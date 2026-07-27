@@ -943,6 +943,186 @@ section.contact .lead a {
   }
 }
 
+/* ── PORTAL HOSTED GALLERIES ── */
+.portal-hosted {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 3rem auto 0;
+  text-align: left;
+}
+
+.portal-hosted-card {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bone-2);
+  text-decoration: none;
+  box-shadow: 0 24px 55px -34px rgba(34, 31, 26, 0.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portal-hosted-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 65px -30px rgba(34, 31, 26, 0.7);
+}
+
+.portal-hosted-card img,
+.portal-hosted-blank {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.portal-hosted-blank {
+  background: linear-gradient(160deg, var(--bone-2), var(--sand));
+}
+
+.portal-hosted-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(34, 31, 26, 0.75), transparent 55%);
+}
+
+.portal-hosted-caption {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.1rem;
+  z-index: 2;
+  display: grid;
+  gap: 0.2rem;
+  color: var(--bone);
+}
+
+.portal-hosted-caption strong {
+  font-family: var(--font-fraunces), "Fraunces", serif;
+  font-weight: 400;
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.portal-hosted-caption span {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(244, 239, 230, 0.8);
+}
+
+/* ── PORTAL GALLERY VIEWER ── */
+.pgal-hero {
+  height: 88vh;
+}
+
+.pgal-hero .hero-bg {
+  animation: ken 20s ease-in-out infinite alternate;
+}
+
+.pgal-work {
+  padding-top: 3rem;
+}
+
+.pgal-item {
+  cursor: default;
+}
+
+.pgal-view {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.pgal-video-tile {
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(160deg, #2c2822, #57534e);
+}
+
+.pgal-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  color: rgba(244, 239, 230, 0.92);
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.pgal-dl {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  z-index: 3;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(34, 31, 26, 0.55);
+  color: var(--bone);
+  text-decoration: none;
+  font-size: 1.05rem;
+  opacity: 0;
+  transition: opacity 0.3s, background 0.25s;
+}
+
+.pgal-item:hover .pgal-dl,
+.pgal-dl:focus-visible {
+  opacity: 1;
+}
+
+.pgal-dl:hover {
+  background: var(--clay);
+}
+
+@media (hover: none) {
+  .pgal-dl {
+    opacity: 1;
+  }
+}
+
+.pgal-lightbox-video {
+  max-width: 92vw;
+  max-height: 82vh;
+  border-radius: 3px;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}
+
+.pgal-lightbox-dl {
+  position: absolute;
+  bottom: 1.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  background: rgba(244, 239, 230, 0.92);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--font-outfit), "Outfit", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pgal-lightbox-dl:hover {
+  background: var(--clay-soft);
+}
+
 /* ── FOOTER ── */
 footer.rm-footer {
   background: #221f1a;

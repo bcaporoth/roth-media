@@ -8,10 +8,17 @@
     "start": "next start"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1095.0",
+    "@aws-sdk/s3-request-presigner": "^3.1095.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
     "next": "^15.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/lib-storage": "^3.1095.0",
+    "archiver": "^8.0.0",
+    "sharp": "^0.35.3"
   }
 }

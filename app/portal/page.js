@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PortalLogin from "../../components/PortalLogin";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
+import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -36,20 +37,45 @@ async function getClientData() {
 
   if (!client) return { user, client: null };
 
-  const [{ data: galleries }, { data: payments }] = await Promise.all([
-    supabase
-      .from("gallery_links")
-      .select("id, title, url, note")
-      .eq("client_id", client.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("payments")
-      .select("id, amount_cents, paid_on, note")
-      .eq("client_id", client.id)
-      .order("paid_on", { ascending: false }),
-  ]);
+  const [{ data: galleries }, { data: payments }, { data: hosted }] =
+    await Promise.all([
+      supabase
+        .from("gallery_links")
+        .select("id, title, url, note")
+        .eq("client_id", client.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("payments")
+        .select("id, amount_cents, paid_on, note")
+        .eq("client_id", client.id)
+        .order("paid_on", { ascending: false }),
+      r2Configured
+        ? supabase
+            .from("galleries")
+            .select("id, title, event_date, cover_filename, media_count")
+            .eq("client_id", client.id)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
+    ]);
 
-  return { user, client, galleries: galleries || [], payments: payments || [] };
+  const hostedGalleries = await Promise.all(
+    (hosted || []).map(async (g) => ({
+      ...g,
+      coverUrl: g.cover_filename
+        ? await signedUrl(photoKey(g.id, "thumb", g.cover_filename)).catch(
+            () => null
+          )
+        : null,
+    }))
+  );
+
+  return {
+    user,
+    client,
+    galleries: galleries || [],
+    payments: payments || [],
+    hostedGalleries,
+  };
 }
 
 export default async function PortalPage() {
@@ -69,7 +95,8 @@ export default async function PortalPage() {
     );
   }
 
-  const { user, client, galleries, payments } = await getClientData();
+  const { user, client, galleries, payments, hostedGalleries } =
+    await getClientData();
 
   if (!user) {
     return (
@@ -113,9 +140,44 @@ export default async function PortalPage() {
         Hi, <em>{client.name.split(" ")[0]}.</em>
       </h2>
 
+      {hostedGalleries && hostedGalleries.length > 0 && (
+        <div className="portal-hosted">
+          {hostedGalleries.map((g) => (
+            <Link
+              href={`/portal/gallery/${g.id}`}
+              className="portal-hosted-card"
+              key={g.id}
+            >
+              {g.coverUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={g.coverUrl} alt="" />
+              ) : (
+                <span className="portal-hosted-blank" aria-hidden="true" />
+              )}
+              <span className="portal-hosted-caption">
+                <strong>{g.title}</strong>
+                <span>
+                  {g.media_count} items
+                  {g.event_date &&
+                    ` · ${new Date(g.event_date).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                      timeZone: "UTC",
+                    })}`}
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="portal-grid">
         <div className="portal-card">
-          <h3 className="portal-card-title">Your galleries</h3>
+          <h3 className="portal-card-title">
+            {hostedGalleries && hostedGalleries.length > 0
+              ? "More links"
+              : "Your galleries"}
+          </h3>
           {galleries.length === 0 ? (
             <p className="portal-empty">
               Nothing here yet — your galleries will appear as soon as
