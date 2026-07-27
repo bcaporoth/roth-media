@@ -16,23 +16,25 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata = {
   metadataBase: new URL("https://rothmediaco.com"),
   title: {
-    default: "Roth Media — Video & Photography for Local Businesses",
+    default:
+      "Roth Media — Video & Photography for Local Businesses | Waverly, Elmira & Corning NY",
     template: "%s — Roth Media",
   },
   description:
-    "Short-form video and photography for local businesses. Content made to stop the scroll and bring customers through the door.",
+    "Short-form video, brand content, and photography for local businesses in the Twin Tiers — Waverly, Athens, Sayre, Elmira, and Corning. Brand video from $450, photography from $350.",
   keywords: [
-    "videographer for small business",
-    "local business video",
-    "short form video",
-    "product photography",
-    "brand photography",
-    "content for local businesses",
+    "videographer Elmira NY",
+    "videographer Corning NY",
+    "video for local business Twin Tiers",
+    "brand photography Waverly NY",
+    "product photography Elmira",
+    "short form video Sayre PA",
+    "commercial photographer Athens PA",
   ],
   openGraph: {
     title: "Roth Media — Video & Photography for Local Businesses",
     description:
-      "Short-form video and photography made to stop the scroll and bring customers through the door.",
+      "Short-form video and photography made to stop the scroll and bring customers through the door. Serving the Twin Tiers: Waverly, Athens, Sayre, Elmira & Corning.",
     type: "website",
   },
 };

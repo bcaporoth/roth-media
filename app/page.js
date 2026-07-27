@@ -3,6 +3,9 @@ import path from "path";
 import Image from "next/image";
 import ContactForm from "../components/ContactForm";
 
+const PHONE = "845-549-4425";
+const PHONE_HREF = "tel:+18455494425";
+
 const PLACEHOLDER_LABELS = [
   "Short-Form Video",
   "Product — Studio",
@@ -19,11 +22,41 @@ function getPhotos() {
       .readdirSync(photosDir)
       .filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f))
       .sort()
-      .map((f) => `/photos/${f}`);
+      .map((f) => ({
+        src: `/photos/${f}`,
+        alt: f
+          .replace(/\.[^.]+$/, "")
+          .replace(/^\d+-/, "")
+          .replace(/-/g, " "),
+      }));
   } catch {
     return [];
   }
 }
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: "Roth Media",
+  url: "https://rothmediaco.com",
+  telephone: "+1-845-549-4425",
+  description:
+    "Short-form video, brand content, and photography for local businesses in the Twin Tiers — Waverly NY, Athens PA, Sayre PA, Elmira NY, and Corning NY.",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Waverly",
+    addressRegion: "NY",
+  },
+  areaServed: [
+    "Waverly NY",
+    "Athens PA",
+    "Sayre PA",
+    "Elmira NY",
+    "Corning NY",
+  ],
+  founder: "Brandon Roth",
+  priceRange: "$$",
+};
 
 function FilmIcon() {
   return (
@@ -55,6 +88,10 @@ export default function Home() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <header className="nav">
         <div className="container nav-inner">
           <a href="#top" className="nav-logo">Roth Media</a>
@@ -63,6 +100,7 @@ export default function Home() {
             <a href="#services">Services</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
+            <a href={PHONE_HREF} className="nav-phone">{PHONE}</a>
           </nav>
         </div>
       </header>
@@ -80,6 +118,10 @@ export default function Home() {
             <a className="btn btn-primary" href="#contact">Start a project</a>
             <a className="btn btn-ghost" href="#work">See the work</a>
           </div>
+          <p className="hero-location">
+            Based in Waverly, NY — serving the Twin Tiers: Waverly, Athens,
+            Sayre, Elmira &amp; Corning.
+          </p>
         </section>
 
         <section id="work" className="section">
@@ -90,11 +132,11 @@ export default function Home() {
             </div>
             <div className="work-grid">
               {photos.length > 0
-                ? photos.map((src, i) => (
-                    <div className="work-item" key={src}>
+                ? photos.map((photo, i) => (
+                    <div className="work-item" key={photo.src}>
                       <Image
-                        src={src}
-                        alt={`Roth Media portfolio image ${i + 1}`}
+                        src={photo.src}
+                        alt={photo.alt}
                         width={800}
                         height={1000}
                         sizes="(max-width: 560px) 100vw, (max-width: 900px) 50vw, 33vw"
@@ -122,30 +164,38 @@ export default function Home() {
             <div className="services-grid">
               <div className="service-card">
                 <FilmIcon />
-                <h3>Short-Form Video</h3>
+                <h3>Brand Video</h3>
                 <p>
-                  Reels, TikToks, and Shorts built for how people actually
-                  watch — the single most in-demand format for local
-                  businesses right now.
+                  Reels, promos, and vertical video built for how people
+                  actually watch. A half-day shoot delivers a 90-second promo
+                  plus three vertical reels.
                 </p>
+                <p className="service-price">From $450 · monthly plans from $500/mo</p>
               </div>
               <div className="service-card">
                 <CameraIcon />
-                <h3>Product Photography</h3>
+                <h3>Brand Photography</h3>
                 <p>
-                  Lighting, composition, and detail work that makes your
-                  product the hero — for listings, menus, ads, and social.
+                  A half-day shoot at your business — 40+ edited images of
+                  your product, space, and people, licensed for web and
+                  social.
                 </p>
+                <p className="service-price">From $350</p>
               </div>
               <div className="service-card">
                 <UsersIcon />
-                <h3>Brand &amp; Business</h3>
+                <h3>Headshots &amp; Events</h3>
                 <p>
-                  The people and personality behind your business — your
-                  team, your space, and the moments customers connect with.
+                  Team headshots on-site at your business, and full event
+                  coverage with an edited gallery delivered within two weeks.
                 </p>
+                <p className="service-price">Headshots from $100 · events from $300</p>
               </div>
             </div>
+            <p className="services-note">
+              Also booking weddings, seniors, engagements, and portraits —{" "}
+              <a href="#contact">ask for details</a>.
+            </p>
           </div>
         </section>
 
@@ -158,22 +208,28 @@ export default function Home() {
             <div className="about-grid">
               <div>
                 <p>
-                  I&apos;m Brandon. I started behind a camera shooting
-                  weddings — the kind of work where you get one chance to
-                  catch the moment. Now I bring that same eye to local
-                  businesses.
+                  Hi, I&apos;m Brandon. I&apos;m all about candid work that
+                  feels real — the good moments usually happen in the flow,
+                  when you&apos;re laughing, moving, working, or forgetting
+                  the camera is even there.
                 </p>
                 <p>
-                  My favorite way to start working with someone: I&apos;ll buy
-                  your product, shoot it, and send you the photos. No pitch,
-                  no strings. If you love them, we talk.
+                  I&apos;ll guide you when you need it, but I don&apos;t do
+                  stiff, rigid posing. We keep it easy and relaxed, then
+                  capture what actually feels like your story.
                 </p>
               </div>
               <div>
                 <p>
-                  Every business has something worth looking at. Most just
-                  haven&apos;t had it filmed properly yet.
+                  My favorite way to start working with a business: I&apos;ll
+                  buy your product, shoot it, and send you the photos. No
+                  pitch, no strings. If you love them, we talk.
                 </p>
+                <p>
+                  I&apos;m local to the Valley, and I&apos;d love to work
+                  with you.
+                </p>
+                <p className="about-sig">— Brandon Roth</p>
               </div>
             </div>
           </div>
@@ -187,6 +243,10 @@ export default function Home() {
                 Tell me what you sell or what you do. I&apos;ll come back
                 with ideas for how to shoot it.
               </p>
+              <p className="contact-phone">
+                Prefer to talk? Call or text{" "}
+                <a href={PHONE_HREF}>{PHONE}</a>
+              </p>
             </div>
             <ContactForm />
           </div>
@@ -195,8 +255,11 @@ export default function Home() {
 
       <footer className="footer">
         <div className="container footer-inner">
-          <span>© {new Date().getFullYear()} Roth Media</span>
-          <span>rothmediaco.com</span>
+          <span>© {new Date().getFullYear()} Roth Media · Waverly, NY</span>
+          <span>
+            Serving Waverly · Athens · Sayre · Elmira · Corning
+          </span>
+          <a href={PHONE_HREF}>{PHONE}</a>
         </div>
       </footer>
     </>

@@ -105,9 +105,15 @@ img {
   outline-offset: 4px;
 }
 
+.nav-links .nav-phone {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
 /* ---------- Hero ---------- */
 .hero {
-  padding: 11rem 0 6rem;
+  padding-top: 11rem;
+  padding-bottom: 6rem;
 }
 
 .hero-kicker {
@@ -137,6 +143,13 @@ img {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.hero-location {
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
 }
 
 .btn {
@@ -288,6 +301,26 @@ img {
   color: var(--color-ink-soft);
 }
 
+.service-price {
+  margin-top: 1rem;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.04em;
+  color: var(--color-accent) !important;
+  font-weight: 500;
+}
+
+.services-note {
+  margin-top: 2.5rem;
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+
+.services-note a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .service-icon {
   width: 2.5rem;
   height: 2.5rem;
@@ -307,6 +340,13 @@ img {
   color: var(--color-ink-soft);
   margin-bottom: 1.25rem;
   max-width: 55ch;
+}
+
+.about-sig {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  color: var(--color-ink) !important;
+  letter-spacing: 0.02em;
 }
 
 /* ---------- Contact ---------- */
@@ -412,6 +452,14 @@ img {
   max-width: 45ch;
 }
 
+.contact-phone a {
+  color: #fafaf9;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--color-accent);
+}
+
 .contact .btn-light {
   background: #fafaf9;
   color: var(--color-primary);
@@ -460,7 +508,8 @@ img {
 
 @media (max-width: 560px) {
   .hero {
-    padding: 8.5rem 0 4rem;
+    padding-top: 8.5rem;
+    padding-bottom: 4rem;
   }
   .work-grid,
   .services-grid {
@@ -468,6 +517,9 @@ img {
   }
   .nav-links {
     gap: 1.25rem;
+  }
+  .nav-links .nav-phone {
+    display: none;
   }
 }
 
