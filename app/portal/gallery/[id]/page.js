@@ -31,7 +31,7 @@ export default async function GalleryPage({ params }) {
   // RLS guarantees clients can only fetch their own gallery.
   const { data: gallery } = await supabase
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key")
+    .select("id, title, event_date, cover_filename, zip_key, share_token")
     .eq("id", id)
     .maybeSingle();
   if (!gallery) notFound();
@@ -126,6 +126,15 @@ export default async function GalleryPage({ params }) {
           </p>
         </div>
       </header>
+
+      {gallery.share_token && (
+        <p className="pgal-share">
+          Share this gallery with family &amp; friends — no login needed:{" "}
+          <a href={`/g/${gallery.share_token}`}>
+            rothmediaco.com/g/{gallery.share_token.slice(0, 8)}…
+          </a>
+        </p>
+      )}
 
       <section id="grid" className="work pgal-work">
         <PortalGallery items={items} title={gallery.title} />

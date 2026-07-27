@@ -139,6 +139,11 @@ export default async function PortalPage() {
       <h2>
         Hi, <em>{client.name.split(" ")[0]}.</em>
       </h2>
+      {user.email?.toLowerCase() === "b.caporoth@gmail.com" && (
+        <p className="pgal-share">
+          <Link href="/portal/admin">Studio admin → add &amp; manage galleries</Link>
+        </p>
+      )}
 
       {hostedGalleries && hostedGalleries.length > 0 && (
         <div className="portal-hosted">

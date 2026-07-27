@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import Link from "next/link";
 import Reveal from "../../components/Reveal";
+import ReelCard from "../../components/ReelCard";
 
 export const metadata = {
   title: "Videography",
@@ -103,6 +104,23 @@ export default function VideoPage() {
           Photos hold the moment still. <em>Film</em> gives it back to you —
           the voices, the vows, the room erupting. That&apos;s what I chase.
         </p>
+      </section>
+
+      <section className="pricing" style={{ paddingTop: 0 }}>
+        <div className="pricing-inner">
+          <div className="pricing-head reveal">
+            <div className="kick">Recent work</div>
+            <h2>Made to be watched</h2>
+            <p>Tap to play — sound on.</p>
+          </div>
+          <div className="reels-row reveal">
+            <ReelCard
+              src="/reels/bake-against-the-grain.mp4"
+              title="Bake Against the Grain"
+              client="Brand film"
+            />
+          </div>
+        </div>
       </section>
 
       <section id="pricing" className="pricing">
