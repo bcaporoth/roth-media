@@ -1,43 +1,9 @@
-import fs from "fs";
-import path from "path";
-import Gallery from "../components/Gallery";
+import Link from "next/link";
 import ContactForm from "../components/ContactForm";
 import Reveal from "../components/Reveal";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
-
-// Filenames follow NN-category-caption-words.ext; category prefixes map to
-// gallery filters (gym → fitness, senior → seniors, engagement → engagements).
-const CATEGORY_MAP = {
-  gym: "fitness",
-  lifestyle: "lifestyle",
-  senior: "seniors",
-  engagement: "engagements",
-};
-
-function getPhotos() {
-  const photosDir = path.join(process.cwd(), "public", "photos");
-  try {
-    return fs
-      .readdirSync(photosDir)
-      .filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f))
-      .sort()
-      .map((f) => {
-        const slug = f.replace(/\.[^.]+$/, "").replace(/^\d+-/, "");
-        const [first, ...rest] = slug.split("-");
-        const category = CATEGORY_MAP[first] || "lifestyle";
-        const capSource = (CATEGORY_MAP[first] ? rest : [first, ...rest])
-          .join(" ")
-          .replace(/^(athlete |portrait )/, "");
-        const caption =
-          capSource.charAt(0).toUpperCase() + capSource.slice(1);
-        return { src: `/photos/${f}`, category, caption };
-      });
-  } catch {
-    return [];
-  }
-}
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -46,7 +12,7 @@ const JSON_LD = {
   url: "https://rothmediaco.com",
   telephone: "+1-845-549-4425",
   description:
-    "Short-form video, brand content, and photography for local businesses in the Twin Tiers — Waverly NY, Athens PA, Sayre PA, Elmira NY, and Corning NY.",
+    "Cinematic videography and candid photography for the Twin Tiers — Waverly NY, Athens PA, Sayre PA, Elmira NY, and Corning NY.",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Waverly",
@@ -64,8 +30,6 @@ const JSON_LD = {
 };
 
 export default function Home() {
-  const photos = getPhotos();
-
   return (
     <>
       <script
@@ -75,15 +39,15 @@ export default function Home() {
       <Reveal />
 
       <nav className="rm-nav" aria-label="Main navigation">
-        <a href="#top" className="brand">
+        <Link href="/" className="brand">
           Roth <em>Media</em>
-        </a>
+        </Link>
         <ul className="nav-links">
           <li>
-            <a href="#work">Work</a>
+            <Link href="/video">Video</Link>
           </li>
           <li>
-            <a href="#services">Services</a>
+            <Link href="/photo">Photo</Link>
           </li>
           <li>
             <a href="#about">About</a>
@@ -98,134 +62,46 @@ export default function Home() {
       </nav>
 
       <main id="top">
-        <header className="hero">
-          <div className="hero-bg" />
-          <div className="hero-inner">
-            <div className="hero-eyebrow">
-              Waverly · Athens · Sayre · Elmira · Corning
-            </div>
-            <h1>
-              Content people
-              <br />
-              <em>stop for.</em>
-            </h1>
-            <div className="hero-meta">
-              <span className="loc">
-                Short-form video · Brand photo · Headshots · Events
+        <header className="split" aria-label="Choose your side">
+          <Link href="/video" className="split-panel split-video">
+            <span className="split-bg split-bg-video" aria-hidden="true" />
+            <span className="split-content">
+              <span className="split-kicker">Motion · Sound · Story</span>
+              <span className="split-title">
+                Video<em>graphy</em>
               </span>
-            </div>
-            <div className="hero-cta">
-              <a href="#contact" className="hero-cta-primary">
-                Start a project →
-              </a>
-              <a href="#services" className="hero-cta-secondary">
-                See real prices
-              </a>
-            </div>
-            <p className="hero-trust">
-              Video from $450 · photo from $350 · no obligation
-            </p>
-          </div>
-          <div className="hero-scroll">Scroll</div>
+              <span className="split-sub">
+                Cinematic films for weddings, brands &amp; the moments that
+                move
+              </span>
+              <span className="split-cta">Enter the video side →</span>
+            </span>
+          </Link>
+          <Link href="/photo" className="split-panel split-photo">
+            <span className="split-bg split-bg-photo" aria-hidden="true" />
+            <span className="split-content">
+              <span className="split-kicker">Light · Stillness · Real</span>
+              <span className="split-title">
+                Photo<em>graphy</em>
+              </span>
+              <span className="split-sub">
+                Candid photographs for weddings, seniors, brands &amp; the
+                people you love
+              </span>
+              <span className="split-cta">Enter the photo side →</span>
+            </span>
+          </Link>
+          <span className="split-brand" aria-hidden="true">
+            Roth <em>Media</em>
+          </span>
         </header>
 
         <section className="statement reveal">
           <p>
-            I don&apos;t just make <em>content</em>. I make the stuff people
-            stop scrolling for — the moments that make your business feel
-            like somewhere worth going.
+            One studio, two crafts. <em>Video</em> when the moment moves,{" "}
+            <em>photo</em> when it should stand still — serving the Twin
+            Tiers from Waverly to Corning.
           </p>
-        </section>
-
-        <section id="work" className="work">
-          <Gallery photos={photos} />
-        </section>
-
-        <section id="services" className="services">
-          <div className="svc-inner">
-            <div className="kick">Services</div>
-            <h2>
-              What I <em>make.</em>
-            </h2>
-            <p className="svc-lead">
-              Real prices, up front. Every project starts with a
-              conversation about your business — then I come back with ideas
-              for how to shoot it.
-            </p>
-            <div className="svc-list">
-              <div className="svc-item">
-                <div className="n">01</div>
-                <h3>Brand Video</h3>
-                <p>
-                  Reels, promos, and vertical video built for how people
-                  actually watch.
-                </p>
-                <ul className="svc-prices">
-                  <li>
-                    <span className="svc-price-label">Video</span>
-                    <span className="svc-price-value">from $450</span>
-                  </li>
-                  <li>
-                    <span className="svc-price-label">Monthly</span>
-                    <span className="svc-price-value">from $500/mo</span>
-                  </li>
-                </ul>
-                <p className="svc-includes">
-                  Half-day shoot at your business. A 90-second promo plus
-                  three vertical reels, cut for social.
-                </p>
-              </div>
-              <div className="svc-item">
-                <div className="n">02</div>
-                <h3>Brand Photo</h3>
-                <p>
-                  Your product, your space, and your people — photographed
-                  properly.
-                </p>
-                <ul className="svc-prices">
-                  <li>
-                    <span className="svc-price-label">Photo</span>
-                    <span className="svc-price-value">from $350</span>
-                  </li>
-                </ul>
-                <p className="svc-includes">
-                  Half-day shoot, 40+ edited images with web and social
-                  license — for listings, menus, ads, and posts.
-                </p>
-              </div>
-              <div className="svc-item">
-                <div className="n">03</div>
-                <h3>Headshots &amp; Events</h3>
-                <p>
-                  Team headshots on-site, and full event coverage start to
-                  finish.
-                </p>
-                <ul className="svc-prices">
-                  <li>
-                    <span className="svc-price-label">Headshots</span>
-                    <span className="svc-price-value">from $100</span>
-                  </li>
-                  <li>
-                    <span className="svc-price-label">Events</span>
-                    <span className="svc-price-value">from $300</span>
-                  </li>
-                </ul>
-                <p className="svc-includes">
-                  Headshots: two retouched images each, team of five for
-                  $400. Events: edited gallery within two weeks.
-                </p>
-              </div>
-            </div>
-            <p className="svc-footnote">
-              Also booking weddings, seniors, engagements, and portraits —{" "}
-              <a href="#contact">ask for details</a>.
-            </p>
-            <div className="svc-cta">
-              <a href="#contact" className="svc-cta-btn">
-                Start a project →
-              </a>
-            </div>
-          </div>
         </section>
 
         <section id="about" className="about">
@@ -266,7 +142,7 @@ export default function Home() {
             <em>people stop for.</em>
           </h2>
           <p className="lead">
-            Tell me what you sell or what you do. Prefer to talk? Call or
+            Tell me what you&apos;re dreaming up. Prefer to talk? Call or
             text <a href={PHONE_HREF}>{PHONE}</a>.
           </p>
           <ContactForm />
@@ -280,7 +156,7 @@ export default function Home() {
           </div>
           <span>Waverly, NY — serving the Twin Tiers</span>
           <a href={PHONE_HREF}>{PHONE}</a>
-          <a href="/portal">Client login</a>
+          <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

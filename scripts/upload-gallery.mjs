@@ -23,8 +23,11 @@ import { PassThrough } from "node:stream";
 import { createClient } from "@supabase/supabase-js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import archiver from "archiver";
+import { createRequire } from "node:module";
 import sharp from "sharp";
+
+const require = createRequire(import.meta.url);
+const archiver = require("archiver");
 
 // --- env ---------------------------------------------------------------
 const envPath = path.join(process.cwd(), ".env.local");
@@ -66,7 +69,7 @@ const VIDEO_EXT = /\.(mp4|mov|m4v|webm)$/i;
 
 const files = fs
   .readdirSync(args.dir)
-  .filter((f) => PHOTO_EXT.test(f) || VIDEO_EXT.test(f))
+  .filter((f) => !f.startsWith(".") && (PHOTO_EXT.test(f) || VIDEO_EXT.test(f)))
   .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
 if (files.length === 0) {

@@ -1,48 +1,47 @@
-import { Fraunces, Outfit } from "next/font/google";
+import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const syne = Syne({
   subsets: ["latin"],
-  weight: ["300", "400"],
-  style: ["normal", "italic"],
-  variable: "--font-fraunces",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-display",
 });
 
-const outfit = Outfit({
+const manrope = Manrope({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-outfit",
+  variable: "--font-body",
 });
 
 export const metadata = {
   metadataBase: new URL("https://rothmediaco.com"),
   title: {
     default:
-      "Roth Media — Video & Photography for Local Businesses | Waverly, Elmira & Corning NY",
+      "Roth Media — Videography & Photography | Waverly, Elmira & Corning NY",
     template: "%s — Roth Media",
   },
   description:
-    "Short-form video, brand content, and photography for local businesses in the Twin Tiers — Waverly, Athens, Sayre, Elmira, and Corning. Brand video from $450, photography from $350.",
+    "Cinematic videography and candid photography for the Twin Tiers — Waverly, Athens, Sayre, Elmira, and Corning. Weddings, brands, seniors, and events. Real prices, instant quotes.",
   keywords: [
     "videographer Elmira NY",
     "videographer Corning NY",
-    "video for local business Twin Tiers",
-    "brand photography Waverly NY",
-    "product photography Elmira",
-    "short form video Sayre PA",
-    "commercial photographer Athens PA",
+    "wedding videographer Twin Tiers",
+    "brand video Waverly NY",
+    "wedding photographer Sayre PA",
+    "senior photos Athens PA",
+    "photographer Waverly NY",
   ],
   openGraph: {
-    title: "Roth Media — Video & Photography for Local Businesses",
+    title: "Roth Media — Videography & Photography",
     description:
-      "Short-form video and photography made to stop the scroll and bring customers through the door. Serving the Twin Tiers: Waverly, Athens, Sayre, Elmira & Corning.",
+      "Cinematic video and candid photography for the Twin Tiers. Real prices, instant quotes.",
     type: "website",
   },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
       <body>{children}</body>
     </html>
   );
