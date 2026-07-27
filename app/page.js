@@ -280,6 +280,7 @@ export default function Home() {
           </div>
           <span>Waverly, NY — serving the Twin Tiers</span>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <a href="/portal">Client login</a>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

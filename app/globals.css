@@ -799,6 +799,150 @@ section.contact .lead a {
   display: none;
 }
 
+/* ── PORTAL ── */
+.portal-nav {
+  mix-blend-mode: normal;
+  background: rgba(34, 31, 26, 0.92);
+}
+
+.portal {
+  min-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.portal-section {
+  border-top: none;
+  padding-top: 10rem;
+}
+
+.portal-signout {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  color: #fff;
+  padding: 0.45rem 1rem;
+  font-family: var(--font-outfit), "Outfit", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+.portal-signout:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 3rem auto 0;
+  text-align: left;
+}
+
+.portal-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(250, 246, 238, 0.6);
+  padding: 2rem;
+}
+
+.portal-card-title {
+  font-family: var(--font-fraunces), "Fraunces", serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.portal-empty {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.portal-galleries {
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.portal-galleries a {
+  font-family: var(--font-fraunces), "Fraunces", serif;
+  font-size: 1.15rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  transition: color 0.25s, border-color 0.25s;
+}
+
+.portal-galleries a:hover {
+  color: var(--clay);
+  border-color: var(--clay);
+}
+
+.portal-note {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.portal-payments {
+  list-style: none;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.portal-payments li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.portal-payments .portal-note {
+  display: inline;
+}
+
+.portal-amount {
+  font-family: var(--font-fraunces), "Fraunces", serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.portal-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.portal-total .portal-amount {
+  font-size: 1.35rem;
+}
+
+@media (max-width: 860px) {
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+  .portal-section {
+    padding-top: 7rem;
+  }
+}
+
 /* ── FOOTER ── */
 footer.rm-footer {
   background: #221f1a;
