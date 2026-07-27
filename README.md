@@ -28,14 +28,12 @@ After that, every `git push` deploys automatically.
 
 ## Contact form
 
-The form works out of the box by opening the visitor's email app,
-pre-filled. To upgrade to real in-page submissions:
-
-1. Create a free form at [formspree.io](https://formspree.io) pointing at
-   your email.
-2. In Vercel: Settings → Environment Variables, add
-   `NEXT_PUBLIC_FORM_ENDPOINT` = `https://formspree.io/f/<your-id>`.
-3. Redeploy.
+Submissions go straight to b.caporoth@gmail.com via
+[FormSubmit.co](https://formsubmit.co) — free, no account, no
+subscription. The very first submission triggers a one-time confirmation
+email to that inbox; click **Activate** in it and everything after
+arrives automatically. To change the destination address, edit
+`CONTACT_EMAIL` in `components/ContactForm.js`.
 
 ## SEO loop (monthly)
 

@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-// Set NEXT_PUBLIC_FORM_ENDPOINT (e.g. a Formspree URL like
-// https://formspree.io/f/xxxxxx) to submit in-page. Until then the form
-// falls back to opening the visitor's email app pre-filled.
-const FORM_ENDPOINT = process.env.NEXT_PUBLIC_FORM_ENDPOINT || "";
+// FormSubmit.co — free form-to-email, no account, no subscription.
+// Submissions arrive at CONTACT_EMAIL; the first one triggers a one-time
+// confirmation email with an "Activate" link.
 const CONTACT_EMAIL = "b.caporoth@gmail.com";
+const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 export default function ContactForm() {
   const [status, setStatus] = useState("idle");
@@ -15,26 +15,28 @@ export default function ContactForm() {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
-
-    if (!FORM_ENDPOINT) {
-      const subject = encodeURIComponent(
-        `Project inquiry from ${data.name}${data.business ? ` (${data.business})` : ""}`
-      );
-      const body = encodeURIComponent(
-        `Name: ${data.name}\nBusiness: ${data.business}\nEmail: ${data.email}\nLooking for: ${data.service}\n\n${data.message}`
-      );
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-      return;
-    }
+    if (data._honey) return; // spam bot filled the hidden field
 
     setStatus("sending");
     try {
-      const res = await fetch(FORM_ENDPOINT, {
+      const res = await fetch(ENDPOINT, {
         method: "POST",
-        headers: { Accept: "application/json" },
-        body: new FormData(form),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          business: data.business,
+          email: data.email,
+          service: data.service,
+          message: data.message,
+          _subject: `Roth Media inquiry — ${data.name}${data.business ? ` (${data.business})` : ""}`,
+          _template: "table",
+        }),
       });
-      if (!res.ok) throw new Error("Request failed");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || String(json.success) !== "true") throw new Error("failed");
       setStatus("sent");
       form.reset();
     } catch {
@@ -44,31 +46,63 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <p className="form-success" role="status">
-        Got it — I&apos;ll get back to you within one business day.
-      </p>
+      <div className="cform-success" role="status">
+        <p className="cform-success-title">Got it — talk soon.</p>
+        <p className="cform-success-body">
+          I&apos;ll get back to you within one business day. In a hurry? Call
+          or text <a href="tel:+18455494425">845-549-4425</a>.
+        </p>
+      </div>
     );
   }
 
   return (
-    <form className="contact-form" onSubmit={handleSubmit}>
-      <div className="form-row">
-        <div className="form-field">
-          <label htmlFor="cf-name">Your name *</label>
-          <input id="cf-name" name="name" type="text" required autoComplete="name" />
+    <form className="cform" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        name="_honey"
+        className="cform-honey"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+      />
+      <div className="row">
+        <div>
+          <label htmlFor="cf-name">Name</label>
+          <input
+            id="cf-name"
+            name="name"
+            type="text"
+            placeholder="Your name"
+            autoComplete="name"
+            required
+          />
         </div>
-        <div className="form-field">
-          <label htmlFor="cf-business">Business name</label>
-          <input id="cf-business" name="business" type="text" autoComplete="organization" />
+        <div>
+          <label htmlFor="cf-business">Business</label>
+          <input
+            id="cf-business"
+            name="business"
+            type="text"
+            placeholder="Your business (if you have one)"
+            autoComplete="organization"
+          />
         </div>
       </div>
-      <div className="form-row">
-        <div className="form-field">
-          <label htmlFor="cf-email">Email *</label>
-          <input id="cf-email" name="email" type="email" required autoComplete="email" />
+      <div className="row">
+        <div>
+          <label htmlFor="cf-email">Email</label>
+          <input
+            id="cf-email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
         </div>
-        <div className="form-field">
-          <label htmlFor="cf-service">What are you looking for?</label>
+        <div>
+          <label htmlFor="cf-service">Looking for</label>
           <select id="cf-service" name="service" defaultValue="Video">
             <option>Video</option>
             <option>Photography</option>
@@ -77,8 +111,8 @@ export default function ContactForm() {
           </select>
         </div>
       </div>
-      <div className="form-field">
-        <label htmlFor="cf-message">Tell me about your business</label>
+      <div>
+        <label htmlFor="cf-message">Tell me about it</label>
         <textarea
           id="cf-message"
           name="message"
@@ -86,17 +120,13 @@ export default function ContactForm() {
           placeholder="What do you sell or do? Where can I see it?"
         />
       </div>
-      <button
-        type="submit"
-        className="btn btn-light"
-        disabled={status === "sending"}
-      >
+      <button type="submit" disabled={status === "sending"}>
         {status === "sending" ? "Sending…" : "Send it"}
       </button>
       {status === "error" && (
-        <p className="form-error" role="alert">
-          Something went wrong — email me directly at {CONTACT_EMAIL} and
-          I&apos;ll get right back to you.
+        <p className="cform-error" role="alert">
+          Something went wrong — email me at {CONTACT_EMAIL} or text
+          845-549-4425 and I&apos;ll get right back to you.
         </p>
       )}
     </form>
