@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../components/BrandMark";
 import ContactForm from "../components/ContactForm";
 import Reveal from "../components/Reveal";
 
@@ -40,6 +41,7 @@ export default function Home() {
 
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -152,6 +154,7 @@ export default function Home() {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <span>Waverly, NY — serving the Twin Tiers</span>

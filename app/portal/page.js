@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../../components/BrandMark";
 import PortalLogin from "../../components/PortalLogin";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
@@ -240,6 +241,7 @@ function PortalShell({ children, signedIn = false }) {
     <>
       <nav className="rm-nav portal-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -263,6 +265,7 @@ function PortalShell({ children, signedIn = false }) {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <a href="tel:+18455494425">845-549-4425</a>

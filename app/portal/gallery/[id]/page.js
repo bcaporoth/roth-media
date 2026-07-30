@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
@@ -81,6 +82,7 @@ export default async function GalleryPage({ params }) {
     <>
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -143,6 +145,7 @@ export default async function GalleryPage({ params }) {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <a href="tel:+18455494425">845-549-4425</a>

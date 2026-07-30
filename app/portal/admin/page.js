@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../../../components/BrandMark";
 import { redirect } from "next/navigation";
 import AdminUploader from "../../../components/AdminUploader";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
@@ -29,6 +30,7 @@ export default async function AdminPage() {
     <>
       <nav className="rm-nav portal-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -69,6 +71,7 @@ export default async function AdminPage() {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <span>© {new Date().getFullYear()} Roth Media</span>

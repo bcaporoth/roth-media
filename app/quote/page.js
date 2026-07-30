@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../../components/BrandMark";
 import QuoteForm from "../../components/QuoteForm";
 
 export const metadata = {
@@ -22,6 +23,7 @@ export default async function QuotePage({ searchParams }) {
     <>
       <nav className="rm-nav portal-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -51,6 +53,7 @@ export default async function QuotePage({ searchParams }) {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>

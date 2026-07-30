@@ -1,4 +1,5 @@
 import fs from "fs";
+import BrandMark from "../../components/BrandMark";
 import path from "path";
 import Link from "next/link";
 import Reveal from "../../components/Reveal";
@@ -57,6 +58,7 @@ export default function VideoPage() {
       <Reveal />
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
+          <BrandMark />
           Roth <em>Media</em>
         </Link>
         <ul className="nav-links">
@@ -162,6 +164,7 @@ export default function VideoPage() {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
+            <BrandMark accent />
             Roth <em>Media</em>
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>

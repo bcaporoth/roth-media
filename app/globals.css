@@ -81,6 +81,21 @@ nav.rm-nav {
   color: #fff;
   text-decoration: none;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-mark {
+  height: 1.1em;
+  width: auto;
+  display: inline-block;
+}
+
+.foot-inner .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .rm-nav .brand em {
@@ -950,6 +965,102 @@ header.split:has(.split-photo:hover) .split-photo {
   .qsvc {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Quote form: deep-dive sections ── */
+.qdeep-intro {
+  border-top: 1px solid var(--line);
+  margin-top: 0.5rem;
+  padding-top: 1.6rem;
+  text-align: center;
+}
+
+.qdeep-intro-title {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.qdeep-intro p:not(.qdeep-intro-title) {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.qdeep-section {
+  display: grid;
+  gap: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.4rem 1.4rem 1.5rem;
+  background: rgba(250, 246, 238, 0.45);
+}
+
+.qdeep-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.qhelp {
+  display: block;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--sand);
+  margin-top: -0.55rem;
+}
+
+.qgroup {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.qgroup .qhelp {
+  margin-top: 0;
+}
+
+.qgroup-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.qtoggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qtoggle button {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(250, 246, 238, 0.6);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.qtoggle button:hover {
+  border-color: var(--clay);
+  color: var(--ink);
+}
+
+.qtoggle button.on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bone);
 }
 
 /* ── STATEMENT ── */

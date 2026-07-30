@@ -112,6 +112,39 @@ export function recommendRothPackage({ services, eventType, projectType, budgetR
   return null;
 }
 
+// ── Per-session-type labels & branch logic, ported from the original
+// deep intake questionnaires ─────────────────────────────────────────
+
+function sessionLabels(hasPhoto, eventType, hasVideo, projectType) {
+  if (hasPhoto && eventType) {
+    if (["wedding", "corporate"].includes(eventType))
+      return { date: "Event date", venue: "Ceremony or main venue", address: "Venue address", guests: "Estimated guest count", people: "Key people & VIPs to prioritize" };
+    if (eventType === "senior")
+      return { date: "Preferred session date(s)", venue: "School or team name (if relevant)", address: "Location ideas or address", guests: "Number of people in photos", people: "Senior name, school, year, sports/clubs, who else is joining" };
+    if (eventType === "headshots")
+      return { date: "Preferred session date(s)", venue: "Company, team, or brand name", address: "Studio, office, or outdoor location", guests: "Number of people needing photos", people: "Roles, titles, and how photos will be used (LinkedIn, website, etc.)" };
+    if (eventType === "brand")
+      return { date: "Preferred shoot date(s)", venue: "Business / brand name", address: "Studio, office, storefront, or outdoor location", guests: "Number of people needing photos", people: "Team members, products, services, spaces, or customers to feature" };
+    if (eventType === "engagement")
+      return { date: "Preferred session date(s)", venue: "Meaningful location or backdrop", address: "Location address or area", guests: "Anyone else joining (pets, family)?", people: "Your names and how you met — anything that helps tell your story" };
+    if (["family", "newborn"].includes(eventType))
+      return { date: "Preferred session date(s)", venue: "Home, studio, or outdoor spot", address: "Location address or area", guests: "Number of people (include ages of kids)", people: "Who will be in the photos and any special needs (naps, mobility, etc.)" };
+  }
+  if (hasVideo && projectType) {
+    if (projectType === "wedding_film")
+      return { date: "Wedding date", venue: "Ceremony / reception venue", address: "Venue address", guests: "Estimated guest count", people: "Couple, wedding party, family, and VIPs to prioritize" };
+    if (["brand", "brand_promo", "social_reels"].includes(projectType))
+      return { date: "Preferred shoot date(s)", venue: "Business / brand name", address: "Shoot location or business address", guests: "Number of people on camera", people: "Team members, customers, products, or services featured" };
+    if (projectType === "testimonial")
+      return { date: "Preferred shoot date(s)", venue: "Business / interview location", address: "Interview address or area", guests: "Number of interviews", people: "Who is speaking and what story should they tell?" };
+    if (projectType === "real_estate")
+      return { date: "Preferred shoot date(s)", venue: "Property name or listing", address: "Property address", guests: "People on camera, if any", people: "Property highlights, agent intro, or rooms to emphasize" };
+    if (projectType === "event")
+      return { date: "Event date", venue: "Event venue", address: "Venue address", guests: "Estimated attendance", people: "Speakers, performers, sponsors, or VIPs to prioritize" };
+  }
+  return { date: "Preferred date(s)", venue: "Location or venue name", address: "Address or area ideas", guests: "Number of people involved", people: "Who or what should be featured?" };
+}
+
 // ── Form ─────────────────────────────────────────────────────────────
 
 const CONTACT_EMAIL = "b.caporoth@gmail.com";
@@ -145,6 +178,38 @@ const SERVICES = [
 const label = (options, value) =>
   (options.find(([v]) => v === value) || [])[1] || value;
 
+function Toggle({ legend, help, value, onChange, options = ["Yes", "No"] }) {
+  return (
+    <div className="qgroup">
+      <span className="qgroup-label">{legend}</span>
+      {help && <span className="qhelp">{help}</span>}
+      <div className="qtoggle" role="radiogroup" aria-label={legend}>
+        {options.map((opt) => (
+          <button
+            type="button"
+            key={opt}
+            className={value === opt ? "on" : ""}
+            aria-pressed={value === opt}
+            onClick={() => onChange(value === opt ? "" : opt)}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, hint, children }) {
+  return (
+    <div className="qdeep-section">
+      <h3 className="qdeep-title">{title}</h3>
+      {hint && <p className="qhelp">{hint}</p>}
+      {children}
+    </div>
+  );
+}
+
 export default function QuoteForm({ initialService = "" }) {
   const [services, setServices] = useState(initialService);
   const [eventType, setEventType] = useState("");
@@ -152,6 +217,13 @@ export default function QuoteForm({ initialService = "" }) {
   const [budgetRange, setBudgetRange] = useState("");
   const [status, setStatus] = useState("idle");
   const [sentMatch, setSentMatch] = useState(null);
+
+  // Toggles that reveal follow-up fields
+  const [secondLocation, setSecondLocation] = useState("");
+  const [gettingReady, setGettingReady] = useState("");
+  const [shotList, setShotList] = useState("");
+  const [drone, setDrone] = useState("");
+  const [vowsSpeeches, setVowsSpeeches] = useState("");
 
   const hasPhoto = services === "photography" || services === "both";
   const hasVideo = services === "videography" || services === "both";
@@ -161,32 +233,108 @@ export default function QuoteForm({ initialService = "" }) {
     [services, eventType, projectType, budgetRange]
   );
 
+  // ── Branch logic (which deep sections open up) ──
+  const typeChosen = (hasPhoto && eventType) || (hasVideo && projectType);
+  const pWed = hasPhoto && ["wedding", "corporate", "other"].includes(eventType);
+  const pPortrait = hasPhoto && ["senior", "headshots", "brand", "engagement", "family", "newborn", "other"].includes(eventType);
+  const pBrand = hasPhoto && ["brand", "other"].includes(eventType);
+  const pEngagementQ = hasPhoto && ["wedding", "corporate", "engagement"].includes(eventType);
+  const vWed = hasVideo && ["wedding_film", "event", "other"].includes(projectType);
+  const vWeddingFilm = hasVideo && projectType === "wedding_film";
+  const vBrand = hasVideo && ["brand", "brand_promo", "social_reels", "testimonial", "real_estate", "other"].includes(projectType);
+  const vAudio = hasVideo && projectType && projectType !== "real_estate";
+  const vDrone = hasVideo && projectType && projectType !== "testimonial";
+  const weddingLike = pWed || vWed;
+  const brandLike = pBrand || vBrand;
+
+  const L = sessionLabels(hasPhoto, eventType, hasVideo, projectType);
+
   async function handleSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     if (data._honey) return;
     setStatus("sending");
+
+    // Only send fields the client actually filled in, in call-prep order.
+    const rows = {
+      _subject: `Quote request — ${data.firstName} ${data.lastName} (${services})`,
+      _template: "table",
+      services,
+      "session type": hasPhoto ? label(EVENT_OPTIONS, eventType) : undefined,
+      "project type": hasVideo ? label(PROJECT_OPTIONS, projectType) : undefined,
+      name: `${data.firstName} ${data.lastName}`,
+      email: data.email,
+      phone: data.phone,
+      "heard about us via": data.referral,
+      budget: label(BUDGET_OPTIONS, budgetRange),
+      "matched package": match ? `${match.name} (${match.price})` : "none",
+      // When & where
+      [L.date.toLowerCase()]: data.date,
+      "backup dates / flexibility": data.backupDates,
+      "start time": data.startTime,
+      "end time": data.endTime,
+      [L.venue.toLowerCase()]: data.venueName,
+      [L.address.toLowerCase()]: data.venueAddress,
+      [L.guests.toLowerCase()]: data.guestCount,
+      "key people": data.participants,
+      "second location": secondLocation,
+      "second location address": secondLocation === "Yes" ? data.secondLocationAddress : undefined,
+      "getting-ready coverage": gettingReady,
+      "getting-ready address": gettingReady === "Yes" ? data.gettingReadyAddress : undefined,
+      "location preference": data.locationPreference,
+      "wardrobe / outfits": data.wardrobe,
+      // Style & vision
+      "vibe / mood": data.vibe,
+      "inspiration links": data.inspirationLinks,
+      "color palette / theme": data.colorPalette,
+      "candid vs posed": data.styleMix,
+      "video style": data.videoStyle,
+      "music preference": data.musicPreference,
+      // Brand content
+      "content cadence": data.contentCadence,
+      platforms: data.contentPlatforms,
+      "format / orientation": data.contentOrientation,
+      "business goal": data.contentGoals,
+      "featuring": data.featureList,
+      "on-camera people": data.onCameraTalent,
+      "usage rights / ads": data.usageRights,
+      "brand guidelines": data.brandGuidelines,
+      "scripting support": data.scriptingSupport,
+      "captions needed": data.captionsNeeded,
+      // Day-of logistics
+      "shot list / timeline prepared": shotList,
+      "other vendors": data.otherVendors,
+      "vip guests": data.vipGuests,
+      "vows & speeches audio": vowsSpeeches,
+      "audio needs": data.audioNeeds,
+      "drone coverage": drone,
+      "drone notes": drone === "Yes" ? data.droneNotes : undefined,
+      // Deliverables
+      "coverage hours": data.coverageHours,
+      "second photographer": data.secondPhotographer,
+      "engagement session": data.engagementSession,
+      "film length": data.filmLength,
+      "full ceremony edit": data.fullCeremonyEdit,
+      "social cuts wanted": data.socialCuts,
+      "raw footage": data.rawFootage,
+      "same-day edit": data.sameDayEdit,
+      turnaround: data.turnaround,
+      "printed products": data.printedProducts,
+      // Story
+      story: data.story,
+      "must-haves": data.mustHaves,
+      "anything else": data.notes,
+    };
+    const payload = Object.fromEntries(
+      Object.entries(rows).filter(([, v]) => v !== undefined && v !== "")
+    );
+
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          _subject: `Quote request — ${data.firstName} ${data.lastName} (${services})`,
-          _template: "table",
-          services,
-          "session type": hasPhoto ? label(EVENT_OPTIONS, eventType) : undefined,
-          "project type": hasVideo ? label(PROJECT_OPTIONS, projectType) : undefined,
-          name: `${data.firstName} ${data.lastName}`,
-          email: data.email,
-          phone: data.phone,
-          date: data.date,
-          location: data.location,
-          budget: label(BUDGET_OPTIONS, budgetRange),
-          story: data.story,
-          "must-haves": data.mustHaves,
-          "matched package": match ? `${match.name} (${match.price})` : "none",
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || String(json.success) !== "true") throw new Error("failed");
@@ -288,32 +436,6 @@ export default function QuoteForm({ initialService = "" }) {
                 </select>
               </div>
             )}
-            {services !== "both" && (
-              <div>
-                <label htmlFor="q-date">Date (if you have one)</label>
-                <input id="q-date" name="date" type="date" />
-              </div>
-            )}
-          </div>
-          {services === "both" && (
-            <div className="row">
-              <div>
-                <label htmlFor="q-date2">Date (if you have one)</label>
-                <input id="q-date2" name="date" type="date" />
-              </div>
-              <div>
-                <label htmlFor="q-loc2">Location or venue</label>
-                <input id="q-loc2" name="location" />
-              </div>
-            </div>
-          )}
-          <div className="row">
-            {services !== "both" && (
-              <div>
-                <label htmlFor="q-loc">Location or venue</label>
-                <input id="q-loc" name="location" />
-              </div>
-            )}
             <div>
               <label htmlFor="q-budget">Budget range</label>
               <select id="q-budget" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}>
@@ -323,6 +445,431 @@ export default function QuoteForm({ initialService = "" }) {
               </select>
             </div>
           </div>
+
+          {match && (
+            <div className="qmatch" aria-live="polite">
+              <div className="qmatch-kick">Your match</div>
+              <div className="qmatch-name">
+                <span>{match.name}</span>
+                <span className="qmatch-price">{match.price}</span>
+              </div>
+              <p className="qmatch-includes">{match.includes}</p>
+              {match.note && <p className="qmatch-note">{match.note}</p>}
+              <p className="qmatch-fineprint">
+                No obligation — this is the package most people in your shoes
+                book. I&apos;ll confirm the exact quote before anything is
+                locked in.
+              </p>
+            </div>
+          )}
+
+          {typeChosen && (
+            <>
+              <div className="qdeep-intro">
+                <p className="qdeep-intro-title">Want a sharper quote? Go deeper.</p>
+                <p>
+                  Everything below is optional — skip anything you&apos;re still
+                  deciding. But every answer here means less back-and-forth and
+                  a photographer who shows up to your call already knowing your
+                  day.
+                </p>
+              </div>
+
+              <Section title="When &amp; where">
+                <div className="row">
+                  <div>
+                    <label htmlFor="q-date">{L.date}</label>
+                    <input id="q-date" name="date" type="date" />
+                  </div>
+                  <div>
+                    <label htmlFor="q-backup">Backup dates or flexibility</label>
+                    <input id="q-backup" name="backupDates" placeholder="Weekends only, rain dates, etc." />
+                  </div>
+                </div>
+                <div className="row">
+                  <div>
+                    <label htmlFor="q-start">Preferred start time</label>
+                    <input id="q-start" name="startTime" type="time" />
+                  </div>
+                  <div>
+                    <label htmlFor="q-end">Preferred end time</label>
+                    <input id="q-end" name="endTime" type="time" />
+                  </div>
+                </div>
+                <div className="row">
+                  <div>
+                    <label htmlFor="q-venue">{L.venue}</label>
+                    <input id="q-venue" name="venueName" />
+                  </div>
+                  <div>
+                    <label htmlFor="q-guests">{L.guests}</label>
+                    <input id="q-guests" name="guestCount" inputMode="numeric" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="q-address">{L.address}</label>
+                  <input id="q-address" name="venueAddress" />
+                </div>
+                <div>
+                  <label htmlFor="q-people">{L.people}</label>
+                  <textarea id="q-people" name="participants" rows={2} />
+                </div>
+                {pPortrait && (
+                  <div className="row">
+                    <div>
+                      <label htmlFor="q-locpref">Location preference</label>
+                      <select id="q-locpref" name="locationPreference" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Indoor</option>
+                        <option>Outdoor</option>
+                        <option>Studio</option>
+                        <option>Mix of locations</option>
+                        <option>Not sure yet</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="q-wardrobe">Wardrobe / outfit plans</label>
+                      <input id="q-wardrobe" name="wardrobe" placeholder="Outfit changes, uniforms, colors to avoid…" />
+                    </div>
+                  </div>
+                )}
+                {weddingLike && (
+                  <>
+                    <Toggle
+                      legend="Second location? (e.g. ceremony vs reception)"
+                      help="Some weddings split between two places — like a church ceremony and a reception hall."
+                      value={secondLocation}
+                      onChange={setSecondLocation}
+                    />
+                    {secondLocation === "Yes" && (
+                      <div>
+                        <label htmlFor="q-secondaddr">Second location address</label>
+                        <input id="q-secondaddr" name="secondLocationAddress" />
+                      </div>
+                    )}
+                  </>
+                )}
+                {pWed && (
+                  <>
+                    <Toggle
+                      legend="Getting-ready coverage?"
+                      help="Where hair, makeup, and getting dressed happen before the ceremony — often a hotel room or home."
+                      value={gettingReady}
+                      onChange={setGettingReady}
+                    />
+                    {gettingReady === "Yes" && (
+                      <div>
+                        <label htmlFor="q-readyaddr">Getting-ready address</label>
+                        <input id="q-readyaddr" name="gettingReadyAddress" />
+                      </div>
+                    )}
+                  </>
+                )}
+              </Section>
+
+              <Section
+                title="Style &amp; vision"
+                hint="This is how I learn your taste before we ever talk — Pinterest boards are gold."
+              >
+                <div>
+                  <label htmlFor="q-vibe">The vibe / mood you want</label>
+                  <textarea id="q-vibe" name="vibe" rows={2} placeholder="Warm and candid, moody and cinematic, bright and clean…" />
+                </div>
+                <div>
+                  <label htmlFor="q-inspo">Pinterest boards or inspiration links</label>
+                  <textarea
+                    id="q-inspo"
+                    name="inspirationLinks"
+                    rows={2}
+                    placeholder="Paste links — Pinterest, Instagram saves, films you love. One per line."
+                  />
+                </div>
+                <div className="row">
+                  {hasPhoto && (
+                    <div>
+                      <label htmlFor="q-palette">Color palette or theme</label>
+                      <input id="q-palette" name="colorPalette" />
+                    </div>
+                  )}
+                  {hasPhoto && (
+                    <div>
+                      <label htmlFor="q-stylemix">Candid vs posed</label>
+                      <select id="q-stylemix" name="styleMix" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Mostly candid</option>
+                        <option>Mostly posed</option>
+                        <option>Mix of both</option>
+                      </select>
+                    </div>
+                  )}
+                  {hasVideo && (
+                    <div>
+                      <label htmlFor="q-vstyle">Video style</label>
+                      <select id="q-vstyle" name="videoStyle" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Cinematic</option>
+                        <option>Documentary</option>
+                        <option>Energetic</option>
+                        <option>Romantic</option>
+                        <option>Clean / polished brand</option>
+                        <option>Mix</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                {hasVideo && (
+                  <div>
+                    <label htmlFor="q-music">Music preference</label>
+                    <input id="q-music" name="musicPreference" placeholder="The mood you want, or songs you have rights to use" />
+                  </div>
+                )}
+              </Section>
+
+              {brandLike && (
+                <Section
+                  title="Business &amp; content goals"
+                  hint="So the content actually works for your business — not just looks good."
+                >
+                  <div className="row">
+                    <div>
+                      <label htmlFor="q-cadence">Content cadence</label>
+                      <select id="q-cadence" name="contentCadence" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>One-time shoot</option>
+                        <option>Monthly content retainer</option>
+                        <option>Quarterly content batch</option>
+                        <option>Campaign / launch package</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="q-orientation">Format / orientation needed</label>
+                      <input id="q-orientation" name="contentOrientation" placeholder="Vertical for Reels, wide for website, square posts…" />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="q-platforms">Platforms this content is for</label>
+                    <input id="q-platforms" name="contentPlatforms" placeholder="Instagram, TikTok, LinkedIn, website, ads, Google Business…" />
+                  </div>
+                  <div>
+                    <label htmlFor="q-goals">Business goal for this content</label>
+                    <textarea id="q-goals" name="contentGoals" rows={2} placeholder="More bookings, launch a service, refresh team photos, monthly social content…" />
+                  </div>
+                  <div>
+                    <label htmlFor="q-feature">Products, services, spaces, or offers to feature</label>
+                    <textarea id="q-feature" name="featureList" rows={2} />
+                  </div>
+                  <div className="row">
+                    <div>
+                      <label htmlFor="q-talent">Who should be on camera</label>
+                      <input id="q-talent" name="onCameraTalent" placeholder="Owner, staff, customers, no people…" />
+                    </div>
+                    <div>
+                      <label htmlFor="q-usage">Usage rights / paid ads</label>
+                      <input id="q-usage" name="usageRights" placeholder="Organic social, website, boosted posts, paid ads…" />
+                    </div>
+                  </div>
+                  {hasVideo && (
+                    <>
+                      <div>
+                        <label htmlFor="q-brandguide">Brand guidelines</label>
+                        <input id="q-brandguide" name="brandGuidelines" placeholder="Colors, fonts, tone of voice — or a link to your brand kit" />
+                      </div>
+                      <div className="row">
+                        <div>
+                          <label htmlFor="q-script">Need help with scripting?</label>
+                          <select id="q-script" name="scriptingSupport" defaultValue="">
+                            <option value="">Choose…</option>
+                            <option>Yes</option>
+                            <option>No</option>
+                            <option>Not sure</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor="q-captions">Captions needed?</label>
+                          <select id="q-captions" name="captionsNeeded" defaultValue="">
+                            <option value="">Choose…</option>
+                            <option>Yes</option>
+                            <option>No</option>
+                            <option>Not sure</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </Section>
+              )}
+
+              {(weddingLike || vAudio || vDrone) && (
+                <Section title={weddingLike ? "Day-of logistics" : "On the day"}>
+                  {weddingLike && (
+                    <>
+                      <Toggle
+                        legend="Shot list or day-of timeline prepared?"
+                        help="A plan of key moments and when they happen, so nothing important is missed."
+                        value={shotList}
+                        onChange={setShotList}
+                        options={["Yes", "Not yet"]}
+                      />
+                      <div>
+                        <label htmlFor="q-vendors">Other vendors (planner, DJ, florist, etc.)</label>
+                        <textarea id="q-vendors" name="otherVendors" rows={2} />
+                      </div>
+                      <div>
+                        <label htmlFor="q-vips">Guests who need special attention in photos</label>
+                        <textarea id="q-vips" name="vipGuests" rows={2} placeholder="Grandparents, wedding party, speakers…" />
+                      </div>
+                    </>
+                  )}
+                  {vWed && vAudio && (
+                    <Toggle
+                      legend="Need clean audio of vows, toasts, or speeches?"
+                      value={vowsSpeeches}
+                      onChange={setVowsSpeeches}
+                      options={["Yes", "No", "Not sure"]}
+                    />
+                  )}
+                  {vAudio && (
+                    <div>
+                      <label htmlFor="q-audio">Other audio needs</label>
+                      <input id="q-audio" name="audioNeeds" placeholder="Interviews, room ambience, DJ music, on-camera talking…" />
+                    </div>
+                  )}
+                  {vDrone && (
+                    <>
+                      <Toggle
+                        legend="Drone coverage?"
+                        help="Aerial shots — great for venues, property, and wide establishing views."
+                        value={drone}
+                        onChange={setDrone}
+                        options={["Yes", "No", "Not sure"]}
+                      />
+                      {drone === "Yes" && (
+                        <div>
+                          <label htmlFor="q-dronenotes">Anything specific from the air?</label>
+                          <input id="q-dronenotes" name="droneNotes" />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </Section>
+              )}
+
+              <Section title="Deliverables &amp; timing">
+                <div className="row">
+                  <div>
+                    <label htmlFor="q-hours">Hours of coverage (approx.)</label>
+                    <select id="q-hours" name="coverageHours" defaultValue="">
+                      <option value="">Choose…</option>
+                      <option>1–2 hours</option>
+                      <option>3–4 hours</option>
+                      <option>5–6 hours</option>
+                      <option>7–8 hours</option>
+                      <option>8+ hours</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="q-turnaround">Preferred turnaround</label>
+                    <select id="q-turnaround" name="turnaround" defaultValue="">
+                      <option value="">Choose…</option>
+                      <option>1–2 weeks</option>
+                      <option>3–4 weeks</option>
+                      <option>No rush</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="row">
+                  {pWed && (
+                    <div>
+                      <label htmlFor="q-second">Second photographer?</label>
+                      <select id="q-second" name="secondPhotographer" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Not sure</option>
+                      </select>
+                    </div>
+                  )}
+                  {pEngagementQ && eventType !== "engagement" && (
+                    <div>
+                      <label htmlFor="q-engagement">Engagement session?</label>
+                      <select id="q-engagement" name="engagementSession" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Already booked</option>
+                      </select>
+                    </div>
+                  )}
+                  {hasPhoto && (
+                    <div>
+                      <label htmlFor="q-prints">Printed products (albums, prints)</label>
+                      <select id="q-prints" name="printedProducts" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Maybe later</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                {hasVideo && (
+                  <div className="row">
+                    <div>
+                      <label htmlFor="q-length">Final film length</label>
+                      <select id="q-length" name="filmLength" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Teaser only</option>
+                        <option>1–3 minutes</option>
+                        <option>4–7 minutes</option>
+                        <option>8–15 minutes</option>
+                        <option>Feature length / documentary cut</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="q-cuts">Vertical social cuts wanted</label>
+                      <input id="q-cuts" name="socialCuts" placeholder="How many Reels/TikToks from the shoot?" />
+                    </div>
+                  </div>
+                )}
+                {hasVideo && (
+                  <div className="row">
+                    {vWeddingFilm && (
+                      <div>
+                        <label htmlFor="q-ceremony">Full ceremony &amp; speeches edit?</label>
+                        <select id="q-ceremony" name="fullCeremonyEdit" defaultValue="">
+                          <option value="">Choose…</option>
+                          <option>Yes</option>
+                          <option>No</option>
+                          <option>Not sure</option>
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label htmlFor="q-raw">Raw footage?</label>
+                      <select id="q-raw" name="rawFootage" defaultValue="">
+                        <option value="">Choose…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Not sure</option>
+                      </select>
+                    </div>
+                    {vWed && (
+                      <div>
+                        <label htmlFor="q-sameday">Same-day edit?</label>
+                        <select id="q-sameday" name="sameDayEdit" defaultValue="">
+                          <option value="">Choose…</option>
+                          <option>Yes</option>
+                          <option>No</option>
+                          <option>Not sure</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Section>
+            </>
+          )}
+
           <div>
             <label htmlFor="q-story">Now the good part — tell me your story</label>
             <textarea
@@ -342,23 +889,27 @@ export default function QuoteForm({ initialService = "" }) {
             </label>
             <textarea id="q-must" name="mustHaves" rows={2} />
           </div>
-
-          {match && (
-            <div className="qmatch" aria-live="polite">
-              <div className="qmatch-kick">Your match</div>
-              <div className="qmatch-name">
-                <span>{match.name}</span>
-                <span className="qmatch-price">{match.price}</span>
-              </div>
-              <p className="qmatch-includes">{match.includes}</p>
-              {match.note && <p className="qmatch-note">{match.note}</p>}
-              <p className="qmatch-fineprint">
-                No obligation — this is the package most people in your shoes
-                book. I&apos;ll confirm the exact quote before anything is
-                locked in.
-              </p>
+          {typeChosen && (
+            <div>
+              <label htmlFor="q-notes">
+                Anything else I should know (accessibility, pets, surprises, restrictions)
+              </label>
+              <textarea id="q-notes" name="notes" rows={2} />
             </div>
           )}
+          <div className="row">
+            <div>
+              <label htmlFor="q-referral">How did you hear about me?</label>
+              <select id="q-referral" name="referral" defaultValue="">
+                <option value="">Choose…</option>
+                <option>Instagram</option>
+                <option>Facebook</option>
+                <option>Google</option>
+                <option>Referral / word of mouth</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
 
           <button type="submit" disabled={status === "sending"}>
             {status === "sending"
