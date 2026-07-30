@@ -58,8 +58,8 @@ export default function VideoPage() {
       <Reveal />
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
-          <BrandMark />
-          Roth <em>Media</em>
+          <span className="brand-chip"><BrandMark /></span>
+          <span className="brand-text">Roth <em>Media</em></span>
         </Link>
         <ul className="nav-links">
           <li>
@@ -164,7 +164,7 @@ export default function VideoPage() {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
-            <BrandMark accent />
+            <BrandMark />
             Roth <em>Media</em>
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>

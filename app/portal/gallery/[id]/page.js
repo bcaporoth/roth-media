@@ -82,8 +82,8 @@ export default async function GalleryPage({ params }) {
     <>
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
-          <BrandMark />
-          Roth <em>Media</em>
+          <span className="brand-chip"><BrandMark /></span>
+          <span className="brand-text">Roth <em>Media</em></span>
         </Link>
         <ul className="nav-links">
           <li>
@@ -145,7 +145,7 @@ export default async function GalleryPage({ params }) {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
-            <BrandMark accent />
+            <BrandMark />
             Roth <em>Media</em>
           </div>
           <a href="tel:+18455494425">845-549-4425</a>

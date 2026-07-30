@@ -1,12 +1,12 @@
-export default function BrandMark({ accent = false }) {
+export default function BrandMark() {
   return (
     <svg className="brand-mark" viewBox="0 0 100 130" aria-hidden="true">
       <path
         fillRule="evenodd"
         fill="currentColor"
-        d="M18 122 V8 H58 a34 34 0 0 1 12.5 65.6 L94 122 H66 L46.5 76 H40 V122 Z M40 30 V56 h16 a13 13 0 0 0 0 -26 Z"
+        d="M16 122 V8 H56 a38 40 0 0 1 16.5 76 L97 122 H68 L47.5 84 H38 V122 Z M38 26 L74 50 L38 74 Z"
       />
-      {accent && <path fill="#b06a4f" d="M40 30 L62 43 L40 56 Z" />}
+      <path fill="#b06a4f" d="M38 26 L74 50 L38 74 Z" />
     </svg>
   );
 }

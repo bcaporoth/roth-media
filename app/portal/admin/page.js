@@ -30,8 +30,8 @@ export default async function AdminPage() {
     <>
       <nav className="rm-nav portal-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
-          <BrandMark />
-          Roth <em>Media</em>
+          <span className="brand-chip"><BrandMark /></span>
+          <span className="brand-text">Roth <em>Media</em></span>
         </Link>
         <ul className="nav-links">
           <li>
@@ -71,7 +71,7 @@ export default async function AdminPage() {
       <footer className="rm-footer">
         <div className="foot-inner">
           <div className="brand">
-            <BrandMark accent />
+            <BrandMark />
             Roth <em>Media</em>
           </div>
           <span>© {new Date().getFullYear()} Roth Media</span>

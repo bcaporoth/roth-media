@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 
 const FILTERS = [
   { id: "all", label: "All" },
+  { id: "weddings", label: "Weddings" },
   { id: "fitness", label: "Gyms & Fitness" },
   { id: "lifestyle", label: "Lifestyle" },
   { id: "seniors", label: "Seniors" },
