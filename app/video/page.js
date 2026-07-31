@@ -185,6 +185,7 @@ export default function VideoPage() {
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>
           <Link href="/photo">The photo side</Link>
+          <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

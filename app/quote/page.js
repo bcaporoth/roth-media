@@ -57,6 +57,7 @@ export default async function QuotePage({ searchParams }) {
             Roth <em>Media</em>
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

@@ -221,6 +221,7 @@ export default function PhotoPage() {
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>
           <Link href="/video">The video side</Link>
+          <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

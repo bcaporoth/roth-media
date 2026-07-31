@@ -149,6 +149,7 @@ export default async function SharedGalleryPage({ params }) {
             Roth <em>Media</em>
           </div>
           <a href="tel:+18455494425">845-549-4425</a>
+          <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>
