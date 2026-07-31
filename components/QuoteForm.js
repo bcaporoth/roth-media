@@ -215,6 +215,7 @@ export default function QuoteForm({ initialService = "" }) {
   const [eventType, setEventType] = useState("");
   const [projectType, setProjectType] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
+  const [contactPref, setContactPref] = useState("");
   const [status, setStatus] = useState("idle");
   const [sentMatch, setSentMatch] = useState(null);
 
@@ -266,6 +267,8 @@ export default function QuoteForm({ initialService = "" }) {
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
       phone: data.phone,
+      "best way to reach": data.contactPref,
+      "city / town / venue": data.location,
       "heard about us via": data.referral,
       budget: label(BUDGET_OPTIONS, budgetRange),
       "matched package": match ? `${match.name} (${match.price})` : "none",
@@ -357,8 +360,8 @@ export default function QuoteForm({ initialService = "" }) {
         </p>
         <p className="cform-success-body">
           {sentMatch
-            ? `Based on what you shared, ${sentMatch.name} at ${sentMatch.price} looks like your best fit — I'll confirm the exact quote when I reach out shortly.`
-            : "Thank you — I'll be in touch shortly to talk details and check availability."}
+            ? `Based on what you shared, ${sentMatch.name} at ${sentMatch.price} looks like your best fit — I'll confirm the exact quote when I reach out. You'll hear from me within 24 hours, usually much faster.`
+            : "Thank you — you'll hear from me within 24 hours, usually much faster."}
         </p>
       </div>
     );
@@ -407,8 +410,18 @@ export default function QuoteForm({ initialService = "" }) {
               <input id="q-email" name="email" type="email" required autoComplete="email" />
             </div>
             <div>
-              <label htmlFor="q-phone">Phone</label>
-              <input id="q-phone" name="phone" type="tel" autoComplete="tel" />
+              <label htmlFor="q-phone">
+                {contactPref === "Text me" || contactPref === "Call me"
+                  ? "Phone *"
+                  : "Phone"}
+              </label>
+              <input
+                id="q-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required={contactPref === "Text me" || contactPref === "Call me"}
+              />
             </div>
           </div>
           <div className="row">
@@ -436,6 +449,32 @@ export default function QuoteForm({ initialService = "" }) {
                 </select>
               </div>
             )}
+          </div>
+          <div className="row">
+            <div>
+              <label htmlFor="q-when">Date (if you have one)</label>
+              <input id="q-when" name="date" type="date" />
+            </div>
+            <div>
+              <label htmlFor="q-where">City, town, or venue</label>
+              <input id="q-where" name="location" placeholder="Waverly, Elmira, the venue name…" />
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label htmlFor="q-reach">Best way to reach you</label>
+              <select
+                id="q-reach"
+                name="contactPref"
+                value={contactPref}
+                onChange={(e) => setContactPref(e.target.value)}
+              >
+                <option value="">Choose…</option>
+                <option>Text me</option>
+                <option>Call me</option>
+                <option>Email me</option>
+              </select>
+            </div>
             <div>
               <label htmlFor="q-budget">Budget range</label>
               <select id="q-budget" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}>
@@ -478,12 +517,12 @@ export default function QuoteForm({ initialService = "" }) {
               <Section title="When &amp; where">
                 <div className="row">
                   <div>
-                    <label htmlFor="q-date">{L.date}</label>
-                    <input id="q-date" name="date" type="date" />
-                  </div>
-                  <div>
                     <label htmlFor="q-backup">Backup dates or flexibility</label>
                     <input id="q-backup" name="backupDates" placeholder="Weekends only, rain dates, etc." />
+                  </div>
+                  <div>
+                    <label htmlFor="q-guests">{L.guests}</label>
+                    <input id="q-guests" name="guestCount" inputMode="numeric" />
                   </div>
                 </div>
                 <div className="row">
@@ -496,15 +535,9 @@ export default function QuoteForm({ initialService = "" }) {
                     <input id="q-end" name="endTime" type="time" />
                   </div>
                 </div>
-                <div className="row">
-                  <div>
-                    <label htmlFor="q-venue">{L.venue}</label>
-                    <input id="q-venue" name="venueName" />
-                  </div>
-                  <div>
-                    <label htmlFor="q-guests">{L.guests}</label>
-                    <input id="q-guests" name="guestCount" inputMode="numeric" />
-                  </div>
+                <div>
+                  <label htmlFor="q-venue">{L.venue}</label>
+                  <input id="q-venue" name="venueName" />
                 </div>
                 <div>
                   <label htmlFor="q-address">{L.address}</label>

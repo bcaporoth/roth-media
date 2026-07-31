@@ -2,6 +2,7 @@ import fs from "fs";
 import BrandMark from "../../components/BrandMark";
 import path from "path";
 import Link from "next/link";
+import QuoteForm from "../../components/QuoteForm";
 import Reveal from "../../components/Reveal";
 import ReelCard from "../../components/ReelCard";
 
@@ -88,9 +89,9 @@ export default function VideoPage() {
             like the day did.
           </h1>
           <div className="hero-cta">
-            <Link href="/quote?service=videography" className="hero-cta-primary">
+            <a href="#quote" className="hero-cta-primary">
               Get my instant quote →
-            </Link>
+            </a>
             <a href="#pricing" className="hero-cta-secondary">
               See real prices
             </a>
@@ -154,10 +155,25 @@ export default function VideoPage() {
             ))}
           </div>
           <div className="svc-cta">
-            <Link href="/quote?service=videography" className="svc-cta-btn">
+            <a href="#quote" className="svc-cta-btn">
               Find my package →
-            </Link>
+            </a>
           </div>
+        </div>
+      </section>
+
+      <section id="quote" className="quote-embed">
+        <div className="quote-embed-inner">
+          <div className="kick">Instant quote</div>
+          <h2 className="quote-embed-title">
+            Find your package in <em>two minutes.</em>
+          </h2>
+          <p className="quote-embed-sub">
+            Answer a few questions and get matched to the package people in
+            your shoes actually book — live, as you click. Real prices, no
+            obligation.
+          </p>
+          <QuoteForm initialService="videography" />
         </div>
       </section>
 

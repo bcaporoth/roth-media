@@ -3,6 +3,7 @@ import BrandMark from "../../components/BrandMark";
 import path from "path";
 import Link from "next/link";
 import Gallery from "../../components/Gallery";
+import QuoteForm from "../../components/QuoteForm";
 import Reveal from "../../components/Reveal";
 
 export const metadata = {
@@ -144,9 +145,9 @@ export default function PhotoPage() {
             <em>made to last.</em>
           </h1>
           <div className="hero-cta">
-            <Link href="/quote?service=photography" className="hero-cta-primary">
+            <a href="#quote" className="hero-cta-primary">
               Get my instant quote →
-            </Link>
+            </a>
             <a href="#work" className="hero-cta-secondary">
               See the work
             </a>
@@ -190,10 +191,25 @@ export default function PhotoPage() {
             ))}
           </div>
           <div className="svc-cta">
-            <Link href="/quote?service=photography" className="svc-cta-btn">
+            <a href="#quote" className="svc-cta-btn">
               Find my package →
-            </Link>
+            </a>
           </div>
+        </div>
+      </section>
+
+      <section id="quote" className="quote-embed">
+        <div className="quote-embed-inner">
+          <div className="kick">Instant quote</div>
+          <h2 className="quote-embed-title">
+            Find your package in <em>two minutes.</em>
+          </h2>
+          <p className="quote-embed-sub">
+            Answer a few questions and get matched to the package people in
+            your shoes actually book — live, as you click. Real prices, no
+            obligation.
+          </p>
+          <QuoteForm initialService="photography" />
         </div>
       </section>
 

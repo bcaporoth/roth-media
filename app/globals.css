@@ -987,6 +987,51 @@ header.split:has(.split-photo:hover) .split-photo {
   }
 }
 
+/* ── Embedded quote section (photo + video pages) ── */
+.quote-embed {
+  background: var(--bone);
+  color: var(--ink);
+  padding: 7rem 3rem;
+}
+
+.quote-embed-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quote-embed-inner .quote-form {
+  text-align: left;
+  margin-top: 2.5rem;
+}
+
+.quote-embed-title {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1;
+  margin-top: 0.6rem;
+  color: var(--ink);
+}
+
+.quote-embed-title em {
+  font-style: italic;
+  color: var(--clay);
+}
+
+.quote-embed-sub {
+  margin: 1rem auto 0;
+  max-width: 46ch;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .quote-embed {
+    padding: 4.5rem 1.25rem;
+  }
+}
+
 /* ── Quote form: deep-dive sections ── */
 .qdeep-intro {
   border-top: 1px solid var(--line);
