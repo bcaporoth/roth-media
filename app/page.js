@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BrandMark from "../components/BrandMark";
-import ContactForm from "../components/ContactForm";
+import QuoteForm from "../components/QuoteForm";
 import Reveal from "../components/Reveal";
 
 const PHONE = "845-549-4425";
@@ -144,10 +144,11 @@ export default function Home() {
             <em>people stop for.</em>
           </h2>
           <p className="lead">
-            Tell me what you&apos;re dreaming up. Prefer to talk? Call or
-            text <a href={PHONE_HREF}>{PHONE}</a>.
+            Answer a few questions and get matched to the package people in
+            your shoes actually book — live, as you click. Prefer to talk?
+            Call or text <a href={PHONE_HREF}>{PHONE}</a>.
           </p>
-          <ContactForm />
+          <QuoteForm />
         </section>
       </main>
 
