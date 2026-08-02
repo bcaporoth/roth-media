@@ -17,6 +17,7 @@ const PHONE_HREF = "tel:+18455494425";
 
 const CATEGORY_MAP = {
   wedding: "weddings",
+  event: "events",
   gym: "fitness",
   lifestyle: "lifestyle",
   senior: "seniors",

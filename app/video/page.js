@@ -119,6 +119,19 @@ export default function VideoPage() {
             <h2>Made to be watched</h2>
             <p>Tap to play — sound on.</p>
           </div>
+          <div className="film-card reveal">
+            <video
+              src="/reels/womens-powerlifting-club.mp4"
+              controls
+              playsInline
+              preload="metadata"
+              poster="/hero.jpg"
+            />
+            <p className="film-caption">
+              <strong>Women&apos;s Powerlifting Club</strong> — brand film for
+              Forward Fitness
+            </p>
+          </div>
           <div className="reels-row reveal">
             <ReelCard
               src="/reels/bake-against-the-grain.mp4"

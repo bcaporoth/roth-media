@@ -88,24 +88,39 @@ const hasFfmpeg = (() => {
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
 });
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-  },
-});
+const makeS3 = () =>
+  new S3Client({
+    region: "auto",
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+    maxAttempts: 5,
+  });
+let s3 = makeS3();
 
+// Flaky networks can kill long-lived TLS streams mid-upload ("bad record
+// mac"); retry with a fresh client so new connections are negotiated.
 async function put(key, body, contentType) {
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: BUCKET,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    })
-  );
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+        })
+      );
+      return;
+    } catch (err) {
+      if (attempt >= 6) throw err;
+      console.log(`  retry ${attempt}/5 for ${key}: ${err.code || err.message}`);
+      s3 = makeS3();
+      await new Promise((r) => setTimeout(r, attempt * 2000));
+    }
+  }
 }
 
 async function putStream(key, stream, contentType) {
@@ -206,18 +221,29 @@ for (let i = 0; i < files.length; i++) {
 // NOTE: for photos the web/thumb keys use a .jpg name; the gallery page
 // derives them the same way. Originals keep their exact filename.
 
-// 4. album zip (originals, streamed — never held in memory)
+// 4. album zip (originals, streamed — never held in memory). The stream is
+// consumed on failure, so retries rebuild the archive from scratch.
 console.log("Building album.zip …");
 const zipKey = `galleries/${gid}/album.zip`;
-const archive = archiver("zip", { zlib: { level: 0 } });
-const pass = new PassThrough();
-archive.pipe(pass);
-const zipUpload = putStream(zipKey, pass, "application/zip");
-for (const filename of files) {
-  archive.file(path.join(args.dir, filename), { name: filename });
+for (let attempt = 1; ; attempt++) {
+  try {
+    const archive = archiver("zip", { zlib: { level: 0 } });
+    const pass = new PassThrough();
+    archive.pipe(pass);
+    const zipUpload = putStream(zipKey, pass, "application/zip");
+    for (const filename of files) {
+      archive.file(path.join(args.dir, filename), { name: filename });
+    }
+    await archive.finalize();
+    await zipUpload;
+    break;
+  } catch (err) {
+    if (attempt >= 4) throw err;
+    console.log(`  zip retry ${attempt}/3: ${err.code || err.message}`);
+    s3 = makeS3();
+    await new Promise((r) => setTimeout(r, attempt * 3000));
+  }
 }
-await archive.finalize();
-await zipUpload;
 console.log("album.zip ✓");
 
 // 5. register media + finalize gallery
