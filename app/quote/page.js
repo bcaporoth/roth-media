@@ -34,6 +34,9 @@ export default async function QuotePage({ searchParams }) {
             <Link href="/photo">Photo</Link>
           </li>
           <li>
+            <Link href="/portal" className="nav-login">Client login</Link>
+          </li>
+          <li>
             <a href={PHONE_HREF}>{PHONE}</a>
           </li>
         </ul>

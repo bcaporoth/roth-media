@@ -70,6 +70,9 @@ export default function VideoPage() {
             <Link href="/quote">Get a quote</Link>
           </li>
           <li>
+            <Link href="/portal" className="nav-login">Client login</Link>
+          </li>
+          <li>
             <a href={PHONE_HREF}>{PHONE}</a>
           </li>
         </ul>

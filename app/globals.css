@@ -138,6 +138,18 @@ nav.rm-nav {
   transition: opacity 0.25s;
 }
 
+.rm-nav .nav-links a.nav-login {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  padding: 0.45rem 1.05rem;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.rm-nav .nav-links a.nav-login:hover {
+  background: #fff;
+  color: #000;
+}
+
 .rm-nav .nav-links a:hover {
   opacity: 0.6;
 }
@@ -2152,6 +2164,9 @@ footer.rm-footer {
 @media (max-width: 1100px) {
   .rm-nav .nav-links li:nth-child(n + 4) {
     display: none;
+  }
+  .rm-nav .nav-links li:has(a.nav-login) {
+    display: list-item;
   }
   .svc-list {
     grid-template-columns: repeat(2, 1fr);

@@ -58,6 +58,9 @@ export default function Home() {
             <a href="#contact">Contact</a>
           </li>
           <li>
+            <Link href="/portal" className="nav-login">Client login</Link>
+          </li>
+          <li>
             <a href={PHONE_HREF}>{PHONE}</a>
           </li>
         </ul>
