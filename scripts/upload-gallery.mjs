@@ -231,11 +231,13 @@ for (let attempt = 1; ; attempt++) {
     const pass = new PassThrough();
     archive.pipe(pass);
     const zipUpload = putStream(zipKey, pass, "application/zip");
+    // Pre-attach a handler so an upload failure mid-archive can't become an
+    // unhandled rejection while finalize() is still pending.
+    zipUpload.catch(() => {});
     for (const filename of files) {
       archive.file(path.join(args.dir, filename), { name: filename });
     }
-    await archive.finalize();
-    await zipUpload;
+    await Promise.all([archive.finalize(), zipUpload]);
     break;
   } catch (err) {
     if (attempt >= 4) throw err;
