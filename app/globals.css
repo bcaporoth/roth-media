@@ -1684,6 +1684,18 @@ section.contact .lead a {
   display: none;
 }
 
+.cform-linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
 /* ── PORTAL ── */
 .portal-nav {
   mix-blend-mode: normal;
