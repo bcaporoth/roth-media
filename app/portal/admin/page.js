@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "../../../components/BrandMark";
 import { redirect } from "next/navigation";
 import AdminUploader from "../../../components/AdminUploader";
+import CoverPicker from "../../../components/CoverPicker";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 
@@ -23,7 +24,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
   const { data: galleries } = await db
     .from("galleries")
-    .select("id, title, media_count, share_token, created_at, clients(name, email)")
+    .select("id, title, media_count, share_token, cover_filename, created_at, clients(name, email)")
     .order("created_at", { ascending: false });
 
   return (
@@ -62,6 +63,7 @@ export default async function AdminPage() {
               <div className="admin-list-links">
                 <Link href={`/portal/gallery/${g.id}`}>View</Link>
                 <a href={`/g/${g.share_token}`}>Share link</a>
+                <CoverPicker galleryId={g.id} cover={g.cover_filename} />
               </div>
             </div>
           ))}
