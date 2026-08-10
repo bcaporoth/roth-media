@@ -2410,3 +2410,82 @@ footer.rm-footer {
   color: var(--bone);
   font-weight: 600;
 }
+
+/* ── COVER PICKER (Studio Admin) ── */
+.cover-picker {
+  display: inline-block;
+}
+
+.cover-picker-toggle {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.3rem 0.8rem;
+  color: var(--ink);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cover-picker-toggle:hover {
+  border-color: var(--ink-soft);
+}
+
+.cover-picker-panel {
+  position: relative;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: min(520px, 80vw);
+}
+
+.cover-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.cover-picker-thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+  aspect-ratio: 1;
+}
+
+.cover-picker-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-picker-thumb.is-current {
+  border-color: var(--clay, #b4552d);
+}
+
+.cover-picker-thumb:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.cover-picker-upload {
+  display: inline-block;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.cover-picker-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
