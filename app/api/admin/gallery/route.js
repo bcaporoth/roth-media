@@ -4,7 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
-import { R2_BUCKET, r2Configured, photoKey } from "../../../../lib/r2";
+import { R2_BUCKET, r2Configured, photoKey, signedUrl } from "../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +104,40 @@ export async function POST(request) {
       .update({ media_count: rows.length, cover_filename: coverFilename || null })
       .eq("id", galleryId);
     return NextResponse.json({ ok: true });
+  }
+
+
+  if (body.action === "list-media") {
+    const { galleryId } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const jpgName = (f) => f.replace(/\.[^.]+$/, "") + ".jpg";
+    const [{ data: gallery }, { data: media }] = await Promise.all([
+      db.from("galleries").select("id, cover_filename").eq("id", galleryId).maybeSingle(),
+      db.from("media").select("filename, kind, position").eq("gallery_id", galleryId)
+        .order("position", { ascending: true }),
+    ]);
+    if (!gallery) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    const items = await Promise.all(
+      (media || []).map(async (m) => ({
+        filename: m.filename,
+        kind: m.kind,
+        coverName: jpgName(m.filename),
+        thumbUrl: await signedUrl(photoKey(galleryId, "thumb", jpgName(m.filename))).catch(() => null),
+      }))
+    );
+    return NextResponse.json({ cover: gallery.cover_filename, items });
+  }
+
+  if (body.action === "set-cover") {
+    const { galleryId, coverFilename } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const safe = coverFilename ? String(coverFilename).replace(/[^\w.\- ]/g, "_") : null;
+    const { error } = await db
+      .from("galleries")
+      .update({ cover_filename: safe })
+      .eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, cover: safe });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
