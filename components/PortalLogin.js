@@ -1,7 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseBrowser } from "../lib/supabase-browser";
+
+// Sender-only client. @supabase/ssr forces PKCE (links that only work in
+// the requesting browser), so the sign-in email is requested through a
+// plain implicit-flow client instead — the emailed link then carries the
+// session itself and works on any device.
+function createSenderClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      auth: {
+        flowType: "implicit",
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+}
 
 export default function PortalLogin() {
   // idle | sending | sent | verifying | landing
@@ -16,34 +36,49 @@ export default function PortalLogin() {
   // 2) If an old/used link bounced us here, show a friendly message.
   useEffect(() => {
     const hash = window.location.hash;
-    if (/access_token|refresh_token/.test(hash)) {
-      setStatus("landing");
-      const supabase = createSupabaseBrowser();
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          supabase.auth.getSession().then(({ data }) => {
-            if (data.session) window.location.replace("/portal");
-          });
-        }
-      });
-      const bail = setTimeout(() => {
-        setStatus("idle");
-        setError(
-          "That sign-in link didn't work — it may have expired. Enter your email and I'll send a fresh one."
-        );
-      }, 8000);
-      return () => {
-        clearTimeout(bail);
-        subscription.unsubscribe();
-      };
-    }
-    if (/error=/.test(hash) || /[?&]error=link/.test(window.location.search)) {
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+    const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
+    const code = params.get("code");
+
+    const fail = () => {
+      setStatus("idle");
       setError(
         "That sign-in link didn't work — it may have expired or been used already. Enter your email and I'll send a fresh one."
       );
       window.history.replaceState(null, "", "/portal");
+    };
+
+    // New-style link: session rides in the URL fragment — works on any device.
+    if (accessToken && refreshToken) {
+      setStatus("landing");
+      const supabase = createSupabaseBrowser();
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error: err }) =>
+          err ? fail() : window.location.replace("/portal")
+        )
+        .catch(fail);
+      return;
+    }
+
+    // Older-style link (?code=): exchange works in the browser that
+    // requested the link.
+    if (code) {
+      setStatus("landing");
+      const supabase = createSupabaseBrowser();
+      supabase.auth
+        .exchangeCodeForSession(code)
+        .then(({ error: err }) =>
+          err ? fail() : window.location.replace("/portal")
+        )
+        .catch(fail);
+      return;
+    }
+
+    if (/error=/.test(hash) || params.get("error") === "link") {
+      fail();
     }
   }, []);
 
@@ -56,7 +91,7 @@ export default function PortalLogin() {
     setStatus("sending");
     setError("");
     try {
-      const supabase = createSupabaseBrowser();
+      const supabase = createSenderClient();
       const { error: err } = await supabase.auth.signInWithOtp({
         email,
         options: {

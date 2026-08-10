@@ -5,7 +5,7 @@ import { useState } from "react";
 // FormSubmit.co — free form-to-email, no account, no subscription.
 // Submissions arrive at CONTACT_EMAIL; the first one triggers a one-time
 // confirmation email with an "Activate" link.
-const CONTACT_EMAIL = "b.caporoth@gmail.com";
+const CONTACT_EMAIL = "brandon@rothventures.co";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 export default function ContactForm() {
