@@ -7,9 +7,38 @@ import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  robots: { index: false },
-};
+export async function generateMetadata({ params }) {
+  const base = {
+    robots: { index: false },
+    openGraph: {
+      title: "Your gallery — Roth Media",
+      description: "Watch, view, and download your photos and films from Roth Media.",
+      images: [{ url: "https://rothmediaco.com/og-card.png", width: 1200, height: 630 }],
+      siteName: "Roth Media",
+    },
+    twitter: { card: "summary_large_image" },
+  };
+  try {
+    const { token } = await params;
+    if (!adminConfigured || !/^[0-9a-f-]{36}$/.test(token)) return base;
+    const db = supabaseAdmin();
+    const { data: gallery } = await db
+      .from("galleries")
+      .select("title")
+      .eq("share_token", token)
+      .maybeSingle();
+    if (!gallery) return base;
+    const title = `${gallery.title} — Roth Media`;
+    return {
+      ...base,
+      title,
+      description: "Watch, view, and download your photos and films from Roth Media.",
+      openGraph: { ...base.openGraph, title },
+    };
+  } catch {
+    return base;
+  }
+}
 
 const dateFmt = (d) =>
   new Date(d).toLocaleDateString("en-US", {
