@@ -3,6 +3,7 @@ import BrandMark from "../../../components/BrandMark";
 import { redirect } from "next/navigation";
 import AdminUploader from "../../../components/AdminUploader";
 import CoverPicker from "../../../components/CoverPicker";
+import PremierePanel from "../../../components/PremierePanel";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 
@@ -64,6 +65,7 @@ export default async function AdminPage() {
                 <Link href={`/portal/gallery/${g.id}`}>View</Link>
                 <a href={`/g/${g.share_token}`}>Share link</a>
                 <CoverPicker galleryId={g.id} cover={g.cover_filename} />
+                <PremierePanel galleryId={g.id} />
               </div>
             </div>
           ))}
