@@ -2,6 +2,8 @@ import Link from "next/link";
 import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
+import PortalNav from "../../../../components/PortalNav";
+import { ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
 
@@ -80,22 +82,17 @@ export default async function GalleryPage({ params }) {
 
   return (
     <>
-      <nav className="rm-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link href="/portal">← Your portal</Link>
-          </li>
-          {zipUrl && (
+      <PortalNav
+        email={user.email}
+        isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+        extra={
+          zipUrl ? (
             <li>
-              <a href={zipUrl}>Download all ↓</a>
+              <a className="pnav-link" href={zipUrl}>Download all ↓</a>
             </li>
-          )}
-        </ul>
-      </nav>
+          ) : null
+        }
+      />
 
       <header className="hero pgal-hero">
         {coverUrl && (
