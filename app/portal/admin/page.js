@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AdminUploader from "../../../components/AdminUploader";
 import CoverPicker from "../../../components/CoverPicker";
 import PremierePanel from "../../../components/PremierePanel";
+import DesignPanel from "../../../components/DesignPanel";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 
@@ -25,7 +26,7 @@ export default async function AdminPage() {
   const db = supabaseAdmin();
   const { data: galleries } = await db
     .from("galleries")
-    .select("id, title, media_count, share_token, cover_filename, created_at, clients(name, email)")
+    .select("id, title, media_count, share_token, cover_filename, design, created_at, clients(name, email)")
     .order("created_at", { ascending: false });
 
   return (
@@ -65,6 +66,12 @@ export default async function AdminPage() {
                 <Link href={`/portal/gallery/${g.id}`}>View</Link>
                 <a href={`/g/${g.share_token}`}>Share link</a>
                 <CoverPicker galleryId={g.id} cover={g.cover_filename} />
+                <DesignPanel
+                  galleryId={g.id}
+                  design={g.design}
+                  shareToken={g.share_token}
+                  title={g.title}
+                />
                 <PremierePanel galleryId={g.id} />
               </div>
             </div>
