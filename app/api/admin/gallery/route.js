@@ -7,6 +7,7 @@ import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/sup
 import { R2_BUCKET, r2Configured, photoKey, signedUrl } from "../../../../lib/r2";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
+import { resolveDesign } from "../../../../lib/design";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +141,18 @@ export async function POST(request) {
       .eq("id", galleryId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true, cover: safe });
+  }
+
+  if (body.action === "set-design") {
+    const { galleryId, design } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const clean = resolveDesign(design); // whitelists font/mode/accent
+    const { error } = await db
+      .from("galleries")
+      .update({ design: clean })
+      .eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, design: clean });
   }
 
   if (body.action === "set-premiere") {
