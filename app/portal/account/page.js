@@ -1,8 +1,10 @@
 import Link from "next/link";
 import BrandMark from "../../../components/BrandMark";
 import PasswordForm from "../../../components/PasswordForm";
+import PortalNav from "../../../components/PortalNav";
 import { redirect } from "next/navigation";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
+import { ADMIN_EMAIL } from "../../../lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -26,24 +28,11 @@ export default async function AccountPage({ searchParams }) {
 
   return (
     <>
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link href="/portal">← Your portal</Link>
-          </li>
-          <li>
-            <form action="/auth/signout" method="post">
-              <button type="submit" className="portal-signout">
-                Sign out
-              </button>
-            </form>
-          </li>
-        </ul>
-      </nav>
+      <PortalNav
+        email={user.email}
+        isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+        active="account"
+      />
 
       <main className="portal">
         <section className="contact portal-section">
