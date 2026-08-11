@@ -5,6 +5,7 @@ import AdminUploader from "../../../components/AdminUploader";
 import CoverPicker from "../../../components/CoverPicker";
 import PremierePanel from "../../../components/PremierePanel";
 import DesignPanel from "../../../components/DesignPanel";
+import PortalNav from "../../../components/PortalNav";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 
@@ -31,17 +32,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link href="/portal">← Your portal</Link>
-          </li>
-        </ul>
-      </nav>
+      <PortalNav email={user.email} isAdmin active="admin" />
 
       <main className="quote-wrap">
         <div className="kick">Studio admin</div>
