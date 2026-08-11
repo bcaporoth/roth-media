@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "../../components/BrandMark";
 import PortalLogin from "../../components/PortalLogin";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
+import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 
 export const dynamic = "force-dynamic";
@@ -107,8 +108,8 @@ export default async function PortalPage() {
           Welcome <em>back.</em>
         </h2>
         <p className="lead">
-          Sign in to see your galleries, downloads, and account. No password
-          — I&apos;ll email you a link.
+          Sign in with your email and password to see your galleries,
+          downloads, and account. First time? One quick email sets you up.
         </p>
         <PortalLogin />
       </PortalShell>
@@ -140,11 +141,14 @@ export default async function PortalPage() {
       <h2>
         Hi, <em>{client.name.split(" ")[0]}.</em>
       </h2>
-      {user.email?.toLowerCase() === "b.caporoth@gmail.com" && (
+      {user.email?.toLowerCase() === ADMIN_EMAIL && (
         <p className="pgal-share">
           <Link href="/portal/admin">Studio admin → add &amp; manage galleries</Link>
         </p>
       )}
+      <p className="pgal-share portal-account-link">
+        <Link href="/portal/account">Account → change your password</Link>
+      </p>
 
       {hostedGalleries && hostedGalleries.length > 0 && (
         <div className="portal-hosted">
