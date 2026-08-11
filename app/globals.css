@@ -2577,3 +2577,75 @@ footer.rm-footer {
   font: inherit; font-size: 0.8rem; padding: 0.3rem 0.5rem;
 }
 .portal-account-link { opacity: 0.85; }
+
+/* ---- Per-album design skins ---- */
+.album-skin {
+  background: var(--bone);
+  min-height: 100vh;
+  /* Re-declare so the body font resolves against per-album overrides. */
+  font-family: var(--font-body), "Manrope", sans-serif;
+}
+.album-skin.skin-dark {
+  --bone: #191612;
+  --bone-2: #221e18;
+  --paper: #14110d;
+  --ink: #f1ebdf;
+  --ink-soft: #b4a894;
+  --line: #3b342a;
+  --sand: #a99a83;
+}
+/* Hero text sits on the photo — keep it light in both moods. */
+.album-skin.skin-dark header.hero {
+  --bone: #f4efe6;
+}
+
+/* Studio Admin design panel */
+.design-panel {
+  margin-top: 0.6rem; padding: 1rem; border: 1px solid var(--line);
+  border-radius: 14px; display: grid; gap: 1rem; font-size: 0.9rem;
+}
+.design-preview {
+  border-radius: 12px; padding: 1.4rem 1.5rem; display: grid; gap: 0.45rem;
+  border: 1px solid var(--line);
+}
+.design-preview-kick { font-size: 0.7rem; letter-spacing: 2.5px; text-transform: uppercase; }
+.design-preview strong { font-size: 1.7rem; font-weight: 700; line-height: 1.15; }
+.design-preview > span { font-size: 0.85rem; }
+.design-preview-btn {
+  justify-self: start; color: #faf6ee; font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; padding: 0.55rem 1.1rem;
+  border-radius: 999px; margin-top: 0.35rem;
+}
+.design-group { display: grid; gap: 0.5rem; }
+.design-row { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.design-fonts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+.design-font {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line); border-radius: 10px; background: transparent;
+  color: inherit; cursor: pointer; font: inherit; text-align: left;
+}
+.design-font.is-on { border-color: var(--clay); box-shadow: 0 0 0 1px var(--clay); }
+.design-font-sample { font-size: 1.5rem; line-height: 1; }
+.design-font-meta { display: grid; }
+.design-font-meta em { font-style: normal; font-weight: 600; font-size: 0.85rem; }
+.design-font-meta small { color: var(--ink-soft); font-size: 0.68rem; }
+.design-modes { display: flex; gap: 0.5rem; }
+.design-mode {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  color: inherit; cursor: pointer; font: inherit; font-size: 0.85rem;
+}
+.design-mode.is-on { border-color: var(--clay); box-shadow: 0 0 0 1px var(--clay); }
+.design-mode-chip { width: 16px; height: 16px; border-radius: 50%; border: 1px solid; }
+.design-accents { display: flex; gap: 0.6rem; align-items: center; }
+.design-accent {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; padding: 0;
+}
+.design-accent.is-on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--bone), 0 0 0 3px var(--ink); }
+.design-actions { display: flex; align-items: center; gap: 1rem; }
+.design-actions button {
+  padding: 0.5rem 1.1rem; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--ink); color: var(--bone); cursor: pointer; font: inherit; font-size: 0.85rem;
+}
+.design-actions a { color: var(--clay); font-weight: 600; font-size: 0.85rem; }
