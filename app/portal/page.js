@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandMark from "../../components/BrandMark";
 import PortalLogin from "../../components/PortalLogin";
+import PortalNav from "../../components/PortalNav";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
@@ -118,7 +119,16 @@ export default async function PortalPage() {
 
   if (!client) {
     return (
-      <PortalShell signedIn>
+      <PortalShell
+        signedIn
+        nav={
+          <PortalNav
+            email={user.email}
+            isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+            active="galleries"
+          />
+        }
+      >
         <div className="kick">Client Portal</div>
         <h2>
           Hi — I don&apos;t have your account set up <em>yet.</em>
@@ -135,20 +145,17 @@ export default async function PortalPage() {
 
   const total = payments.reduce((sum, p) => sum + p.amount_cents, 0);
 
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+
   return (
-    <PortalShell signedIn>
+    <PortalShell
+      signedIn
+      nav={<PortalNav email={user.email} isAdmin={isAdmin} active="galleries" />}
+    >
       <div className="kick">Client Portal</div>
       <h2>
         Hi, <em>{client.name.split(" ")[0]}.</em>
       </h2>
-      {user.email?.toLowerCase() === ADMIN_EMAIL && (
-        <p className="pgal-share">
-          <Link href="/portal/admin">Studio admin → add &amp; manage galleries</Link>
-        </p>
-      )}
-      <p className="pgal-share portal-account-link">
-        <Link href="/portal/account">Account → change your password</Link>
-      </p>
 
       {hostedGalleries && hostedGalleries.length > 0 && (
         <div className="portal-hosted">
@@ -240,29 +247,31 @@ export default async function PortalPage() {
   );
 }
 
-function PortalShell({ children, signedIn = false }) {
+function PortalShell({ children, signedIn = false, nav = null }) {
   return (
     <>
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link href="/">← Back to site</Link>
-          </li>
-          {signedIn && (
+      {nav || (
+        <nav className="rm-nav portal-nav" aria-label="Main navigation">
+          <Link href="/" className="brand">
+            <span className="brand-chip"><BrandMark /></span>
+            <span className="brand-text">Roth <em>Media</em></span>
+          </Link>
+          <ul className="nav-links">
             <li>
-              <form action="/auth/signout" method="post">
-                <button type="submit" className="portal-signout">
-                  Sign out
-                </button>
-              </form>
+              <Link href="/">← Back to site</Link>
             </li>
-          )}
-        </ul>
-      </nav>
+            {signedIn && (
+              <li>
+                <form action="/auth/signout" method="post">
+                  <button type="submit" className="portal-signout">
+                    Sign out
+                  </button>
+                </form>
+              </li>
+            )}
+          </ul>
+        </nav>
+      )}
       <main className="portal">
         <section className="contact portal-section">{children}</section>
       </main>
