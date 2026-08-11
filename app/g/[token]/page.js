@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "../../../components/BrandMark";
 import { notFound } from "next/navigation";
 import PortalGallery from "../../../components/PortalGallery";
+import PremiereGate from "../../../components/PremiereGate";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
 
@@ -28,12 +29,12 @@ export async function generateMetadata({ params }) {
       .eq("share_token", token)
       .maybeSingle();
     if (!gallery) return base;
-    const title = `${gallery.title} — Roth Media`;
+    // Layout template appends "— Roth Media" to <title>; og:title is verbatim.
     return {
       ...base,
-      title,
+      title: gallery.title,
       description: "Watch, view, and download your photos and films from Roth Media.",
-      openGraph: { ...base.openGraph, title },
+      openGraph: { ...base.openGraph, title: `${gallery.title} — Roth Media` },
     };
   } catch {
     return base;
@@ -58,10 +59,73 @@ export default async function SharedGalleryPage({ params }) {
   const db = supabaseAdmin();
   const { data: gallery } = await db
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key")
+    .select("id, title, event_date, cover_filename, zip_key, premiere_enabled, reveal_at")
     .eq("share_token", token)
     .maybeSingle();
   if (!gallery) notFound();
+
+  const premiereActive = Boolean(gallery.premiere_enabled);
+  const revealed =
+    !gallery.reveal_at || new Date(gallery.reveal_at) <= new Date();
+
+  // Pre-reveal premiere: no media leaves the server — guests get the
+  // capture form + countdown only.
+  if (premiereActive && !revealed) {
+    const coverUrlEarly = gallery.cover_filename
+      ? await signedUrl(photoKey(gallery.id, "web", gallery.cover_filename)).catch(
+          () => null
+        )
+      : null;
+    return (
+      <>
+        <nav className="rm-nav" aria-label="Main navigation">
+          <Link href="/" className="brand">
+            <span className="brand-chip"><BrandMark /></span>
+            <span className="brand-text">Roth <em>Media</em></span>
+          </Link>
+          <ul className="nav-links">
+            <li>
+              <Link href="/quote">Book your own shoot</Link>
+            </li>
+          </ul>
+        </nav>
+        <header className="hero pgal-hero pgate-hero">
+          {coverUrlEarly && (
+            <div
+              className="hero-bg"
+              style={{ backgroundImage: `url(${coverUrlEarly})` }}
+            />
+          )}
+          <div className="hero-inner">
+            <div className="hero-eyebrow">
+              {gallery.event_date ? dateFmt(gallery.event_date) : "A Roth Media premiere"}
+            </div>
+            <h1>
+              {gallery.title.split(" ").slice(0, -1).join(" ")}{" "}
+              <em>{gallery.title.split(" ").slice(-1)}</em>
+            </h1>
+            <PremiereGate
+              mode="inline"
+              galleryId={gallery.id}
+              token={token}
+              title={gallery.title}
+              revealAt={gallery.reveal_at}
+            />
+          </div>
+        </header>
+        <footer className="rm-footer">
+          <div className="foot-inner">
+            <div className="brand">
+              <BrandMark />
+              Roth <em>Media</em>
+            </div>
+            <a href="tel:+18455494425">845-549-4425</a>
+            <span>© {new Date().getFullYear()} Roth Media</span>
+          </div>
+        </footer>
+      </>
+    );
+  }
 
   const { data: media } = await db
     .from("media")
@@ -104,6 +168,15 @@ export default async function SharedGalleryPage({ params }) {
 
   return (
     <>
+      {premiereActive && (
+        <PremiereGate
+          mode="overlay"
+          galleryId={gallery.id}
+          token={token}
+          title={gallery.title}
+          revealAt={gallery.reveal_at}
+        />
+      )}
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
           <span className="brand-chip"><BrandMark /></span>
