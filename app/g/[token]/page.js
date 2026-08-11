@@ -3,6 +3,7 @@ import BrandMark from "../../../components/BrandMark";
 import { notFound } from "next/navigation";
 import PortalGallery from "../../../components/PortalGallery";
 import PremiereGate from "../../../components/PremiereGate";
+import { designSkin } from "../../../lib/design";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
 
@@ -59,11 +60,12 @@ export default async function SharedGalleryPage({ params }) {
   const db = supabaseAdmin();
   const { data: gallery } = await db
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key, premiere_enabled, reveal_at")
+    .select("id, title, event_date, cover_filename, zip_key, premiere_enabled, reveal_at, design")
     .eq("share_token", token)
     .maybeSingle();
   if (!gallery) notFound();
 
+  const skin = designSkin(gallery.design);
   const premiereActive = Boolean(gallery.premiere_enabled);
   const revealed =
     !gallery.reveal_at || new Date(gallery.reveal_at) <= new Date();
@@ -77,7 +79,8 @@ export default async function SharedGalleryPage({ params }) {
         )
       : null;
     return (
-      <>
+      <div className={skin.className} style={skin.style}>
+        {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
         <nav className="rm-nav" aria-label="Main navigation">
           <Link href="/" className="brand">
             <span className="brand-chip"><BrandMark /></span>
@@ -123,7 +126,7 @@ export default async function SharedGalleryPage({ params }) {
             <span>© {new Date().getFullYear()} Roth Media</span>
           </div>
         </footer>
-      </>
+      </div>
     );
   }
 
@@ -167,7 +170,8 @@ export default async function SharedGalleryPage({ params }) {
     : null;
 
   return (
-    <>
+    <div className={skin.className} style={skin.style}>
+      {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
       {premiereActive && (
         <PremiereGate
           mode="overlay"
@@ -255,6 +259,6 @@ export default async function SharedGalleryPage({ params }) {
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
