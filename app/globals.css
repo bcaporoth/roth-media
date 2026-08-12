@@ -3121,3 +3121,32 @@ footer.rm-footer {
     margin-bottom: 0.8rem;
   }
 }
+
+/* ── PORTAL HOME POLISH ──
+   Hosted-gallery cards center as a group instead of hugging the left,
+   a lone info card centers itself, and the first-visit empty state
+   reads like a promise rather than an apology. */
+.portal-hosted {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.portal-hosted-card {
+  flex: 0 1 300px;
+  width: min(300px, 100%);
+}
+
+.portal-empty-solo {
+  text-align: center;
+  margin-top: 2.5rem;
+  font-size: 1.05rem;
+}
+
+.portal-grid:has(> :only-child) {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
