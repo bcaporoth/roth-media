@@ -76,6 +76,9 @@ export default function PortalGallery({ items, title }) {
             if (e.target === e.currentTarget) close();
           }}
         >
+          <span className="pgal-lightbox-count" aria-hidden="true">
+            {lightbox + 1} / {items.length}
+          </span>
           <button className="close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -118,3 +121,4 @@ export default function PortalGallery({ items, title }) {
     </>
   );
 }
+
