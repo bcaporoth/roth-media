@@ -147,6 +147,12 @@ export default async function PortalPage() {
 
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
 
+  const first = client.name.trim().split(/\s+/)[0] || "there";
+  const firstName = first.charAt(0).toUpperCase() + first.slice(1);
+  const hasHosted = hostedGalleries && hostedGalleries.length > 0;
+  const hasLinks = galleries.length > 0;
+  const hasPayments = payments.length > 0;
+
   return (
     <PortalShell
       signedIn
@@ -154,10 +160,14 @@ export default async function PortalPage() {
     >
       <div className="kick">Client Portal</div>
       <h2>
-        Hi, <em>{client.name.split(" ")[0]}.</em>
+        Hi, <em>{firstName}.</em>
       </h2>
+      <p className="lead">
+        Your photos and films, ready when you are — view, share, and download
+        anytime.
+      </p>
 
-      {hostedGalleries && hostedGalleries.length > 0 && (
+      {hasHosted && (
         <div className="portal-hosted">
           {hostedGalleries.map((g) => (
             <Link
@@ -188,38 +198,36 @@ export default async function PortalPage() {
         </div>
       )}
 
-      <div className="portal-grid">
-        <div className="portal-card">
-          <h3 className="portal-card-title">
-            {hostedGalleries && hostedGalleries.length > 0
-              ? "More links"
-              : "Your galleries"}
-          </h3>
-          {galleries.length === 0 ? (
-            <p className="portal-empty">
-              Nothing here yet — your galleries will appear as soon as
-              they&apos;re ready.
-            </p>
-          ) : (
-            <ul className="portal-galleries">
-              {galleries.map((g) => (
-                <li key={g.id}>
-                  <a href={g.url} target="_blank" rel="noopener noreferrer">
-                    {g.title} ↗
-                  </a>
-                  {g.note && <span className="portal-note">{g.note}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {!hasHosted && !hasLinks && (
+        <p className="portal-empty portal-empty-solo">
+          Your first gallery is on its way — it&apos;ll appear right here the
+          moment it&apos;s ready.
+        </p>
+      )}
 
-        <div className="portal-card">
-          <h3 className="portal-card-title">Payments</h3>
-          {payments.length === 0 ? (
-            <p className="portal-empty">No payments recorded yet.</p>
-          ) : (
-            <>
+      {(hasLinks || hasPayments) && (
+        <div className="portal-grid">
+          {hasLinks && (
+            <div className="portal-card">
+              <h3 className="portal-card-title">
+                {hasHosted ? "More links" : "Your galleries"}
+              </h3>
+              <ul className="portal-galleries">
+                {galleries.map((g) => (
+                  <li key={g.id}>
+                    <a href={g.url} target="_blank" rel="noopener noreferrer">
+                      {g.title} ↗
+                    </a>
+                    {g.note && <span className="portal-note">{g.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {hasPayments && (
+            <div className="portal-card">
+              <h3 className="portal-card-title">Payments</h3>
               <ul className="portal-payments">
                 {payments.map((p) => (
                   <li key={p.id}>
@@ -239,10 +247,10 @@ export default async function PortalPage() {
                 <span>Total with Roth Media</span>
                 <span className="portal-amount">{money(total)}</span>
               </p>
-            </>
+            </div>
           )}
         </div>
-      </div>
+      )}
     </PortalShell>
   );
 }
@@ -288,3 +296,4 @@ function PortalShell({ children, signedIn = false, nav = null }) {
     </>
   );
 }
+
