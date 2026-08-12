@@ -94,6 +94,16 @@ export default async function GalleryPage({ params }) {
       }).catch(() => null)
     : null;
 
+  // Film-only galleries: the chosen cover doubles as the film's poster,
+  // so "Set cover" updates the tile below the hero too.
+  const allVideos = items.length > 0 && items.every((i) => i.kind === "video");
+  const videoPoster =
+    allVideos && gallery.cover_filename
+      ? await signedUrl(
+          photoKey(gallery.id, "thumb", gallery.cover_filename)
+        ).catch(() => null)
+      : null;
+
   // The album's saved design (font pairing, mood, accent) follows it here,
   // so the signed-in view matches the public share page.
   const skin = designSkin(gallery.design);
@@ -155,7 +165,7 @@ export default async function GalleryPage({ params }) {
       )}
 
       <section id="grid" className="work pgal-work">
-        <PortalGallery items={items} title={gallery.title} />
+        <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
       </section>
 
       <footer className="rm-footer">
