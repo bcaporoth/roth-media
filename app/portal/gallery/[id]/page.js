@@ -3,15 +3,29 @@ import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
 import PortalNav from "../../../../components/PortalNav";
+import { designSkin } from "../../../../lib/design";
 import { ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  robots: { index: false },
-};
+export async function generateMetadata({ params }) {
+  const base = { title: "Your Gallery", robots: { index: false } };
+  try {
+    const { id } = await params;
+    if (!portalConfigured) return base;
+    const supabase = await createSupabaseServer();
+    const { data: g } = await supabase
+      .from("galleries")
+      .select("title")
+      .eq("id", id)
+      .maybeSingle();
+    return g ? { ...base, title: g.title } : base;
+  } catch {
+    return base;
+  }
+}
 
 const dateFmt = (d) =>
   new Date(d).toLocaleDateString("en-US", {
@@ -34,7 +48,7 @@ export default async function GalleryPage({ params }) {
   // RLS guarantees clients can only fetch their own gallery.
   const { data: gallery } = await supabase
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key, share_token")
+    .select("id, title, event_date, cover_filename, zip_key, share_token, design")
     .eq("id", id)
     .maybeSingle();
   if (!gallery) notFound();
@@ -80,8 +94,13 @@ export default async function GalleryPage({ params }) {
       }).catch(() => null)
     : null;
 
+  // The album's saved design (font pairing, mood, accent) follows it here,
+  // so the signed-in view matches the public share page.
+  const skin = designSkin(gallery.design);
+
   return (
-    <>
+    <div className={skin.className} style={skin.style}>
+      {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
       <PortalNav
         email={user.email}
         isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
@@ -149,6 +168,7 @@ export default async function GalleryPage({ params }) {
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
+
