@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
 import PortalNav from "../../../../components/PortalNav";
 import { designSkin } from "../../../../lib/design";
-import { ADMIN_EMAIL } from "../../../../lib/supabase-admin";
+import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
 
@@ -45,15 +45,18 @@ export default async function GalleryPage({ params }) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/portal");
 
-  // RLS guarantees clients can only fetch their own gallery.
-  const { data: gallery } = await supabase
+  // Clients stay behind RLS (their own galleries only); the studio admin
+  // can open any gallery via the service client.
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  const db = isAdmin && adminConfigured ? supabaseAdmin() : supabase;
+  const { data: gallery } = await db
     .from("galleries")
     .select("id, title, event_date, cover_filename, zip_key, share_token, design")
     .eq("id", id)
     .maybeSingle();
   if (!gallery) notFound();
 
-  const { data: media } = await supabase
+  const { data: media } = await db
     .from("media")
     .select("filename, kind")
     .eq("gallery_id", gallery.id)
@@ -113,7 +116,7 @@ export default async function GalleryPage({ params }) {
       {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
       <PortalNav
         email={user.email}
-        isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+        isAdmin={isAdmin}
         extra={
           zipUrl ? (
             <li>
