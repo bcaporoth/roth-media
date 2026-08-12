@@ -169,6 +169,16 @@ export default async function SharedGalleryPage({ params }) {
       }).catch(() => null)
     : null;
 
+  // Film-only galleries: the chosen cover doubles as the film's poster,
+  // so "Set cover" updates the tile below the hero too.
+  const allVideos = items.length > 0 && items.every((i) => i.kind === "video");
+  const videoPoster =
+    allVideos && gallery.cover_filename
+      ? await signedUrl(
+          photoKey(gallery.id, "thumb", gallery.cover_filename)
+        ).catch(() => null)
+      : null;
+
   return (
     <div className={skin.className} style={skin.style}>
       {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
@@ -231,7 +241,7 @@ export default async function SharedGalleryPage({ params }) {
       </header>
 
       <section id="grid" className="work pgal-work">
-        <PortalGallery items={items} title={gallery.title} />
+        <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
       </section>
 
       <section className="contact" style={{ borderTop: "1px solid var(--line)" }}>
