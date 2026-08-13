@@ -16,7 +16,14 @@ export async function generateMetadata({ params }) {
     const { id } = await params;
     if (!portalConfigured) return base;
     const supabase = await createSupabaseServer();
-    const { data: g } = await supabase
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const db =
+      user?.email?.toLowerCase() === ADMIN_EMAIL && adminConfigured
+        ? supabaseAdmin()
+        : supabase;
+    const { data: g } = await db
       .from("galleries")
       .select("title")
       .eq("id", id)
