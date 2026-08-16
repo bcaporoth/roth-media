@@ -191,3 +191,4 @@ export default async function GalleryPage({ params }) {
     </div>
   );
 }
+

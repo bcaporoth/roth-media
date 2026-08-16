@@ -125,3 +125,4 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     </>
   );
 }
+

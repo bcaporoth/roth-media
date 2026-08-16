@@ -2844,7 +2844,6 @@ footer.rm-footer {
   .portal-appbar .nav-links { gap: 0.55rem; }
   .portal-appbar .portal-signout { padding: 0.32rem 0.65rem; font-size: 0.62rem; }
 }
-
 /* ── STUDIO ADMIN DASHBOARD ── */
 .admin-shell {
   background: var(--bone);
@@ -3215,7 +3214,6 @@ footer.rm-footer {
     flex-basis: 100%;
   }
 }
-
 /* ── CLIENT GALLERY MASONRY ──
    The share page and portal gallery grids show every photo in full at
    its natural shape (no 4:5 crop boxes). Marketing-site .gallery grids
