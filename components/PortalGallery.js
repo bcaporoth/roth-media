@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 // Client-side gallery viewer: masonry grid, lightbox with keyboard nav,
 // per-item download. Handles photos and videos; all URLs arrive
 // pre-signed from the server.
-export default function PortalGallery({ items, title }) {
+export default function PortalGallery({ items, title, videoPoster = null }) {
   const [lightbox, setLightbox] = useState(null);
 
   const close = useCallback(() => setLightbox(null), []);
@@ -33,17 +33,20 @@ export default function PortalGallery({ items, title }) {
   return (
     <>
       <div className="gallery pgal-grid">
-        {items.map((item, i) => (
+        {items.map((item, i) => {
+          const tileSrc =
+            item.kind === "video" ? videoPoster || item.thumbUrl : item.thumbUrl;
+          return (
           <div className="item pgal-item" key={item.filename}>
             <button
               className="pgal-view"
               onClick={() => setLightbox(i)}
               aria-label={`View ${item.kind} ${i + 1} of ${title}`}
             >
-              {item.thumbUrl ? (
+              {tileSrc ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={item.thumbUrl}
+                  src={tileSrc}
                   alt={`${title} — ${item.kind} ${i + 1}`}
                   loading={i < 6 ? "eager" : "lazy"}
                 />
@@ -65,7 +68,8 @@ export default function PortalGallery({ items, title }) {
               ↓
             </a>
           </div>
-        ))}
+          );
+        })}
       </div>
       {current && (
         <div
@@ -76,6 +80,9 @@ export default function PortalGallery({ items, title }) {
             if (e.target === e.currentTarget) close();
           }}
         >
+          <span className="pgal-lightbox-count" aria-hidden="true">
+            {lightbox + 1} / {items.length}
+          </span>
           <button className="close" onClick={close} aria-label="Close">
             ×
           </button>
@@ -90,7 +97,7 @@ export default function PortalGallery({ items, title }) {
             <video
               className="pgal-lightbox-video"
               src={current.webUrl}
-              poster={current.thumbUrl || undefined}
+              poster={videoPoster || current.thumbUrl || undefined}
               controls
               autoPlay
               playsInline

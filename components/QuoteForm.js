@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 // ── Package data + matcher, ported verbatim from the original
 // Roth Photography intelligent questionnaire ─────────────────────────
@@ -54,7 +54,7 @@ function tierRecommendation(tiers, ceiling) {
   const { tier, note } = pickTier(tiers, ceiling);
   return {
     name: tier.name,
-    price: `$${tier.amount.toLocaleString("en-US")}`,
+    price: `starting at $${tier.amount.toLocaleString("en-US")}`,
     includes: tier.includes,
     note: [tier.note, note].filter(Boolean).join(" ") || undefined,
   };
@@ -87,8 +87,8 @@ export function recommendRothPackage({ services, eventType, projectType, budgetR
   }
   if (isEngagement) {
     return both
-      ? { name: "Engagement Session + Film", price: "$450", includes: "60 min on location, 40+ edited images plus a 60–90 sec film — $100 credits toward your wedding booking." }
-      : { name: "Engagement Session", price: "$250", includes: "60 min on location, 40+ edited images — $100 credits toward your wedding booking." };
+      ? { name: "Engagement Session + Film", price: "starting at $450", includes: "60 min on location, 40+ edited images plus a 60–90 sec film — $100 credits toward your wedding booking." }
+      : { name: "Engagement Session", price: "starting at $250", includes: "60 min on location, 40+ edited images — $100 credits toward your wedding booking." };
   }
   if (isPortrait) {
     const rec = tierRecommendation(PORTRAIT_TIERS, ceiling);
@@ -97,12 +97,12 @@ export function recommendRothPackage({ services, eventType, projectType, budgetR
     return rec;
   }
   if (isHeadshots) {
-    return { name: "Headshot Session", price: "$100 / person", includes: "20 min, two retouched images sized for LinkedIn and web.", note: "Booking for a team? On-site team session: $400 covers up to five people, then $75 per person after — mention your headcount in the message." };
+    return { name: "Headshot Session", price: "from $100 / person", includes: "20 min, two retouched images sized for LinkedIn and web.", note: "Booking for a team? On-site team session starts at $400 for up to five people, then $75 per person after — mention your headcount in the message." };
   }
   if (isBrand) {
-    if (both) return { name: "Content Day · photo & video", price: "$700", includes: "Half-day at your business: 40+ edited images plus a 90-sec promo and 3 vertical reels, licensed for web and social.", note: "Saves $100 vs. booking separately. Want fresh content on repeat? Monthly plans from $500/mo." };
-    if (hasVideo) return { name: "Promo Package · video", price: "$450", includes: "90-sec promo film plus 3 vertical reels, licensed music, one revision round.", note: "Monthly content plans from $500/mo." };
-    return { name: "Content Shoot · photo", price: "$350", includes: "Half-day shoot, 40+ edited images with a web + social license.", note: "Monthly content plans from $500/mo." };
+    if (both) return { name: "Content Day · photo & video", price: "starting at $700", includes: "Half-day at your business: 40+ edited images plus a 90-sec promo and 3 vertical reels, licensed for web and social.", note: "Want fresh content on repeat? Monthly plans from $500/mo." };
+    if (hasVideo) return { name: "Promo Package · video", price: "starting at $450", includes: "90-sec promo film plus 3 vertical reels, licensed music, one revision round.", note: "Monthly content plans from $500/mo." };
+    return { name: "Content Shoot · photo", price: "starting at $350", includes: "Half-day shoot, 40+ edited images with a web + social license.", note: "Monthly content plans from $500/mo." };
   }
   if (isEvent) {
     if (both) return { name: "Event Coverage · photo & video", price: "from $600", includes: "2-hour minimum with full gallery and an edited event recap video.", note: "Saves $100 vs. booking separately. Additional hours $125 each." };
@@ -211,7 +211,9 @@ function Section({ title, hint, children }) {
 }
 
 export default function QuoteForm({ initialService = "" }) {
+  const formRef = useRef(null);
   const [services, setServices] = useState(initialService);
+  const [step, setStep] = useState(initialService ? "basics" : "service");
   const [eventType, setEventType] = useState("");
   const [projectType, setProjectType] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
@@ -249,6 +251,18 @@ export default function QuoteForm({ initialService = "" }) {
   const brandLike = pBrand || vBrand;
 
   const L = sessionLabels(hasPhoto, eventType, hasVideo, projectType);
+
+  function chooseService(value) {
+    setServices(value);
+    setEventType("");
+    setProjectType("");
+    setStep("basics");
+  }
+
+  function goToDetails() {
+    if (!formRef.current?.reportValidity()) return;
+    setStep("details");
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -368,14 +382,20 @@ export default function QuoteForm({ initialService = "" }) {
   }
 
   return (
-    <form className="quote-form" onSubmit={handleSubmit}>
+    <form ref={formRef} className="quote-form quote-wizard" onSubmit={handleSubmit}>
+      <div className="qsteps" aria-label="Quote form progress">
+        <span className={step === "service" ? "active" : ""}>1. Pick service</span>
+        <span className={step === "basics" ? "active" : ""}>2. Quick fit</span>
+        <span className={step === "details" ? "active" : ""}>3. Tell the story</span>
+      </div>
+
       <div className="qsvc" role="radiogroup" aria-label="What do you need?">
         {SERVICES.map(([value, title, desc]) => (
           <button
             type="button"
             key={value}
             className={services === value ? "on" : ""}
-            onClick={() => setServices(value)}
+            onClick={() => chooseService(value)}
             aria-pressed={services === value}
           >
             <span className="qsvc-title">{title}</span>
@@ -394,6 +414,7 @@ export default function QuoteForm({ initialService = "" }) {
       {services && (
         <>
           <input type="text" name="_honey" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+          <div hidden={step !== "basics"}>
           <div className="row">
             <div>
               <label htmlFor="q-first">First name *</label>
@@ -501,7 +522,17 @@ export default function QuoteForm({ initialService = "" }) {
               </p>
             </div>
           )}
+          <div className="qnav-row">
+            <button type="button" className="qsecondary" onClick={() => setStep("service")}>
+              ← Change service
+            </button>
+            <button type="button" onClick={goToDetails}>
+              Next: tell me the story →
+            </button>
+          </div>
+          </div>
 
+          <div hidden={step !== "details"}>
           {typeChosen && (
             <>
               <div className="qdeep-intro">
@@ -959,6 +990,12 @@ export default function QuoteForm({ initialService = "" }) {
               845-549-4425 and I&apos;ll get right back to you.
             </p>
           )}
+          <div className="qnav-row qnav-row-bottom">
+            <button type="button" className="qsecondary" onClick={() => setStep("basics")}>
+              ← Back to basics
+            </button>
+          </div>
+          </div>
         </>
       )}
     </form>

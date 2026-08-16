@@ -3,15 +3,36 @@ import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
 import PortalNav from "../../../../components/PortalNav";
-import { ADMIN_EMAIL } from "../../../../lib/supabase-admin";
+import { designSkin } from "../../../../lib/design";
+import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  robots: { index: false },
-};
+export async function generateMetadata({ params }) {
+  const base = { title: "Your Gallery", robots: { index: false } };
+  try {
+    const { id } = await params;
+    if (!portalConfigured) return base;
+    const supabase = await createSupabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const db =
+      user?.email?.toLowerCase() === ADMIN_EMAIL && adminConfigured
+        ? supabaseAdmin()
+        : supabase;
+    const { data: g } = await db
+      .from("galleries")
+      .select("title")
+      .eq("id", id)
+      .maybeSingle();
+    return g ? { ...base, title: g.title } : base;
+  } catch {
+    return base;
+  }
+}
 
 const dateFmt = (d) =>
   new Date(d).toLocaleDateString("en-US", {
@@ -31,15 +52,18 @@ export default async function GalleryPage({ params }) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/portal");
 
-  // RLS guarantees clients can only fetch their own gallery.
-  const { data: gallery } = await supabase
+  // Clients stay behind RLS (their own galleries only); the studio admin
+  // can open any gallery via the service client.
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  const db = isAdmin && adminConfigured ? supabaseAdmin() : supabase;
+  const { data: gallery } = await db
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key, share_token")
+    .select("id, title, event_date, cover_filename, zip_key, share_token, design")
     .eq("id", id)
     .maybeSingle();
   if (!gallery) notFound();
 
-  const { data: media } = await supabase
+  const { data: media } = await db
     .from("media")
     .select("filename, kind")
     .eq("gallery_id", gallery.id)
@@ -80,11 +104,26 @@ export default async function GalleryPage({ params }) {
       }).catch(() => null)
     : null;
 
+  // Film-only galleries: the chosen cover doubles as the film's poster,
+  // so "Set cover" updates the tile below the hero too.
+  const allVideos = items.length > 0 && items.every((i) => i.kind === "video");
+  const videoPoster =
+    allVideos && gallery.cover_filename
+      ? await signedUrl(
+          photoKey(gallery.id, "thumb", gallery.cover_filename)
+        ).catch(() => null)
+      : null;
+
+  // The album's saved design (font pairing, mood, accent) follows it here,
+  // so the signed-in view matches the public share page.
+  const skin = designSkin(gallery.design);
+
   return (
-    <>
+    <div className={skin.className} style={skin.style}>
+      {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
       <PortalNav
         email={user.email}
-        isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+        isAdmin={isAdmin}
         extra={
           zipUrl ? (
             <li>
@@ -136,7 +175,7 @@ export default async function GalleryPage({ params }) {
       )}
 
       <section id="grid" className="work pgal-work">
-        <PortalGallery items={items} title={gallery.title} />
+        <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
       </section>
 
       <footer className="rm-footer">
@@ -149,6 +188,6 @@ export default async function GalleryPage({ params }) {
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

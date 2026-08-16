@@ -28,10 +28,13 @@ export default async function QuotePage({ searchParams }) {
         </Link>
         <ul className="nav-links">
           <li>
-            <Link href="/video">Video</Link>
+            <Link href="/#work">Work</Link>
           </li>
           <li>
-            <Link href="/photo">Photo</Link>
+            <Link href="/#pricing">Pricing</Link>
+          </li>
+          <li>
+            <Link href="/#about">About</Link>
           </li>
           <li>
             <Link href="/portal" className="nav-login">Client login</Link>
