@@ -110,6 +110,22 @@ export async function POST(request) {
   }
 
 
+  // Remove a gallery that never received any media (an upload that failed
+  // outright), so a dead run doesn't leave a ghost card in the dashboard.
+  if (body.action === "discard") {
+    const { galleryId } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { count } = await db
+      .from("media")
+      .select("id", { count: "exact", head: true })
+      .eq("gallery_id", galleryId);
+    if (count && count > 0)
+      return NextResponse.json({ ok: false, reason: "gallery has media" });
+    const { error } = await db.from("galleries").delete().eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.action === "list-media") {
     const { galleryId } = body;
     if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
