@@ -850,6 +850,35 @@ header.split:has(.split-photo:hover) .split-photo {
   color: var(--clay-soft);
 }
 
+.price-card .pincludes {
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding-top: 0.85rem;
+}
+
+.price-card .pincludes li {
+  justify-content: flex-start;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.price-card .pincludes li::before {
+  content: "✓";
+  color: var(--clay);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.page-dark .price-card .pincludes li {
+  color: rgba(244, 239, 230, 0.65);
+}
+
+.page-dark .price-card .pincludes li::before {
+  color: var(--clay-soft);
+}
+
 .price-card .pnote {
   font-size: 0.8rem;
   line-height: 1.55;
@@ -3219,14 +3248,18 @@ footer.rm-footer {
    its natural shape (no 4:5 crop boxes). Marketing-site .gallery grids
    are untouched — these rules only apply to .pgal-grid. */
 .gallery.pgal-grid {
-  display: block;
-  columns: 3;
-  column-gap: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.gallery.pgal-grid .pgal-col {
+  flex: 1;
+  min-width: 0;
 }
 
 .gallery.pgal-grid .pgal-item {
   aspect-ratio: auto;
-  break-inside: avoid;
   margin-bottom: 1.25rem;
 }
 
@@ -3258,12 +3291,18 @@ footer.rm-footer {
 
 @media (max-width: 900px) {
   .gallery.pgal-grid {
-    columns: 2;
-    column-gap: 0.8rem;
+    gap: 0.8rem;
   }
 
   .gallery.pgal-grid .pgal-item {
     margin-bottom: 0.8rem;
+  }
+
+  /* Phones have no arrow keys — keep the tap targets big and obvious. */
+  .lightbox .arrow {
+    font-size: 2.2rem;
+    padding: 1.2rem 0.9rem;
+    opacity: 0.85;
   }
 }
 
@@ -3294,4 +3333,101 @@ footer.rm-footer {
   max-width: 560px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* ============================================================
+   ALBUM UPLOADER — progress, resume banner, skipped-file notice
+   ============================================================ */
+
+.rm-resume {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.rm-linkbtn {
+  display: inline;
+  width: auto;
+  margin: 0 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--clay);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.rm-linkbtn:hover {
+  color: var(--ink);
+}
+
+.rm-stop {
+  display: block;
+  margin: 0.6rem 0 0;
+  color: var(--ink-soft);
+}
+
+.rm-progress {
+  margin-top: 1rem;
+}
+
+.rm-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bone-2);
+  overflow: hidden;
+}
+
+.rm-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--clay-soft), var(--clay));
+  transition: width 0.35s ease;
+}
+
+.rm-progress-line {
+  margin: 0.55rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rm-progress-line strong {
+  color: var(--ink);
+}
+
+.rm-progress-note {
+  margin: 0.25rem 0 0;
+  color: var(--clay);
+  font-size: 0.82rem;
+}
+
+.rm-failures {
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--clay);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.rm-failures strong {
+  color: var(--ink);
+}
+
+.admin-shell.is-dark .rm-resume,
+.admin-shell.is-dark .rm-failures {
+  background: rgba(255, 255, 255, 0.04);
 }
