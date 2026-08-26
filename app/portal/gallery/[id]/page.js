@@ -100,7 +100,6 @@ export default async function GalleryPage({ params }) {
   const zipUrl = gallery.zip_key
     ? await signedUrl(gallery.zip_key, {
         download: `${gallery.title.replace(/[^\w\s-]/g, "")}.zip`,
-        expiresIn: 6 * 3600,
       }).catch(() => null)
     : null;
 
