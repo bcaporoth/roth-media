@@ -172,6 +172,18 @@ export default function Home() {
                 <strong>Nolan &amp; Kennedy</strong> — wedding sneak peek
               </p>
             </div>
+            <div className="film-card reveal">
+              <video
+                src="/reels/nicole-golden-zumba-promo.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                poster="/reels/nicole-golden-zumba-promo-poster.jpg"
+              />
+              <p className="film-caption">
+                <strong>Nicole Golden</strong> — Zumba class promo
+              </p>
+            </div>
             <div className="reels-row reveal">
               <ReelCard
                 src="/reels/bake-against-the-grain.mp4"
