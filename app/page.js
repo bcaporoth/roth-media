@@ -46,14 +46,30 @@ const CATEGORY_MAP = {
   engagement: "engagements",
 };
 
+const FEATURED = [
+  "25-wedding-the-veil-took-flight.jpg",
+  "24-wedding-a-world-of-their-own.jpg",
+  "40-wedding-just-married-mid-laugh.jpg",
+  "16-wedding-final-touches.jpg",
+  "17-wedding-two-rings.jpg",
+  "18-wedding-suiting-up-together.jpg",
+  "22-wedding-the-first-dance.jpg",
+  "06-engagement-she-said-yes.jpg",
+  "04-senior-portrait-golden-hour.jpg",
+  "09-senior-portrait-through-the-lens.jpg",
+  "02-lifestyle-at-home-in-the-kitchen.jpg",
+  "01-gym-athlete-chalk-and-focus.jpg",
+  "42-gym-coach-and-client.jpg",
+  "05-gym-quiet-before-the-lift.jpg",
+  "33-event-the-finish-line-hug.jpg",
+];
+
 function getPhotos() {
   const photosDir = path.join(process.cwd(), "public", "photos");
   try {
-    return fs
-      .readdirSync(photosDir)
-      .filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f) && !f.startsWith("."))
-      .sort()
-      .map((f) => {
+    return FEATURED.filter((f) =>
+      fs.existsSync(path.join(photosDir, f))
+    ).map((f) => {
         const slug = f.replace(/\.[^.]+$/, "").replace(/^\d+-/, "");
         const [first, ...rest] = slug.split("-");
         const category = CATEGORY_MAP[first] || "lifestyle";
