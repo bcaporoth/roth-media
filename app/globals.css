@@ -3483,3 +3483,460 @@ footer.rm-footer {
 .admin-shell.is-dark .rm-failures {
   background: rgba(255, 255, 255, 0.04);
 }
+
+/* ── GUIDED QUOTE FLOW ──
+   One entrance (Photo / Video / Both), one exit (the quote request).
+   Reuses .qsvc, .qtoggle, .qmatch, .quote-form input styling. */
+.qflow {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.qflow-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.4rem;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.4rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.qflow-steps li span,
+.qflow-steps li button {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 0.4rem;
+  text-align: center;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qflow-steps li button {
+  cursor: pointer;
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+.qflow-steps li button:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.qflow-steps li.active span {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: rgba(34, 31, 26, 0.06);
+}
+
+.qflow-crumbs {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-size: 0.85rem;
+  color: var(--clay);
+  margin: 0 0 1rem;
+}
+
+.qflow-q {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.qflow-step > .qhelp {
+  display: block;
+  margin-bottom: 1.2rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.qflow .qsvc {
+  margin-bottom: 0.5rem;
+}
+
+.qflow .qsvc.four {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* package cards */
+.qpkgs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.qpkgs.four {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.qpkg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(250, 246, 238, 0.6);
+  padding: 1.25rem 1.2rem 1.1rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ink);
+  transition: border-color 0.25s, transform 0.2s, background 0.25s;
+}
+
+.qpkg:hover {
+  border-color: var(--clay);
+  transform: translateY(-2px);
+}
+
+.qpkg.popular {
+  border-color: var(--clay);
+}
+
+.qpkg.on {
+  background: var(--ink);
+  color: var(--bone);
+  border-color: var(--ink);
+}
+
+.qpkg-flag {
+  position: absolute;
+  top: -0.6rem;
+  left: 1rem;
+  background: var(--clay);
+  color: var(--bone);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.qpkg-name {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.qpkg-price {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--clay);
+  font-variant-numeric: tabular-nums;
+}
+
+.qpkg.on .qpkg-price {
+  color: var(--clay-soft);
+}
+
+.qpkg-price small {
+  font-family: var(--font-body), "Manrope", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-left: 0.2rem;
+}
+
+.qpkg.on .qpkg-price small {
+  color: rgba(244, 239, 230, 0.6);
+}
+
+.qpkg-scope {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.qpkg.on .qpkg-scope {
+  color: rgba(244, 239, 230, 0.7);
+}
+
+.qpkg ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.qpkg.on ul {
+  color: rgba(244, 239, 230, 0.85);
+}
+
+.qpkg li {
+  margin-bottom: 0.2rem;
+}
+
+/* add-ons */
+.qaddons {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.qaddon {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(250, 246, 238, 0.6);
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.qaddon.on {
+  border-color: var(--clay);
+  background: rgba(176, 106, 79, 0.07);
+}
+
+.qaddon-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+  cursor: pointer;
+}
+
+.qaddon-main input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--clay);
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.qaddon-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.qaddon-name small {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+  margin-top: 0.1rem;
+}
+
+.qaddon-price {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  color: var(--clay);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.qaddon-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.qaddon-qty button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qaddon-qty button:hover {
+  border-color: var(--ink);
+}
+
+.qaddon-qty span {
+  min-width: 1.4rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* detail + contact fields */
+.qf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.qf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.qf-field.wide {
+  grid-column: 1 / -1;
+}
+
+.qflow-form .qprimary {
+  background: var(--ink);
+  color: var(--bone);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  font-family: var(--font-body), "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.2s;
+}
+
+.qflow-form .qprimary:hover:not(:disabled) {
+  background: var(--clay);
+  border-color: var(--clay);
+  transform: translateY(-1px);
+}
+
+.qflow-form .qprimary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.qflow-form .qsecondary {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.85rem 1.3rem;
+  font-family: var(--font-body), "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.qflow-form .qsecondary:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* summary + running estimate */
+.qflow-summary {
+  margin-bottom: 1.4rem;
+}
+
+.qflow-lines {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.qflow-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  border-top: 1px dashed var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+.qrail {
+  position: sticky;
+  bottom: 1rem;
+  margin-top: 1.4rem;
+  margin-left: auto;
+  width: max-content;
+  max-width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  background: var(--ink);
+  color: var(--bone);
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  box-shadow: 0 10px 30px rgba(34, 31, 26, 0.25);
+  font-size: 0.8rem;
+}
+
+.qrail-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 239, 230, 0.6);
+}
+
+.qrail-total {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--clay-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.qrail-sub {
+  color: rgba(244, 239, 230, 0.7);
+}
+
+.qflow-exit {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .qflow-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .qpkgs,
+  .qpkgs.four,
+  .qflow .qsvc.four {
+    grid-template-columns: 1fr;
+  }
+  .qf-grid {
+    grid-template-columns: 1fr;
+  }
+  .qaddon {
+    flex-wrap: wrap;
+  }
+  .qrail {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+.quote-form label.qaddon-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+}

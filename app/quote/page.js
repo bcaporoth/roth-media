@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BrandMark from "../../components/BrandMark";
-import QuoteForm from "../../components/QuoteForm";
+import QuoteFlow from "../../components/QuoteFlow";
 
 export const metadata = {
   title: "Get an Instant Quote",
@@ -13,11 +13,10 @@ const PHONE_HREF = "tel:+18455494425";
 
 export default async function QuotePage({ searchParams }) {
   const params = await searchParams;
-  const service = ["photography", "videography", "both"].includes(
-    params?.service
-  )
-    ? params.service
-    : "";
+  const craft =
+    { photography: "photo", videography: "video", both: "both", photo: "photo", video: "video" }[
+      params?.service
+    ] || "";
 
   return (
     <>
@@ -47,13 +46,12 @@ export default async function QuotePage({ searchParams }) {
 
       <main className="quote-wrap">
         <div className="kick">Instant quote</div>
-        <h1>Find your package in two minutes.</h1>
+        <h1>Build your quote in two minutes.</h1>
         <p className="lead">
-          Answer a few questions and this form matches you to the package
-          people in your shoes actually book — live, as you click. Real
-          prices, no obligation.
+          Pick what you need and I&apos;ll walk you to a tailored starting
+          price, step by step. Real prices, no obligation.
         </p>
-        <QuoteForm initialService={service} />
+        <QuoteFlow initialCraft={craft} />
       </main>
 
       <footer className="rm-footer">

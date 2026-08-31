@@ -3,8 +3,7 @@ import fs from "fs";
 import path from "path";
 import BrandMark from "../components/BrandMark";
 import Gallery from "../components/Gallery";
-import PricingToggle from "../components/PricingToggle";
-import QuoteForm from "../components/QuoteForm";
+import QuoteFlow from "../components/QuoteFlow";
 import ReelCard from "../components/ReelCard";
 import Reveal from "../components/Reveal";
 
@@ -211,7 +210,21 @@ export default function Home() {
         </section>
 
         <section id="pricing" className="pricing section-alt">
-          <PricingToggle />
+          <div className="pricing-inner">
+            <div className="pricing-head reveal">
+              <div className="kick">Real prices, up front</div>
+              <h2>Build your quote.</h2>
+              <p>
+                Photo, video, or both — pick what you need and I&apos;ll walk
+                you to a tailored starting price, step by step. Every number is
+                tied to what you walk away with, not hours on a clock. Prefer
+                to talk? Call or text <a href={PHONE_HREF}>{PHONE}</a>.
+              </p>
+            </div>
+            <div id="quote">
+              <QuoteFlow />
+            </div>
+          </div>
         </section>
 
         <section id="about" className="about">
@@ -244,20 +257,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="quote" className="quote-embed">
-          <div className="quote-embed-inner">
-            <div className="kick">Instant quote</div>
-            <h2 className="quote-embed-title">
-              Let&apos;s make something <em>people stop for.</em>
-            </h2>
-            <p className="quote-embed-sub">
-              Answer a few questions and get matched to the package people in
-              your shoes actually book — live, as you click. Prefer to talk?
-              Call or text <a href={PHONE_HREF}>{PHONE}</a>.
-            </p>
-            <QuoteForm />
-          </div>
-        </section>
       </main>
 
       <footer className="rm-footer">
