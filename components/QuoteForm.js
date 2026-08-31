@@ -8,20 +8,20 @@ import { useMemo, useRef, useState } from "react";
 const WEDDING_PHOTO = [
   { name: "Half Day · photo", amount: 1200, includes: "Ceremony, portraits, and the first hours of the reception — through the first dance, toasts, and cake. Online gallery, print rights, sneak peeks within 72 hrs." },
   { name: "Full Day · photo", amount: 2000, includes: "Full-day coverage from getting ready through the end-of-night exit. Online gallery, print rights, sneak peeks within 72 hrs." },
-  { name: "The Works · photo", amount: 3000, includes: "Full-day coverage plus an engagement session — the complete photography experience.", note: "Going all-in? The Whole Story adds rehearsal-dinner coverage, a first-year milestone mini, and video — $5,000 for everything." },
+  { name: "The Works · photo", amount: 3000, includes: "Full-day coverage plus an engagement session — the complete photography experience.", note: "Going all-in? The Whole Story adds rehearsal-dinner coverage, a first-year milestone mini, and video — $6,500 for everything." },
 ];
 
 const WEDDING_VIDEO = [
-  { name: "Half Day · video", amount: 1200, includes: "Ceremony, portraits, and the first hours of the reception — through the first dance, toasts, and cake — cut into a cinematic highlight film with ceremony audio and licensed music." },
-  { name: "Full Day · video", amount: 2000, includes: "Full-day coverage from getting ready through the end-of-night exit, delivered as a highlight film plus key full edits." },
-  { name: "The Works · video", amount: 3000, includes: "Full-day coverage plus full ceremony and speeches edits, drone, and a next-day teaser — the complete film experience.", note: "Going all-in? The Whole Story adds an engagement session, rehearsal-dinner coverage, a first-year milestone mini, and photo — $5,000 for everything." },
+  { name: "Essential · video", amount: 2500, includes: "8 hours of coverage cut into a cinematic highlight film with real ceremony audio and licensed music — full ceremony and speeches covered." },
+  { name: "Signature · video", amount: 3500, includes: "10 hours of coverage — everything in Essential plus drone, a next-day teaser, a longer feature film, and full ceremony + toasts delivered in full." },
+  { name: "Luxury · video", amount: 4500, includes: "All in: two shooters, a documentary edit, and social cuts on top of everything in Signature.", note: "Going all-in on both crafts? The Whole Story adds photo, an engagement session, rehearsal-dinner coverage, and a first-year milestone mini — $6,500 for everything." },
 ];
 
 const WEDDING_BOTH = [
-  { name: "Half Day · photo & video", amount: 1800, includes: "Ceremony, portraits, and the first hours of the reception — through the first dance, toasts, and cake — in both photo and video. One team, one timeline, gallery plus highlight film.", note: "Saves $600 vs. booking separately." },
-  { name: "Full Day · photo & video", amount: 3000, includes: "Full-day photo and video from getting ready through the end-of-night exit — gallery plus highlight film.", note: "Saves $1,000 vs. booking separately." },
-  { name: "The Works · photo & video", amount: 4000, includes: "Everything on both sides — full-day photo and video, engagement session, full ceremony and speeches edits, drone, and a next-day teaser.", note: "Saves $2,000 vs. booking separately." },
-  { name: "The Whole Story · photo & video", amount: 5000, includes: "Your whole season, one team: engagement session with a mini film, rehearsal-dinner coverage, the full wedding day in photo and video, one first-year milestone mini (anniversary, day-after, baby shower — your pick), and a $250 print credit.", note: 'Everything from "yes" to your first anniversary — and it still beats booking the pieces separately.' },
+  { name: "Essential · photo & video", amount: 3500, includes: "8 hours of photo and video from one team — full edited gallery with print rights plus the cinematic highlight film, with ceremony and speeches covered on both sides.", note: "Adding full photo coverage to any film tier is a flat $1,000." },
+  { name: "Signature · photo & video", amount: 4500, includes: "10 hours of photo and video — the gallery plus the Signature film: drone, next-day teaser, longer feature film, full ceremony + toasts.", note: "One team, one timeline — no vendor juggling." },
+  { name: "Luxury · photo & video", amount: 5500, includes: "Everything on both sides, nothing held back — two shooters, documentary edit, social cuts, drone, teaser, and the complete photo experience.", note: "The all-in day." },
+  { name: "The Whole Story · photo & video", amount: 6500, includes: "Your whole season, one team: engagement session with a mini film, rehearsal-dinner coverage, the full wedding day in photo and video, one first-year milestone mini (anniversary, day-after, baby shower — your pick), and a $250 print credit.", note: 'Everything from "yes" to your first anniversary — and it still beats booking the pieces separately.' },
 ];
 
 const PORTRAIT_TIERS = [
@@ -100,13 +100,13 @@ export function recommendRothPackage({ services, eventType, projectType, budgetR
     return { name: "Headshot Session", price: "from $100 / person", includes: "20 min, two retouched images sized for LinkedIn and web.", note: "Booking for a team? On-site team session starts at $400 for up to five people, then $75 per person after — mention your headcount in the message." };
   }
   if (isBrand) {
-    if (both) return { name: "Content Day · photo & video", price: "starting at $700", includes: "Half-day at your business: 40+ edited images plus a 90-sec promo and 3 vertical reels, licensed for web and social.", note: "Want fresh content on repeat? Monthly plans from $500/mo." };
-    if (hasVideo) return { name: "Promo Package · video", price: "starting at $450", includes: "90-sec promo film plus 3 vertical reels, licensed music, one revision round.", note: "Monthly content plans from $500/mo." };
-    return { name: "Content Shoot · photo", price: "starting at $350", includes: "Half-day shoot, 40+ edited images with a web + social license.", note: "Monthly content plans from $500/mo." };
+    if (both) return { name: "Content Creation Day · photo & video", price: "starting at $1,500", includes: "A full day at your business (up to 8 hours): one flagship brand video, up to 5 vertical reels, 40+ edited images licensed for web and social, and drone where it fits — a month of marketing from one day of shooting.", note: "Need a quick hit instead? The half day starts at $500 — one location, one 90-second video or three reels. Monthly plans from $750/mo." };
+    if (hasVideo) return { name: "Brand Video Half Day", price: "starting at $500", includes: "Up to 4 hours on site, one location: a polished 90-second video or three vertical reels — editing and one revision round included.", note: "The full Content Creation Day — flagship brand video, up to 5 reels, drone where it fits — starts at $1,500. Extra reels $125 each." };
+    return { name: "Content Shoot · photo", price: "starting at $350", includes: "Half-day shoot, 40+ edited images with a web + social license.", note: "Monthly content plans from $750/mo." };
   }
   if (isEvent) {
-    if (both) return { name: "Event Coverage · photo & video", price: "from $600", includes: "2-hour minimum with full gallery and an edited event recap video.", note: "Saves $100 vs. booking separately. Additional hours $125 each." };
-    if (hasVideo) return { name: "Event Coverage · video", price: "from $400", includes: "2-hour minimum, edited event recap video delivered within two weeks.", note: "Additional hours $125 each." };
+    if (both) return { name: "Event Coverage · photo & video", price: "from $900", includes: "Half-day or full-day coverage with a full edited gallery and an event recap.", note: "The full recap film — cut for socials and sponsor decks — runs $1,200–1,800 with the edit included. Additional hours $125 each." };
+    if (hasVideo) return { name: "Event Coverage · video", price: "from $600", includes: "Half-day or full-day filming ($600–900), edited recap delivered within two weeks.", note: "The full recap film — cut for socials and sponsor decks — runs $1,200–1,800. Additional hours $125 each." };
     return { name: "Event Coverage · photo", price: "from $300", includes: "2-hour minimum, full edited gallery delivered within two weeks.", note: "Additional hours $125 each." };
   }
   return null;
@@ -150,17 +150,24 @@ function sessionLabels(hasPhoto, eventType, hasVideo, projectType) {
 const CONTACT_EMAIL = "b.caporoth@gmail.com";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
-const EVENT_OPTIONS = [
-  ["", "Choose…"], ["wedding", "Wedding"], ["engagement", "Engagement"],
-  ["family", "Family"], ["newborn", "Newborn"], ["senior", "Senior portraits"],
-  ["headshots", "Headshots / branding"], ["brand", "Business / brand content"],
-  ["corporate", "Event / corporate"], ["other", "Other"],
-];
-
-const PROJECT_OPTIONS = [
-  ["", "Choose…"], ["wedding_film", "Wedding film"], ["brand", "Business / brand content"],
-  ["brand_promo", "Brand promo"], ["event", "Event coverage"], ["social_reels", "Social reels"],
-  ["testimonial", "Customer testimonial"], ["real_estate", "Real estate / property"], ["other", "Other"],
+// One combined list for every inquiry — every option from the old photo and
+// video lists, mapped to [value, label, eventType, projectType] so the right
+// branches stay active.
+const COMBINED_OPTIONS = [
+  ["", "Choose…", "", ""],
+  ["wedding", "Wedding", "wedding", "wedding_film"],
+  ["engagement", "Engagement", "engagement", "other"],
+  ["family", "Family", "family", "other"],
+  ["newborn", "Newborn", "newborn", "other"],
+  ["senior", "Senior portraits", "senior", "other"],
+  ["headshots", "Headshots / branding", "headshots", "other"],
+  ["brand", "Business / brand content", "brand", "brand"],
+  ["brand_promo", "Brand promo", "brand", "brand_promo"],
+  ["social_reels", "Social reels", "brand", "social_reels"],
+  ["testimonial", "Customer testimonial", "brand", "testimonial"],
+  ["real_estate", "Real estate / property", "brand", "real_estate"],
+  ["corporate", "Event / corporate", "corporate", "event"],
+  ["other", "Other", "other", "other"],
 ];
 
 const BUDGET_OPTIONS = [
@@ -170,9 +177,9 @@ const BUDGET_OPTIONS = [
 ];
 
 const SERVICES = [
-  ["photography", "Photography", "Photo coverage only"],
-  ["videography", "Videography", "Video coverage only"],
-  ["both", "Both", "Photo + video together"],
+  ["both", "Photo + video"],
+  ["photography", "Photo only"],
+  ["videography", "Video only"],
 ];
 
 const label = (options, value) =>
@@ -212,10 +219,11 @@ function Section({ title, hint, children }) {
 
 export default function QuoteForm({ initialService = "" }) {
   const formRef = useRef(null);
-  const [services, setServices] = useState(initialService);
-  const [step, setStep] = useState(initialService ? "basics" : "service");
+  const [services, setServices] = useState(initialService || "both");
+  const [step, setStep] = useState("basics");
   const [eventType, setEventType] = useState("");
   const [projectType, setProjectType] = useState("");
+  const [combinedType, setCombinedType] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
   const [contactPref, setContactPref] = useState("");
   const [status, setStatus] = useState("idle");
@@ -252,13 +260,6 @@ export default function QuoteForm({ initialService = "" }) {
 
   const L = sessionLabels(hasPhoto, eventType, hasVideo, projectType);
 
-  function chooseService(value) {
-    setServices(value);
-    setEventType("");
-    setProjectType("");
-    setStep("basics");
-  }
-
   function goToDetails() {
     if (!formRef.current?.reportValidity()) return;
     setStep("details");
@@ -276,8 +277,8 @@ export default function QuoteForm({ initialService = "" }) {
       _subject: `Quote request — ${data.firstName} ${data.lastName} (${services})`,
       _template: "table",
       services,
-      "session type": hasPhoto ? label(EVENT_OPTIONS, eventType) : undefined,
-      "project type": hasVideo ? label(PROJECT_OPTIONS, projectType) : undefined,
+      coverage: label(SERVICES, services),
+      "what it's for": label(COMBINED_OPTIONS, combinedType),
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
       phone: data.phone,
@@ -384,37 +385,12 @@ export default function QuoteForm({ initialService = "" }) {
   return (
     <form ref={formRef} className="quote-form quote-wizard" onSubmit={handleSubmit}>
       <div className="qsteps" aria-label="Quote form progress">
-        <span className={step === "service" ? "active" : ""}>1. Pick service</span>
-        <span className={step === "basics" ? "active" : ""}>2. Quick fit</span>
-        <span className={step === "details" ? "active" : ""}>3. Tell the story</span>
+        <span className={step === "basics" ? "active" : ""}>1. Quick fit</span>
+        <span className={step === "details" ? "active" : ""}>2. Tell the story</span>
       </div>
 
-      <div className="qsvc" role="radiogroup" aria-label="What do you need?">
-        {SERVICES.map(([value, title, desc]) => (
-          <button
-            type="button"
-            key={value}
-            className={services === value ? "on" : ""}
-            onClick={() => chooseService(value)}
-            aria-pressed={services === value}
-          >
-            <span className="qsvc-title">{title}</span>
-            <span className="qsvc-desc">{desc}</span>
-          </button>
-        ))}
-      </div>
-
-      {!services && (
-        <p className="quote-hint">
-          Check one above — a few quick questions and you&apos;re done. Takes
-          about two minutes.
-        </p>
-      )}
-
-      {services && (
-        <>
-          <input type="text" name="_honey" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-          <div hidden={step !== "basics"}>
+      <input type="text" name="_honey" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+      <div hidden={step !== "basics"}>
           <div className="row">
             <div>
               <label htmlFor="q-first">First name *</label>
@@ -446,30 +422,37 @@ export default function QuoteForm({ initialService = "" }) {
             </div>
           </div>
           <div className="row">
-            {hasPhoto && (
-              <div>
-                <label htmlFor="q-event">
-                  {services === "both" ? "Photography session type *" : "Session type *"}
-                </label>
-                <select id="q-event" value={eventType} onChange={(e) => setEventType(e.target.value)} required>
-                  {EVENT_OPTIONS.map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {hasVideo && (
-              <div>
-                <label htmlFor="q-project">
-                  {services === "both" ? "Video project type *" : "Project type *"}
-                </label>
-                <select id="q-project" value={projectType} onChange={(e) => setProjectType(e.target.value)} required>
-                  {PROJECT_OPTIONS.map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div>
+              <label htmlFor="q-combined">What are we capturing? *</label>
+              <select
+                id="q-combined"
+                value={combinedType}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const opt = COMBINED_OPTIONS.find(([v]) => v === value);
+                  setCombinedType(value);
+                  setEventType(opt?.[2] ?? "");
+                  setProjectType(opt?.[3] ?? "");
+                }}
+                required
+              >
+                {COMBINED_OPTIONS.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="q-coverage">Coverage</label>
+              <select
+                id="q-coverage"
+                value={services}
+                onChange={(e) => setServices(e.target.value)}
+              >
+                {SERVICES.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="row">
             <div>
@@ -523,9 +506,6 @@ export default function QuoteForm({ initialService = "" }) {
             </div>
           )}
           <div className="qnav-row">
-            <button type="button" className="qsecondary" onClick={() => setStep("service")}>
-              ← Change service
-            </button>
             <button type="button" onClick={goToDetails}>
               Next: tell me the story →
             </button>
@@ -995,9 +975,7 @@ export default function QuoteForm({ initialService = "" }) {
               ← Back to basics
             </button>
           </div>
-          </div>
-        </>
-      )}
+      </div>
     </form>
   );
 }
