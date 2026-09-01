@@ -29,10 +29,10 @@ export default async function QuotePage({ searchParams }) {
             <Link href="/#work">Work</Link>
           </li>
           <li>
-            <Link href="/#pricing">Pricing</Link>
+            <Link href="/weddings">Weddings</Link>
           </li>
           <li>
-            <Link href="/#about">About</Link>
+            <Link href="/business">For business</Link>
           </li>
           <li>
             <Link href="/portal" className="nav-login">Client login</Link>

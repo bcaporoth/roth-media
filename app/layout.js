@@ -36,6 +36,7 @@ export const metadata = {
     description:
       "Cinematic video and candid photography for the Twin Tiers. Real prices, instant quotes.",
     type: "website",
+    images: ["/og-card.png"],
   },
 };
 

@@ -35,6 +35,8 @@ const JSON_LD = {
   ],
   founder: "Brandon Roth",
   priceRange: "$$",
+  image: "https://rothmediaco.com/og-card.png",
+  geo: { "@type": "GeoCoordinates", latitude: 42.0106, longitude: -76.5272 },
 };
 
 const CATEGORY_MAP = {
@@ -109,10 +111,10 @@ export default function Home() {
             <a href="#work">Work</a>
           </li>
           <li>
-            <a href="#pricing">Pricing</a>
+            <Link href="/weddings">Weddings</Link>
           </li>
           <li>
-            <a href="#about">About</a>
+            <Link href="/business">For business</Link>
           </li>
           <li>
             <a href="#quote">Get a quote</a>

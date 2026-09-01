@@ -3800,7 +3800,8 @@ footer.rm-footer {
   grid-column: 1 / -1;
 }
 
-.qflow-form .qprimary {
+.qflow-form .qprimary,
+a.svc-cta {
   background: var(--ink);
   color: var(--bone);
   border: 1px solid var(--ink);
@@ -3815,7 +3816,8 @@ footer.rm-footer {
   transition: background 0.25s, transform 0.2s;
 }
 
-.qflow-form .qprimary:hover:not(:disabled) {
+.qflow-form .qprimary:hover:not(:disabled),
+a.svc-cta:hover {
   background: var(--clay);
   border-color: var(--clay);
   transform: translateY(-1px);
@@ -4270,4 +4272,126 @@ footer.rm-footer {
   -webkit-text-fill-color: var(--ink);
   caret-color: var(--ink);
   transition: background-color 9999s ease-out 0s;
+}
+
+/* ── SERVICE LANDING PAGES (/weddings, /business) ── */
+.svc-wrap {
+  text-align: left;
+}
+
+.svc-wrap > .kick,
+.svc-wrap > h1,
+.svc-wrap > .lead {
+  text-align: center;
+}
+
+.svc-wrap > .lead {
+  margin-inline: auto;
+}
+
+.svc-cta-row {
+  text-align: center;
+  margin: 1.6rem 0 0;
+}
+
+.svc-cta {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.svc-video {
+  margin: 2.6rem 0 0;
+}
+
+.svc-video video {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+  background: #000;
+}
+
+.svc-video figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.svc-video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  margin-top: 2.6rem;
+}
+
+.svc-video-grid .svc-video {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .svc-video-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.svc-section {
+  margin-top: 3.2rem;
+}
+
+.svc-section h2 {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1.1rem;
+}
+
+.svc-pkgs .qpkg {
+  text-decoration: none;
+}
+
+.svc-note {
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.svc-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.7rem;
+  color: var(--ink-soft);
+}
+
+.svc-steps strong {
+  color: var(--ink);
+}
+
+.svc-faq {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(250, 246, 238, 0.6);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.7rem;
+}
+
+.svc-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.svc-faq p {
+  margin: 0.7rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.svc-final {
+  text-align: center;
+  border-top: 1px solid var(--line);
+  padding-top: 2.4rem;
 }
