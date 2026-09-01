@@ -5,7 +5,7 @@ import PromoEntry, { PromoCountdown, PROMO } from "../../components/PromoEntry";
 export const metadata = {
   title: "Win a Free Content Day — Roth Media",
   description:
-    "One Twin Tiers business wins a free Content Day: a brand video, four reels, and 20–40 edited photos. Enter in 30 seconds.",
+    "One Twin Tiers business wins a free Content Day: a brand video, ten reels, and 20–40 edited photos. Enter in 30 seconds.",
 };
 
 const PHONE = "845-549-4425";
@@ -41,7 +41,7 @@ export default function PromoPage() {
           <div className="qmatch-kick">What the winner gets · ${PROMO.value.toLocaleString("en-US")} value</div>
           <ul className="qflow-get promo-get">
             <li>A 60–90 second brand video for your website and ads</li>
-            <li>4 vertical reels for Instagram, Facebook, and TikTok</li>
+            <li>10 vertical reels for Instagram, Facebook, and TikTok</li>
             <li>20–40 edited photos, licensed for web and social</li>
             <li>One round of revisions, delivered within two weeks — ready to post</li>
           </ul>

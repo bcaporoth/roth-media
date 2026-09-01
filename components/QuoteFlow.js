@@ -22,9 +22,8 @@ const PACKAGES = {
     { id: "luxury", name: "Luxury", price: 4500, scope: "All day · two shooters", get: ["Everything in Signature", "A second shooter all day — both of you getting ready, every angle", "A documentary edit of the full day", "Social cuts sized for Instagram and TikTok", "Nothing held back"], includes: ["drone", "second"] },
   ],
   business: [
-    { id: "day", name: "Content Day", price: 1500, scope: "One shoot day", popular: true, get: ["A 60–90 second brand video for your website and ads", "4 vertical reels for Instagram, Facebook, and TikTok", "20–40 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
-    { id: "works", name: "The Works", price: 2500, scope: "One shoot day · a quarter of content", get: ["A 2–3 minute brand film plus the 60–90 second cut", "8 vertical reels", "40+ edited photos, licensed for web and social", "Drone footage of your location", "Captions written for every post, ready to schedule", "Two rounds of revisions"], includes: ["drone", "reels", "photos"] },
-    { id: "retainer", name: "Every Other Month", price: 1250, per: "/day", scope: "Six Content Days a year", get: ["A full Content Day every other month — video, 4 reels, 20–40 photos each visit", "Your feed never goes quiet", "Billed per shoot, no lump sum", "Priority scheduling"], includes: [] },
+    { id: "day", name: "Content Day", price: 1500, scope: "One shoot day", popular: true, get: ["A 60–90 second brand video for your website and ads", "10 vertical reels for Instagram, Facebook, and TikTok", "20–40 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
+    { id: "retainer", name: "Every Other Month", price: 1250, per: "/day", scope: "Six Content Days a year", get: ["A full Content Day every other month — brand video, 10 reels, 20–40 photos each visit", "Your feed never goes quiet", "Billed per shoot, no lump sum", "Priority scheduling"], includes: [] },
   ],
 };
 
@@ -36,7 +35,7 @@ const ADDONS = {
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your venue and portraits" },
   ],
   business: [
-    { id: "reels", name: "4 more reels", price: 400, get: "Eight reels instead of four — two months of posts" },
+    { id: "website", name: "Need a website?", price: 2000, from: true, get: "A full site built from your Content Day — the video, the photos, the words. We scope it together on a call." },
     { id: "photos", name: "20 more edited photos", price: 250, get: "40+ photos instead of 20–40" },
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your location" },
   ],
@@ -186,7 +185,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
                       <label className="qaddon-main">
                         <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
                         <span className="qaddon-name">{a.name}<small>{a.get}</small></span>
-                        <span className="qaddon-price">+{money(a.price)}</span>
+                        <span className="qaddon-price">{a.from ? "from " : ""}+{money(a.price)}</span>
                       </label>
                     </div>
                   ))}
