@@ -18,7 +18,7 @@ const CATEGORIES = [
 const PACKAGES = {
   wedding: [
     { id: "essential", name: "Essential", price: 2500, scope: "8 hours", get: ["A cinematic highlight film with your real vows and ceremony audio — exactly as long as it should be, never padded", "Your full ceremony, filmed and delivered", "Speeches and toasts, filmed and delivered", "Delivered online, ready to share, within 6 weeks"], includes: [] },
-    { id: "signature", name: "Signature", price: 3500, scope: "10 hours", popular: true, get: ["Everything in Essential", "Drone footage of your venue and portraits", "Short vertical reels of your favorite moments, sized for Instagram and TikTok", "A next-day sneak peek to post while everyone's still talking about it"], includes: ["drone"] },
+    { id: "signature", name: "Signature", price: 3500, scope: "10 hours", popular: true, get: ["Everything in Essential", "Drone footage of your venue and portraits", "Short vertical reels of your favorite moments, sized for Instagram and TikTok", "A next-day sneak peek to post while everyone's still talking about it"], includes: ["drone", "reels"] },
   ],
   business: [
     { id: "mini", name: "Mini Content Day", price: 750, scope: "One shoot day · the essentials", get: ["Your promo — a 60–90 second brand video for your website and ads", "3 vertical reels for Instagram, Facebook, and TikTok", "10 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
@@ -32,6 +32,10 @@ const ADDONS = {
   wedding: [
     { id: "photo", name: "Add photo coverage", price: 1000, get: "Full edited gallery with print rights, sneak peeks in 72 hours" },
     { id: "second", name: "Second shooter", price: 500, get: "Two angles all day, both of you getting ready" },
+    { id: "engagement", name: "Engagement session", price: 350, get: "An hour of photos before the big day — perfect for save-the-dates and your wedding website" },
+    { id: "rehearsal", name: "Rehearsal dinner coverage", price: 400, get: "The night before, filmed — the toasts, the nerves, everyone arriving" },
+    { id: "reels", name: "Social reels", price: 250, get: "Short vertical cuts of your favorite moments, sized for Instagram and TikTok" },
+    { id: "raw", name: "Every raw moment", price: 300, get: "All the unedited footage from your day, delivered in full — nothing left behind" },
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your venue and portraits" },
   ],
   business: [
