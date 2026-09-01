@@ -217,10 +217,11 @@ export default function Home() {
               <div className="kick">Real prices, up front</div>
               <h2>Build your quote.</h2>
               <p>
-                Photo, video, or both — pick what you need and I&apos;ll walk
-                you to a tailored starting price, step by step. Every number is
-                tied to what you walk away with, not hours on a clock. Prefer
-                to talk? Call or text <a href={PHONE_HREF}>{PHONE}</a>.
+                A wedding, an engagement, or content for your business — pick
+                what you&apos;re here for and I&apos;ll walk you to a tailored
+                starting price, step by step. Every number is tied to what you
+                walk away with, not hours on a clock. Prefer to talk? Call or
+                text <a href={PHONE_HREF}>{PHONE}</a>.
               </p>
             </div>
             <div id="quote">
