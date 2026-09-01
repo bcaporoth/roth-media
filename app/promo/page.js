@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandMark from "../../components/BrandMark";
-import PromoEntry, { PromoCountdown, PROMO } from "../../components/PromoEntry";
+import PromoEntry, { PromoCountdown } from "../../components/PromoEntry";
+import { PROMO } from "../../lib/promo";
 
 export const metadata = {
   title: "Win a Free Content Day — Roth Media",

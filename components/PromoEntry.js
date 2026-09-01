@@ -2,15 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-// ── Free Content Day giveaway: entry form + countdown ─────────────────
-export const PROMO = {
-  prize: "a free Content Day",
-  value: 1500,
-  closesAt: "2026-09-14T23:59:59-04:00", // 11:59 PM ET, Sept 14 2026
-  closesLabel: "Sunday, September 14",
-  drawLabel: "Monday, September 15",
-  tiktok: "https://www.tiktok.com/@rothmediaco",
-};
+// ── Free Content Day giveaway: entry form + countdown ──
+import { PROMO } from "../lib/promo";
 
 const CONTACT_EMAIL = "b.caporoth@gmail.com";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PROMO } from "./PromoEntry";
+import { PROMO } from "../lib/promo";
 
 // Floating homepage pointer to the giveaway. Disappears when entries close.
 export default function PromoPill() {
