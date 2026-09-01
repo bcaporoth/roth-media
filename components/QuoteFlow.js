@@ -17,13 +17,13 @@ const CATEGORIES = [
 // get: what the client walks away with — plain words, no jargon.
 const PACKAGES = {
   wedding: [
-    { id: "essential", name: "Essential", price: 2500, scope: "8 hours", get: ["A cinematic highlight film (3–5 min) with your real vows and ceremony audio", "Your full ceremony, filmed and delivered", "Speeches and toasts, filmed and delivered", "Delivered online, ready to share, within 6 weeks"], includes: [] },
-    { id: "signature", name: "Signature", price: 3500, scope: "10 hours", popular: true, get: ["Everything in Essential", "A longer feature film (8–12 min)", "Drone footage of your venue and portraits", "A next-day teaser to post while everyone's still talking about it", "Full ceremony + toasts, delivered in full"], includes: ["drone"] },
-    { id: "luxury", name: "Luxury", price: 4500, scope: "All day · two shooters", get: ["Everything in Signature", "A second shooter all day — both of you getting ready, every angle", "A documentary edit of the full day", "Social cuts sized for Instagram and TikTok", "Nothing held back"], includes: ["drone", "second"] },
+    { id: "essential", name: "Essential", price: 2500, scope: "8 hours", get: ["A cinematic highlight film with your real vows and ceremony audio — exactly as long as it should be, never padded", "Your full ceremony, filmed and delivered", "Speeches and toasts, filmed and delivered", "Delivered online, ready to share, within 6 weeks"], includes: [] },
+    { id: "signature", name: "Signature", price: 3500, scope: "10 hours", popular: true, get: ["Everything in Essential", "Drone footage of your venue and portraits", "Short vertical reels of your favorite moments, sized for Instagram and TikTok", "A next-day sneak peek to post while everyone's still talking about it"], includes: ["drone"] },
   ],
   business: [
-    { id: "day", name: "Content Day", price: 1500, scope: "One shoot day", popular: true, get: ["A 60–90 second brand video for your website and ads", "10 vertical reels for Instagram, Facebook, and TikTok", "20–40 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
-    { id: "retainer", name: "Every Other Month", price: 1250, per: "/day", scope: "Six Content Days a year", get: ["A full Content Day every other month — brand video, 10 reels, 20–40 photos each visit", "Your feed never goes quiet", "Billed per shoot, no lump sum", "Priority scheduling"], includes: [] },
+    { id: "mini", name: "Mini Content Day", price: 750, scope: "One shoot day · the essentials", get: ["Your promo — a 60–90 second brand video for your website and ads", "3 vertical reels for Instagram, Facebook, and TikTok", "10 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
+    { id: "day", name: "Full Content Day", price: 1500, scope: "One shoot day · the full haul", popular: true, get: ["Your promo — a 60–90 second brand video for your website and ads", "10 vertical reels for Instagram, Facebook, and TikTok", "20–40 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
+    { id: "retainer", name: "Every Other Month", price: 1250, per: "/day", scope: "Six Content Days a year", get: ["A Full Content Day every other month — promo, 10 reels, 20–40 photos each visit", "Your feed never goes quiet", "Billed per shoot, no lump sum", "Priority scheduling"], includes: [] },
   ],
 };
 
@@ -35,9 +35,9 @@ const ADDONS = {
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your venue and portraits" },
   ],
   business: [
+    { id: "promo2", name: "Another promo video", price: 400, get: "A second 60–90 second cut from the same shoot — a different offer, season, or audience" },
+    { id: "reels", name: "5 more reels", price: 250, get: "Five extra vertical reels on top of what your day includes" },
     { id: "website", name: "Need a website?", price: 2000, from: true, get: "A full site built from your Content Day — the video, the photos, the words. We scope it together on a call." },
-    { id: "photos", name: "20 more edited photos", price: 250, get: "40+ photos instead of 20–40" },
-    { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your location" },
   ],
 };
 
