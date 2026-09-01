@@ -13,10 +13,9 @@ const PHONE_HREF = "tel:+18455494425";
 
 export default async function QuotePage({ searchParams }) {
   const params = await searchParams;
-  const craft =
-    { photography: "photo", videography: "video", both: "both", photo: "photo", video: "video" }[
-      params?.service
-    ] || "";
+  const category = ["wedding", "business", "event"].includes(params?.for)
+    ? params.for
+    : "";
 
   return (
     <>
@@ -51,7 +50,7 @@ export default async function QuotePage({ searchParams }) {
           Pick what you need and I&apos;ll walk you to a tailored starting
           price, step by step. Real prices, no obligation.
         </p>
-        <QuoteFlow initialCraft={craft} />
+        <QuoteFlow initialCategory={category} />
       </main>
 
       <footer className="rm-footer">
