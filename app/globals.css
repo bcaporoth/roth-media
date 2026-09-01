@@ -4218,3 +4218,15 @@ footer.rm-footer {
 @media (max-width: 640px) {
   .promo-pill em { display: none; }
 }
+
+/* Chrome autofill paints fields baby-blue — keep them on the bone palette */
+.quote-form input:-webkit-autofill,
+.quote-form input:-webkit-autofill:hover,
+.quote-form input:-webkit-autofill:focus,
+.quote-form textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--bone) inset;
+  box-shadow: 0 0 0 1000px var(--bone) inset;
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-out 0s;
+}
