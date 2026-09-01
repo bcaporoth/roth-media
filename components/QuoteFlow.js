@@ -22,8 +22,9 @@ const PACKAGES = {
     { id: "luxury", name: "Luxury", price: 4500, scope: "All day · two shooters", get: ["Everything in Signature", "A second shooter all day — both of you getting ready, every angle", "A documentary edit of the full day", "Social cuts sized for Instagram and TikTok", "Nothing held back"], includes: ["drone", "second"] },
   ],
   business: [
-    { id: "quick", name: "Quick Hit", price: 500, scope: "Half day · one location", get: ["One polished video up to 90 seconds — or three short reels, your call", "Editing included, with one round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
-    { id: "day", name: "Content Day", price: 1500, scope: "Full day", popular: true, get: ["One flagship brand video for your website and ads", "Five vertical reels for Instagram, Facebook, and TikTok", "Drone footage of your location", "Editing included, with one round of revisions", "Delivered within two weeks — a month of marketing from one day"], includes: ["drone"] },
+    { id: "day", name: "Content Day", price: 1500, scope: "One shoot day", popular: true, get: ["A 60–90 second brand video for your website and ads", "4 vertical reels for Instagram, Facebook, and TikTok", "20–40 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
+    { id: "works", name: "The Works", price: 2500, scope: "One shoot day · a quarter of content", get: ["A 2–3 minute brand film plus the 60–90 second cut", "8 vertical reels", "40+ edited photos, licensed for web and social", "Drone footage of your location", "Captions written for every post, ready to schedule", "Two rounds of revisions"], includes: ["drone", "reels", "photos"] },
+    { id: "retainer", name: "Every Other Month", price: 1250, per: "/day", scope: "Six Content Days a year", get: ["A full Content Day every other month — video, 4 reels, 20–40 photos each visit", "Your feed never goes quiet", "Billed per shoot, no lump sum", "Priority scheduling"], includes: [] },
   ],
 };
 
@@ -35,8 +36,8 @@ const ADDONS = {
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your venue and portraits" },
   ],
   business: [
-    { id: "photo", name: "Add 40+ edited photos", price: 350, get: "Licensed for your website and social" },
-    { id: "reels", name: "Three more reels", price: 375, get: "Six weeks of posts instead of three" },
+    { id: "reels", name: "4 more reels", price: 400, get: "Eight reels instead of four — two months of posts" },
+    { id: "photos", name: "20 more edited photos", price: 250, get: "40+ photos instead of 20–40" },
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your location" },
   ],
 };
@@ -93,12 +94,12 @@ export default function QuoteFlow({ initialCategory = "" }) {
     setStatus("sending");
     const L = DETAIL[category];
     const rows = {
-      _subject: `Quote — ${data.firstName} ${data.lastName} · ${catTitle} · ${pkg.name} (${money(estimate)})`,
+      _subject: `Quote — ${data.firstName} ${data.lastName} · ${catTitle} · ${pkg.name} (${money(estimate)}${pkg.per || ""})`,
       _template: "table",
       "what it's for": catTitle,
-      package: `${pkg.name} — ${money(pkg.price)}`,
+      package: `${pkg.name} — ${money(pkg.price)}${pkg.per || ""}`,
       "add-ons": chosen.length ? chosen.map((a) => `${a.name} (${money(a.price)})`).join("; ") : "none",
-      "starting price": money(estimate),
+      "starting price": money(estimate) + (pkg.per || ""),
       "they get": [...fullGet(category, pkg), ...chosen.map((a) => a.get)].join(" · "),
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
@@ -113,7 +114,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
       const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || String(json.success) !== "true") throw new Error("failed");
-      setSent({ name: pkg.name, total: money(estimate) });
+      setSent({ name: pkg.name, total: money(estimate) + (pkg.per || "") });
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -168,7 +169,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
                 <button type="button" key={p.id} className={`qpkg ${pkgId === p.id ? "on" : ""} ${p.popular ? "popular" : ""}`} onClick={() => pickPackage(p.id)} aria-pressed={pkgId === p.id}>
                   {p.popular && <span className="qpkg-flag">Most booked</span>}
                   <span className="qpkg-name">{p.name}</span>
-                  <span className="qpkg-price">{money(p.price)} <small>starting at</small></span>
+                  <span className="qpkg-price">{money(p.price)}{p.per || ""} <small>starting at</small></span>
                   <span className="qpkg-scope">{p.scope}</span>
                   <span className="qpkg-you">You get</span>
                   <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -193,7 +194,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
                 <div className="qnav-row">
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
-                    <span className="qflow-total">Starting at <strong>{money(estimate)}</strong></span>
+                    <span className="qflow-total">Starting at <strong>{money(estimate)}{pkg.per || ""}</strong></span>
                     <button type="button" className="qprimary" onClick={() => jump(2)}>Continue</button>
                   </div>
                 </div>
@@ -211,7 +212,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
           {pkg && (
             <div className="qmatch qflow-summary">
               <div className="qmatch-kick">Your quote</div>
-              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at {money(estimate)}</span></div>
+              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at {money(estimate)}{pkg.per || ""}</span></div>
               <ul className="qflow-get">
                 {fullGet(category, pkg).map((g) => <li key={g}>{g}</li>)}
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}

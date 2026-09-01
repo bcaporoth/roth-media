@@ -4,6 +4,7 @@ import path from "path";
 import BrandMark from "../components/BrandMark";
 import Gallery from "../components/Gallery";
 import QuoteFlow from "../components/QuoteFlow";
+import PromoPill from "../components/PromoPill";
 import ReelCard from "../components/ReelCard";
 import Reveal from "../components/Reveal";
 
@@ -96,6 +97,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
       <Reveal />
+      <PromoPill />
 
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">
