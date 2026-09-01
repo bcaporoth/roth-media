@@ -3985,6 +3985,12 @@ footer.rm-footer {
   grid-template-columns: repeat(2, 1fr);
 }
 
+.qpkgs.one {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
 .qpkg-you {
   font-size: 0.68rem;
   font-weight: 800;

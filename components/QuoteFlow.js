@@ -17,8 +17,7 @@ const CATEGORIES = [
 // get: what the client walks away with — plain words, no jargon.
 const PACKAGES = {
   wedding: [
-    { id: "essential", name: "Essential", price: 2500, scope: "8 hours", get: ["A cinematic highlight film with your real vows and ceremony audio — exactly as long as it should be, never padded", "Your full ceremony, filmed and delivered", "Speeches and toasts, filmed and delivered", "Delivered online, ready to share, within 6 weeks"], includes: [] },
-    { id: "signature", name: "Signature", price: 3500, scope: "10 hours", popular: true, get: ["Everything in Essential", "Drone footage of your venue and portraits", "Short vertical reels of your favorite moments, sized for Instagram and TikTok", "A next-day sneak peek to post while everyone's still talking about it"], includes: ["drone", "reels"] },
+    { id: "film", name: "The Wedding Film", price: 3500, scope: "10 hours · everything included", get: ["A cinematic highlight film with your real vows and ceremony audio — exactly as long as it should be, never padded", "Your full ceremony, filmed and delivered", "Speeches and toasts, filmed and delivered", "Drone footage of your venue and portraits", "Short vertical reels of your favorite moments, sized for Instagram and TikTok", "A next-day sneak peek to post while everyone's still talking about it", "Delivered online, ready to share, within 6 weeks"], includes: ["drone", "reels"] },
   ],
   business: [
     { id: "mini", name: "Mini Content Day", price: 750, scope: "One shoot day · the essentials", get: ["Your promo — a 60–90 second brand video for your website and ads", "3 vertical reels for Instagram, Facebook, and TikTok", "10 edited photos, licensed for web and social", "One round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
@@ -70,7 +69,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
   const [step, setStep] = useState(valid ? 1 : 0);
   const [category, setCategory] = useState(valid ? initialCategory : "");
-  const [pkgId, setPkgId] = useState("");
+  const [pkgId, setPkgId] = useState(valid && PACKAGES[initialCategory].length === 1 ? PACKAGES[initialCategory][0].id : "");
   const [addons, setAddons] = useState({});
   const [contactPref, setContactPref] = useState("Text me");
   const [status, setStatus] = useState("idle");
@@ -87,7 +86,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
     setStep(n);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function pickCategory(id) { setCategory(id); setPkgId(""); setAddons({}); jump(1); }
+  function pickCategory(id) { setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
   function pickPackage(id) { setPkgId(id); setAddons({}); }
 
   async function handleSubmit(e) {
@@ -167,9 +166,9 @@ export default function QuoteFlow({ initialCategory = "" }) {
 
         {step === 1 && (
           <div className="qflow-step">
-            <h3 className="qflow-q">Pick your package.</h3>
-            <p className="qhelp">Real starting prices. You see exactly what you get before you send anything.</p>
-            <div className={`qpkgs ${packages.length === 2 ? "two" : ""}`}>
+            <h3 className="qflow-q">{packages.length === 1 ? "One package. Everything you need." : "Pick your package."}</h3>
+            <p className="qhelp">{packages.length === 1 ? "One real price, everything included — then add extras only if you want them." : "Real starting prices. You see exactly what you get before you send anything."}</p>
+            <div className={`qpkgs ${packages.length === 2 ? "two" : packages.length === 1 ? "one" : ""}`}>
               {packages.map((p) => (
                 <button type="button" key={p.id} className={`qpkg ${pkgId === p.id ? "on" : ""} ${p.popular ? "popular" : ""}`} onClick={() => pickPackage(p.id)} aria-pressed={pkgId === p.id}>
                   {p.popular && <span className="qpkg-flag">Most booked</span>}
