@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "../lib/track";
 import { useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
 
@@ -44,7 +45,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
     setStep(n);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function pickCategory(id) { setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
+  function pickCategory(id) { track("quote_started", { category: id }); setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
   function pickPackage(id) { setPkgId(id); setAddons({}); }
 
   async function handleSubmit(e) {
@@ -77,6 +78,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok || String(json.success) !== "true") throw new Error("failed");
       setSent({ name: pkg.name, total: money(estimate) + (pkg.per || "") });
+      track("quote_sent", { category, package: pkg.id, total: estimate });
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -204,6 +206,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
           {status === "error" && <p className="cform-error">That didn&apos;t send. Try again, or text me at 845-549-4425.</p>}
           <div className="qnav-row">
             <button type="button" className="qsecondary" onClick={() => jump(1)}>Back</button>
+            <p className="consent">By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
             <button type="submit" className="qprimary" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Send my quote"}</button>
           </div>
         </div>

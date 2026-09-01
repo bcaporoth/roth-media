@@ -4513,3 +4513,25 @@ a.svc-cta:hover {
 /* Footer social row */
 .foot-social { display: inline-flex; gap: 1rem; flex-wrap: wrap; }
 .foot-social a { text-decoration: none; }
+
+/* Form consent line (quote + promo) */
+.consent {
+  margin: 0.4rem 0 0.9rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--sand);
+}
+.consent a { color: inherit; text-decoration: underline; }
+
+/* Privacy + Terms pages */
+.legal-wrap { max-width: 680px; }
+.legal { color: var(--ink-soft); font-size: 1rem; line-height: 1.7; }
+.legal h2 {
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  margin: 2.2rem 0 0.6rem;
+  color: var(--ink, inherit);
+}
+.legal p { margin: 0 0 0.9rem; }
+.legal a { color: inherit; text-decoration: underline; }

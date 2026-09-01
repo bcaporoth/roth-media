@@ -43,7 +43,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Vercel Web Analytics — enable "Web Analytics" on the Vercel project once; no package needed. */}
+        <script dangerouslySetInnerHTML={{ __html: "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};" }} />
+        <script defer src="/_vercel/insights/script.js"></script>
+      </body>
     </html>
   );
 }

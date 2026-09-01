@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "../lib/track";
 import { useEffect, useState } from "react";
 
 // ── Free Content Day giveaway: entry form + countdown ──
@@ -67,6 +68,7 @@ export default function PromoEntry() {
       const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || String(json.success) !== "true") throw new Error("failed");
+      track("promo_entry_sent");
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -105,6 +107,7 @@ export default function PromoEntry() {
       {status === "error" && <p className="cform-error">That didn&apos;t send. Try again, or text 845-549-4425 with your business name.</p>}
       <div className="qnav-row">
         <span className="qhelp">One entry per business. Rules below.</span>
+        <p className="consent">By entering you&apos;re okay with Roth Media texting or emailing you about the giveaway and a related offer. Reply STOP any time. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
         <button type="submit" className="qprimary" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Put me in the pot"}</button>
       </div>
     </form>

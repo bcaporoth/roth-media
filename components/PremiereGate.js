@@ -135,8 +135,8 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
         <p className="cform-error" role="alert">{error}</p>
       )}
       <p className="pgate-fine">
-        You&apos;ll get the film in your inbox the moment it premieres. No spam,
-        ever — unsubscribe with one tap.
+        You&apos;ll get the film in your inbox the moment it premieres, plus a
+        couple of notes from Roth Media afterward. No spam — unsubscribe with one tap.
       </p>
     </form>
   );

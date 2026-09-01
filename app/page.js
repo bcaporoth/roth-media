@@ -12,7 +12,8 @@ import Reveal from "../components/Reveal";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
-const HERO_VIDEO = "/nolan-kennedy-wedding-hero.mp4";
+const HERO_VIDEO = "/nolan-kennedy-wedding-hero.mp4"; // full sneak peek, plays in the film card
+const HERO_LOOP = "/hero-loop.mp4"; // 30-second silent loop for the header — 7 MB instead of 46
 const HERO_POSTER = "/nolan-kennedy-cover.png";
 
 const JSON_LD = {
@@ -93,7 +94,7 @@ function getPhotos() {
 export default function Home() {
   const photos = getPhotos();
   const hasReel = fs.existsSync(
-    path.join(process.cwd(), "public", HERO_VIDEO.replace(/^\//, ""))
+    path.join(process.cwd(), "public", HERO_LOOP.replace(/^\//, ""))
   );
 
   return (
@@ -135,7 +136,7 @@ export default function Home() {
       <main id="top">
         <header className="reel unified-hero">
           {hasReel ? (
-            <video src={HERO_VIDEO} autoPlay muted loop playsInline poster={HERO_POSTER} />
+            <video src={HERO_LOOP} autoPlay muted loop playsInline preload="auto" poster={HERO_POSTER} />
           ) : (
             <div className="reel-poster" aria-hidden="true" />
           )}
@@ -279,6 +280,8 @@ export default function Home() {
           <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
           <SocialLinks />
           <Link href="/portal">Client login</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>

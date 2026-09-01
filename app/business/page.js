@@ -154,6 +154,8 @@ export default function BusinessPage() {
           <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
           <SocialLinks />
           <Link href="/portal">Client login</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
       </footer>
