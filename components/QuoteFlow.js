@@ -11,8 +11,7 @@ const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 const CATEGORIES = [
   { id: "wedding", title: "A wedding", desc: "A cinematic film of the whole day — with photos if you want them." },
-  { id: "business", title: "My business", desc: "A brand video and reels that bring customers through the door." },
-  { id: "event", title: "An event", desc: "Coverage as it happens, and a recap that sells next year's." },
+  { id: "business", title: "My business", desc: "Branded content — a brand video and reels that bring customers through the door." },
 ];
 
 // get: what the client walks away with — plain words, no jargon.
@@ -25,10 +24,6 @@ const PACKAGES = {
   business: [
     { id: "quick", name: "Quick Hit", price: 500, scope: "Half day · one location", get: ["One polished video up to 90 seconds — or three short reels, your call", "Editing included, with one round of revisions", "Delivered within two weeks, ready to post"], includes: [] },
     { id: "day", name: "Content Day", price: 1500, scope: "Full day", popular: true, get: ["One flagship brand video for your website and ads", "Five vertical reels for Instagram, Facebook, and TikTok", "Drone footage of your location", "Editing included, with one round of revisions", "Delivered within two weeks — a month of marketing from one day"], includes: ["drone"] },
-  ],
-  event: [
-    { id: "coverage", name: "Event Coverage", price: 600, scope: "Half day", get: ["Your event filmed as it happens — speakers, crowd, the moments", "An edited recap for social, delivered within two weeks"], includes: [] },
-    { id: "recap", name: "Recap Film", price: 1200, scope: "Full day + the film", popular: true, get: ["Full-day coverage of the whole event", "A polished recap film (2–3 min) cut for socials and sponsor decks", "Speeches and presentations captured with clean audio", "Delivered within two weeks"], includes: [] },
   ],
 };
 
@@ -44,16 +39,11 @@ const ADDONS = {
     { id: "reels", name: "Three more reels", price: 375, get: "Six weeks of posts instead of three" },
     { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your location" },
   ],
-  event: [
-    { id: "photo", name: "Add photos", price: 300, get: "Full gallery your guests can share" },
-    { id: "drone", name: "Drone footage", price: 200, get: "Aerials of the venue and crowd" },
-  ],
 };
 
 const DETAIL = {
   wedding: { date: "Wedding date", where: "Venue (or town if you're still deciding)" },
   business: { date: "When would you like to shoot?", where: "Business name and location" },
-  event: { date: "Event date", where: "Event name and venue" },
 };
 
 const STEPS = ["What it's for", "Your package", "Your info"];
@@ -157,7 +147,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
         {step === 0 && (
           <div className="qflow-step">
             <h3 className="qflow-q">What are we filming?</h3>
-            <div className="qsvc">
+            <div className="qsvc two">
               {CATEGORIES.map((c) => (
                 <button type="button" key={c.id} className={category === c.id ? "on" : ""} onClick={() => pickCategory(c.id)}>
                   <span className="qsvc-title">{c.title}</span>

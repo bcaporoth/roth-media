@@ -4020,3 +4020,14 @@ footer.rm-footer {
     grid-template-columns: 1fr;
   }
 }
+
+.qflow .qsvc.two {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 640px;
+}
+
+@media (max-width: 640px) {
+  .qflow .qsvc.two {
+    grid-template-columns: 1fr;
+  }
+}
