@@ -4535,3 +4535,15 @@ a.svc-cta:hover {
 }
 .legal p { margin: 0 0 0.9rem; }
 .legal a { color: inherit; text-decoration: underline; }
+
+/* Secondary "book a call" link beside the main CTA */
+.svc-cta-row { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; }
+.svc-cta-secondary {
+  display: inline-block;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.svc-cta-secondary:hover { color: var(--ink); }
+.cform-success-body a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

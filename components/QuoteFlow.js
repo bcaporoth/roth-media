@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "../lib/track";
+import { CALENDLY } from "../lib/site";
 import { useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
 
@@ -91,6 +92,9 @@ export default function QuoteFlow({ initialCategory = "" }) {
         <p className="cform-success-title">Got it — I&apos;ll be in touch within 24 hours.</p>
         <p className="cform-success-body">
           {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I&apos;ll confirm the exact number and lock your date. Usually much faster than 24 hours.
+        </p>
+        <p className="cform-success-body">
+          Want to talk it through now? <a href={CALENDLY} target="_blank" rel="noopener noreferrer" onClick={() => track("book_call_click", { from: "quote" })}>Book a 15-minute call</a> and pick a time that works.
         </p>
       </div>
     );

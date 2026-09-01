@@ -1,6 +1,6 @@
 import Link from "next/link";
 import SocialLinks from "../../components/SocialLinks";
-import { EMAIL, SAME_AS } from "../../lib/site";
+import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
 
@@ -86,6 +86,7 @@ export default function BusinessPage() {
         </p>
         <p className="svc-cta-row">
           <Link href="/quote?for=business" className="qprimary svc-cta">Build my quote →</Link>
+          <a href={CALENDLY} className="svc-cta-secondary" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
         </p>
 
         <div className="svc-video-grid">
@@ -142,6 +143,7 @@ export default function BusinessPage() {
           <p className="qhelp">Build the quote — no obligation, and I&apos;ll be in touch within 24 hours.</p>
           <p className="svc-cta-row">
             <Link href="/quote?for=business" className="qprimary svc-cta">Get my instant quote →</Link>
+            <a href={CALENDLY} className="svc-cta-secondary" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
           </p>
         </section>
       </main>

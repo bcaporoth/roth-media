@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "../lib/track";
+import { CALENDLY } from "../lib/site";
 import { useEffect, useState } from "react";
 
 // ── Free Content Day giveaway: entry form + countdown ──
@@ -83,6 +84,9 @@ export default function PromoEntry() {
         <p className="cform-success-title">You&apos;re in the pot.</p>
         <p className="cform-success-body">
           Winner drawn {PROMO.drawLabel} and announced on TikTok — I&apos;ll call or text if it&apos;s you. Want better odds for your town? Tag a business that needs this in the comments.
+        </p>
+        <p className="cform-success-body">
+          Don&apos;t want to wait on the draw? <a href={CALENDLY} target="_blank" rel="noopener noreferrer" onClick={() => track("book_call_click", { from: "promo" })}>Book a 15-minute call</a> and we&apos;ll talk about your business now.
         </p>
       </div>
     );
