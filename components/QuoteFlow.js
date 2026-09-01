@@ -37,6 +37,8 @@ const ADDONS = {
   business: [
     { id: "promo2", name: "Another promo video", price: 400, get: "A second 60–90 second cut from the same shoot — a different offer, season, or audience" },
     { id: "reels", name: "5 more reels", price: 250, get: "Five extra vertical reels on top of what your day includes" },
+    { id: "photos", name: "20 more edited photos", price: 250, get: "Double the gallery, licensed for web and social" },
+    { id: "drone", name: "Drone footage", price: 200, get: "Aerials of your location" },
     { id: "website", name: "Need a website?", price: 2000, from: true, get: "A full site built from your Content Day — the video, the photos, the words. We scope it together on a call." },
   ],
 };
