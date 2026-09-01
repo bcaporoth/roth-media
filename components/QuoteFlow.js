@@ -217,6 +217,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
               </ul>
               <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
+              <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
             </div>
           )}
           <h3 className="qflow-q">Where should I send it?</h3>
