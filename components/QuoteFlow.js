@@ -10,7 +10,7 @@ const CONTACT_EMAIL = "b.caporoth@gmail.com";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 const CATEGORIES = [
-  { id: "wedding", title: "A wedding", desc: "A cinematic film of the whole day — with photos if you want them." },
+  { id: "wedding", title: "A wedding or engagement", desc: "A cinematic film of your day — from the proposal to the last dance, with photos if you want them." },
   { id: "business", title: "My business", desc: "Branded content — a brand video and reels that bring customers through the door." },
 ];
 
@@ -48,7 +48,7 @@ const ADDONS = {
 };
 
 const DETAIL = {
-  wedding: { date: "Wedding date", where: "Venue (or town if you're still deciding)" },
+  wedding: { date: "Your date", where: "Venue (or town if you're still deciding)" },
   business: { date: "When would you like to shoot?", where: "Business name and location" },
 };
 
@@ -151,7 +151,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
         <input type="text" name="_honey" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
         {step === 0 && (
-          <div className="qflow-step">
+          <div className="qflow-step qflow-entry">
             <h3 className="qflow-q">What are we filming?</h3>
             <div className="qsvc two">
               {CATEGORIES.map((c) => (

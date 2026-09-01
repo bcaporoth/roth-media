@@ -3945,6 +3945,40 @@ footer.rm-footer {
 .qflow-steps.three {
   grid-template-columns: repeat(3, 1fr);
   max-width: 560px;
+  margin-inline: auto;
+}
+
+/* entry screen — centered, roomier cards so it doesn't feel barren */
+.qflow-entry {
+  text-align: center;
+}
+
+.qflow-entry .qsvc.two {
+  margin-inline: auto;
+  max-width: 680px;
+  gap: 1rem;
+  text-align: left;
+}
+
+.qflow-entry .qsvc button {
+  display: grid;
+  align-content: start;
+  padding: 1.6rem 1.4rem;
+  border-radius: 18px;
+}
+
+.qflow-entry .qsvc .qsvc-title {
+  font-size: 1.15rem;
+}
+
+.qflow-entry .qsvc .qsvc-desc {
+  font-size: 0.85rem;
+  margin-top: 0.45rem;
+  line-height: 1.55;
+}
+
+.qflow-entry .qflow-foot {
+  margin-top: 1.3rem;
 }
 
 .qpkgs.two {
