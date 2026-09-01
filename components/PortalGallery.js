@@ -74,9 +74,26 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
 
   const current = lightbox !== null ? items[lightbox] : null;
 
-  // Deal items into columns without disturbing their order.
-  const columns = Array.from({ length: cols }, () => []);
-  items.forEach((item, i) => columns[i % cols].push([item, i]));
+  // Sections ("parts of the day"): group by item.section in first-appearance
+  // order. Untitled items form a heading-less group. The lightbox keeps
+  // global indices, so prev/next flows straight through section borders.
+  const groups = [];
+  items.forEach((item, i) => {
+    const key = item.section || "";
+    let g = groups.find((x) => x.key === key);
+    if (!g) {
+      g = { key, title: item.section || null, entries: [] };
+      groups.push(g);
+    }
+    g.entries.push([item, i]);
+  });
+
+  // Deal a group's items into columns without disturbing their order.
+  const dealt = (entries) => {
+    const columns = Array.from({ length: cols }, () => []);
+    entries.forEach(([item, i], n) => columns[n % cols].push([item, i]));
+    return columns;
+  };
 
   const tile = (item, i) => {
     const tileSrc =
@@ -118,13 +135,25 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
 
   return (
     <>
-      <div className="gallery pgal-grid">
-        {columns.map((col, c) => (
-          <div className="pgal-col" key={c}>
-            {col.map(([item, i]) => tile(item, i))}
+      {groups.map((group) => (
+        <section className="pgal-section" key={group.key || "·"}>
+          {group.title && (
+            <h2 className="pgal-section-title">
+              {group.title}
+              <span className="pgal-section-count">
+                {group.entries.length}
+              </span>
+            </h2>
+          )}
+          <div className="gallery pgal-grid">
+            {dealt(group.entries).map((col, c) => (
+              <div className="pgal-col" key={c}>
+                {col.map(([item, i]) => tile(item, i))}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
+      ))}
       {current && (
         <div
           className="lightbox"

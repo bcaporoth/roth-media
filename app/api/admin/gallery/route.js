@@ -94,13 +94,24 @@ export async function POST(request) {
     const { galleryId, media, coverFilename } = body;
     if (!galleryId || !Array.isArray(media))
       return NextResponse.json({ error: "Bad finalize request" }, { status: 422 });
-    const rows = media.map((m, i) => ({
+    const baseRow = (m, i) => ({
       gallery_id: galleryId,
       filename: String(m.filename),
       kind: m.kind === "video" ? "video" : "photo",
       position: i,
-    }));
-    const { error } = await db.from("media").insert(rows);
+    });
+    const hasSections = media.some((m) => m.section);
+    const rows = media.map((m, i) =>
+      m.section
+        ? { ...baseRow(m, i), section: String(m.section).slice(0, 80) }
+        : baseRow(m, i)
+    );
+    let { error } = await db.from("media").insert(rows);
+    // media.section doesn't exist until supabase/sections.sql has run —
+    // land the album flat rather than failing the whole upload.
+    if (error && hasSections && /section/i.test(error.message)) {
+      ({ error } = await db.from("media").insert(media.map(baseRow)));
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await db
       .from("galleries")

@@ -28,6 +28,22 @@ function jpgName(f) {
   return f.replace(/\.[^.]+$/, "") + ".jpg";
 }
 
+// Folder mode: the picked folder's SUBFOLDERS become album sections.
+// "Album/02 Ceremony/IMG_1.jpg" → section "Ceremony" (leading numbers are
+// sort order, not display). Files sitting directly in the picked folder
+// get no section.
+function relPath(file) {
+  return file.webkitRelativePath || file.name;
+}
+
+function sectionOf(file) {
+  const parts = relPath(file).split("/");
+  if (parts.length < 3) return null;
+  const raw = parts[parts.length - 2].trim();
+  const clean = raw.replace(/^\d+[\s._-]*/, "").trim();
+  return (clean || raw).slice(0, 80) || null;
+}
+
 function fmtBytes(n) {
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
   if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(0)} MB`;
@@ -171,6 +187,7 @@ export default function AdminUploader() {
   const [done, setDone] = useState(null);
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
+  const [folderMode, setFolderMode] = useState(false);
 
   const cancelRef = useRef(false);
   const wakeLockRef = useRef(null);
@@ -225,7 +242,9 @@ export default function AdminUploader() {
       setError("Pick at least one photo or video.");
       return;
     }
-    all.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    // Folder mode: sorting by relative path keeps each subfolder's photos
+    // together and orders sections by folder name (01 …, 02 …).
+    all.sort((a, b) => relPath(a).localeCompare(relPath(b), undefined, { numeric: true }));
 
     const title = String(data.get("title") || "").trim();
     const resuming =
@@ -308,7 +327,7 @@ export default function AdminUploader() {
             ],
           });
           await putWithRetry(signed.urls[0].url, file, () => bump(`retrying ${file.name}`));
-          results[i] = { filename: safe, kind: "video" };
+          results[i] = { filename: safe, kind: "video", section: sectionOf(file) };
         } else {
           const size = await imageSize(file);
           const [web, thumb] = [
@@ -330,7 +349,7 @@ export default function AdminUploader() {
             putWithRetry(bySize.web.url, web, () => bump(`retrying ${file.name}`)),
             putWithRetry(bySize.thumb.url, thumb, () => bump(`retrying ${file.name}`)),
           ]);
-          results[i] = { filename: safe, kind: "photo" };
+          results[i] = { filename: safe, kind: "photo", section: sectionOf(file) };
         }
       };
 
@@ -374,6 +393,7 @@ export default function AdminUploader() {
             uploadedNow.get(f.name) || {
               filename: f.name.replace(/[^\w.\- ]/g, "_"),
               kind: VIDEO_EXT.test(f.name) ? "video" : "photo",
+              section: sectionOf(f),
             }
         );
 
@@ -477,14 +497,29 @@ export default function AdminUploader() {
         </div>
       </div>
       <div>
-        <label htmlFor="au-files">Photos &amp; videos *</label>
+        <label htmlFor="au-files">
+          {folderMode ? "Album folder *" : "Photos & videos *"}
+        </label>
         <input
           id="au-files"
           name="files"
           type="file"
           multiple
-          accept="image/*,video/mp4,video/quicktime,video/webm"
+          accept={folderMode ? undefined : "image/*,video/mp4,video/quicktime,video/webm"}
+          {...(folderMode ? { webkitdirectory: "", directory: "" } : {})}
         />
+        <label className="au-foldermode">
+          <input
+            type="checkbox"
+            checked={folderMode}
+            onChange={(e) => setFolderMode(e.target.checked)}
+          />
+          <span>
+            Upload a whole folder — subfolders become <strong>sections</strong> of
+            the album (&ldquo;01 Getting Ready&rdquo;, &ldquo;02 Ceremony&rdquo;… numbers set the
+            order and are hidden from clients).
+          </span>
+        </label>
       </div>
 
       <button type="submit" disabled={busy}>

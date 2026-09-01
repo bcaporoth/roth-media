@@ -63,11 +63,20 @@ export default async function GalleryPage({ params }) {
     .maybeSingle();
   if (!gallery) notFound();
 
-  const { data: media } = await db
+  // `section` arrives with supabase/sections.sql — fall back to a flat
+  // album until that migration has run.
+  let { data: media, error: mediaError } = await db
     .from("media")
-    .select("filename, kind")
+    .select("filename, kind, section")
     .eq("gallery_id", gallery.id)
     .order("position", { ascending: true });
+  if (mediaError) {
+    ({ data: media } = await db
+      .from("media")
+      .select("filename, kind")
+      .eq("gallery_id", gallery.id)
+      .order("position", { ascending: true }));
+  }
 
   // Derived sizes (web/thumb + video posters) are always stored as .jpg;
   // originals keep their exact filename.
@@ -87,7 +96,7 @@ export default async function GalleryPage({ params }) {
           download: m.filename,
         }),
       ]);
-      return { filename: m.filename, kind: m.kind, thumbUrl, webUrl, downloadUrl };
+      return { filename: m.filename, kind: m.kind, section: m.section || null, thumbUrl, webUrl, downloadUrl };
     })
   );
 
