@@ -3492,6 +3492,7 @@ footer.rm-footer {
   max-width: 900px;
   margin: 0 auto;
   text-align: left;
+  scroll-margin-top: 96px; /* step changes scrollIntoView — clear the sticky nav */
 }
 
 .qflow-steps {
