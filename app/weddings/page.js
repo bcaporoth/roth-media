@@ -1,4 +1,6 @@
 import Link from "next/link";
+import SocialLinks from "../../components/SocialLinks";
+import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
 
@@ -15,7 +17,7 @@ const PHONE_HREF = "tel:+18455494425";
 const FAQS = [
   {
     q: "How much does a wedding videographer cost in the Twin Tiers?",
-    a: "My prices are public: Ceremony Only starts at $1,500 and The Wedding Film — the full day with drone, social reels, and a next-day sneak peek — starts at $3,500. Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.",
+    a: "My prices are public: Ceremony Only starts at $1,500 and The Wedding Film — the full day with social reels and a next-day sneak peek — starts at $3,500. Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.",
   },
   {
     q: "Do you film engagements too?",
@@ -39,7 +41,7 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Service",
   serviceType: "Wedding videography",
-  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", url: "https://rothmediaco.com" },
+  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
   areaServed: ["Sayre PA", "Athens PA", "Waverly NY", "Elmira NY", "Corning NY"],
   offers: PACKAGES.wedding.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD" })),
 };
@@ -143,6 +145,8 @@ export default function WeddingsPage() {
           <div className="brand"><BrandMark />Roth <em>Media</em></div>
           <span>Waverly, NY — serving the Twin Tiers</span>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <SocialLinks />
           <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>

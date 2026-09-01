@@ -4509,3 +4509,7 @@ a.svc-cta:hover {
   border-top: 1px solid var(--line);
   padding-top: 2.4rem;
 }
+
+/* Footer social row */
+.foot-social { display: inline-flex; gap: 1rem; flex-wrap: wrap; }
+.foot-social a { text-decoration: none; }

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 // ── Free Content Day giveaway: entry form + countdown ──
 import { PROMO } from "../lib/promo";
 
-const CONTACT_EMAIL = "b.caporoth@gmail.com";
+const CONTACT_EMAIL = "brandon@rothventures.co";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 function useCountdown(iso) {

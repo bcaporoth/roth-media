@@ -7,7 +7,7 @@ import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
 // 3. Your info + the quote.  Every number lives in lib/packages.js.
 
-const CONTACT_EMAIL = "b.caporoth@gmail.com";
+const CONTACT_EMAIL = "brandon@rothventures.co";
 const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 const STEPS = ["What it's for", "Your package", "Your info"];

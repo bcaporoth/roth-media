@@ -1,4 +1,6 @@
 import Link from "next/link";
+import SocialLinks from "../../components/SocialLinks";
+import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
 
@@ -39,7 +41,7 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Service",
   serviceType: "Brand video and content production",
-  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", url: "https://rothmediaco.com" },
+  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
   areaServed: ["Sayre PA", "Athens PA", "Waverly NY", "Elmira NY", "Corning NY"],
   offers: PACKAGES.business.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD" })),
 };
@@ -149,6 +151,8 @@ export default function BusinessPage() {
           <div className="brand"><BrandMark />Roth <em>Media</em></div>
           <span>Waverly, NY — serving the Twin Tiers</span>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <SocialLinks />
           <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>

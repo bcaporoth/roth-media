@@ -1,4 +1,6 @@
 import Link from "next/link";
+import SocialLinks from "../../components/SocialLinks";
+import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import PromoEntry, { PromoCountdown } from "../../components/PromoEntry";
 import { PROMO } from "../../lib/promo";
@@ -94,6 +96,8 @@ export default function PromoPage() {
             Roth <em>Media</em>
           </div>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <SocialLinks />
           <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>

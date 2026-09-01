@@ -1,4 +1,6 @@
 import Link from "next/link";
+import SocialLinks from "../components/SocialLinks";
+import { EMAIL, SAME_AS } from "../lib/site";
 import fs from "fs";
 import path from "path";
 import BrandMark from "../components/BrandMark";
@@ -19,6 +21,8 @@ const JSON_LD = {
   name: "Roth Media",
   url: "https://rothmediaco.com",
   telephone: "+1-845-549-4425",
+  email: EMAIL,
+  sameAs: SAME_AS,
   description:
     "Cinematic videography and candid photography for the Twin Tiers — Waverly NY, Athens PA, Sayre PA, Elmira NY, and Corning NY.",
   address: {
@@ -272,6 +276,8 @@ export default function Home() {
           </div>
           <span>Waverly, NY — serving the Twin Tiers</span>
           <a href={PHONE_HREF}>{PHONE}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <SocialLinks />
           <Link href="/portal">Client login</Link>
           <span>© {new Date().getFullYear()} Roth Media</span>
         </div>
