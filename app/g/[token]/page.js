@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import PortalGallery from "../../../components/PortalGallery";
 import PremiereGate from "../../../components/PremiereGate";
 import { designSkin } from "../../../lib/design";
+import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
 
@@ -264,6 +265,14 @@ export default async function SharedGalleryPage({ params }) {
         <Link href="/quote" className="hero-cta-primary" style={{ marginTop: "1rem" }}>
           Get my instant quote →
         </Link>
+        {REVIEW_URL && (
+          <p className="lead" style={{ marginTop: "1.6rem" }}>
+            Had a great experience with us?{" "}
+            <a href={REVIEW_URL} target="_blank" rel="noopener noreferrer">
+              Leave a Google review ★
+            </a>
+          </p>
+        )}
       </section>
 
       <footer className="rm-footer">
