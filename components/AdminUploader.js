@@ -188,9 +188,37 @@ export default function AdminUploader() {
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
   const [folderMode, setFolderMode] = useState(false);
+  // Client roster: pick a saved client or type a new one — new clients are
+  // saved to the roster automatically when the gallery is created.
+  const [clients, setClients] = useState([]);
+  const [clientPick, setClientPick] = useState("new");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientName, setClientName] = useState("");
 
   const cancelRef = useRef(false);
   const wakeLockRef = useRef(null);
+
+  useEffect(() => {
+    api({ action: "clients" })
+      .then((r) => setClients(r.clients || []))
+      .catch(() => {
+        /* roster unavailable — typing still works */
+      });
+  }, []);
+
+  const pickClient = (value) => {
+    setClientPick(value);
+    if (value === "new") {
+      setClientEmail("");
+      setClientName("");
+      return;
+    }
+    const c = clients.find((x) => x.id === value);
+    if (c) {
+      setClientEmail(c.email);
+      setClientName(c.name || "");
+    }
+  };
 
   useEffect(() => {
     try {
@@ -433,6 +461,13 @@ export default function AdminUploader() {
         elapsed: Date.now() - startedAt,
       });
       form.reset();
+      setClientPick("new");
+      setClientEmail("");
+      setClientName("");
+      // The client just used may be new — refresh the roster.
+      api({ action: "clients" })
+        .then((r) => setClients(r.clients || []))
+        .catch(() => {});
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -480,6 +515,21 @@ export default function AdminUploader() {
           <input id="au-date" name="eventDate" type="date" />
         </div>
       </div>
+      <div>
+        <label htmlFor="au-client">Client *</label>
+        <select
+          id="au-client"
+          value={clientPick}
+          onChange={(e) => pickClient(e.target.value)}
+        >
+          <option value="new">+ New client…</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name ? `${c.name} — ${c.email}` : c.email}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="row">
         <div>
           <label htmlFor="au-email">Client email *</label>
@@ -489,13 +539,29 @@ export default function AdminUploader() {
             type="email"
             required
             placeholder="They sign in with this"
+            value={clientEmail}
+            onChange={(e) => setClientEmail(e.target.value)}
+            readOnly={clientPick !== "new"}
           />
         </div>
         <div>
           <label htmlFor="au-name">Client name</label>
-          <input id="au-name" name="clientName" placeholder="Olivia Morgan" />
+          <input
+            id="au-name"
+            name="clientName"
+            placeholder="Olivia Morgan"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            readOnly={clientPick !== "new"}
+          />
         </div>
       </div>
+      {clientPick === "new" && clients.length > 0 && (
+        <p className="au-client-hint">
+          New clients are saved to your roster automatically — next time
+          they&apos;ll be in the list above.
+        </p>
+      )}
       <div>
         <label htmlFor="au-files">
           {folderMode ? "Album folder *" : "Photos & videos *"}

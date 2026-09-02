@@ -71,6 +71,16 @@ export async function POST(request) {
     return NextResponse.json({ galleryId: gallery.id, shareToken: gallery.share_token });
   }
 
+  // Roster for the uploader's client picker — every client ever added.
+  if (body.action === "clients") {
+    const { data, error } = await db
+      .from("clients")
+      .select("id, email, name")
+      .order("name", { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ clients: data || [] });
+  }
+
   if (body.action === "sign") {
     const { galleryId, files } = body;
     if (!galleryId || !Array.isArray(files) || files.length === 0 || files.length > 60)

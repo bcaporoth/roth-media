@@ -3485,6 +3485,12 @@ body:has(.lightbox) nav.rm-nav {
   color: var(--sand);
 }
 
+.au-client-hint {
+  margin: -0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
 /* Uploader folder-mode toggle */
 .au-foldermode {
   display: flex;
