@@ -7,7 +7,7 @@ import { PACKAGES, ADDONS, money } from "../../lib/packages";
 export const metadata = {
   title: "Brand Video & Content Days for Twin Tiers Businesses",
   description:
-    "A Content Day gets your business a brand video, vertical reels, and edited photos in one shoot — Sayre, Athens, Waverly, Elmira & Corning. From $750, delivered in two weeks.",
+    "A Reel Day fills your feed with 8 vertical reels from one shoot; a Full Content Day adds your brand video and photos — Sayre, Athens, Waverly, Elmira & Corning. From $800.",
   alternates: { canonical: "/business" },
 };
 
@@ -16,8 +16,8 @@ const PHONE_HREF = "tel:+18455494425";
 
 const FAQS = [
   {
-    q: "What is a Content Day?",
-    a: "One shoot day at your business that walks away as a month of marketing: a 60–90 second brand video for your website and ads, vertical reels for Instagram, Facebook, and TikTok, and edited photos licensed for web and social. Mini starts at $750, the Full Content Day at $1,500.",
+    q: "What's the difference between a Reel Day and a Full Content Day?",
+    a: "Both are one shoot day at your business. A Reel Day ($800) fills your feed: 8 vertical reels for Instagram, Facebook, and TikTok. The Full Content Day ($1,500) adds your 60–90 second brand video for your website and ads, plus 20–40 edited photos — a month of marketing in one visit.",
   },
   {
     q: "How fast do I get my content?",

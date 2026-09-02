@@ -6,9 +6,9 @@ import PromoEntry, { PromoCountdown } from "../../components/PromoEntry";
 import { PROMO } from "../../lib/promo";
 
 export const metadata = {
-  title: "Win a Free Content Day — Roth Media",
+  title: "Win a Free Reel Day",
   description:
-    "One Twin Tiers business wins a free Content Day: a brand video, ten reels, and 20–40 edited photos. Enter in 30 seconds.",
+    "One Twin Tiers business wins a free Reel Day: 8 vertical reels shot at your place, ready to post. Other winners get it half off. Enter in 30 seconds.",
 };
 
 const PHONE = "845-549-4425";
@@ -31,11 +31,12 @@ export default function PromoPage() {
       </nav>
 
       <main className="quote-wrap promo-wrap">
-        <div className="kick">Free Content Day giveaway</div>
-        <h1>One local business wins a <em>free Content Day.</em></h1>
+        <div className="kick">Free Reel Day giveaway</div>
+        <h1>One local business wins a <em>free Reel Day.</em></h1>
         <p className="lead">
-          A full day of filming at your business, and you walk away with everything below —
-          on me. Entries close {PROMO.closesLabel}.
+          A shoot day at your business, and you walk away with everything below —
+          on me. Other winners drawn get the same Reel Day at half price.
+          Entries close {PROMO.closesLabel}.
         </p>
 
         <PromoCountdown />
@@ -43,10 +44,10 @@ export default function PromoPage() {
         <section className="promo-box">
           <div className="qmatch-kick">What the winner gets · ${PROMO.value.toLocaleString("en-US")} value</div>
           <ul className="qflow-get promo-get">
-            <li>A 60–90 second brand video for your website and ads</li>
-            <li>10 vertical reels for Instagram, Facebook, and TikTok</li>
-            <li>20–40 edited photos, licensed for web and social</li>
+            <li>A Reel Day: 8 vertical reels for Instagram, Facebook, and TikTok</li>
+            <li>Shot at your business — your people, your place, not stock</li>
             <li>One round of revisions, delivered within two weeks — ready to post</li>
+            <li>Runner-up winners get the same Reel Day at half price — ${PROMO.runnerUp}</li>
           </ul>
         </section>
 
@@ -76,11 +77,13 @@ export default function PromoPage() {
             18 or older and authorized to speak for the business. Entries close {PROMO.closesLabel}, 2026 at 11:59 PM ET.
           </p>
           <p>
-            One winner is drawn at random from all valid entries on {PROMO.drawLabel}, announced on TikTok, and
-            contacted by phone or email. If the winner doesn&apos;t respond within 72 hours, a new winner is drawn.
-            The prize is one Content Day as described above, to be scheduled within 90 days of the draw at a
-            mutually agreed date, at the winner&apos;s location. No cash value, not transferable, no purchase
-            necessary. Entering doesn&apos;t obligate you to anything.
+            One grand-prize winner is drawn at random from all valid entries on {PROMO.drawLabel}, announced on
+            TikTok, and contacted by phone or email. If the winner doesn&apos;t respond within 72 hours, a new winner
+            is drawn. The grand prize is one Reel Day as described above (${PROMO.value} value), to be scheduled
+            within 90 days of the draw at a mutually agreed date, at the winner&apos;s location. Additional runner-up
+            winners may be drawn and offered the same Reel Day at half price (${PROMO.runnerUp}) — that&apos;s an
+            offer, not a charge; runner-ups aren&apos;t obligated to book. No cash value, not transferable, no
+            purchase necessary. Entering doesn&apos;t obligate you to anything.
           </p>
           <p>
             This giveaway is run by Roth Media and is in no way sponsored, endorsed, administered by, or

@@ -14,7 +14,7 @@ export default function PromoPill() {
   return (
     <Link href="/promo" className="promo-pill">
       <span className="promo-pill-dot" aria-hidden="true" />
-      Win a free Content Day <em>· enter by {PROMO.closesLabel.replace("Sunday, ", "")}</em>
+      Win a free Reel Day <em>· enter by {PROMO.closesLabel.replace("Sunday, ", "")}</em>
     </Link>
   );
 }
