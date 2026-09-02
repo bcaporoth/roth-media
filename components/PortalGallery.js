@@ -14,7 +14,46 @@ import { useState, useEffect, useCallback, useRef } from "react";
 export default function PortalGallery({ items, title, videoPoster = null }) {
   const [lightbox, setLightbox] = useState(null);
   const [cols, setCols] = useState(3);
+  const [saving, setSaving] = useState(null);
+  const [touchShare, setTouchShare] = useState(false);
   const touchRef = useRef(null);
+
+  // Phones/tablets that can hand a file to the native share sheet get a
+  // "save to Photos" flow; everyone else keeps the plain download link.
+  useEffect(() => {
+    setTouchShare(
+      typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        window.matchMedia("(hover: none) and (pointer: coarse)").matches
+    );
+  }, []);
+
+  // Fetch the original and open the OS share sheet — on iOS/Android that
+  // includes "Save Image", which drops it straight into the photo library
+  // (a plain download link can only reach the Files app). Any failure
+  // (CORS not set up yet, share refused, slow network killed the gesture)
+  // falls back to the normal download.
+  const saveItem = async (e, item) => {
+    if (!touchShare || item.kind === "video" || saving) return;
+    e.preventDefault();
+    setSaving(item.filename);
+    try {
+      const res = await fetch(item.downloadUrl);
+      if (!res.ok) throw new Error(`fetch ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], item.filename, {
+        type: blob.type || "image/jpeg",
+      });
+      if (!navigator.canShare({ files: [file] })) throw new Error("no file share");
+      await navigator.share({ files: [file] });
+    } catch (err) {
+      // AbortError = the client closed the share sheet — not a failure.
+      if (err?.name !== "AbortError") window.location.href = item.downloadUrl;
+    } finally {
+      setSaving(null);
+    }
+  };
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
@@ -124,10 +163,12 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
         <a
           className="pgal-dl"
           href={item.downloadUrl}
-          aria-label={`Download ${item.kind} ${i + 1}`}
-          title={`Download this ${item.kind}`}
+          onClick={(e) => saveItem(e, item)}
+          aria-label={`Save ${item.kind} ${i + 1}`}
+          aria-busy={saving === item.filename}
+          title={`Save this ${item.kind}`}
         >
-          ↓
+          {saving === item.filename ? "…" : "↓"}
         </a>
       </div>
     );
@@ -194,9 +235,15 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           <a
             className="pgal-lightbox-dl"
             href={current.downloadUrl}
-            title={`Download this ${current.kind}`}
+            onClick={(e) => saveItem(e, current)}
+            aria-busy={saving === current.filename}
+            title={`Save this ${current.kind}`}
           >
-            Download ↓
+            {saving === current.filename
+              ? "Saving…"
+              : touchShare && current.kind !== "video"
+                ? "Save photo ↓"
+                : "Download ↓"}
           </a>
           <button
             className="arrow next"

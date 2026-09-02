@@ -25,6 +25,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { createRequire } from "node:module";
 import sharp from "sharp";
+import { captureTime } from "./lib/capture-time.mjs";
 
 const require = createRequire(import.meta.url);
 const archiver = require("archiver");
@@ -67,10 +68,25 @@ if (!args.dir || !args.client || !args.title) {
 const PHOTO_EXT = /\.(jpe?g|png|webp|heic|tiff?)$/i;
 const VIDEO_EXT = /\.(mp4|mov|m4v|webm)$/i;
 
-const files = fs
+// Album order = time taken (EXIF), not filename: camera counters roll
+// over past 9999 mid-shoot and second-camera files sort to the end, so a
+// name sort scrambles the day. Ties (and files with no EXIF) fall back to
+// numeric filename order. Pass --order name to force the old behavior.
+const unsorted = fs
   .readdirSync(args.dir)
-  .filter((f) => !f.startsWith(".") && (PHOTO_EXT.test(f) || VIDEO_EXT.test(f)))
-  .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  .filter((f) => !f.startsWith(".") && (PHOTO_EXT.test(f) || VIDEO_EXT.test(f)));
+const byName = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+let files;
+if (args.order === "name") {
+  files = unsorted.sort(byName);
+} else {
+  const timed = await Promise.all(
+    unsorted.map(async (f) => [f, await captureTime(path.join(args.dir, f))])
+  );
+  files = timed
+    .sort((a, b) => a[1] - b[1] || byName(a[0], b[0]))
+    .map(([f]) => f);
+}
 
 if (files.length === 0) {
   console.error(`No photos or videos found in ${args.dir}`);
@@ -148,7 +164,7 @@ let { data: client } = await supabase
   .eq("email", email)
   .maybeSingle();
 if (!client) {
-  const name = email.split("@")[0].replace(/[._]/g, " ");
+  const name = args.clientName || email.split("@")[0].replace(/[._]/g, " ");
   ({ data: client } = await supabase
     .from("clients")
     .insert({ email, name })
@@ -165,7 +181,7 @@ const { data: gallery, error: gErr } = await supabase
     title: args.title,
     event_date: args.date || null,
   })
-  .select("id")
+  .select("id, share_token")
   .single();
 if (gErr) {
   console.error("Failed to create gallery:", gErr.message);
@@ -265,4 +281,5 @@ await supabase
 
 console.log(`\nDone. ${rows.length} items live at:`);
 console.log(`  https://rothmediaco.com/portal/gallery/${gid}`);
+console.log(`  https://rothmediaco.com/g/${gallery.share_token}`);
 console.log(`Client signs in as ${email} at rothmediaco.com/portal`);

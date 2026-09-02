@@ -2195,7 +2195,7 @@ section.contact .lead a {
   justify-content: center;
   border-radius: 999px;
   background: rgba(34, 31, 26, 0.55);
-  color: var(--bone);
+  color: #f4efe6;
   text-decoration: none;
   font-size: 1.05rem;
   opacity: 0;
@@ -2232,7 +2232,7 @@ section.contact .lead a {
   padding: 0.7rem 1.4rem;
   border-radius: 999px;
   background: rgba(244, 239, 230, 0.92);
-  color: var(--ink);
+  color: #221f1a;
   text-decoration: none;
   font-family: var(--font-body), "Manrope", sans-serif;
   font-size: 0.75rem;
@@ -2312,11 +2312,14 @@ body:has(.lightbox) nav.rm-nav {
   box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
 }
 
+/* Lightbox chrome uses fixed colors, not skin variables: the backdrop is
+   always near-black, but dark album skins flip --bone dark — which made
+   the close button and arrows invisible. */
 .lightbox .close {
   position: absolute;
   top: 1.5rem;
   right: 1.9rem;
-  color: var(--bone);
+  color: #f4efe6;
   font-size: 2rem;
   cursor: pointer;
   opacity: 0.7;
@@ -2332,7 +2335,7 @@ body:has(.lightbox) nav.rm-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--bone);
+  color: #f4efe6;
   font-size: 2.6rem;
   cursor: pointer;
   opacity: 0.5;
