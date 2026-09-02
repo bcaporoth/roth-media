@@ -3344,6 +3344,122 @@ body:has(.lightbox) nav.rm-nav {
   width: 100%;
 }
 
+/* Multi-select: "Select photos" toolbar + per-tile check badges. The bar
+   sticks below the fixed nav so the save button stays reachable while
+   scrolling a long album. */
+.pgal-toolbar {
+  position: sticky;
+  top: 4.6rem;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 1.4rem;
+  pointer-events: none;
+}
+
+.pgal-toolbar > * {
+  pointer-events: auto;
+}
+
+.pgal-tool-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bone);
+  color: var(--ink);
+  font-family: var(--font-body), "Manrope", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -12px rgba(34, 31, 26, 0.35);
+  transition: background 0.25s, border-color 0.25s, opacity 0.25s;
+}
+
+.pgal-tool-btn:hover {
+  border-color: var(--clay);
+}
+
+.pgal-tool-btn.primary {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: #faf6ee;
+}
+
+.pgal-tool-btn.primary:hover {
+  background: var(--clay-soft);
+  border-color: var(--clay-soft);
+}
+
+.pgal-tool-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.pgal-tool-count {
+  font-family: var(--font-body), "Manrope", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--bone);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line);
+}
+
+.pgal-check {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 2;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(34, 31, 26, 0.4);
+  color: transparent;
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: background 0.2s, color 0.2s;
+}
+
+.pgal-check.on {
+  background: var(--clay);
+  color: #fff;
+}
+
+.pgal-view.is-selected img {
+  outline: 3px solid var(--clay);
+  outline-offset: -3px;
+}
+
+.pgal-view.pgal-unselectable {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .pgal-toolbar {
+    top: 4.2rem;
+  }
+
+  .pgal-tool-btn {
+    padding: 0.55rem 0.95rem;
+    font-size: 0.68rem;
+  }
+
+  .pgal-tool-count {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.7rem;
+  }
+}
+
 /* Album sections — "parts of the day" headings between masonry groups. */
 .pgal-section + .pgal-section {
   margin-top: 3.2rem;

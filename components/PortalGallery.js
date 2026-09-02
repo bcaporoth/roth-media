@@ -16,7 +16,14 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   const [cols, setCols] = useState(3);
   const [saving, setSaving] = useState(null);
   const [touchShare, setTouchShare] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulk, setBulk] = useState(null); // { done, total } while fetching/downloading
+  const [pendingCount, setPendingCount] = useState(0);
   const touchRef = useRef(null);
+  // Files fetched for a bulk save whose share sheet needs one more tap
+  // (Safari's user-activation window expired during the fetches).
+  const pendingRef = useRef(null);
 
   // Phones/tablets that can hand a file to the native share sheet get a
   // "save to Photos" flow; everyone else keeps the plain download link.
@@ -55,6 +62,117 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     }
   };
 
+  const exitSelect = useCallback(() => {
+    setSelectMode(false);
+    setSelected(new Set());
+    setPendingCount(0);
+    pendingRef.current = null;
+  }, []);
+
+  const toggleSelect = (filename) => {
+    setPendingCount(0);
+    pendingRef.current = null;
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(filename)) next.delete(filename);
+      else next.add(filename);
+      return next;
+    });
+  };
+
+  // Fetch the selected photos' web-size versions a few at a time. Web size
+  // (2200px) keeps a 20-photo save around 30 MB — the share sheet chokes on
+  // gigabytes of originals, and full res stays a tap away per photo or via
+  // the album zip.
+  const fetchSelected = async (chosen) => {
+    const files = new Array(chosen.length);
+    let done = 0;
+    let idx = 0;
+    const worker = async () => {
+      while (idx < chosen.length) {
+        const i = idx++;
+        const res = await fetch(chosen[i].webUrl);
+        if (!res.ok) throw new Error(`fetch ${res.status}`);
+        const blob = await res.blob();
+        const base = chosen[i].filename.replace(/\.[^.]+$/, "");
+        files[i] = new File([blob], `${base}.jpg`, {
+          type: blob.type || "image/jpeg",
+        });
+        done += 1;
+        setBulk({ done, total: chosen.length, phase: "fetch" });
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(4, chosen.length) }, worker)
+    );
+    return files;
+  };
+
+  const bulkSave = async () => {
+    if (bulk) return;
+
+    // Second tap after the share sheet needed a fresh gesture: the files
+    // are already in memory, share immediately.
+    if (pendingRef.current) {
+      const files = pendingRef.current;
+      pendingRef.current = null;
+      setPendingCount(0);
+      try {
+        await navigator.share({ files });
+        exitSelect();
+      } catch {
+        /* client closed the sheet — keep the selection */
+      }
+      return;
+    }
+
+    const chosen = items.filter(
+      (it) => it.kind !== "video" && selected.has(it.filename)
+    );
+    if (!chosen.length) return;
+
+    if (touchShare) {
+      let files = null;
+      try {
+        setBulk({ done: 0, total: chosen.length, phase: "fetch" });
+        files = await fetchSelected(chosen);
+        setBulk(null);
+        if (!navigator.canShare({ files })) throw new Error("no file share");
+        await navigator.share({ files });
+        exitSelect();
+        return;
+      } catch (err) {
+        setBulk(null);
+        if (err?.name === "AbortError") return; // sheet dismissed
+        if (err?.name === "NotAllowedError" && files) {
+          // Fetches outlived the tap's activation window — hold the files
+          // and turn the button into a one-tap share.
+          pendingRef.current = files;
+          setPendingCount(files.length);
+          return;
+        }
+        // Anything else (share of many files refused, fetch failed) falls
+        // through to plain downloads below.
+      }
+    }
+
+    // Sequential downloads of the originals — the browser may ask once to
+    // allow multiple downloads.
+    setBulk({ done: 0, total: chosen.length, phase: "download" });
+    for (let i = 0; i < chosen.length; i++) {
+      const a = document.createElement("a");
+      a.href = chosen[i].downloadUrl;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setBulk({ done: i + 1, total: chosen.length, phase: "download" });
+      await new Promise((r) => setTimeout(r, 450));
+    }
+    setBulk(null);
+    exitSelect();
+  };
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
     const apply = () => setCols(mq.matches ? 2 : 3);
@@ -82,6 +200,15 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [lightbox, close, step]);
+
+  useEffect(() => {
+    if (!selectMode || lightbox !== null) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") exitSelect();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectMode, lightbox, exitSelect]);
 
   // Warm the neighbours so arrow / swipe feels instant.
   useEffect(() => {
@@ -137,12 +264,27 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   const tile = (item, i) => {
     const tileSrc =
       item.kind === "video" ? videoPoster || item.thumbUrl : item.thumbUrl;
+    const selectable = selectMode && item.kind !== "video";
+    const isSel = selectable && selected.has(item.filename);
     return (
       <div className="item pgal-item" key={item.filename}>
         <button
-          className="pgal-view"
-          onClick={() => setLightbox(i)}
-          aria-label={`View ${item.kind} ${i + 1} of ${title}`}
+          className={`pgal-view${isSel ? " is-selected" : ""}${
+            selectMode && !selectable ? " pgal-unselectable" : ""
+          }`}
+          onClick={() =>
+            selectMode
+              ? selectable && toggleSelect(item.filename)
+              : setLightbox(i)
+          }
+          aria-label={
+            selectMode
+              ? selectable
+                ? `Select photo ${i + 1} of ${title}`
+                : `Videos can't be multi-selected`
+              : `View ${item.kind} ${i + 1} of ${title}`
+          }
+          aria-pressed={selectMode ? isSel : undefined}
         >
           {tileSrc ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -159,23 +301,71 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
               ▶
             </span>
           )}
+          {selectable && (
+            <span className={`pgal-check${isSel ? " on" : ""}`} aria-hidden="true">
+              ✓
+            </span>
+          )}
         </button>
-        <a
-          className="pgal-dl"
-          href={item.downloadUrl}
-          onClick={(e) => saveItem(e, item)}
-          aria-label={`Save ${item.kind} ${i + 1}`}
-          aria-busy={saving === item.filename}
-          title={`Save this ${item.kind}`}
-        >
-          {saving === item.filename ? "…" : "↓"}
-        </a>
+        {!selectMode && (
+          <a
+            className="pgal-dl"
+            href={item.downloadUrl}
+            onClick={(e) => saveItem(e, item)}
+            aria-label={`Save ${item.kind} ${i + 1}`}
+            aria-busy={saving === item.filename}
+            title={`Save this ${item.kind}`}
+          >
+            {saving === item.filename ? "…" : "↓"}
+          </a>
+        )}
       </div>
     );
   };
 
+  const photoCount = items.filter((it) => it.kind !== "video").length;
+
+  const bulkLabel = () => {
+    if (bulk)
+      return bulk.phase === "fetch"
+        ? `Preparing ${bulk.done}/${bulk.total}…`
+        : `Downloading ${bulk.done}/${bulk.total}…`;
+    if (pendingCount) return `Tap to save ${pendingCount} photos`;
+    if (touchShare) return `Save ${selected.size || ""} to Photos`;
+    return `Download ${selected.size || ""}`;
+  };
+
   return (
     <>
+      {photoCount > 1 && (
+        <div className="pgal-toolbar">
+          {!selectMode ? (
+            <button
+              className="pgal-tool-btn"
+              onClick={() => setSelectMode(true)}
+            >
+              Select photos
+            </button>
+          ) : (
+            <>
+              <span className="pgal-tool-count">
+                {selected.size} selected
+              </span>
+              <button
+                className="pgal-tool-btn primary"
+                disabled={(!selected.size && !pendingCount) || !!bulk}
+                aria-busy={!!bulk}
+                onClick={bulkSave}
+              >
+                {bulkLabel()}
+              </button>
+              <button className="pgal-tool-btn" onClick={exitSelect}>
+                Done
+              </button>
+            </>
+          )}
+        </div>
+      )}
       {groups.map((group) => (
         <section className="pgal-section" key={group.key || "·"}>
           {group.title && (
