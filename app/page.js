@@ -184,37 +184,48 @@ export default function Home() {
               <h2>Made to be watched</h2>
               <p>Tap to play. Sound on when you&apos;re ready.</p>
             </div>
-            <div className="film-card reveal">
-              <video
-                src={HERO_VIDEO}
-                controls
-                playsInline
-                preload="metadata"
-                poster={HERO_POSTER}
-              />
-              <p className="film-caption">
-                <strong>Nolan &amp; Kennedy</strong> — wedding sneak peek
-              </p>
-            </div>
-            <div className="film-card reveal">
-              <video
-                src="/reels/nicole-golden-zumba-promo.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                poster="/reels/nicole-golden-zumba-promo-poster.jpg"
-              />
-              <p className="film-caption">
-                <strong>Nicole Golden</strong> — Zumba class promo
-              </p>
-            </div>
-            <div className="reels-row reveal">
+            <figure className="film-card film-feature reveal">
+              <div className="film-frame">
+                <video
+                  src={HERO_VIDEO}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster="/nolan-kennedy-wedding-poster.jpg"
+                />
+              </div>
+              <figcaption>
+                <strong>Nolan &amp; Kennedy</strong>
+                <span>Wedding sneak peek</span>
+              </figcaption>
+            </figure>
+            <div className="video-row reveal">
+              <figure className="film-card">
+                <div className="film-frame">
+                  <video
+                    src="/reels/nicole-golden-zumba-promo.mp4"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster="/reels/nicole-golden-zumba-promo-poster.jpg"
+                  />
+                </div>
+                <figcaption>
+                  <strong>Nicole Golden</strong>
+                  <span>Zumba class promo</span>
+                </figcaption>
+              </figure>
               <ReelCard
                 src="/reels/bake-against-the-grain.mp4"
+                poster="/reels/bake-against-the-grain-poster.jpg"
                 title="Bake Against the Grain"
                 client="Brand film"
               />
             </div>
+            <p className="video-cta reveal">
+              Picture your day like this?{" "}
+              <a href="#quote">Build your film quote →</a>
+            </p>
           </div>
         </section>
 

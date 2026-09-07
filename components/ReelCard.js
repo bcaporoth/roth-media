@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 // Vertical reel in a phone-style frame; tap to play with sound.
-export default function ReelCard({ src, title, client }) {
+export default function ReelCard({ src, poster, title, client }) {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
 
@@ -30,6 +30,7 @@ export default function ReelCard({ src, title, client }) {
         <video
           ref={ref}
           src={src}
+          poster={poster}
           playsInline
           preload="metadata"
           onEnded={() => setPlaying(false)}

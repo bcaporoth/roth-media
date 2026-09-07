@@ -556,15 +556,8 @@ header.split:has(.split-photo:hover) .split-photo {
 .unified-video-work {
   background:
     radial-gradient(circle at top left, rgba(176, 106, 79, 0.18), transparent 32rem),
+    radial-gradient(circle at 88% 95%, rgba(176, 106, 79, 0.12), transparent 30rem),
     #0e0d0b;
-}
-
-.unified-video-work .film-card {
-  margin-bottom: 3rem;
-}
-
-.unified-video-work .reels-row {
-  padding-bottom: 0.5rem;
 }
 
 /* ── ADMIN ── */
@@ -701,6 +694,43 @@ header.split:has(.split-photo:hover) .split-photo {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(244, 239, 230, 0.55);
+}
+
+/* Landscape film + vertical reel side by side at matching heights:
+   16:9 next to 9/16 → column ratio 256:81 keeps the two videos equal-height. */
+.video-row {
+  display: grid;
+  grid-template-columns: 256fr 81fr;
+  gap: 2rem;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.video-row .film-card {
+  max-width: none;
+  margin: 0;
+}
+
+.video-row .reel-card {
+  width: 100%;
+}
+
+@media (max-width: 820px) {
+  .video-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 3rem;
+  }
+
+  .video-row .film-card {
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .video-row .reel-card {
+    width: min(320px, 78vw);
+  }
 }
 
 /* ── PRICING ── */
@@ -2621,30 +2651,68 @@ body:has(.lightbox) nav.rm-nav {
   }
 }
 
-/* ── Feature film card (video page) ── */
+/* ── Film cards (video work) ── */
 .film-card {
   max-width: 900px;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto;
 }
 
-.film-card video {
+.film-feature {
+  max-width: 1040px;
+  margin-bottom: 4rem;
+}
+
+.film-frame {
+  border: 1px solid rgba(244, 239, 230, 0.16);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
+}
+
+.film-frame video {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 16px;
-  background: #000;
   display: block;
 }
 
-.film-caption {
-  margin-top: 0.8rem;
-  font-size: 0.88rem;
-  color: var(--sand);
+.film-card figcaption {
+  margin-top: 1rem;
   text-align: center;
+  display: grid;
+  gap: 0.15rem;
 }
 
-.film-caption strong {
-  color: var(--bone);
+.film-card figcaption strong {
+  font-family: var(--font-display), "Syne", sans-serif;
   font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--bone);
+}
+
+.film-card figcaption span {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 239, 230, 0.55);
+}
+
+.film-feature figcaption strong {
+  font-size: 1.25rem;
+}
+
+.video-cta {
+  margin-top: 3.5rem;
+  text-align: center;
+  font-size: 1.02rem;
+  color: rgba(244, 239, 230, 0.7);
+}
+
+.video-cta a {
+  color: var(--clay-soft);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ── COVER PICKER (Studio Admin) ── */
