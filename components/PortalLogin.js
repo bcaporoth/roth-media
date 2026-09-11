@@ -29,6 +29,24 @@ function createSenderClient() {
 
 const NEXT_KEY = "rm-after-login";
 
+// People type emails with stray capitals and iPhone autofill loves
+// trailing spaces — accounts are stored lowercase, so normalize first.
+const cleanEmail = (e) => e.trim().toLowerCase();
+
+async function emailIsKnown(email) {
+  try {
+    const res = await fetch("/api/portal/known-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    return Boolean(json?.known);
+  } catch {
+    return true; // never block a real client because the check hiccuped
+  }
+}
+
 export default function PortalLogin() {
   // password | sending | sent | verifying | landing
   const [mode, setMode] = useState("password");
@@ -103,18 +121,22 @@ export default function PortalLogin() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    const addr = cleanEmail(email);
     try {
       const supabase = createSupabaseBrowser();
       const { error: err } = await supabase.auth.signInWithPassword({
-        email,
+        email: addr,
         password,
       });
       if (err) throw err;
       window.location.assign("/portal");
     } catch {
+      const known = await emailIsKnown(addr);
       setBusy(false);
       setError(
-        "That email + password didn't match. Double-check both — or tap \"First time here / forgot password?\" below and I'll email you a way in."
+        known
+          ? "The password didn't match. Tap \"First time here / forgot password?\" below — you'll be back in within a minute."
+          : `I don't have an account under ${addr}. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
       );
     }
   }
@@ -123,17 +145,27 @@ export default function PortalLogin() {
   // lands on the choose-a-password page.
   async function handleSendSetup(e) {
     e.preventDefault();
-    if (!email) {
+    const addr = cleanEmail(email);
+    if (!addr) {
       setError("Type your email first, then tap that again.");
       return;
     }
     setMode("sending");
     setError("");
     try {
+      // Only email addresses that are actually on the roster — otherwise a
+      // typo would silently create an empty account with no galleries in it.
+      if (!(await emailIsKnown(addr))) {
+        setMode("password");
+        setError(
+          `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
+        );
+        return;
+      }
       window.localStorage.setItem(NEXT_KEY, "/portal/account?setup=1");
       const supabase = createSenderClient();
       const { error: err } = await supabase.auth.signInWithOtp({
-        email,
+        email: addr,
         options: {
           emailRedirectTo: `${window.location.origin}/portal`,
         },
@@ -163,7 +195,7 @@ export default function PortalLogin() {
     try {
       const supabase = createSupabaseBrowser();
       const { error: err } = await supabase.auth.verifyOtp({
-        email,
+        email: cleanEmail(email),
         token,
         type: "email",
       });
@@ -248,6 +280,9 @@ export default function PortalLogin() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          inputMode="email"
           required
         />
       </div>
