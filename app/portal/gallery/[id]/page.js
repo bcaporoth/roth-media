@@ -6,7 +6,7 @@ import PortalNav from "../../../../components/PortalNav";
 import { designSkin } from "../../../../lib/design";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
-import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
+import { r2Configured, signedUrl, photoKey, getDims } from "../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +82,7 @@ export default async function GalleryPage({ params }) {
   // originals keep their exact filename.
   const jpgName = (f) => f.replace(/\.[^.]+$/, "") + ".jpg";
 
+  const dims = await getDims(gallery.id);
   const items = await Promise.all(
     (media || []).map(async (m) => {
       const thumb = photoKey(gallery.id, "thumb", jpgName(m.filename));
@@ -96,7 +97,8 @@ export default async function GalleryPage({ params }) {
           download: m.filename,
         }),
       ]);
-      return { filename: m.filename, kind: m.kind, section: m.section || null, thumbUrl, webUrl, downloadUrl };
+      const [w, h] = dims[m.filename] || [];
+      return { filename: m.filename, kind: m.kind, section: m.section || null, thumbUrl, webUrl, downloadUrl, w: w || null, h: h || null };
     })
   );
 

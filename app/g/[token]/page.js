@@ -6,7 +6,7 @@ import PremiereGate from "../../../components/PremiereGate";
 import { designSkin } from "../../../lib/design";
 import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
-import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
+import { r2Configured, signedUrl, photoKey, getDims } from "../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -148,6 +148,7 @@ export default async function SharedGalleryPage({ params }) {
 
   const jpgName = (f) => f.replace(/\.[^.]+$/, "") + ".jpg";
 
+  const dims = await getDims(gallery.id);
   const items = await Promise.all(
     (media || []).map(async (m) => {
       const thumb = photoKey(gallery.id, "thumb", jpgName(m.filename));
@@ -162,7 +163,8 @@ export default async function SharedGalleryPage({ params }) {
           download: m.filename,
         }),
       ]);
-      return { filename: m.filename, kind: m.kind, section: m.section || null, thumbUrl, webUrl, downloadUrl };
+      const [w, h] = dims[m.filename] || [];
+      return { filename: m.filename, kind: m.kind, section: m.section || null, thumbUrl, webUrl, downloadUrl, w: w || null, h: h || null };
     })
   );
 

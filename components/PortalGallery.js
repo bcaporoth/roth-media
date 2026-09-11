@@ -255,9 +255,22 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   });
 
   // Deal a group's items into columns without disturbing their order.
+  // Each item goes to the currently-shortest column, weighted by its
+  // aspect ratio — round-robin ignored heights, so 500 photos in, one
+  // column could finish a dozen photos shorter than its neighbors.
+  // Ratios come from the dims sidecar; fallbacks for items without one.
+  const ratioOf = (item) => {
+    if (item.kind === "video") return 9 / 16;
+    return item.w && item.h ? item.h / item.w : 0.75;
+  };
   const dealt = (entries) => {
     const columns = Array.from({ length: cols }, () => []);
-    entries.forEach(([item, i], n) => columns[n % cols].push([item, i]));
+    const heights = Array.from({ length: cols }, () => 0);
+    entries.forEach(([item, i]) => {
+      const c = heights.indexOf(Math.min(...heights));
+      columns[c].push([item, i]);
+      heights[c] += ratioOf(item);
+    });
     return columns;
   };
 

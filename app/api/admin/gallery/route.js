@@ -4,7 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@aws-sdk/client-s3";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
-import { R2_BUCKET, r2Configured, photoKey, signedUrl } from "../../../../lib/r2";
+import { R2_BUCKET, r2Configured, photoKey, signedUrl, getDims, putDims } from "../../../../lib/r2";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
@@ -127,6 +127,20 @@ export async function POST(request) {
       .from("galleries")
       .update({ media_count: rows.length, cover_filename: coverFilename || null })
       .eq("id", galleryId);
+    // Photo dimensions → R2 sidecar, merged so resumed uploads accumulate.
+    // Best-effort: a dims failure must never fail the finalize.
+    try {
+      const withDims = media.filter((m) => m.width > 0 && m.height > 0);
+      if (withDims.length) {
+        const dims = await getDims(galleryId);
+        for (const m of withDims)
+          dims[String(m.filename)] = [
+            Math.round(m.width),
+            Math.round(m.height),
+          ];
+        await putDims(galleryId, dims);
+      }
+    } catch {}
     return NextResponse.json({ ok: true });
   }
 

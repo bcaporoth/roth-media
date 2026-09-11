@@ -377,7 +377,13 @@ export default function AdminUploader() {
             putWithRetry(bySize.web.url, web, () => bump(`retrying ${file.name}`)),
             putWithRetry(bySize.thumb.url, thumb, () => bump(`retrying ${file.name}`)),
           ]);
-          results[i] = { filename: safe, kind: "photo", section: sectionOf(file) };
+          results[i] = {
+            filename: safe,
+            kind: "photo",
+            section: sectionOf(file),
+            width: size.width,
+            height: size.height,
+          };
         }
       };
 
