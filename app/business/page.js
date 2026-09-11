@@ -16,8 +16,8 @@ const PHONE_HREF = "tel:+18455494425";
 
 const FAQS = [
   {
-    q: "What's the difference between a Reel Day and a Full Content Day?",
-    a: "Both are one shoot day at your business. A Reel Day ($800) fills your feed: 8 vertical reels for Instagram, Facebook, and TikTok. The Full Content Day ($1,500) adds your 60–90 second brand video for your website and ads, plus 20–40 edited photos — a month of marketing in one visit.",
+    q: "What does a Content Day cost, and what do I get?",
+    a: "A Content Day is $750 — one visit to your business, typically a half day, and you walk away with a 60–90 second promo for anything you want to promote, sized for your website, Instagram, Facebook, and TikTok. Want more from the same shoot? A second promo is a $400 add-on.",
   },
   {
     q: "How fast do I get my content?",
@@ -28,8 +28,8 @@ const FAQS = [
     a: "Yes. All music is licensed through Epidemic Sound and your finished videos are cleared for your website, socials, and online advertising.",
   },
   {
-    q: "What if I want content every month?",
-    a: "The Every Other Month plan books a Full Content Day six times a year at $1,250 per visit — billed per shoot, no lump sum, with priority scheduling. Your feed never goes quiet.",
+    q: "Do you do photos too?",
+    a: "Yes — a brand photo session is a $650 add-on: a dedicated 2-hour photo visit on its own day, 30 edited photos licensed for web and social.",
   },
   {
     q: "Do you build websites too?",
@@ -78,10 +78,10 @@ export default function BusinessPage() {
 
       <main className="quote-wrap svc-wrap">
         <div className="kick">Branded content · Twin Tiers</div>
-        <h1>One shoot day. A month of content.</h1>
+        <h1>One Content Day. One promo that sells.</h1>
         <p className="lead">
-          A brand video, vertical reels, and edited photos from a single Content
-          Day at your business — for shops, gyms, restaurants, and makers in
+          A 60–90 second promo shot at your business, for anything you want
+          to promote — for shops, gyms, restaurants, builders, and makers in
           Sayre, Athens, Waverly, Elmira, and Corning.
         </p>
         <p className="svc-cta-row">
@@ -101,8 +101,8 @@ export default function BusinessPage() {
         </div>
 
         <section className="svc-section">
-          <h2>Pick your day.</h2>
-          <div className="qpkgs svc-pkgs">
+          <h2>One package. One real price.</h2>
+          <div className={`qpkgs svc-pkgs ${PACKAGES.business.length === 1 ? "one" : PACKAGES.business.length === 2 ? "two" : ""}`}>
             {PACKAGES.business.map((p) => (
               <Link key={p.id} href="/quote?for=business" className={`qpkg ${p.popular ? "popular" : ""}`}>
                 {p.popular && <span className="qpkg-flag">Most booked</span>}
@@ -116,6 +116,35 @@ export default function BusinessPage() {
           </div>
           <p className="qhelp svc-note">
             Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder.
+          </p>
+        </section>
+
+        <section className="svc-section">
+          <h2>What would your promo be?</h2>
+          <p className="svc-note">
+            Every business has one story worth 60 seconds. A few we&apos;d pitch:
+          </p>
+          <div className="svc-ideas">
+            <div className="svc-idea">
+              <strong>A restaurant</strong>
+              <p>Friday night at full tilt — the kitchen firing, plates hitting the pass, regulars mid-laugh. Ends on the dish everyone orders.</p>
+            </div>
+            <div className="svc-idea">
+              <strong>A gym</strong>
+              <p>The 6 AM crew — chalk, last reps, a PR bell, your coaches actually coaching. The energy people join for.</p>
+            </div>
+            <div className="svc-idea">
+              <strong>A bookstore</strong>
+              <p>Shelves worth getting lost in — staff picks, page turns, the reading chair in the window. An afternoon people can feel.</p>
+            </div>
+            <div className="svc-idea">
+              <strong>A construction company</strong>
+              <p>One job, start to finish — day-one dirt to the final walkthrough. Proof of work that wins the next bid.</p>
+            </div>
+          </div>
+          <p className="svc-note">
+            Something else? Whatever you do, there&apos;s a promo in it — we find
+            it together on the planning call.
           </p>
         </section>
 

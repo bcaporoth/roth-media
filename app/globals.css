@@ -4673,6 +4673,40 @@ a.svc-cta:hover {
   color: var(--ink-soft);
 }
 
+/* Example promo ideas on the business page */
+.svc-ideas {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+
+.svc-idea {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(250, 246, 238, 0.6);
+  padding: 1rem 1.2rem;
+}
+
+.svc-idea strong {
+  display: block;
+  font-family: var(--font-display), "Syne", sans-serif;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.svc-idea p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 700px) {
+  .svc-ideas {
+    grid-template-columns: 1fr;
+  }
+}
+
 .svc-steps strong {
   color: var(--ink);
 }

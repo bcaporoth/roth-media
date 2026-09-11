@@ -7,7 +7,7 @@ import { PACKAGES, ADDONS, money } from "../../lib/packages";
 export const metadata = {
   title: "Wedding & Engagement Films — Sayre, Athens, Waverly & the Twin Tiers",
   description:
-    "Cinematic wedding films with your real vows and ceremony audio — serving Sayre PA, Athens PA, Waverly NY, Elmira, and Corning. Real prices from $1,500. Instant quote, no obligation.",
+    "Wedding photography and cinematic wedding films — serving Sayre PA, Athens PA, Waverly NY, Elmira, and Corning. Real prices from $2,500. Instant quote, no obligation.",
   alternates: { canonical: "/weddings" },
 };
 
@@ -16,16 +16,16 @@ const PHONE_HREF = "tel:+18455494425";
 
 const FAQS = [
   {
-    q: "How much does a wedding videographer cost in the Twin Tiers?",
-    a: "My prices are public: Ceremony Only starts at $1,500 and The Wedding Film — the full day with social reels and a next-day sneak peek — starts at $3,500. Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.",
+    q: "How much does a wedding photographer or videographer cost in the Twin Tiers?",
+    a: "My prices are public: full-day Wedding Photography is $2,500 (300–500 edited photos) and full-day Wedding Videography is $3,500 (two reels, your full ceremony, and speeches). Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.",
   },
   {
     q: "Do you film engagements too?",
-    a: "Yes — engagement films and engagement photo sessions both. An engagement session is also available as a $350 add-on to any wedding package, perfect for save-the-dates and your wedding website.",
+    a: "Yes — an engagement film is a $450 add-on to any wedding package, perfect for save-the-dates and your wedding website.",
   },
   {
-    q: "When do we get our film?",
-    a: "Your full film is delivered online, ready to share, within six weeks. Couples who book The Wedding Film also get a next-day sneak peek to post while everyone's still talking about the day.",
+    q: "When do we get everything?",
+    a: "Sneak peeks land within 48 hours — photos or video, ready to post while everyone's still talking about the day. Your full delivery follows online within six weeks.",
   },
   {
     q: "Can we post our films anywhere? What about the music?",
@@ -78,11 +78,11 @@ export default function WeddingsPage() {
 
       <main className="quote-wrap svc-wrap">
         <div className="kick">Weddings &amp; engagements · Twin Tiers</div>
-        <h1>Your day, filmed like a story worth retelling.</h1>
+        <h1>Your day, told the way it felt.</h1>
         <p className="lead">
-          Cinematic wedding films with your real vows and ceremony audio — for
-          couples in Sayre, Athens, Waverly, Elmira, Corning, and everywhere in
-          between. Real prices, up front.
+          Full-day wedding photography, or a cinematic film with your real
+          vows and ceremony audio — for couples in Sayre, Athens, Waverly,
+          Elmira, Corning, and everywhere in between. Real prices, up front.
         </p>
         <p className="svc-cta-row">
           <Link href="/quote?for=wedding" className="qprimary svc-cta">Build my quote →</Link>
