@@ -5,6 +5,7 @@ import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import { PACKAGES, money } from "../../lib/packages";
 import { CITIES, findCity } from "../../lib/cities";
+import { videoUrl } from "../../lib/media";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
@@ -86,7 +87,7 @@ export default async function CityPage({ params }) {
         </p>
 
         <figure className="svc-video">
-          <video controls playsInline preload="none" poster="/nolan-kennedy-cover.png" src="/nolan-kennedy-wedding-hero.mp4" />
+          <video controls playsInline preload="none" poster="/nolan-kennedy-cover.png" src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
           <figcaption>Nolan &amp; Kennedy — wedding sneak peek, Twin Tiers</figcaption>
         </figure>
 

@@ -3,11 +3,12 @@ import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
+import { videoUrl } from "../../lib/media";
 
 export const metadata = {
   title: "Brand Video & Content Days for Twin Tiers Businesses",
   description:
-    "A Reel Day fills your feed with 8 vertical reels from one shoot; a Full Content Day adds your brand video and photos — Sayre, Athens, Waverly, Elmira & Corning. From $800.",
+    "A Content Day gets you a 60–90 second promo shot at your business — Sayre, Athens, Waverly, Elmira & Corning. $750, real prices up front.",
   alternates: { canonical: "/business" },
 };
 
@@ -91,11 +92,11 @@ export default function BusinessPage() {
 
         <div className="svc-video-grid">
           <figure className="svc-video">
-            <video controls playsInline preload="none" poster="/reels/nicole-golden-zumba-promo-poster.jpg" src="/reels/nicole-golden-zumba-promo.mp4" />
+            <video controls playsInline preload="none" poster="/reels/nicole-golden-zumba-promo-poster.jpg" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} />
             <figcaption>Nicole Golden — Zumba class promo</figcaption>
           </figure>
           <figure className="svc-video">
-            <video controls playsInline preload="none" src="/reels/bake-against-the-grain.mp4" />
+            <video controls playsInline preload="none" src={videoUrl("/reels/bake-against-the-grain.mp4")} />
             <figcaption>Bake Against the Grain — brand film</figcaption>
           </figure>
         </div>

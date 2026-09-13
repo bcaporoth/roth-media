@@ -9,6 +9,7 @@ import QuoteFlow from "../components/QuoteFlow";
 import PromoPill from "../components/PromoPill";
 import ReelCard from "../components/ReelCard";
 import Reveal from "../components/Reveal";
+import { videoUrl, mediaOffloaded } from "../lib/media";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
@@ -93,9 +94,9 @@ function getPhotos() {
 
 export default function Home() {
   const photos = getPhotos();
-  const hasReel = fs.existsSync(
-    path.join(process.cwd(), "public", HERO_LOOP.replace(/^\//, ""))
-  );
+  const hasReel =
+    mediaOffloaded ||
+    fs.existsSync(path.join(process.cwd(), "public", HERO_LOOP.replace(/^\//, "")));
 
   return (
     <>
@@ -136,7 +137,7 @@ export default function Home() {
       <main id="top">
         <header className="reel unified-hero">
           {hasReel ? (
-            <video src={HERO_LOOP} autoPlay muted loop playsInline preload="auto" poster={HERO_POSTER} />
+            <video src={videoUrl(HERO_LOOP)} autoPlay muted loop playsInline preload="auto" poster={HERO_POSTER} />
           ) : (
             <div className="reel-poster" aria-hidden="true" />
           )}
@@ -187,7 +188,7 @@ export default function Home() {
             <figure className="film-card film-feature reveal">
               <div className="film-frame">
                 <video
-                  src={HERO_VIDEO}
+                  src={videoUrl(HERO_VIDEO)}
                   controls
                   playsInline
                   preload="metadata"
@@ -203,7 +204,7 @@ export default function Home() {
               <figure className="film-card">
                 <div className="film-frame">
                   <video
-                    src="/reels/nicole-golden-zumba-promo.mp4"
+                    src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")}
                     controls
                     playsInline
                     preload="metadata"
@@ -216,7 +217,7 @@ export default function Home() {
                 </figcaption>
               </figure>
               <ReelCard
-                src="/reels/bake-against-the-grain.mp4"
+                src={videoUrl("/reels/bake-against-the-grain.mp4")}
                 poster="/reels/bake-against-the-grain-poster.jpg"
                 title="Bake Against the Grain"
                 client="Brand film"

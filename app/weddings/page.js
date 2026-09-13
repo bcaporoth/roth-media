@@ -3,6 +3,7 @@ import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
+import { videoUrl } from "../../lib/media";
 
 export const metadata = {
   title: "Wedding & Engagement Films — Sayre, Athens, Waverly & the Twin Tiers",
@@ -89,7 +90,7 @@ export default function WeddingsPage() {
         </p>
 
         <figure className="svc-video">
-          <video controls playsInline preload="none" poster="/nolan-kennedy-cover.png" src="/nolan-kennedy-wedding-hero.mp4" />
+          <video controls playsInline preload="none" poster="/nolan-kennedy-cover.png" src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
           <figcaption>Nolan &amp; Kennedy — wedding sneak peek</figcaption>
         </figure>
 
