@@ -7,12 +7,15 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage kick="Terms" title="The short version of how we work." updated="September 1, 2026">
+    <LegalPage kick="Terms" title="The short version of how we work." updated="September 24, 2026">
       <h2>Quotes</h2>
       <p>Prices on this site are real starting prices. The instant quote is an estimate; we confirm the final number in writing before anything is booked. Prices can change, but a number we&apos;ve confirmed to you in writing is locked.</p>
 
       <h2>Booking</h2>
       <p>A date is held once we&apos;ve both signed the agreement and the retainer is paid. The retainer is non-refundable because it takes the date off the calendar for everyone else. Everything else — payment schedule, rescheduling, cancellation, delivery timeline — is spelled out in that agreement, and the agreement wins if it ever disagrees with this page.</p>
+
+      <h2>Travel</h2>
+      <p>There&apos;s no travel fee anywhere in the Twin Tiers or the southern Finger Lakes — roughly an hour from Waverly in any direction. Farther than that, travel is quoted up front with your estimate: round-trip mileage at the current IRS rate, plus lodging when the schedule needs an overnight (an early start or a late finish more than about two hours out). It&apos;s confirmed in writing with the rest of the quote, so it never shows up as a surprise on the invoice.</p>
 
       <h2>Delivery and rights</h2>
       <p>Wedding films are delivered online, ready to share, within six weeks; business content within two. You get a personal license to post and share what we deliver. Business clients get a license to use their content for their own marketing, including paid ads. Roth Media keeps the copyright and may show the work in its own portfolio unless we&apos;ve agreed otherwise in writing.</p>

@@ -15,7 +15,7 @@ const PHONE_HREF = "tel:+18455494425";
 
 export default async function QuotePage({ searchParams }) {
   const params = await searchParams;
-  const category = ["wedding", "business"].includes(params?.for)
+  const category = ["wedding", "business", "family"].includes(params?.for)
     ? params.for
     : "";
 

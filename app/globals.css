@@ -4376,8 +4376,25 @@ a.svc-cta:hover {
   max-width: 640px;
 }
 
+.qflow .qsvc.three {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 900px;
+}
+
+.qflow-entry .qsvc.three {
+  margin-inline: auto;
+  gap: 1rem;
+  text-align: left;
+}
+
 @media (max-width: 640px) {
   .qflow .qsvc.two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .qflow .qsvc.three {
     grid-template-columns: 1fr;
   }
 }

@@ -116,7 +116,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
         {step === 0 && (
           <div className="qflow-step qflow-entry">
             <h3 className="qflow-q">What are we filming?</h3>
-            <div className="qsvc two">
+            <div className={`qsvc ${CATEGORIES.length === 3 ? "three" : "two"}`}>
               {CATEGORIES.map((c) => (
                 <button type="button" key={c.id} className={category === c.id ? "on" : ""} onClick={() => pickCategory(c.id)}>
                   <span className="qsvc-title">{c.title}</span>
@@ -124,7 +124,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
                 </button>
               ))}
             </div>
-            <p className="qhelp qflow-foot">Just want photos? Pick the closest option and tell me in the notes — I&apos;ll quote it.</p>
+            <p className="qhelp qflow-foot">Something else — seniors, headshots, an event? Pick the closest option and tell me in the notes — I&apos;ll quote it.</p>
           </div>
         )}
 
@@ -195,7 +195,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
             <div className="qf-field"><label htmlFor="qf-last">Last name *</label><input id="qf-last" name="lastName" required={step === 2} autoComplete="family-name" /></div>
             <div className="qf-field"><label htmlFor="qf-email">Email *</label><input id="qf-email" name="email" type="email" required={step === 2} autoComplete="email" /></div>
             <div className="qf-field"><label htmlFor="qf-phone">Phone *</label><input id="qf-phone" name="phone" type="tel" required={step === 2} autoComplete="tel" /></div>
-            <div className="qf-field"><label htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input id="qf-date" name="date" type="text" placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
+            <div className="qf-field"><label htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input id="qf-date" name="date" type="text" placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : category === "family" ? "A weekend in October, golden hour if we can…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
             <div className="qf-field"><label htmlFor="qf-where">{DETAIL[category || "wedding"].where}</label><input id="qf-where" name="where" /></div>
             <div className="qf-field wide"><label htmlFor="qf-notes">Anything I should know?</label><textarea id="qf-notes" name="notes" rows={3} placeholder="Must-have moments, a second location, photos only, a tight deadline…" /></div>
           </div>
