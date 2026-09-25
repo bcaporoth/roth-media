@@ -4108,6 +4108,7 @@ body:has(.lightbox) nav.rm-nav {
 }
 
 .qflow-form .qprimary,
+.guest-up .qprimary,
 a.svc-cta {
   background: var(--ink);
   color: var(--bone);
@@ -4124,13 +4125,15 @@ a.svc-cta {
 }
 
 .qflow-form .qprimary:hover:not(:disabled),
+.guest-up .qprimary:hover:not(:disabled),
 a.svc-cta:hover {
   background: var(--clay);
   border-color: var(--clay);
   transform: translateY(-1px);
 }
 
-.qflow-form .qprimary:disabled {
+.qflow-form .qprimary:disabled,
+.guest-up .qprimary:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -4791,3 +4794,112 @@ a.svc-cta:hover {
 }
 .svc-cta-secondary:hover { color: var(--ink); }
 .cform-success-body a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ═══════════════════════════════════════════════════════════
+   GUEST REEL — public upload page, couple's gallery, QR sign, admin panel
+   ═══════════════════════════════════════════════════════════ */
+.guest-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+  position: relative;
+  z-index: 3;
+}
+.guest-wrap > .kick { font-size: 0.72rem; letter-spacing: 0.26em; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.5rem; }
+.guest-wrap > h1 { font-family: var(--font-display), "Syne", sans-serif; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.05; margin: 0 0 0.75rem; }
+.guest-wrap > .lead { font-size: 1.02rem; line-height: 1.5; opacity: 0.85; margin: 0 0 1.75rem; }
+.guest-brand { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-bottom: 1.75rem; }
+.guest-foot { margin-top: 3rem; font-size: 0.82rem; opacity: 0.6; }
+.guest-foot a { color: inherit; }
+
+.guest-up .qf-field { margin-bottom: 1rem; }
+.guest-consent { display: flex; gap: 0.7rem; align-items: flex-start; font-size: 0.9rem; line-height: 1.45; margin: 0 0 1.25rem; cursor: pointer; }
+.guest-consent input { margin-top: 0.25rem; flex: none; width: 1.1rem; height: 1.1rem; }
+.guest-consent a { color: inherit; }
+.guest-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.5rem; }
+.guest-actions .qprimary { flex: 1 1 100%; text-align: center; }
+.guest-actions .abtn { flex: 1 1 100%; text-align: center; }
+.guest-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.guest-rec { margin: 1rem 0; border-radius: 14px; overflow: hidden; background: #191612; }
+.guest-rec-video { display: block; width: 100%; max-height: 60vh; object-fit: cover; background: #000; }
+.guest-rec-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.9rem; color: #fff; font-size: 0.9rem; }
+.guest-rec-bar .abtn { margin-left: auto; }
+.guest-rec-dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #e0452e; animation: guestBlink 1s infinite; }
+@keyframes guestBlink { 50% { opacity: 0.2; } }
+
+.guest-queue { margin-top: 1.25rem; }
+.guest-queue ul { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.4rem; }
+.guest-item { position: relative; display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.8rem; border-radius: 10px; background: rgba(0, 0, 0, 0.05); font-size: 0.88rem; overflow: hidden; }
+.guest-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guest-item-meta { flex: none; opacity: 0.7; }
+.guest-item.is-done .guest-item-meta { color: #2e7d4f; opacity: 1; }
+.guest-item.is-failed { background: rgba(224, 69, 46, 0.1); }
+.guest-item-bar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--clay, #b8552f); transition: width 0.2s; }
+.guest-send { width: 100%; text-align: center; }
+.guest-thanks { margin-top: 0.75rem; }
+.guest-closed { padding: 2rem 0; }
+
+/* couple's gallery */
+.guest-gal { max-width: 1100px; }
+.guest-sec { margin-top: 2.25rem; }
+.guest-sec h2 { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.3rem; margin: 0 0 0.9rem; }
+.guest-msgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.guest-msg { margin: 0; }
+.guest-msg video { width: 100%; aspect-ratio: 9 / 12; object-fit: cover; border-radius: 12px; background: #000; }
+.guest-msg figcaption { font-size: 0.85rem; margin-top: 0.4rem; }
+.guest-msg figcaption span { opacity: 0.65; }
+.guest-msg figcaption a { color: inherit; }
+.guest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+.guest-cell { position: relative; display: block; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: rgba(0, 0, 0, 0.06); }
+.guest-cell img, .guest-cell video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.guest-cell-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.35rem 0.5rem; font-size: 0.72rem; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); }
+
+/* QR sign — 4x6 by default, letter with ?big=1 */
+.gsign { min-height: 100vh; display: grid; place-items: center; background: #f4efe6; padding: 1rem; }
+.gsign-card { width: 4in; height: 6in; box-sizing: border-box; padding: 0.4in 0.35in; background: #fff; color: #191612; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.16in; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12); }
+.gsign-kick { font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.6; }
+.gsign-title { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.25rem; line-height: 1.1; margin: 0; }
+.gsign-qr { width: 2.3in; height: 2.3in; }
+.gsign-how { font-size: 0.7rem; line-height: 1.4; margin: 0; opacity: 0.85; }
+.gsign-url { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; margin: 0; }
+.gsign-credit { font-size: 0.6rem; opacity: 0.55; margin: 0; }
+.gsign-big .gsign-card { width: 8.5in; height: 11in; padding: 1in 0.8in; gap: 0.3in; }
+.gsign-big .gsign-kick { font-size: 1rem; }
+.gsign-big .gsign-title { font-size: 2.6rem; }
+.gsign-big .gsign-qr { width: 5in; height: 5in; }
+.gsign-big .gsign-how { font-size: 1.2rem; }
+.gsign-big .gsign-url { font-size: 1.4rem; }
+.gsign-big .gsign-credit { font-size: 0.95rem; }
+.gsign-print { font-size: 0.85rem; opacity: 0.7; }
+.gsign-print a { color: inherit; }
+@media print {
+  .gsign { background: #fff; padding: 0; min-height: auto; display: block; }
+  .gsign-card { box-shadow: none; margin: 0; }
+  .no-print { display: none !important; }
+  @page { size: 4in 6in; margin: 0; }
+  .gsign-big { }
+}
+
+/* admin panel */
+.guest-admin-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; align-items: end; margin-bottom: 1.25rem; }
+.guest-admin-form label { display: grid; gap: 0.3rem; font-size: 0.82rem; }
+.guest-admin-form input, .guest-admin-form select { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
+.guest-admin-slug { display: flex; align-items: center; gap: 0.2rem; font-size: 0.85rem; opacity: 0.85; }
+.guest-admin-slug input { flex: 1; min-width: 0; }
+.guest-admin-form .abtn { grid-column: 1 / -1; justify-self: start; }
+.guest-admin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.guest-admin-ev { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(0, 0, 0, 0.04); display: grid; gap: 0.6rem; }
+.admin-shell.is-dark .guest-admin-ev { background: rgba(255, 255, 255, 0.06); }
+.guest-admin-head { display: grid; gap: 0.15rem; }
+.achip-danger { color: #c0392b; }
+@media (max-width: 640px) {
+  .guest-admin-form { grid-template-columns: 1fr; }
+  .guest-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* guest page borrows the quote-form field look */
+.guest-up .qf-field label { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--clay); }
+.guest-up .qf-field input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); padding: 0.5rem 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.1rem; color: var(--ink); outline: none; border-radius: 0; }
+.guest-up .qf-field input::placeholder { color: var(--sand); font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.95rem; }
+.guest-up .qf-field input:focus { border-color: var(--clay); }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import GuestEventsPanel from "./GuestEventsPanel";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
 import CoverPicker from "./CoverPicker";
@@ -36,6 +37,7 @@ export default function AdminDashboard({ galleries }) {
   const [look, setLook] = useState({ mode: "light", accent: "clay" });
   const [lookOpen, setLookOpen] = useState(false);
   const [uploaderOpen, setUploaderOpen] = useState(false);
+  const [guestOpen, setGuestOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
   const [copiedId, setCopiedId] = useState(null);
@@ -174,6 +176,13 @@ export default function AdminDashboard({ galleries }) {
           </button>
           <button
             type="button"
+            className="abtn abtn-ghost"
+            onClick={() => setGuestOpen(!guestOpen)}
+          >
+            {guestOpen ? "Close guest reel" : "◎ Guest Reel"}
+          </button>
+          <button
+            type="button"
             className="abtn"
             onClick={() => setUploaderOpen(!uploaderOpen)}
           >
@@ -228,6 +237,8 @@ export default function AdminDashboard({ galleries }) {
             </p>
           </div>
         )}
+
+        {guestOpen && <GuestEventsPanel />}
 
         {uploaderOpen && (
           <section className="anew">
