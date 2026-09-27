@@ -1,14 +1,13 @@
 "use client";
 
 import { track } from "../lib/track";
+import { submitLead } from "../lib/submit-lead";
 import { CALENDLY } from "../lib/site";
 import { useEffect, useState } from "react";
 
 // ── Free Content Day giveaway: entry form + countdown ──
 import { PROMO } from "../lib/promo";
 
-const CONTACT_EMAIL = "brandon@rothventures.co";
-const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 function useCountdown(iso) {
   const [left, setLeft] = useState(null);
@@ -64,11 +63,17 @@ export default function PromoEntry() {
       "why them": data.why,
       "commented on tiktok": data.commented ? "yes" : "no",
     };
-    const payload = Object.fromEntries(Object.entries(rows).filter(([, v]) => v !== undefined && v !== ""));
+    const { _subject, _template, ...fieldRows } = rows;
     try {
-      const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || String(json.success) !== "true") throw new Error("failed");
+      await submitLead({
+        kind: "promo",
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: _subject,
+        summary: `Promo entry · ${data.business}${data.town ? ` · ${data.town}` : ""}`,
+        fields: Object.entries(fieldRows),
+      });
       track("promo_entry_sent");
       setStatus("sent");
     } catch {

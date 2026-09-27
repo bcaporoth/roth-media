@@ -5,6 +5,7 @@ import PortalNav from "../../../components/PortalNav";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
+import { newLeadCount } from "../../../lib/studio-data";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,25 @@ export default async function AdminPage() {
     )
     .order("created_at", { ascending: false });
 
+  // Studio extras — both tolerate studio.sql not being run yet.
+  const [{ data: reviews }, { data: acts }, newCount] = await Promise.all([
+    db.from("galleries").select("id, review_requested_at"),
+    db
+      .from("gallery_activity")
+      .select("gallery_id, action, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20000),
+    newLeadCount(),
+  ]);
+  const reviewedAt = new Map((reviews || []).map((r) => [r.id, r.review_requested_at]));
+  const activity = new Map();
+  for (const a of acts || []) {
+    const cur = activity.get(a.gallery_id) || { views: 0, saves: 0, last: a.created_at };
+    if (a.action === "view") cur.views++;
+    else cur.saves++;
+    activity.set(a.gallery_id, cur);
+  }
+
   // Flatten for the client component + sign cover thumbnails.
   const items = await Promise.all(
     (galleries || []).map(async (g) => ({
@@ -42,6 +62,8 @@ export default async function AdminPage() {
       event_date: g.event_date,
       clientName: g.clients?.name || "",
       clientEmail: g.clients?.email || "",
+      reviewRequestedAt: reviewedAt.get(g.id) || null,
+      activity: activity.get(g.id) || null,
       coverUrl:
         r2Configured && g.cover_filename
           ? await signedUrl(photoKey(g.id, "thumb", g.cover_filename)).catch(
@@ -55,7 +77,7 @@ export default async function AdminPage() {
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
 
-      <AdminDashboard galleries={items} />
+      <AdminDashboard galleries={items} newCount={newCount} />
 
       <footer className="rm-footer">
         <div className="foot-inner">

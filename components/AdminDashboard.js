@@ -7,6 +7,8 @@ import AdminUploader from "./AdminUploader";
 import CoverPicker from "./CoverPicker";
 import DesignPanel from "./DesignPanel";
 import PremierePanel from "./PremierePanel";
+import ReviewButton from "./ReviewButton";
+import { StudioTabs } from "./StudioShell";
 import { DESIGN_ACCENTS } from "../lib/design";
 
 // Studio Admin dashboard — stats, search/sort, cover-photo cards, and a
@@ -33,7 +35,7 @@ function initials(title) {
     .join("");
 }
 
-export default function AdminDashboard({ galleries }) {
+export default function AdminDashboard({ galleries, newCount = 0 }) {
   const [look, setLook] = useState({ mode: "light", accent: "clay" });
   const [lookOpen, setLookOpen] = useState(false);
   const [uploaderOpen, setUploaderOpen] = useState(false);
@@ -123,6 +125,7 @@ export default function AdminDashboard({ galleries }) {
       style={shellStyle}
     >
       <main className="admin-wrap">
+        <StudioTabs active="galleries" newCount={newCount} />
         <div className="kick">Studio admin</div>
         <h1>Your studio.</h1>
 
@@ -292,6 +295,11 @@ export default function AdminDashboard({ galleries }) {
                       ? `Event ${fmtDate(g.event_date)}`
                       : `Added ${fmtDate(g.created_at)}`}
                   </span>
+                  <span className="gcard-meta gcard-activity">
+                    {g.activity
+                      ? `Opened ${g.activity.views}× · ${g.activity.saves} saved · last ${fmtDate(g.activity.last)}`
+                      : "Not opened yet"}
+                  </span>
                   <div className="gcard-actions">
                     <Link className="achip" href={`/portal/gallery/${g.id}`}>
                       View
@@ -323,6 +331,11 @@ export default function AdminDashboard({ galleries }) {
                       title={g.title}
                     />
                     <PremierePanel galleryId={g.id} />
+                    <ReviewButton
+                      galleryId={g.id}
+                      clientEmail={g.clientEmail}
+                      requestedAt={g.reviewRequestedAt}
+                    />
                   </div>
                 </div>
               </article>

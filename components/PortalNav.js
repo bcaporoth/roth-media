@@ -21,8 +21,8 @@ export default function PortalNav({ email, isAdmin = false, active = "", extra =
         </li>
         {isAdmin && (
           <li>
-            <Link className={cls("admin")} href="/portal/admin">
-              Studio admin
+            <Link className={cls("admin")} href="/portal/admin/inbox">
+              Studio
             </Link>
           </li>
         )}

@@ -1,5 +1,6 @@
 import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
+import SiteBeacon from "../components/SiteBeacon";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
       <body>
         {children}
+        <SiteBeacon />
         {/* Vercel Web Analytics — enable "Web Analytics" on the Vercel project once; no package needed. */}
         <script dangerouslySetInnerHTML={{ __html: "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};" }} />
         <script defer src="/_vercel/insights/script.js"></script>

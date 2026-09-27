@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
 import PortalGallery from "../../../../components/PortalGallery";
+import GalleryBeacon from "../../../../components/GalleryBeacon";
 import PortalNav from "../../../../components/PortalNav";
 import { designSkin } from "../../../../lib/design";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
@@ -186,6 +187,7 @@ export default async function GalleryPage({ params }) {
 
       <section id="grid" className="work pgal-work">
         <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
+        <GalleryBeacon galleryId={gallery.id} via="portal" />
       </section>
 
       <footer className="rm-footer">

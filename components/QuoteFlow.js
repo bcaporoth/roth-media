@@ -1,6 +1,7 @@
 "use client";
 
 import { track } from "../lib/track";
+import { submitLead } from "../lib/submit-lead";
 import { CALENDLY } from "../lib/site";
 import { useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
@@ -9,8 +10,6 @@ import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
 // 3. Your info + the quote.  Every number lives in lib/packages.js.
 
-const CONTACT_EMAIL = "brandon@rothventures.co";
-const ENDPOINT = `https://formsubmit.co/ajax/${CONTACT_EMAIL}`;
 
 const STEPS = ["What it's for", "Your package", "Your info"];
 
@@ -73,11 +72,17 @@ export default function QuoteFlow({ initialCategory = "" }) {
       [L.where.toLowerCase()]: data.where,
       "anything else": data.notes,
     };
-    const payload = Object.fromEntries(Object.entries(rows).filter(([, v]) => v !== undefined && v !== ""));
+    const { _subject, _template, ...fieldRows } = rows;
     try {
-      const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(payload) });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || String(json.success) !== "true") throw new Error("failed");
+      await submitLead({
+        kind: "quote",
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        phone: data.phone,
+        subject: _subject,
+        summary: `${catTitle} · ${pkg.name} · ${money(estimate)}${pkg.per || ""}`,
+        fields: Object.entries(fieldRows),
+      });
       setSent({ name: pkg.name, total: money(estimate) + (pkg.per || "") });
       track("quote_sent", { category, package: pkg.id, total: estimate });
       setStatus("sent");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "../../../components/BrandMark";
 import { notFound } from "next/navigation";
 import PortalGallery from "../../../components/PortalGallery";
+import GalleryBeacon from "../../../components/GalleryBeacon";
 import PremiereGate from "../../../components/PremiereGate";
 import { designSkin } from "../../../lib/design";
 import { REVIEW_URL } from "../../../lib/site";
@@ -253,6 +254,7 @@ export default async function SharedGalleryPage({ params }) {
 
       <section id="grid" className="work pgal-work">
         <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
+        <GalleryBeacon galleryId={gallery.id} via="share" />
       </section>
 
       <section className="contact" style={{ borderTop: "1px solid var(--line)" }}>
