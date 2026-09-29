@@ -48,20 +48,35 @@ export async function POST(request) {
     const eventDate = body.eventDate || null;
     const base = eventDate ? new Date(eventDate + "T23:59:59Z") : new Date();
     const until = new Date(base.getTime() + days * 86400000).toISOString();
-    const { data, error } = await db
+    const galleryId = /^[0-9a-f-]{36}$/.test(String(body.galleryId || "")) ? body.galleryId : null;
+    let { data, error } = await db
       .from("guest_events")
-      .insert({ slug, title, event_date: eventDate, upload_open_until: until })
+      .insert({ slug, title, event_date: eventDate, upload_open_until: until, ...(galleryId ? { gallery_id: galleryId } : {}) })
       .select("id, slug, title, event_date, upload_open_until, view_token, created_at")
       .single();
+    // gallery_id arrives with supabase/guest-link.sql — create unlinked until then.
+    if (error && galleryId && /gallery_id/i.test(error.message)) {
+      ({ data, error } = await db
+        .from("guest_events")
+        .insert({ slug, title, event_date: eventDate, upload_open_until: until })
+        .select("id, slug, title, event_date, upload_open_until, view_token, created_at")
+        .single());
+    }
     if (error) return bad(/duplicate|unique/i.test(error.message) ? "That link name is taken" : error.message, 500);
     return NextResponse.json({ event: data });
   }
 
   if (body.action === "list") {
-    const { data: events, error } = await db
+    let { data: events, error } = await db
       .from("guest_events")
-      .select("id, slug, title, event_date, upload_open_until, view_token, created_at")
+      .select("id, slug, title, event_date, upload_open_until, view_token, created_at, gallery_id, galleries(title)")
       .order("created_at", { ascending: false });
+    if (error) {
+      ({ data: events, error } = await db
+        .from("guest_events")
+        .select("id, slug, title, event_date, upload_open_until, view_token, created_at")
+        .order("created_at", { ascending: false }));
+    }
     if (error) return bad(error.message, 500);
     const { data: counts } = await db
       .from("guest_uploads")
@@ -75,8 +90,17 @@ export async function POST(request) {
       e.bytes += Number(c.bytes || 0);
     }
     return NextResponse.json({
-      events: (events || []).map((e) => ({ ...e, stats: byEvent[e.id] || { photos: 0, videos: 0, messages: 0, bytes: 0 } })),
+      events: (events || []).map((e) => ({ ...e, galleryTitle: e.galleries?.title || null, galleries: undefined, stats: byEvent[e.id] || { photos: 0, videos: 0, messages: 0, bytes: 0 } })),
     });
+  }
+
+  if (body.action === "set-gallery") {
+    const { eventId, galleryId } = body;
+    if (!eventId) return bad("Bad request");
+    const gid = /^[0-9a-f-]{36}$/.test(String(galleryId || "")) ? galleryId : null;
+    const { error } = await db.from("guest_events").update({ gallery_id: gid }).eq("id", eventId);
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true });
   }
 
   if (body.action === "set-window") {

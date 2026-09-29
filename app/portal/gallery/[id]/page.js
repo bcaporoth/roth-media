@@ -8,6 +8,7 @@ import { designSkin } from "../../../../lib/design";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../../lib/r2";
+import { guestLinkForGallery } from "../../../../lib/guest";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,9 @@ export default async function GalleryPage({ params }) {
   // so the signed-in view matches the public share page.
   const skin = designSkin(gallery.design);
 
+  // guest_events is service-role only — clients read it through the admin client.
+  const guestLink = adminConfigured ? await guestLinkForGallery(supabaseAdmin(), gallery.id) : null;
+
   return (
     <div className={skin.className} style={skin.style}>
       {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
@@ -183,6 +187,14 @@ export default async function GalleryPage({ params }) {
             rothmediaco.com/g/{gallery.share_token.slice(0, 8)}…
           </a>
         </p>
+      )}
+
+      {guestLink && (
+        <a className="guest-card" href={guestLink.href}>
+          <span className="guest-card-kick">From your guests</span>
+          <strong>{guestLink.count} {guestLink.count === 1 ? "upload" : "uploads"} from the people who were there</strong>
+          <span className="guest-card-sub">{guestLink.open ? "Still coming in — open the guest gallery →" : "Open the guest gallery →"}</span>
+        </a>
       )}
 
       <section id="grid" className="work pgal-work">

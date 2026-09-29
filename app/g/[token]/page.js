@@ -8,6 +8,7 @@ import { designSkin } from "../../../lib/design";
 import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../lib/r2";
+import { guestLinkForGallery } from "../../../lib/guest";
 
 export const dynamic = "force-dynamic";
 
@@ -181,6 +182,8 @@ export default async function SharedGalleryPage({ params }) {
       }).catch(() => null)
     : null;
 
+  const guestLink = await guestLinkForGallery(db, gallery.id);
+
   // Film-only galleries: the chosen cover doubles as the film's poster,
   // so "Set cover" updates the tile below the hero too.
   const allVideos = items.length > 0 && items.every((i) => i.kind === "video");
@@ -251,6 +254,14 @@ export default async function SharedGalleryPage({ params }) {
           </p>
         </div>
       </header>
+
+      {guestLink && (
+        <a className="guest-card" href={guestLink.href}>
+          <span className="guest-card-kick">From your guests</span>
+          <strong>{guestLink.count} {guestLink.count === 1 ? "upload" : "uploads"} from the people who were there</strong>
+          <span className="guest-card-sub">{guestLink.open ? "Still coming in — open the guest gallery →" : "Open the guest gallery →"}</span>
+        </a>
+      )}
 
       <section id="grid" className="work pgal-work">
         <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />

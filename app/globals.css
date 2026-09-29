@@ -5335,3 +5335,16 @@ a.svc-cta:hover {
 .sbars-ticks { position: relative; height: 1.3rem; margin-top: 0.3rem; font-size: 0.72rem; color: var(--ink-soft); }
 .sbars-ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
 .sbars-ticks span:first-child { transform: none; left: 0 !important; }
+
+/* guest reel — fixes + album card */
+.guest-brand, .guest-brand .brand-text { color: var(--ink); }
+.guest-queue .qhelp, .guest-up > .qhelp { margin-top: 0.75rem; }
+.guest-send { display: block; }
+.guest-card { display: block; max-width: 720px; margin: 1.5rem auto 0; padding: 1.1rem 1.3rem; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: inherit; background: rgba(255, 255, 255, 0.35); transition: border-color 0.2s, transform 0.2s; }
+.guest-card:hover { border-color: var(--clay); transform: translateY(-1px); }
+.guest-card-kick { display: block; font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--clay); margin-bottom: 0.3rem; }
+.guest-card strong { display: block; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.05rem; line-height: 1.25; }
+.guest-card-sub { display: block; font-size: 0.85rem; opacity: 0.7; margin-top: 0.3rem; }
+.guest-admin-attach { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
+.guest-admin-attach select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; max-width: 260px; }
+@media (max-width: 640px) { .guest-card { margin-inline: 1rem; } }

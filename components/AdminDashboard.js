@@ -241,7 +241,7 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
           </div>
         )}
 
-        {guestOpen && <GuestEventsPanel />}
+        {guestOpen && <GuestEventsPanel galleries={galleries} />}
 
         {uploaderOpen && (
           <section className="anew">

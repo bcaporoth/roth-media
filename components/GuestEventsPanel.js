@@ -20,13 +20,14 @@ async function api(payload) {
 const fmtBytes = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
 
-export default function GuestEventsPanel() {
+export default function GuestEventsPanel({ galleries = [] }) {
   const [events, setEvents] = useState(null);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [eventDate, setEventDate] = useState("");
   const [daysOpen, setDaysOpen] = useState(30);
+  const [galleryId, setGalleryId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
@@ -39,8 +40,8 @@ export default function GuestEventsPanel() {
     e.preventDefault();
     setBusy(true); setError("");
     try {
-      await api({ action: "create", title, slug, eventDate: eventDate || null, daysOpen });
-      setTitle(""); setSlug(""); setSlugTouched(false); setEventDate("");
+      await api({ action: "create", title, slug, eventDate: eventDate || null, daysOpen, galleryId: galleryId || null });
+      setTitle(""); setSlug(""); setSlugTouched(false); setEventDate(""); setGalleryId("");
       await refresh();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
@@ -68,6 +69,10 @@ export default function GuestEventsPanel() {
         <label>Uploads stay open<select value={daysOpen} onChange={(e) => setDaysOpen(Number(e.target.value))}>
           {[14, 30, 60, 90].map((d) => <option key={d} value={d}>{d} days after</option>)}
         </select></label>
+        <label>Attach to their album<select value={galleryId} onChange={(e) => setGalleryId(e.target.value)}>
+          <option value="">Not yet — I'll attach it later</option>
+          {galleries.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+        </select></label>
         <button type="submit" className="abtn" disabled={busy || !title || !slug}>{busy ? "Creating…" : "Create event"}</button>
       </form>
       {error && <p className="cform-error">{error}</p>}
@@ -86,6 +91,12 @@ export default function GuestEventsPanel() {
                   <strong>{ev.title}</strong>
                   <span className="gcard-meta">{ev.event_date ? fmtDate(ev.event_date) : "no date"} · {open ? `open until ${fmtDate(ev.upload_open_until)}` : "closed"}</span>
                   <span className="gcard-meta">{ev.stats.photos} photos · {ev.stats.videos} videos · {ev.stats.messages} messages · {fmtBytes(ev.stats.bytes)}</span>
+                  <label className="guest-admin-attach">In their album:
+                    <select value={ev.gallery_id || ""} onChange={async (e) => { try { await api({ action: "set-gallery", eventId: ev.id, galleryId: e.target.value || null }); await refresh(); } catch (err) { setError(err.message); } }}>
+                      <option value="">— not attached —</option>
+                      {galleries.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+                    </select>
+                  </label>
                 </div>
                 <div className="gcard-actions">
                   <button type="button" className={"achip" + (copied === ev.id + "u" ? " is-done" : "")} onClick={() => copy(up, ev.id + "u")}>{copied === ev.id + "u" ? "Copied ✓" : "Copy guest link"}</button>
