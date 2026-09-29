@@ -19,6 +19,8 @@ async function api(payload) {
 
 const fmtBytes = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.round(n / 1e6)} MB`);
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
+const fmtLocal = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" }) : "");
+const SITE = "https://rothmediaco.com";
 
 export default function GuestEventsPanel({ galleries = [] }) {
   const [events, setEvents] = useState(null);
@@ -56,7 +58,6 @@ export default function GuestEventsPanel({ galleries = [] }) {
     try { await api({ action: "delete-event", eventId: ev.id }); await refresh(); } catch (err) { setError(err.message); }
   }
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://rothmediaco.com";
 
   return (
     <section className="anew guest-admin">
@@ -83,13 +84,13 @@ export default function GuestEventsPanel({ galleries = [] }) {
         <ul className="guest-admin-list">
           {events.map((ev) => {
             const open = new Date(ev.upload_open_until) > new Date();
-            const up = `${origin}/guest/${ev.slug}`;
-            const gal = `${origin}/guest/${ev.slug}/gallery?k=${ev.view_token}`;
+            const up = `${SITE}/guest/${ev.slug}`;
+            const gal = `${SITE}/guest/${ev.slug}/gallery?k=${ev.view_token}`;
             return (
               <li key={ev.id} className="guest-admin-ev">
                 <div className="guest-admin-head">
                   <strong>{ev.title}</strong>
-                  <span className="gcard-meta">{ev.event_date ? fmtDate(ev.event_date) : "no date"} · {open ? `open until ${fmtDate(ev.upload_open_until)}` : "closed"}</span>
+                  <span className="gcard-meta">{ev.event_date ? fmtDate(ev.event_date) : "no date"} · {open ? `open until ${fmtLocal(ev.upload_open_until)}` : "closed"}</span>
                   <span className="gcard-meta">{ev.stats.photos} photos · {ev.stats.videos} videos · {ev.stats.messages} messages · {fmtBytes(ev.stats.bytes)}</span>
                   <label className="guest-admin-attach">In their album:
                     <select value={ev.gallery_id || ""} onChange={async (e) => { try { await api({ action: "set-gallery", eventId: ev.id, galleryId: e.target.value || null }); await refresh(); } catch (err) { setError(err.message); } }}>
@@ -101,7 +102,7 @@ export default function GuestEventsPanel({ galleries = [] }) {
                 <div className="gcard-actions">
                   <button type="button" className={"achip" + (copied === ev.id + "u" ? " is-done" : "")} onClick={() => copy(up, ev.id + "u")}>{copied === ev.id + "u" ? "Copied ✓" : "Copy guest link"}</button>
                   <a className="achip" href={`/guest/${ev.slug}/sign`} target="_blank" rel="noreferrer">Print QR sign ↗</a>
-                  <a className="achip" href={gal} target="_blank" rel="noreferrer">Open gallery ↗</a>
+                  <a className="achip" href={`/guest/${ev.slug}/gallery?k=${ev.view_token}`} target="_blank" rel="noreferrer">Open gallery ↗</a>
                   <button type="button" className={"achip" + (copied === ev.id + "g" ? " is-done" : "")} onClick={() => copy(gal, ev.id + "g")}>{copied === ev.id + "g" ? "Copied ✓" : "Copy couple's link"}</button>
                   <button type="button" className="achip achip-danger" onClick={() => remove(ev)}>Delete</button>
                 </div>

@@ -55,7 +55,7 @@ export default function ClientsBoard({ initial, emailReady }) {
   }
   async function tempPassword(c) {
     if (!window.confirm(`Set a new temporary password for ${c.email}? Their old one stops working.`)) return;
-    try { const r = await api({ action: "set-password", email: c.email }); await copy(r.password, "Password"); window.prompt(`Temporary password for ${c.email} (copied — text it to them):`, r.password); await refresh(); } catch (err) { fail(err); }
+    try { const r = await api({ action: "set-password", email: c.email }); window.prompt(`Temporary password for ${c.email} — copy it and text it to them:`, r.password); await refresh(); } catch (err) { fail(err); }
   }
   async function galleryReady(c, g) {
     if (!window.confirm(`Email ${c.email} that "${g.title}" is ready?`)) return;
@@ -136,7 +136,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                   <span className="gcard-meta">{c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
                   <span className="gcard-meta">
                     {c.galleries.length} {c.galleries.length === 1 ? "gallery" : "galleries"}
-                    {" · "}{c.account ? `logs in (last ${fmt(c.account.lastSignIn) || "never"})` : "no login yet — share link only"}
+                    {" · "}{c.account ? (c.account.lastSignIn ? `logs in · last ${fmt(c.account.lastSignIn)}` : "has a login · never signed in") : "no login yet — share link only"}
                   </span>
                 </button>
                 <div className="client-quick">
@@ -146,7 +146,7 @@ export default function ClientsBoard({ initial, emailReady }) {
               </div>
 
               {isOpen && (
-                <div className="client-detail">
+                <div className="client-detail" key={`${c.id}-${c.name}-${c.email}-${c.phone}`}>
                   <div className="client-fields">
                     <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && save(c, { name: e.target.value })} /></label>
                     <label>Email<input defaultValue={c.email} onBlur={(e) => e.target.value !== c.email && save(c, { email: e.target.value })} /></label>
@@ -163,7 +163,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                         <span className="gcard-actions">
                           <button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button>
                           <a className="achip" href={`/portal/gallery/${g.id}`}>Open</a>
-                          <button type="button" className="achip" disabled={!emailReady} onClick={() => galleryReady(c, g)}>Email “it’s ready”</button>
+                          <button type="button" className="achip" disabled={!emailReady} onClick={() => galleryReady(c, g)}>Email &quot;it&apos;s ready&quot;</button>
                         </span>
                         {!g.shared && (
                           <span className="client-members">
@@ -180,7 +180,7 @@ export default function ClientsBoard({ initial, emailReady }) {
 
                   <div className="kick-sm">Login</div>
                   <p className="gcard-meta">
-                    {c.account ? `Account exists · last sign-in ${fmt(c.account.lastSignIn) || "never"}.` : "No account yet — the share link works without one."}
+                    {c.account ? (c.account.lastSignIn ? `Account exists · last sign-in ${fmt(c.account.lastSignIn)}.` : "Account exists · never signed in.") : "No account yet — the share link works without one."}
                     {" "}Set a temporary password and text it to them; they can change it anytime from their account page.
                   </p>
                   <div className="gcard-actions">

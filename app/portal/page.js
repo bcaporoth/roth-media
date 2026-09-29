@@ -73,7 +73,7 @@ async function getClientData() {
           .select("id, title, event_date, cover_filename, media_count")
           .in("id", ids)
           .order("created_at", { ascending: false });
-        shared = extra || [];
+        shared = (extra || []).map((g) => ({ ...g, shared: true }));
       }
     } catch {}
   }
@@ -201,7 +201,7 @@ export default async function PortalPage() {
               <span className="portal-hosted-caption">
                 <strong>{g.title}</strong>
                 <span>
-                  {g.media_count} items
+                  {g.shared ? "Shared with you · " : ""}{g.media_count} items
                   {g.event_date &&
                     ` · ${new Date(g.event_date).toLocaleDateString("en-US", {
                       month: "long",

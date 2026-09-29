@@ -16,6 +16,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fmtBytes = (n) =>
   n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(0)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`;
 
+// Desktop drags of HEIC/MOV sometimes arrive with an empty type.
+function guessType(name = "") {
+  const ext = name.toLowerCase().split(".").pop();
+  return { heic: "image/heic", heif: "image/heif", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", mov: "video/quicktime", mp4: "video/mp4", m4v: "video/mp4", webm: "video/webm" }[ext] || "application/octet-stream";
+}
+
 async function api(payload) {
   const res = await fetch("/api/guest", {
     method: "POST",
@@ -124,7 +130,7 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
           action: "sign", slug, consent: true, guestName: name.trim(),
           files: batch.map((it) => ({
             filename: it.file.name || (it.message ? "message.webm" : "upload"),
-            contentType: it.file.type || "application/octet-stream",
+            contentType: it.file.type || guessType(it.file.name),
             bytes: it.file.size, message: it.message,
           })),
         });
@@ -150,7 +156,8 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
                 id: s.id, filename: s.filename, key: s.key, kind: s.kind, contentType: s.contentType,
                 webKey: dims && s.web ? s.web.key : null, width: dims?.width, height: dims?.height,
               });
-              patch(it.id, { status: "done", pct: 100 });
+              recorded[recorded.length - 1].itemId = it.id;
+              patch(it.id, { status: "uploading", pct: 100 });
             } catch (err) {
               patch(it.id, { status: "failed", error: err.message || "Upload failed" });
             }
@@ -158,8 +165,16 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
         };
         await Promise.all(Array.from({ length: CONCURRENCY }, worker));
         if (recorded.length) {
-          const r = await api({ action: "record", slug, guestName: name.trim(), items: recorded });
-          setSent((n) => n + (r.recorded || 0));
+          // Only "Sent ✓" once the server has written the rows — otherwise a
+          // dropped record call would show success for files the couple never sees.
+          try {
+            const r = await api({ action: "record", slug, guestName: name.trim(), items: recorded.map(({ itemId, ...rest }) => rest) });
+            setSent((n) => n + (r.recorded || 0));
+            for (const rec of recorded) patch(rec.itemId, { status: "done", pct: 100 });
+          } catch (err) {
+            for (const rec of recorded) patch(rec.itemId, { status: "failed", error: "Didn't save — tap Send again" });
+            throw err;
+          }
         }
       }
     } catch (err) {

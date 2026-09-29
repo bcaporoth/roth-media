@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { R2_BUCKET, r2Configured, signedUrl } from "../../../../lib/r2";
@@ -44,8 +44,8 @@ export async function POST(request) {
     if (!title) return bad("Give the event a name");
     let slug = slugify(body.slug || title);
     if (!SLUG_RE.test(slug)) return bad("That link name won't work — letters, numbers, dashes");
-    const days = Math.min(90, Math.max(1, Number(body.daysOpen || 30)));
-    const eventDate = body.eventDate || null;
+    const days = Math.min(90, Math.max(1, Number.isFinite(Number(body.daysOpen)) ? Number(body.daysOpen) : 30));
+    const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.eventDate || "")) ? body.eventDate : null;
     const base = eventDate ? new Date(eventDate + "T23:59:59Z") : new Date();
     const until = new Date(base.getTime() + days * 86400000).toISOString();
     const galleryId = /^[0-9a-f-]{36}$/.test(String(body.galleryId || "")) ? body.galleryId : null;
@@ -129,10 +129,9 @@ export async function POST(request) {
     const { eventId } = body;
     if (!eventId) return bad("Bad request");
     const { data: rows } = await db.from("guest_uploads").select("key, web_key").eq("event_id", eventId);
-    for (const r of rows || []) {
-      for (const key of [r.key, r.web_key].filter(Boolean)) {
-        try { await r2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key })); } catch {}
-      }
+    const keys = (rows || []).flatMap((r) => [r.key, r.web_key].filter(Boolean)).map((Key) => ({ Key }));
+    for (let i = 0; i < keys.length; i += 1000) {
+      try { await r2().send(new DeleteObjectsCommand({ Bucket: R2_BUCKET, Delete: { Objects: keys.slice(i, i + 1000), Quiet: true } })); } catch {}
     }
     const { error } = await db.from("guest_events").delete().eq("id", eventId);
     if (error) return bad(error.message, 500);

@@ -8,10 +8,12 @@ create table if not exists public.gallery_members (
 );
 alter table public.gallery_members enable row level security;
 
+drop policy if exists "members read own memberships" on public.gallery_members;
 create policy "members read own memberships" on public.gallery_members
   for select using (
     client_id in (select id from public.clients where email = auth.jwt() ->> 'email')
   );
+drop policy if exists "members read shared galleries" on public.galleries;
 create policy "members read shared galleries" on public.galleries
   for select using (
     id in (
@@ -20,6 +22,7 @@ create policy "members read shared galleries" on public.galleries
       where c.email = auth.jwt() ->> 'email'
     )
   );
+drop policy if exists "members read shared media" on public.media;
 create policy "members read shared media" on public.media
   for select using (
     gallery_id in (

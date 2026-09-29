@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { resendConfigured, sendEmail } from "../../../../lib/resend";
+import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName } from "../../../../lib/client-email";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ function tempPassword() {
 }
 
 async function findAuthUser(db, email) {
-  // Supabase admin API pages at 50; rosters this size fit in a few pages.
+  // Supabase admin API pages; rosters this size fit in a page or two.
   for (let page = 1; page <= 20; page++) {
     const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
     if (error) throw new Error(error.message);
@@ -114,6 +114,15 @@ export async function POST(request) {
       const email = cleanEmail(body.email);
       if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
       patch.email = email;
+      // Keep the login in step — RLS matches on the auth email, so a roster-only
+      // change would silently lock them out of every gallery.
+      try {
+        const { data: cur } = await db.from("clients").select("email").eq("id", id).maybeSingle();
+        if (cur && cur.email.toLowerCase() !== email) {
+          const au = await findAuthUser(db, cur.email.toLowerCase());
+          if (au) await db.auth.admin.updateUserById(au.id, { email, email_confirm: true });
+        }
+      } catch {}
     }
     let { error } = await db.from("clients").update(patch).eq("id", id);
     if (error && /phone|notes/i.test(error.message)) {
@@ -215,18 +224,24 @@ export async function POST(request) {
     const { data: clients, error } = await q;
     if (error) return bad(error.message, 500);
     const seen = new Set();
-    let sent = 0;
-    const failed = [];
+    const list = [];
     for (const c of clients || []) {
       const email = cleanEmail(c.email);
       if (!EMAIL_RE.test(email) || seen.has(email)) continue;
       seen.add(email);
+      const bodyText = merge(message, c);
+      list.push({ to: email, subject: merge(subject, c), text: bodyText, html: wrapHtml({ body: bodyText }) });
+    }
+    // Resend's batch endpoint takes 100 per call — one request, no 2/sec throttle to trip.
+    let sent = 0;
+    const failed = [];
+    for (let i = 0; i < list.length; i += 100) {
+      const chunk = list.slice(i, i + 100);
       try {
-        const bodyText = merge(message, c);
-        await sendEmail({ to: email, subject: merge(subject, c), text: bodyText, html: wrapHtml({ body: bodyText }) });
-        sent += 1;
+        await sendBatch(chunk);
+        sent += chunk.length;
       } catch (err) {
-        failed.push(`${email}: ${err.message}`);
+        failed.push(`${chunk.length} recipients: ${err.message}`);
       }
     }
     return NextResponse.json({ ok: true, sent, failed });

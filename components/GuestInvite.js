@@ -13,7 +13,7 @@ export default function GuestInvite({ slug, title, className = "" }) {
   async function share() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Photos from ${title}`, text, url });
+        await navigator.share({ title: `Photos from ${title}`, text: text.replace(`: ${url}`, "."), url });
         setDone("Sent");
       } else {
         await navigator.clipboard.writeText(text);

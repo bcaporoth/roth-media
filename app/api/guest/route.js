@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { R2_BUCKET, r2Configured } from "../../../lib/r2";
@@ -58,7 +58,8 @@ export async function POST(request) {
       const contentType = String(f.contentType || "");
       const bytes = Number(f.bytes || 0);
       if (!/^(image|video)\//.test(contentType)) return bad(`${f.filename || "A file"} isn't a photo or video`);
-      if (!(bytes > 0) || bytes > MAX_FILE_BYTES) return bad(`${f.filename || "A file"} is over 750 MB`);
+      if (!(bytes > 0)) return bad(`${f.filename || "A file"} is empty`);
+      if (bytes > MAX_FILE_BYTES) return bad(`${f.filename || "A file"} is over 750 MB`);
       const id = crypto.randomUUID();
       const filename = safeName(f.filename);
       const kind = kindFor(contentType, f.message === true);
@@ -97,7 +98,8 @@ export async function POST(request) {
       const filename = safeName(it.filename);
       const key = guestKey(event.id, id, "orig", filename);
       if (!/^[0-9a-f-]{36}$/.test(id) || it.key !== key) continue; // only keys we signed
-      // Confirm the bytes actually landed before writing a row.
+      // Confirm the bytes actually landed before writing a row — and that the
+      // size cap wasn't dodged by lying at sign time.
       let bytes = 0;
       try {
         const head = await r2().send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: key }));
@@ -105,7 +107,13 @@ export async function POST(request) {
       } catch {
         continue;
       }
+      if (bytes > MAX_FILE_BYTES) {
+        try { await r2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key })); } catch {}
+        continue;
+      }
       const kind = ["photo", "video", "message"].includes(it.kind) ? it.kind : "photo";
+      // web_key is rebuilt here, never taken from the caller — it names an R2 object we later delete.
+      const webKey = kind === "photo" && it.webKey ? guestKey(event.id, id, "web", filename.replace(/\.[^.]+$/, "") + ".jpg") : null;
       rows.push({
         id,
         event_id: event.id,
@@ -113,7 +121,7 @@ export async function POST(request) {
         kind,
         filename,
         key,
-        web_key: kind === "photo" && it.webKey ? String(it.webKey) : null,
+        web_key: webKey,
         content_type: String(it.contentType || "").slice(0, 80),
         bytes,
         width: it.width > 0 ? Math.round(it.width) : null,
@@ -121,7 +129,8 @@ export async function POST(request) {
       });
     }
     if (!rows.length) return bad("Uploads didn't finish — try again");
-    const { error } = await db.from("guest_uploads").insert(rows);
+    // A retried record (dropped response) must not 500 on the primary key.
+    const { error } = await db.from("guest_uploads").upsert(rows, { onConflict: "id", ignoreDuplicates: true });
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true, recorded: rows.length });
   }
