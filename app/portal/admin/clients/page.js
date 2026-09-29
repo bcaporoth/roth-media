@@ -26,8 +26,22 @@ export default async function ClientsPage() {
     .from("galleries")
     .select("id, title, share_token, media_count, event_date, client_id, created_at")
     .order("created_at", { ascending: false });
+  const membersByGallery = {};
+  const memberOf = {};
+  try {
+    const { data: members } = await db.from("gallery_members").select("gallery_id, client_id, clients(id, name, email)");
+    for (const m of members || []) {
+      (membersByGallery[m.gallery_id] ||= []).push({ id: m.client_id, name: m.clients?.name || "", email: m.clients?.email || "" });
+      (memberOf[m.client_id] ||= []).push(m.gallery_id);
+    }
+  } catch {}
+  const withMembers = (g) => ({ ...g, members: membersByGallery[g.id] || [] });
+  const byId = {};
+  for (const g of galleries || []) byId[g.id] = g;
   const byClient = {};
-  for (const g of galleries || []) (byClient[g.client_id] ||= []).push(g);
+  for (const g of galleries || []) (byClient[g.client_id] ||= []).push(withMembers(g));
+  for (const [cid, gids] of Object.entries(memberOf))
+    for (const gid of gids) if (byId[gid]) (byClient[cid] ||= []).push({ ...withMembers(byId[gid]), shared: true });
   const accounts = {};
   try {
     const { data } = await db.auth.admin.listUsers({ page: 1, perPage: 200 });

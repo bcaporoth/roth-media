@@ -61,8 +61,25 @@ async function getClientData() {
         : Promise.resolve({ data: [] }),
     ]);
 
+  // Albums shared with this client by someone else (spouse's wedding, etc).
+  let shared = [];
+  if (r2Configured) {
+    try {
+      const { data: m } = await supabase.from("gallery_members").select("gallery_id").eq("client_id", client.id);
+      const ids = (m || []).map((x) => x.gallery_id).filter((id) => !(hosted || []).some((g) => g.id === id));
+      if (ids.length) {
+        const { data: extra } = await supabase
+          .from("galleries")
+          .select("id, title, event_date, cover_filename, media_count")
+          .in("id", ids)
+          .order("created_at", { ascending: false });
+        shared = extra || [];
+      }
+    } catch {}
+  }
+
   const hostedGalleries = await Promise.all(
-    (hosted || []).map(async (g) => ({
+    [...(hosted || []), ...shared].map(async (g) => ({
       ...g,
       coverUrl: g.cover_filename
         ? await signedUrl(photoKey(g.id, "thumb", g.cover_filename)).catch(

@@ -47,8 +47,23 @@ export async function GET() {
     .from("galleries")
     .select("id, title, share_token, media_count, event_date, client_id, created_at")
     .order("created_at", { ascending: false });
+  // Extra people on each album (spouse, parents) — table arrives with gallery-members.sql.
+  const membersByGallery = {};
+  const memberOf = {};
+  try {
+    const { data: members } = await db.from("gallery_members").select("gallery_id, client_id, clients(id, name, email)");
+    for (const m of members || []) {
+      (membersByGallery[m.gallery_id] ||= []).push({ id: m.client_id, name: m.clients?.name || "", email: m.clients?.email || "" });
+      (memberOf[m.client_id] ||= []).push(m.gallery_id);
+    }
+  } catch {}
+  const withMembers = (g) => ({ ...g, members: membersByGallery[g.id] || [] });
+  const byId = {};
+  for (const g of galleries || []) byId[g.id] = g;
   const byClient = {};
-  for (const g of galleries || []) (byClient[g.client_id] ||= []).push(g);
+  for (const g of galleries || []) (byClient[g.client_id] ||= []).push(withMembers(g));
+  for (const [cid, gids] of Object.entries(memberOf))
+    for (const gid of gids) if (byId[gid]) (byClient[cid] ||= []).push({ ...withMembers(byId[gid]), shared: true });
 
   const accounts = {};
   try {
@@ -105,6 +120,31 @@ export async function POST(request) {
       delete patch.phone; delete patch.notes;
       ({ error } = await db.from("clients").update(patch).eq("id", id));
     }
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Put another person on an album: ensures they're on the roster, then links them.
+  if (body.action === "add-member") {
+    const { galleryId } = body;
+    const email = cleanEmail(body.email);
+    const name = String(body.name || "").trim().slice(0, 80);
+    if (!galleryId || !EMAIL_RE.test(email)) return bad("Need a gallery and a real email");
+    let { data: client } = await db.from("clients").select("id").eq("email", email).maybeSingle();
+    if (!client) {
+      const { data, error } = await db.from("clients").insert({ email, name: name || email.split("@")[0] }).select("id").single();
+      if (error) return bad(error.message, 500);
+      client = data;
+    }
+    const { error } = await db.from("gallery_members").upsert({ gallery_id: galleryId, client_id: client.id });
+    if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/gallery-members.sql first" : error.message, 500);
+    return NextResponse.json({ ok: true, clientId: client.id });
+  }
+
+  if (body.action === "remove-member") {
+    const { galleryId, clientId } = body;
+    if (!galleryId || !clientId) return bad("Bad request");
+    const { error } = await db.from("gallery_members").delete().eq("gallery_id", galleryId).eq("client_id", clientId);
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true });
   }

@@ -5381,3 +5381,7 @@ a.svc-cta:hover {
   .clients-add, .client-fields { grid-template-columns: 1fr; }
   .client-quick { display: none; }
 }
+
+/* album members */
+.client-members { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
+.client-members .itag button { background: none; border: 0; color: inherit; cursor: pointer; padding: 0 0 0 0.2rem; font-size: 0.9em; opacity: 0.7; }
