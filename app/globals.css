@@ -5356,3 +5356,28 @@ a.svc-cta:hover {
 .guest-invite { font: inherit; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em; color: var(--bone); background: var(--ink); border: 1px solid var(--ink); border-radius: 999px; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.2s; }
 .guest-invite:hover { background: var(--clay); border-color: var(--clay); }
 .guest-invite-top { margin: -0.75rem 0 1.5rem; }
+
+/* Studio → Clients */
+.clients-flash { font-size: 0.85rem; color: #2e7d4f; margin: 0.5rem 0; }
+.clients-add, .clients-compose { display: grid; gap: 0.6rem; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; margin: 0.75rem 0 1rem; }
+.clients-add { grid-template-columns: 1fr 1.4fr 1fr auto; align-items: center; }
+.clients-add input, .clients-compose input, .clients-compose textarea, .client-fields input, .client-notes textarea { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; width: 100%; }
+.clients-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.client { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.35); }
+.admin-shell.is-dark .client { background: rgba(255, 255, 255, 0.04); }
+.client-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; }
+.client-row input[type="checkbox"] { width: 1.05rem; height: 1.05rem; flex: none; }
+.client-main { flex: 1; min-width: 0; display: grid; gap: 0.1rem; text-align: left; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.client-main strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1rem; }
+.client-quick { display: flex; gap: 0.4rem; flex: none; }
+.client-detail { border-top: 1px solid var(--line); padding: 0.9rem; display: grid; gap: 0.7rem; }
+.client-fields { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 0.6rem; }
+.client-fields label, .client-notes { display: grid; gap: 0.25rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+.client-fields input, .client-notes textarea { text-transform: none; letter-spacing: 0; font-size: 0.95rem; }
+.client-galleries { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+.client-galleries li { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.client-galleries .gcard-actions { margin: 0; }
+@media (max-width: 720px) {
+  .clients-add, .client-fields { grid-template-columns: 1fr; }
+  .client-quick { display: none; }
+}

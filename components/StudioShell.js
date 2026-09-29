@@ -16,6 +16,7 @@ export const STUDIO_TABS = [
   { key: "stats", label: "Stats", href: "/portal/admin/stats" },
   { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
   { key: "galleries", label: "Galleries", href: "/portal/admin" },
+  { key: "clients", label: "Clients", href: "/portal/admin/clients" },
   { key: "card", label: "Card & QR", href: "/portal/admin/card" },
   { key: "pay", label: "Payments", href: "/portal/admin/pay" },
 ];
