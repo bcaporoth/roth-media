@@ -9,6 +9,7 @@ import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../lib/r2";
 import { guestLinkForGallery } from "../../../lib/guest";
+import GuestInvite from "../../../components/GuestInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -256,11 +257,15 @@ export default async function SharedGalleryPage({ params }) {
       </header>
 
       {guestLink && (
-        <a className="guest-card" href={guestLink.href}>
+        <div className="guest-card">
           <span className="guest-card-kick">From your guests</span>
-          <strong>{guestLink.count} {guestLink.count === 1 ? "upload" : "uploads"} from the people who were there</strong>
-          <span className="guest-card-sub">{guestLink.open ? "Still coming in — open the guest gallery →" : "Open the guest gallery →"}</span>
-        </a>
+          <strong>{guestLink.count === 0 ? "Your guests' photos land here" : `${guestLink.count} ${guestLink.count === 1 ? "upload" : "uploads"} from the people who were there`}</strong>
+          <span className="guest-card-sub">{guestLink.open ? "Anyone with the link can add their phone photos, videos, and a message — no app." : "Uploads have closed, but everything they sent is here."}</span>
+          <div className="guest-card-actions">
+            <a className="guest-card-open" href={guestLink.href}>Open guest gallery →</a>
+            {guestLink.open && <GuestInvite slug={guestLink.slug} title={guestLink.title} />}
+          </div>
+        </div>
       )}
 
       <section id="grid" className="work pgal-work">

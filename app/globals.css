@@ -5348,3 +5348,11 @@ a.svc-cta:hover {
 .guest-admin-attach { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
 .guest-admin-attach select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; max-width: 260px; }
 @media (max-width: 640px) { .guest-card { margin-inline: 1rem; } }
+
+/* guest reel — invite button + card actions */
+.guest-card-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 0.8rem; }
+.guest-card-open { font-size: 0.85rem; font-weight: 600; color: var(--ink); text-decoration: none; padding: 0.55rem 0.9rem; border: 1px solid var(--line); border-radius: 999px; }
+.guest-card-open:hover { border-color: var(--clay); }
+.guest-invite { font: inherit; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em; color: var(--bone); background: var(--ink); border: 1px solid var(--ink); border-radius: 999px; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.2s; }
+.guest-invite:hover { background: var(--clay); border-color: var(--clay); }
+.guest-invite-top { margin: -0.75rem 0 1.5rem; }

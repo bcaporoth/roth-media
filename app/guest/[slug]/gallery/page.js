@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BrandMark from "../../../../components/BrandMark";
+import GuestInvite from "../../../../components/GuestInvite";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, signedUrl } from "../../../../lib/r2";
 import { SLUG_RE } from "../../../../lib/guest";
@@ -52,6 +53,7 @@ export default async function GuestGalleryPage({ params, searchParams }) {
         {messages.length ? ` · ${messages.length} video ${messages.length === 1 ? "message" : "messages"}` : ""}
         {stillOpen ? " · still coming in" : ""}. Tap anything to download the original.
       </p>
+      {stillOpen && <GuestInvite slug={ev.slug} title={ev.title} className="guest-invite-top" />}
 
       {messages.length > 0 && (
         <section className="guest-sec">
