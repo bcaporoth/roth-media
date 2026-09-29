@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage kick="Terms" title="The short version of how we work." updated="September 24, 2026">
+    <LegalPage kick="Terms" title="The short version of how we work." updated="September 29, 2026">
       <p>These terms cover everything Roth Media does — wedding photo and video, family sessions, Content Days for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
 
       <h2>Quotes</h2>
@@ -57,6 +57,9 @@ export default function TermsPage() {
 
       <h2>Showing our work</h2>
       <p>Your signed booking agreement includes your written permission for us to use what we shoot in our portfolio, on this site, on social media, in ads for Roth Media, and in submissions to publications. If you&apos;d rather we didn&apos;t — for any reason, no explanation needed — say so in writing before the shoot and we&apos;ll keep your work private. That won&apos;t change your price. If you&apos;re booking a session for your kids, you&apos;re confirming you&apos;re their parent or legal guardian and can give that permission for them. We don&apos;t sell your photos or footage to anyone.</p>
+
+      <h2>Guest uploads</h2>
+      <p>When a booking includes guest photo sharing, guests scan a QR code and upload their own phone photos, videos, and video messages. Each guest confirms before uploading that the content is theirs to share and that they&apos;re giving it to you and to Roth Media to keep, share, and use. Guest uploads are unedited and arrive as-is; we don&apos;t review, curate, or moderate them, and we&apos;re not responsible for what a guest chooses to send. Anything a guest uploads can be removed on request. Guest uploads stay in your gallery for the same twelve months as the rest of your delivery.</p>
 
       <h2>Client galleries</h2>
       <p>Galleries are private. Share the link and password with whoever you like — that&apos;s what they&apos;re for — but the gallery stays yours, and we&apos;ll take it down whenever you ask. Galleries stay online for twelve months after delivery; download everything to your own storage in that window. We keep a backup of your delivered files for twelve months after delivery as a courtesy, not a guarantee — after that they may be gone, so your copy is the copy.</p>

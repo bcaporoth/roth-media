@@ -33,6 +33,10 @@ const FAQS = [
     a: "Yes. All music is professionally licensed through Epidemic Sound, and your finished films are fully cleared for your socials, website, and online use. The license covers the songs as they appear in your delivered videos.",
   },
   {
+    q: "Can our guests share their photos with us?",
+    a: "Yes — Guest photos & video messages is a $250 add-on. A QR card goes on every table; guests scan it, pick from their camera roll, and it lands in your private gallery. No app to download. They can record a 60-second video message for you too, and uploads stay open for a month after the wedding.",
+  },
+  {
     q: "What areas do you serve?",
     a: "I'm local to the Valley — Sayre, Athens, and Waverly — and film weddings across the Twin Tiers, including Elmira, Corning, Towanda, and the surrounding area.",
   },
