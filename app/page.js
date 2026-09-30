@@ -7,7 +7,7 @@ import BrandMark from "../components/BrandMark";
 import Gallery from "../components/Gallery";
 import QuoteFlow from "../components/QuoteFlow";
 import PromoPill from "../components/PromoPill";
-import ReelCard from "../components/ReelCard";
+import FilmCard from "../components/FilmCard";
 import Reveal from "../components/Reveal";
 import { videoUrl, mediaOffloaded } from "../lib/media";
 
@@ -178,54 +178,59 @@ export default function Home() {
           <Gallery photos={photos} />
         </section>
 
-        <section className="pricing page-dark unified-video-work">
+        <section id="films" className="pricing page-dark unified-video-work">
           <div className="pricing-inner">
             <div className="pricing-head reveal">
               <div className="kick">Video work</div>
-              <h2>Made to be watched</h2>
-              <p>Tap to play. Sound on when you&apos;re ready.</p>
+              <h2>Made to be watched.</h2>
+              <p>Tap to play, sound on. Hover for a silent peek.</p>
             </div>
-            <figure className="film-card film-feature reveal">
-              <div className="film-frame">
-                <video
-                  src={videoUrl(HERO_VIDEO)}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  poster="/nolan-kennedy-wedding-poster.jpg"
-                />
+
+            <div className="fc-lane reveal">
+              <div className="fc-lane-head">
+                <span className="fc-lane-kick">Weddings</span>
+                <span className="fc-lane-note">Ceremony-first films, delivered the same night as a sneak peek.</span>
               </div>
-              <figcaption>
-                <strong>Nolan &amp; Kennedy</strong>
-                <span>Wedding sneak peek</span>
-              </figcaption>
-            </figure>
-            <div className="video-row reveal">
-              <figure className="film-card">
-                <div className="film-frame">
-                  <video
-                    src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    poster="/reels/nicole-golden-zumba-promo-poster.jpg"
-                  />
-                </div>
-                <figcaption>
-                  <strong>Nicole Golden</strong>
-                  <span>Zumba class promo</span>
-                </figcaption>
-              </figure>
-              <ReelCard
-                src={videoUrl("/reels/bake-against-the-grain.mp4")}
-                poster="/reels/bake-against-the-grain-poster.jpg"
-                title="Bake Against the Grain"
-                client="Brand film"
+              <FilmCard
+                feature
+                src={videoUrl(HERO_VIDEO)}
+                poster="/nolan-kennedy-wedding-poster.jpg"
+                title="Nolan & Kennedy"
+                sub="Wedding sneak peek · The Pines, Corning"
               />
             </div>
+
+            <div className="fc-lane reveal">
+              <div className="fc-lane-head">
+                <span className="fc-lane-kick">For business</span>
+                <span className="fc-lane-note">Promos and reels cut for the feed — one shoot, a month of posts.</span>
+              </div>
+              <div className="fc-bento">
+                <FilmCard
+                  src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")}
+                  poster="/reels/nicole-golden-zumba-promo-poster.jpg"
+                  title="Nicole Golden"
+                  sub="Zumba class promo"
+                />
+                <FilmCard
+                  src={videoUrl("/reels/womens-powerlifting-club.mp4")}
+                  poster="/reels/womens-powerlifting-club-poster.jpg"
+                  title="Women’s Powerlifting Club"
+                  sub="Gym promo"
+                />
+                <FilmCard
+                  vertical
+                  src={videoUrl("/reels/bake-against-the-grain.mp4")}
+                  poster="/reels/bake-against-the-grain-poster.jpg"
+                  title="Bake Against the Grain"
+                  sub="Brand film · vertical for Instagram & TikTok"
+                />
+              </div>
+            </div>
+
             <p className="video-cta reveal">
-              Picture your day like this?{" "}
-              <a href="#quote">Build your film quote →</a>
+              Picture your day — or your business — like this?{" "}
+              <a href="#quote">Build your quote →</a>
             </p>
           </div>
         </section>
