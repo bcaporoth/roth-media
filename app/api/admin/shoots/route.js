@@ -28,7 +28,7 @@ async function locate(address) {
   const g = await geocode(address);
   if (!g) return { place_label: "", lat: null, lng: null, miles: null, drive_min: null };
   const d = await drive(g);
-  return { place_label: g.label, lat: g.lat, lng: g.lng, miles: d.miles, drive_min: d.minutes };
+  return { place_label: (g.approximate ? "≈ " : "") + g.label, lat: g.lat, lng: g.lng, miles: d.miles, drive_min: d.minutes };
 }
 
 function clean(body, existing = {}) {
