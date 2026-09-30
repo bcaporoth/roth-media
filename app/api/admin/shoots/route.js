@@ -1,0 +1,116 @@
+import { NextResponse } from "next/server";
+import { isAdminRequest } from "../../../../lib/admin-guard";
+import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { geocode, drive } from "../../../../lib/geo";
+import { GUIDES } from "../../../../lib/shoot-guides";
+
+export const dynamic = "force-dynamic";
+
+const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 });
+const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
+const KINDS = new Set(Object.keys(GUIDES));
+const STATUSES = new Set(["planned", "confirmed", "done", "cancelled"]);
+const clip = (v, n) => String(v ?? "").trim().slice(0, n);
+
+// Pull a place out of a lead's fields: "where", "venue", "location", "business name and location", "address".
+function addressFromFields(fields) {
+  const rows = Array.isArray(fields) ? fields : [];
+  const hit = rows.find(([k]) => /venue|address|location|where/i.test(String(k)));
+  return hit ? String(hit[1] || "").trim() : "";
+}
+function dateFromFields(fields) {
+  const rows = Array.isArray(fields) ? fields : [];
+  const hit = rows.find(([k]) => /date|when/i.test(String(k)));
+  return hit ? String(hit[1] || "").trim() : "";
+}
+
+async function locate(address) {
+  const g = await geocode(address);
+  if (!g) return { place_label: "", lat: null, lng: null, miles: null, drive_min: null };
+  const d = await drive(g);
+  return { place_label: g.label, lat: g.lat, lng: g.lng, miles: d.miles, drive_min: d.minutes };
+}
+
+function clean(body, existing = {}) {
+  const out = {};
+  if (body.title !== undefined) { out.title = clip(body.title, 120); if (!out.title) throw new Error("Give the shoot a title"); }
+  if (body.kind !== undefined) out.kind = KINDS.has(body.kind) ? body.kind : "other";
+  if (body.status !== undefined) out.status = STATUSES.has(body.status) ? body.status : "planned";
+  for (const k of ["client_name", "client_email", "client_phone", "time_note", "address"]) if (body[k] !== undefined) out[k] = clip(body[k], k === "address" ? 240 : 120);
+  if (body.date !== undefined) { const d = clip(body.date, 10); if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Bad date"); out.date = d || null; }
+  if (body.start_time !== undefined) { const t = clip(body.start_time, 5); if (t && !/^\d{2}:\d{2}$/.test(t)) throw new Error("Bad time"); out.start_time = t; }
+  if (body.notes !== undefined) out.notes = clip(body.notes, 8000);
+  if (body.checklist !== undefined) out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 60).map((c) => ({ text: clip(c.text, 200), done: Boolean(c.done) })).filter((c) => c.text);
+  if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
+  if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
+  return out;
+}
+
+export async function GET() {
+  if (!(await isAdminRequest())) return deny();
+  const db = supabaseAdmin();
+  const [{ data: shoots, error }, { data: leads }, { data: galleries }] = await Promise.all([
+    db.from("shoots").select("*").order("date", { ascending: true, nullsFirst: false }),
+    db.from("submissions").select("id, created_at, kind, name, email, phone, summary, fields, status").in("status", ["new", "contacted", "booked"]).order("created_at", { ascending: false }).limit(60),
+    db.from("galleries").select("id, title").order("created_at", { ascending: false }),
+  ]);
+  if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/shoots.sql first" : error.message, 500);
+  return NextResponse.json({
+    shoots: shoots || [],
+    leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
+    galleries: galleries || [],
+    guides: GUIDES,
+  });
+}
+
+export async function POST(request) {
+  if (!(await isAdminRequest())) return deny();
+  const body = await request.json().catch(() => ({}));
+  const db = supabaseAdmin();
+
+  try {
+    if (body.action === "create") {
+      const row = clean(body);
+      if (!row.title) return bad("Give the shoot a title");
+      if (!row.checklist?.length) row.checklist = (GUIDES[row.kind || "other"]?.items || []).map((text) => ({ text, done: false }));
+      if (row.address) Object.assign(row, await locate(row.address));
+      const { data, error } = await db.from("shoots").insert(row).select("*").single();
+      if (error) return bad(error.message, 500);
+      return NextResponse.json({ shoot: data });
+    }
+
+    if (body.action === "update") {
+      const { id } = body;
+      if (!id) return bad("Bad request");
+      const row = clean(body);
+      row.updated_at = new Date().toISOString();
+      if (row.address !== undefined) {
+        const { data: cur } = await db.from("shoots").select("address").eq("id", id).maybeSingle();
+        if (!cur || cur.address !== row.address) Object.assign(row, row.address ? await locate(row.address) : { place_label: "", lat: null, lng: null, miles: null, drive_min: null });
+      }
+      const { data, error } = await db.from("shoots").update(row).eq("id", id).select("*").single();
+      if (error) return bad(error.message, 500);
+      return NextResponse.json({ shoot: data });
+    }
+
+    if (body.action === "relocate") {
+      const { id } = body;
+      const { data: cur } = await db.from("shoots").select("address").eq("id", id).maybeSingle();
+      if (!cur?.address) return bad("No address on this shoot");
+      const loc = await locate(cur.address);
+      if (!loc.lat) return bad("Couldn't find that address — try adding the town and state");
+      const { data, error } = await db.from("shoots").update({ ...loc, updated_at: new Date().toISOString() }).eq("id", id).select("*").single();
+      if (error) return bad(error.message, 500);
+      return NextResponse.json({ shoot: data });
+    }
+
+    if (body.action === "delete") {
+      const { error } = await db.from("shoots").delete().eq("id", body.id);
+      if (error) return bad(error.message, 500);
+      return NextResponse.json({ ok: true });
+    }
+  } catch (err) {
+    return bad(err.message);
+  }
+  return bad("Unknown action", 400);
+}

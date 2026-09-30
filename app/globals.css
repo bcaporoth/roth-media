@@ -5460,3 +5460,39 @@ a.svc-cta:hover {
 .sforms-table tbody th { font-weight: 400; white-space: nowrap; color: var(--ink-soft); }
 .sforms-table a { color: var(--ink); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--line); }
 @media (max-width: 720px) { .sforms-table thead { display: none; } .sforms-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem 0.6rem; padding: 0.5rem 0; border-top: 1px solid var(--line); } .sforms-table th, .sforms-table td { padding: 0; } }
+
+/* ── SHOOTS (Studio itinerary) ── */
+.shoots-bar { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.shoot-new { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; margin: 0.75rem 0 1rem; align-items: end; }
+.shoot-new label { display: grid; gap: 0.25rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.shoot-new label.wide, .shoot-new .wide { grid-column: 1 / -1; }
+.shoot-new input, .shoot-new select, .shoot-new textarea { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; width: 100%; text-transform: none; letter-spacing: 0; }
+.shoot-new .abtn { justify-self: start; }
+.shoot-list { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.5rem; }
+.shoot-list.is-past { opacity: 0.7; margin-top: 0.75rem; }
+.shoot { border: 1px solid var(--line); border-radius: 14px; background: rgba(250, 246, 238, 0.6); }
+.shoot.is-open { border-color: var(--clay); }
+.shoot-row { width: 100%; display: grid; grid-template-columns: 150px 1fr 110px auto; gap: 1rem; align-items: center; padding: 0.85rem 1rem; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.shoot-row strong { display: block; font-weight: 600; }
+.shoot-row em { display: block; font-style: normal; font-size: 0.8rem; color: var(--ink-soft); }
+.shoot-far { text-align: right; }
+.shoot-detail { padding: 0 1rem 1rem; display: grid; gap: 0.9rem; }
+.shoot-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+.shoot-facts > div { border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 0.8rem; display: grid; gap: 0.1rem; }
+.shoot-facts strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.25rem; }
+.shoot-facts em { font-style: normal; font-size: 0.76rem; color: var(--ink-soft); }
+.shoot-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.shoot-sec-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.shoot-check { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }
+.shoot-check label { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.92rem; line-height: 1.4; cursor: pointer; }
+.shoot-check li.is-done label { text-decoration: line-through; color: var(--ink-soft); }
+.shoot-notes { width: 100%; font: inherit; padding: 0.6rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 10px; background: transparent; color: inherit; resize: vertical; }
+select.achip { appearance: auto; }
+.shoots-past-toggle { margin-top: 1rem; }
+@media (max-width: 820px) {
+  .shoot-new { grid-template-columns: 1fr 1fr; }
+  .shoot-row { grid-template-columns: 1fr; gap: 0.3rem; }
+  .shoot-far { text-align: left; }
+  .shoot-facts, .shoot-cols { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) { .shoot-new, .shoot-facts, .shoot-cols { grid-template-columns: 1fr; } }

@@ -14,6 +14,7 @@ const LOOK_KEY = "rm-admin-look";
 export const STUDIO_TABS = [
   { key: "inbox", label: "Inbox", href: "/portal/admin/inbox" },
   { key: "stats", label: "Stats", href: "/portal/admin/stats" },
+  { key: "shoots", label: "Shoots", href: "/portal/admin/shoots" },
   { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
   { key: "galleries", label: "Galleries", href: "/portal/admin" },
   { key: "clients", label: "Clients", href: "/portal/admin/clients" },
