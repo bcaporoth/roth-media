@@ -5450,3 +5450,13 @@ a.svc-cta:hover {
 .camp-cta { display: inline-block; text-align: center; text-decoration: none; margin-top: 0.4rem; }
 .qmatch-today code { font: inherit; font-weight: 700; letter-spacing: 0.06em; background: rgba(176, 106, 79, 0.15); padding: 0.05rem 0.4rem; border-radius: 6px; }
 @media (max-width: 720px) { .camp-offers { grid-template-columns: 1fr; } }
+
+/* stats: forms table */
+.sforms { margin: 1.5rem 0; }
+.sforms .spanel-head { flex-wrap: wrap; gap: 0.5rem; }
+.sforms-table { width: 100%; margin-top: 0.5rem; }
+.sforms-table th, .sforms-table td { text-align: left; padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: top; font-size: 0.9rem; }
+.sforms-table thead th, .sforms-table thead td { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
+.sforms-table tbody th { font-weight: 400; white-space: nowrap; color: var(--ink-soft); }
+.sforms-table a { color: var(--ink); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--line); }
+@media (max-width: 720px) { .sforms-table thead { display: none; } .sforms-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 0.15rem 0.6rem; padding: 0.5rem 0; border-top: 1px solid var(--line); } .sforms-table th, .sforms-table td { padding: 0; } }

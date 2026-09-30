@@ -67,6 +67,14 @@ export default function InboxBoard({ initial }) {
   const [noteState, setNoteState] = useState("");
   const [journey, setJourney] = useState(null);
 
+  // Deep link from Stats: /portal/admin/inbox?open=<id> opens that lead (any status).
+  useEffect(() => {
+    try {
+      const id = new URLSearchParams(window.location.search).get("open");
+      if (id && initial.some((it) => it.id === id)) { setFilter("all"); setOpenId(id); }
+    } catch {}
+  }, [initial]);
+
   const counts = useMemo(() => {
     const c = { all: items.length, open: 0 };
     for (const s of STATUS) c[s.key] = 0;

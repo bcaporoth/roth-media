@@ -20,6 +20,9 @@ const ago = (d) => {
   const h = Math.round(m / 60);
   return h < 24 ? `${h}h` : `${Math.round(h / 24)}d`;
 };
+const KIND = { quote: "Quote", booking: "Booked 💸", promo: "Promo entry", card: "Business card", contact: "Message" };
+const STATUS = { new: "New", contacted: "Contacted", booked: "Booked", lost: "Lost", archived: "Archived" };
+const fullWhen = (d) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const hourLabel = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
 
 // The "?" opens a plain-English note on what the number means and why it matters.
@@ -280,6 +283,35 @@ export default function StatsBoard({ data }) {
           )}
         </section>
       </div>
+
+      <section className="spanel spanel-wide sforms">
+        <div className="spanel-head">
+          <h3>Forms that came in</h3>
+          <span className="gcard-meta">
+            {data.formKinds.length ? data.formKinds.map(([k, n]) => `${n} ${KIND[k] || k}`).join(" · ") : "None in this window"}
+            {" · "}<Link href="/portal/admin/inbox">Open inbox →</Link>
+          </span>
+        </div>
+        {data.forms.length === 0 ? (
+          <p className="inbox-hint">No forms in this window. Quotes, messages, business-card taps, and paid bookings all land here.</p>
+        ) : (
+          <table className="idet-fields stable sforms-table">
+            <thead><tr><th>When</th><td>Who</td><td>What</td><td>Type</td><td>From</td><td>Status</td></tr></thead>
+            <tbody>
+              {data.forms.map((f) => (
+                <tr key={f.id}>
+                  <th scope="row">{fullWhen(f.at)}</th>
+                  <td><Link href={`/portal/admin/inbox?open=${f.id}`}>{f.name}</Link></td>
+                  <td>{f.summary}</td>
+                  <td>{KIND[f.kind] || f.kind}</td>
+                  <td>{f.from}</td>
+                  <td><span className={`itag itag-${f.status}`}>{STATUS[f.status] || f.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
 
       <div className="sgrid">
         <section className="spanel">

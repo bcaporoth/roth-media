@@ -75,7 +75,7 @@ export default async function StatsPage({ searchParams }) {
     ),
     db
       .from("submissions")
-      .select("created_at, kind, status")
+      .select("id, created_at, kind, status, name, email, summary, source_path, utm")
       .gte("created_at", since.toISOString()),
     db
       .from("gallery_activity")
@@ -200,6 +200,20 @@ export default async function StatsPage({ searchParams }) {
       source: r.type === "pageview" ? source(r) : "",
     })),
     galleries: [...byGallery.values()].sort((a, b) => b.views + b.downloads - (a.views + a.downloads)),
+    // Every form that came in during the window — the actual people.
+    forms: [...subs]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 50)
+      .map((s) => ({
+        id: s.id,
+        at: s.created_at,
+        kind: s.kind,
+        status: s.status,
+        name: s.name || s.email || "—",
+        summary: s.summary || "",
+        from: s.utm?.source || (s.source_path || "").replace(/^\//, "") || "site",
+      })),
+    formKinds: Object.entries(subs.reduce((m, s) => ((m[s.kind] = (m[s.kind] || 0) + 1), m), {})).sort((a, b) => b[1] - a[1]),
     galleryFeed: acts.slice(0, 25).map((a) => ({
       at: a.created_at,
       title: a.galleries?.title || "Gallery",
