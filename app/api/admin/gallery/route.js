@@ -71,6 +71,55 @@ export async function POST(request) {
     return NextResponse.json({ galleryId: gallery.id, shareToken: gallery.share_token });
   }
 
+  // Everything the "Edit album" panel needs: owner + extra people.
+  if (body.action === "detail") {
+    const { galleryId } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data: g } = await db.from("galleries").select("id, title, event_date, client_id, clients!client_id(name, email)").eq("id", galleryId).maybeSingle();
+    if (!g) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    let members = [];
+    try {
+      const { data } = await db.from("gallery_members").select("client_id, clients(id, name, email)").eq("gallery_id", galleryId);
+      members = (data || []).map((m) => ({ id: m.client_id, name: m.clients?.name || "", email: m.clients?.email || "" }));
+    } catch {}
+    return NextResponse.json({ gallery: { id: g.id, title: g.title, event_date: g.event_date, ownerName: g.clients?.name || "", ownerEmail: g.clients?.email || "" }, members });
+  }
+
+  // Edit title / date / owner. A new owner email is added to the roster.
+  if (body.action === "update") {
+    const { galleryId } = body;
+    if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const patch = {};
+    if (body.title !== undefined) {
+      const title = String(body.title || "").trim().slice(0, 120);
+      if (!title) return NextResponse.json({ error: "Give the album a title" }, { status: 422 });
+      patch.title = title;
+    }
+    if (body.eventDate !== undefined) {
+      const d = String(body.eventDate || "");
+      if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return NextResponse.json({ error: "Bad date" }, { status: 422 });
+      patch.event_date = d || null;
+    }
+    if (body.ownerEmail !== undefined) {
+      const email = String(body.ownerEmail || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "That email doesn't look right" }, { status: 422 });
+      let { data: client } = await db.from("clients").select("id").eq("email", email).maybeSingle();
+      if (!client) {
+        const name = String(body.ownerName || "").trim().slice(0, 80) || email.split("@")[0].replace(/[._]/g, " ");
+        const { data, error } = await db.from("clients").insert({ email, name }).select("id").single();
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        client = data;
+      } else if (body.ownerName) {
+        await db.from("clients").update({ name: String(body.ownerName).trim().slice(0, 80) }).eq("id", client.id);
+      }
+      patch.client_id = client.id;
+    }
+    if (!Object.keys(patch).length) return NextResponse.json({ ok: true });
+    const { error } = await db.from("galleries").update(patch).eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
   // Roster for the uploader's client picker — every client ever added.
   if (body.action === "clients") {
     const { data, error } = await db

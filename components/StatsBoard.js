@@ -22,12 +22,18 @@ const ago = (d) => {
 };
 const hourLabel = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
 
-function Tile({ value, label, hint }) {
+// The "?" opens a plain-English note on what the number means and why it matters.
+export function Tile({ value, label, hint, help }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="astat">
+    <div className={"astat" + (open ? " is-help" : "")}>
+      {help && (
+        <button type="button" className="astat-help" aria-label={`What is ${label}?`} aria-expanded={open} onClick={() => setOpen((o) => !o)}>?</button>
+      )}
       <strong>{value}</strong>
       <span>{label}</span>
       {hint && <em className="astat-hint">{hint}</em>}
+      {help && open && <p className="astat-pop">{help}</p>}
     </div>
   );
 }
@@ -157,11 +163,15 @@ export default function StatsBoard({ data }) {
       </div>
 
       <div className="astats">
-        <Tile value={fmt(k.visits)} label="Visits" hint="unique people per day" />
-        <Tile value={fmt(k.pageviews)} label="Page views" hint={`${k.pagesPerVisit.toFixed(1)} pages per visit`} />
-        <Tile value={fmt(k.leads)} label="Leads" hint={`${k.booked} booked`} />
-        <Tile value={pct(k.conversion)} label="Visit → lead" hint="leads ÷ visits" />
-        <Tile value={fmt(k.qr)} label="QR scans" hint="business card visits" />
+        <Tile value={fmt(k.visits)} label="Visits" hint="unique people per day" help="How many different people came to the site. The same person twice in one day counts once; tomorrow they count again. Your own visits from this device aren't counted. This is your reach — ads, posts, and the QR card all feed it." />
+        <Tile value={fmt(k.pageviews)} label="Page views" hint={`${k.pagesPerVisit.toFixed(1)} pages per visit`} help="Every page load. Pages per visit tells you if people look around (2+ is good) or bounce off the first page (close to 1 means the landing page isn't hooking them)." />
+        <Tile value={fmt(k.leads)} label="Leads" hint={`${k.booked} booked`} help="Forms sent — quotes, messages, promo entries, business-card contacts. 'Booked' is the ones you've marked booked in the inbox plus paid bookings. This is the number to grow; visits only matter if they turn into these." />
+        <Tile value={pct(k.conversion)} label="Visit → lead" hint="leads ÷ visits" help="Of everyone who visited, what share sent a form. 2–5% is healthy for a service business; under 1% means the site isn't asking clearly enough, or the traffic is the wrong people." />
+        <Tile value={pct(k.visits ? k.bookings / k.visits : 0)} label="Visit → paid" hint={`${fmt(k.bookings)} booked & paid`} help="Visitors who went all the way through 'Book it' and paid. The truest number on this page: money in, no chasing. Compare it to Visit → lead to see how many leads you're closing." />
+        <Tile value={`$${fmt(k.paidCents / 100)}`} label="Collected" hint={`of $${fmt(k.bookedValueCents / 100)} booked`} help="Cash actually paid through the site in this window (retainers plus full payments). 'Booked' is the full value of those jobs — the gap is balances still due." />
+        <Tile value={fmt(k.galleryOpens)} label="Gallery opens" hint={`${fmt(k.gallerySaves)} saves`} help="Times a client (or someone they shared with) opened a gallery, and how many photos they saved. High opens + low saves means they're browsing on the phone — a nudge to download everything before the 12-month window helps." />
+        <Tile value={fmt(k.guestUploads)} label="Guest uploads" hint="photos, videos, messages" help="What wedding guests sent through the QR cards. Each one is a guest who now knows your name — and a couple who got extra value you can mention in the next pitch." />
+        <Tile value={fmt(k.qr)} label="QR scans" hint="business card visits" help="Visits that came from your business card or printed QR. Tells you if the cards you hand out are actually getting scanned." />
       </div>
 
       {data.range > 1 && (

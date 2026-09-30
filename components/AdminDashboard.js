@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import GuestEventsPanel from "./GuestEventsPanel";
+import { Tile } from "./StatsBoard";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
 import CoverPicker from "./CoverPicker";
+import GalleryEditPanel from "./GalleryEditPanel";
 import DesignPanel from "./DesignPanel";
 import PremierePanel from "./PremierePanel";
 import ReviewButton from "./ReviewButton";
@@ -130,26 +132,10 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
         <h1>Your studio.</h1>
 
         <div className="astats">
-          <div className="astat">
-            <strong>{galleries.length}</strong>
-            <span>Galleries</span>
-          </div>
-          <div className="astat">
-            <strong>{totalItems.toLocaleString("en-US")}</strong>
-            <span>Photos &amp; videos</span>
-          </div>
-          <div className="astat">
-            <strong>{clientCount}</strong>
-            <span>Clients</span>
-          </div>
-          <div className="astat">
-            <strong className="astat-small">
-              {latest ? latest.title : "—"}
-            </strong>
-            <span>
-              Latest{latest ? ` · ${fmtDate(latest.created_at)}` : ""}
-            </span>
-          </div>
+          <Tile value={galleries.length} label="Galleries" help="Every album you've published, sneak peeks included. Each one is a share link you can text a client and a login they can use in the portal." />
+          <Tile value={totalItems.toLocaleString("en-US")} label="Photos & videos" help="Total files across all galleries — the size of what you're hosting and backing up. Galleries stay online 12 months after delivery." />
+          <Tile value={clientCount} label="Clients" help="People on your roster — anyone who owns an album or was added to one. Manage logins, emails, and broadcasts under the Clients tab." />
+          <Tile value={latest ? latest.title : "—"} label={`Latest${latest ? ` · ${fmtDate(latest.created_at)}` : ""}`} help="The most recently published gallery. If it's been a while, that's your cue to post work or reach out." />
         </div>
 
         <div className="atoolbar">
@@ -323,6 +309,7 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
                     </a>
                   </div>
                   <div className="gcard-tools">
+                    <GalleryEditPanel galleryId={g.id} onSaved={() => window.location.reload()} />
                     <CoverPicker galleryId={g.id} cover={g.cover_filename} />
                     <DesignPanel
                       galleryId={g.id}

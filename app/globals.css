@@ -5413,3 +5413,24 @@ a.svc-cta:hover {
 .qmatch-today strong { color: var(--clay); }
 .qflow-buy { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 640px) { .qflow-buy { width: 100%; flex-direction: column; } .qflow-buy button { width: 100%; } }
+
+/* stat tile help */
+.astat { position: relative; }
+.astat-help { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 999px; border: 1px solid var(--line, #ddd2bf); background: transparent; color: var(--ink-soft); font: inherit; font-size: 0.72rem; font-weight: 700; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.astat-help:hover, .astat.is-help .astat-help { background: var(--clay); border-color: var(--clay); color: #fff; }
+.astat-pop { margin: 0.6rem 0 0; font-size: 0.8rem; line-height: 1.45; color: var(--ink); font-weight: 400; }
+
+/* edit album panel */
+.gedit-panel { width: min(560px, 86vw); display: grid; gap: 0.9rem; }
+.gedit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.8rem; align-items: end; }
+.gedit-form label { display: grid; gap: 0.25rem; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.gedit-form input { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); }
+.gedit-form .gedit-hint, .gedit-form .abtn { grid-column: 1 / -1; }
+.gedit-add { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 0.5rem; align-items: center; }
+.gedit-add input { font: inherit; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); min-width: 0; }
+.gedit-hint { margin: 0; }
+.gedit-msg { color: var(--clay); font-weight: 600; }
+@media (max-width: 640px) { .gedit-form, .gedit-add { grid-template-columns: 1fr; } }
+.gedit-panel .client-members { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+.gedit-panel .client-members li { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; font-size: 0.9rem; }
+.gedit-panel .client-members em { color: var(--ink-soft); font-style: normal; }

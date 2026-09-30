@@ -9,12 +9,14 @@ export default function GuestInvite({ slug, title, className = "" }) {
   const [done, setDone] = useState("");
   const [showLink, setShowLink] = useState(false);
   const url = `https://rothmediaco.com/guest/${slug}`;
-  const text = `Got photos or videos from ${title}? Send them straight to us here — no app, just pick from your camera roll: ${url}`;
+  // Generic on purpose: the album might be "Matt & April" or "The Klines" — the
+  // sentence has to read right either way when it lands in a text thread.
+  const text = `Got photos or videos from the day? Send them straight to our shared album — no app, just pick from your camera roll: ${url}`;
 
   async function share() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Photos from ${title}`, text: text.replace(`: ${url}`, "."), url });
+        await navigator.share({ title: `Share your photos — ${title}`, text: text.replace(`: ${url}`, "."), url });
         setDone("Sent");
       } else {
         await navigator.clipboard.writeText(text);

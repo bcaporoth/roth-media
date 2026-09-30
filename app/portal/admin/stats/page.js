@@ -65,7 +65,7 @@ export default async function StatsPage({ searchParams }) {
   const since = new Date(Date.now() - range * 24 * 3600 * 1000);
   const db = supabaseAdmin();
 
-  const [{ rows, error }, subsRes, actRes, newCount] = await Promise.all([
+  const [{ rows, error }, subsRes, actRes, newCount, bookRes, guestRes] = await Promise.all([
     fetchAll(() =>
       db
         .from("site_events")
@@ -84,7 +84,12 @@ export default async function StatsPage({ searchParams }) {
       .order("created_at", { ascending: false })
       .limit(5000),
     newLeadCount(),
+    // Both tables may not exist yet (bookings.sql / guest.sql) — tolerated below.
+    db.from("bookings").select("paid_cents, total_cents, mode").gte("created_at", since.toISOString()),
+    db.from("guest_uploads").select("id", { count: "exact", head: true }).gte("created_at", since.toISOString()),
   ]);
+  const bookings = bookRes?.data || [];
+  const guestUploads = guestRes?.count || 0;
 
   const views = rows.filter((r) => r.type === "pageview");
   const events = rows.filter((r) => r.type === "event");
@@ -127,6 +132,7 @@ export default async function StatsPage({ searchParams }) {
     },
     { label: "Started a quote", n: visitsWhere((r) => r.type === "event" && r.name === "quote_started") },
     { label: "Sent a quote", n: subs.filter((s) => s.kind === "quote").length },
+    { label: "Booked & paid", n: bookings.length },
   ];
 
   const qrVisits = new Set(views.filter((r) => r.utm_source === "qr").map(visitKey)).size;
@@ -159,6 +165,12 @@ export default async function StatsPage({ searchParams }) {
       conversion: visits.size ? subs.length / visits.size : 0,
       qr: qrVisits,
       live,
+      bookings: bookings.length,
+      paidCents: bookings.reduce((n, b) => n + Number(b.paid_cents || 0), 0),
+      bookedValueCents: bookings.reduce((n, b) => n + Number(b.total_cents || 0), 0),
+      galleryOpens: acts.filter((a) => a.action === "view").length,
+      gallerySaves: acts.filter((a) => a.action !== "view").length,
+      guestUploads,
     },
     daily: [...daily.values()].map((d) => ({
       date: d.date,
