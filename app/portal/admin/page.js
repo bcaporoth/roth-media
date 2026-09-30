@@ -26,7 +26,7 @@ export default async function AdminPage() {
   const { data: galleries } = await db
     .from("galleries")
     .select(
-      "id, title, media_count, share_token, cover_filename, design, created_at, event_date, clients(name, email)"
+      "id, title, media_count, share_token, cover_filename, design, created_at, event_date, clients!client_id(name, email)"
     )
     .order("created_at", { ascending: false });
 

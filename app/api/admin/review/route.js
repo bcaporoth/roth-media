@@ -17,7 +17,7 @@ export async function POST(request) {
   const db = supabaseAdmin();
   const { data: g } = await db
     .from("galleries")
-    .select("id, title, clients(name, email)")
+    .select("id, title, clients!client_id(name, email)")
     .eq("id", galleryId)
     .maybeSingle();
   const to = g?.clients?.email;
