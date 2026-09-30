@@ -1,0 +1,119 @@
+import Link from "next/link";
+import SocialLinks from "../../../components/SocialLinks";
+import BrandMark from "../../../components/BrandMark";
+import FilmCard from "../../../components/FilmCard";
+import { EMAIL } from "../../../lib/site";
+import { videoUrl } from "../../../lib/media";
+import { PACKAGES, money } from "../../../lib/packages";
+import { CAMPAIGN } from "../../../lib/campaign";
+
+export const metadata = {
+  title: "Still need a wedding videographer this year? Open dates + 2027 early pricing",
+  description:
+    "Last-minute wedding videography in the Twin Tiers — the 2026 dates still open, 25% off, booked online tonight. Or lock a 2027 date at this year's prices. Waverly, Elmira, Corning, Ithaca, Sayre.",
+  alternates: { canonical: "/weddings/open-dates" },
+};
+
+const PHONE = "845-549-4425";
+const PHONE_HREF = "tel:+18455494425";
+
+export default function OpenDatesPage() {
+  const film = PACKAGES.wedding.find((p) => p.id === "film");
+  const c = CAMPAIGN;
+  const priceAfter = (pct) => money(Math.round(film.price * (1 - pct / 100)));
+  const todayAfter = (pct) => money(Math.round(film.price * 0.3 * (1 - pct / 100)));
+
+  return (
+    <>
+      <nav className="rm-nav portal-nav" aria-label="Main navigation">
+        <Link href="/" className="brand">
+          <span className="brand-chip"><BrandMark /></span>
+          <span className="brand-text">Roth <em>Media</em></span>
+        </Link>
+        <ul className="nav-links">
+          <li><Link href="/#work">Work</Link></li>
+          <li><Link href="/weddings">Weddings</Link></li>
+          <li><Link href="/portal" className="nav-login">Client login</Link></li>
+          <li><a href={PHONE_HREF}>{PHONE}</a></li>
+        </ul>
+      </nav>
+
+      <main className="quote-wrap promo-wrap camp-wrap">
+        <div className="kick">Wedding films · Twin Tiers</div>
+        <h1>Still need a videographer <em>this year?</em></h1>
+        <p className="lead">
+          Your photographer&apos;s booked. Your vows aren&apos;t going to film themselves. I have a handful of {new Date().getFullYear()} dates left — and if you&apos;re planning for next year, you can lock 2027 at this year&apos;s prices before {c.endsLabel}.
+        </p>
+
+        <div className="camp-film">
+          <FilmCard
+            feature
+            src={videoUrl("/nolan-kennedy-wedding-hero.mp4")}
+            poster="/nolan-kennedy-wedding-poster.jpg"
+            title="Nolan & Kennedy"
+            sub="Booked 9 days out · The Pines, Corning"
+          />
+        </div>
+
+        <div className="camp-offers">
+          <section className="promo-box camp-offer">
+            <div className="qmatch-kick">This year · {c.thisYear.percent}% off</div>
+            <h2>Open {new Date().getFullYear()} dates</h2>
+            <ul className="camp-dates">
+              {c.openDates2026.map((d) => <li key={d}>{d}</li>)}
+            </ul>
+            <p>{c.thisYear.blurb}</p>
+            <p className="camp-price"><strong>{priceAfter(c.thisYear.percent)}</strong> <s>{money(film.price)}</s> · {todayAfter(c.thisYear.percent)} holds it today</p>
+            <Link className="qprimary camp-cta" href={`/quote?for=wedding&code=${c.thisYear.code}`}>Grab a date — code {c.thisYear.code}</Link>
+          </section>
+
+          <section className="promo-box camp-offer">
+            <div className="qmatch-kick">Next year · {c.nextYear.percent}% off</div>
+            <h2>Reserve 2027 now</h2>
+            <p>{c.nextYear.blurb}</p>
+            <p className="camp-price"><strong>{priceAfter(c.nextYear.percent)}</strong> <s>{money(film.price)}</s> · {todayAfter(c.nextYear.percent)} holds it today</p>
+            <p className="gcard-meta">Ends {c.endsLabel}. Prices go up in January.</p>
+            <Link className="qprimary camp-cta" href={`/quote?for=wedding&code=${c.nextYear.code}`}>Lock my 2027 date — code {c.nextYear.code}</Link>
+          </section>
+        </div>
+
+        <section className="promo-steps">
+          <h2>What you get</h2>
+          <ul className="qflow-get promo-get">
+            {film.get.map((g) => <li key={g}>{g}</li>)}
+            <li>Add photo coverage, a second shooter, or guest photo uploads on the next screen</li>
+          </ul>
+        </section>
+
+        <section className="promo-steps">
+          <h2>How it works</h2>
+          <ol>
+            <li><strong>Pick a date above</strong> and build your package — two minutes, real prices.</li>
+            <li><strong>Book it online.</strong> The 30% retainer holds the date; enter the code on the payment screen. Balance is due two weeks before, not today.</li>
+            <li><strong>I call you within 24 hours</strong> to plan the day. Sneak peek video lands within 48 hours of the wedding.</li>
+          </ol>
+        </section>
+
+        <section className="promo-rules">
+          <h2>The fine print, short version</h2>
+          <p>{c.areaLine}</p>
+          <p>Codes apply to Wedding Videography booked online through {c.endsLabel}, {new Date().getFullYear()}; one code per booking. Retainers are non-refundable; one free reschedule with 30 days&apos; notice. Open dates are first-come — the list above updates as they book. Full <Link href="/terms">terms</Link>.</p>
+          <p>Rather talk first? Text or call {PHONE}.</p>
+        </section>
+      </main>
+
+      <footer className="rm-footer">
+        <div className="foot-inner">
+          <div className="brand"><BrandMark />Roth <em>Media</em></div>
+          <a href={PHONE_HREF}>{PHONE}</a>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+          <SocialLinks />
+          <Link href="/portal">Client login</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <span>© {new Date().getFullYear()} Roth Media</span>
+        </div>
+      </footer>
+    </>
+  );
+}

@@ -24,7 +24,7 @@ function fullGet(category, pkg) {
 
 const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
 
-export default function QuoteFlow({ initialCategory = "", checkout = false }) {
+export default function QuoteFlow({ initialCategory = "", checkout = false, promo = null }) {
   const formRef = useRef(null);
   const topRef = useRef(null);
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
@@ -47,6 +47,9 @@ export default function QuoteFlow({ initialCategory = "", checkout = false }) {
   const buyable = checkout && pkg && !chosen.some((a) => a.from);
   const retainer = category === "wedding";
   const dueToday = retainer ? Math.round(estimate * RETAINER_RATE) : estimate;
+  // Campaign code from the landing page (?code=): show the math; Stripe applies it.
+  const promoPct = promo && category === "wedding" ? promo.percent : 0;
+  const discounted = promoPct ? Math.round(dueToday * (1 - promoPct / 100)) : dueToday;
 
   function jump(n) {
     setStep(n);
@@ -220,7 +223,11 @@ export default function QuoteFlow({ initialCategory = "", checkout = false }) {
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
               </ul>
               {buyable ? (
-                <p className="qmatch-today"><strong>{money(dueToday)} today</strong>{retainer ? ` holds your date — 30% retainer, balance ${money(estimate - dueToday)} due 14 days before.` : " — paid in full, done."} Have a promo code? Enter it on the payment screen.</p>
+                <p className="qmatch-today">
+                  {promoPct ? <><strong>{money(discounted)} today</strong> with code <code>{promo.code}</code> ({promoPct}% off — enter it on the payment screen). </> : <><strong>{money(dueToday)} today</strong></>}
+                  {retainer ? `${promoPct ? "That's the 30% retainer that" : " —"} holds your date; the balance is due 14 days before.` : " — paid in full, done."}
+                  {!promoPct && " Have a promo code? Enter it on the payment screen."}
+                </p>
               ) : (
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
               )}
@@ -254,7 +261,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false }) {
               By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
             </p>
             <div className="qflow-go qflow-buy">
-              {buyable && <button type="button" className="qprimary" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(dueToday)} today`}</button>}
+              {buyable && <button type="button" className="qprimary" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(discounted)} today`}</button>}
               <button type="submit" className={buyable ? "qsecondary" : "qprimary"} disabled={status === "sending" || status === "booking"}>{status === "sending" ? "Sending…" : buyable ? "Just send me the quote" : "Send my quote"}</button>
             </div>
           </div>

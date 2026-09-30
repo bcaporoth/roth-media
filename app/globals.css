@@ -5434,3 +5434,19 @@ a.svc-cta:hover {
 .gedit-panel .client-members { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
 .gedit-panel .client-members li { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; font-size: 0.9rem; }
 .gedit-panel .client-members em { color: var(--ink-soft); font-style: normal; }
+
+/* ── CAMPAIGN: open dates ── */
+.camp-wrap { max-width: 900px; }
+.camp-film { margin: 1.5rem 0 2.2rem; }
+.camp-film .fc-frame { box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.5); }
+.camp-offers { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 2.2rem; }
+.camp-offer { margin-bottom: 0; display: grid; gap: 0.7rem; align-content: start; }
+.camp-offer h2 { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.5rem; margin: 0; }
+.camp-offer p { margin: 0; line-height: 1.5; }
+.camp-dates { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.camp-dates li { border: 1px solid var(--clay); color: var(--clay); border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.85rem; font-weight: 600; }
+.camp-price strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.6rem; color: var(--ink); }
+.camp-price s { color: var(--ink-soft); margin-left: 0.3rem; }
+.camp-cta { display: inline-block; text-align: center; text-decoration: none; margin-top: 0.4rem; }
+.qmatch-today code { font: inherit; font-weight: 700; letter-spacing: 0.06em; background: rgba(176, 106, 79, 0.15); padding: 0.05rem 0.4rem; border-radius: 6px; }
+@media (max-width: 720px) { .camp-offers { grid-template-columns: 1fr; } }
