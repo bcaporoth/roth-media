@@ -27,7 +27,7 @@ export default function LegalPage({ kick, title, updated, children }) {
       <main className="quote-wrap legal-wrap">
         <div className="kick">{kick}</div>
         <h1>{title}</h1>
-        <p className="lead">Last updated {updated}. Questions? Email <a href={`mailto:${EMAIL}`}>{EMAIL}</a> or text {PHONE}.</p>
+        <p className="lead">{updated ? `Last updated ${updated}. ` : ""}Questions? Email <a href={`mailto:${EMAIL}`}>{EMAIL}</a> or text {PHONE}.</p>
         <article className="legal">{children}</article>
       </main>
 

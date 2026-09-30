@@ -156,6 +156,9 @@ export async function POST(request) {
       .eq("gallery_id", galleryId);
     if (count && count > 0)
       return NextResponse.json({ ok: false, reason: "gallery has media" });
+    // Guest Reel events keep their uploads; they just stop pointing at a dead album.
+    try { await db.from("guest_events").update({ gallery_id: null }).eq("gallery_id", galleryId); } catch {}
+    try { await db.from("gallery_members").delete().eq("gallery_id", galleryId); } catch {}
     const { error } = await db.from("galleries").delete().eq("id", galleryId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });

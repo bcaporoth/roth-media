@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       <p>To answer you, deliver your work, and tell you about Roth Media offers you asked to hear about. We do not sell your information, and we do not share it with anyone except the services that run the site: Vercel (hosting), Supabase (database and login), Cloudflare (file storage), Resend (email), and FormSubmit (form delivery).</p>
 
       <h2>Texts and email</h2>
-      <p>If you give us your number or email on a form, you&apos;re okay with Roth Media contacting you about that request by text and email. Reply STOP to any text, or use the opt-out line in any email, and we&apos;ll stop.</p>
+      <p>If you give us your number or email on a form, you&apos;re okay with Roth Media contacting you about that request by text and email. Reply STOP to any text, or click the unsubscribe link at the bottom of any email, and we&apos;ll stop. Unsubscribing stops marketing emails; we&apos;ll still email you about work you&apos;ve booked (a gallery that&apos;s ready, an invoice, a schedule change).</p>
 
       <h2>Photos and video of you</h2>
       <p>Wedding and event photos and footage are delivered to the client who hired us under a personal license (Roth Media keeps the copyright, as the terms explain) and shared through private galleries. We only use a client&apos;s footage in our own marketing with their permission (it&apos;s in the contract).</p>

@@ -53,6 +53,11 @@ export default function GuestEventsPanel({ galleries = [] }) {
     catch { window.prompt("Copy:", text); }
   }
 
+  async function setWindow(ev, until, label) {
+    try { await api({ action: "set-window", eventId: ev.id, until: until.toISOString() }); await refresh(); setCopied(ev.id + label); setTimeout(() => setCopied(""), 1500); }
+    catch (err) { setError(err.message); }
+  }
+
   async function remove(ev) {
     if (!window.confirm(`Delete "${ev.title}" and every guest upload in it? This can't be undone.`)) return;
     try { await api({ action: "delete-event", eventId: ev.id }); await refresh(); } catch (err) { setError(err.message); }
@@ -104,6 +109,14 @@ export default function GuestEventsPanel({ galleries = [] }) {
                   <a className="achip" href={`/guest/${ev.slug}/sign`} target="_blank" rel="noreferrer">Print QR sign ↗</a>
                   <a className="achip" href={`/guest/${ev.slug}/gallery?k=${ev.view_token}`} target="_blank" rel="noreferrer">Open gallery ↗</a>
                   <button type="button" className={"achip" + (copied === ev.id + "g" ? " is-done" : "")} onClick={() => copy(gal, ev.id + "g")}>{copied === ev.id + "g" ? "Copied ✓" : "Copy couple's link"}</button>
+                  {open ? (
+                    <>
+                      <button type="button" className="achip" onClick={() => setWindow(ev, new Date(Math.max(Date.now(), new Date(ev.upload_open_until).getTime()) + 30 * 86400000), "x")}>+30 days</button>
+                      <button type="button" className="achip" onClick={() => { if (window.confirm(`Close uploads for "${ev.title}" now? Guests will see "uploads are closed"; you can reopen anytime.`)) setWindow(ev, new Date(), "c"); }}>Close uploads</button>
+                    </>
+                  ) : (
+                    <button type="button" className="achip" onClick={() => setWindow(ev, new Date(Date.now() + 30 * 86400000), "r")}>Reopen 30 days</button>
+                  )}
                   <button type="button" className="achip achip-danger" onClick={() => remove(ev)}>Delete</button>
                 </div>
               </li>

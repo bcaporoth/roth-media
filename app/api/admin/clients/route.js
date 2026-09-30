@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "../../../../lib/admin-guard";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
-import { wrapHtml, merge, firstName } from "../../../../lib/client-email";
+import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +36,13 @@ export async function GET() {
   const db = supabaseAdmin();
   let { data: clients, error } = await db
     .from("clients")
-    .select("id, email, name, phone, notes, created_at")
+    .select("id, email, name, phone, notes, email_opt_out, created_at")
     .order("name", { ascending: true });
   if (error) {
-    // phone/notes arrive with supabase/clients.sql — degrade to the base roster.
+    // phone/notes (clients.sql) and email_opt_out (clients-optout.sql) — degrade to the base roster.
+    ({ data: clients, error } = await db.from("clients").select("id, email, name, phone, notes, created_at").order("name"));
+  }
+  if (error) {
     ({ data: clients, error } = await db.from("clients").select("id, email, name, created_at").order("name"));
   }
   if (error) return bad(error.message, 500);
@@ -163,7 +166,28 @@ export async function POST(request) {
     if (!id) return bad("Bad request");
     const { count } = await db.from("galleries").select("id", { count: "exact", head: true }).eq("client_id", id);
     if (count) return bad("This client has galleries — delete those first (or keep the client).");
+    const { data: c } = await db.from("clients").select("email").eq("id", id).maybeSingle();
+    try { await db.from("gallery_members").delete().eq("client_id", id); } catch {}
     const { error } = await db.from("clients").delete().eq("id", id);
+    if (error) return bad(error.message, 500);
+    // Their login goes too — a roster-less account can't see anything anyway,
+    // and leaving it means a stale password floating around.
+    let loginRemoved = false;
+    try {
+      const au = c?.email ? await findAuthUser(db, cleanEmail(c.email)) : null;
+      if (au && au.email?.toLowerCase() !== ADMIN_EMAIL) {
+        const { error: e2 } = await db.auth.admin.deleteUser(au.id);
+        loginRemoved = !e2;
+      }
+    } catch {}
+    return NextResponse.json({ ok: true, loginRemoved });
+  }
+
+  // Put someone back on the broadcast list after they unsubscribed (they asked).
+  if (body.action === "resubscribe") {
+    const { id } = body;
+    if (!id) return bad("Bad request");
+    const { error } = await db.from("clients").update({ email_opt_out: false }).eq("id", id);
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true });
   }
@@ -219,18 +243,26 @@ export async function POST(request) {
     const subject = String(body.subject || "").trim().slice(0, 200);
     const message = String(body.message || "").trim().slice(0, 10000);
     if (!subject || !message) return bad("Subject and message are both needed");
-    let q = db.from("clients").select("id, email, name");
-    if (Array.isArray(body.ids) && body.ids.length) q = q.in("id", body.ids.slice(0, 500));
-    const { data: clients, error } = await q;
+    const pick = (cols) => {
+      let q = db.from("clients").select(cols);
+      if (Array.isArray(body.ids) && body.ids.length) q = q.in("id", body.ids.slice(0, 500));
+      return q;
+    };
+    let { data: clients, error } = await pick("id, email, name, email_opt_out, unsubscribe_token");
+    if (error) ({ data: clients, error } = await pick("id, email, name")); // before clients-optout.sql
     if (error) return bad(error.message, 500);
     const seen = new Set();
     const list = [];
+    let skipped = 0;
     for (const c of clients || []) {
       const email = cleanEmail(c.email);
       if (!EMAIL_RE.test(email) || seen.has(email)) continue;
+      if (c.email_opt_out) { skipped += 1; continue; }
       seen.add(email);
       const bodyText = merge(message, c);
-      list.push({ to: email, subject: merge(subject, c), text: bodyText, html: wrapHtml({ body: bodyText }) });
+      const unsubscribe = unsubscribeUrl(c);
+      const footer = unsubscribe ? `\n\nDon't want emails from Roth Media? Unsubscribe: ${unsubscribe}` : "";
+      list.push({ to: email, subject: merge(subject, c), text: bodyText + footer, html: wrapHtml({ body: bodyText, unsubscribe }), unsubscribe });
     }
     // Resend's batch endpoint takes 100 per call — one request, no 2/sec throttle to trip.
     let sent = 0;
@@ -244,7 +276,7 @@ export async function POST(request) {
         failed.push(`${chunk.length} recipients: ${err.message}`);
       }
     }
-    return NextResponse.json({ ok: true, sent, failed });
+    return NextResponse.json({ ok: true, sent, skipped, failed });
   }
 
   return bad("Unknown action", 400);

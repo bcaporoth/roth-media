@@ -4,7 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { R2_BUCKET, r2Configured } from "../../../lib/r2";
 import {
-  SLUG_RE, MAX_FILE_BYTES, MAX_FILES_PER_SIGN, guestKey, safeName, kindFor, isOpen,
+  SLUG_RE, MAX_FILE_BYTES, MAX_FILES_PER_SIGN, MAX_UPLOADS_PER_EVENT, guestKey, safeName, kindFor, isOpen,
 } from "../../../lib/guest";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +25,19 @@ function r2() {
 }
 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
+
+// Best-effort per-IP throttle (per serverless instance): 40 sign calls / 10 min
+// is ~800 files — plenty for a guest, not enough to hammer the bucket.
+const hits = new Map();
+function throttled(request) {
+  const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "?";
+  const now = Date.now();
+  const w = (hits.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
+  w.push(now);
+  hits.set(ip, w);
+  if (hits.size > 5000) hits.clear();
+  return w.length > 40;
+}
 
 async function loadEvent(db, slug) {
   if (!SLUG_RE.test(String(slug || ""))) return null;
@@ -48,10 +61,14 @@ export async function POST(request) {
     if (!event) return bad("Event not found", 404);
     if (!isOpen(event)) return bad("Uploads for this event have closed", 410);
     if (body.consent !== true) return bad("Please accept the sharing terms first");
+    if (throttled(request)) return bad("Whoa — that's a lot at once. Give it a minute and try again.", 429);
     const guestName = String(body.guestName || "").trim().slice(0, 60);
     const files = Array.isArray(body.files) ? body.files : [];
     if (!files.length || files.length > MAX_FILES_PER_SIGN)
       return bad(`Send 1–${MAX_FILES_PER_SIGN} files at a time`);
+    const { count: soFar } = await db.from("guest_uploads").select("id", { count: "exact", head: true }).eq("event_id", event.id);
+    if ((soFar || 0) + files.length > MAX_UPLOADS_PER_EVENT)
+      return bad("This album is full — thank you! Text your photos to the couple instead.");
 
     const urls = [];
     for (const f of files) {
