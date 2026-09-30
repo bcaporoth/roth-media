@@ -7,6 +7,7 @@ import { useState } from "react";
 
 export default function GuestInvite({ slug, title, className = "" }) {
   const [done, setDone] = useState("");
+  const [showLink, setShowLink] = useState(false);
   const url = `https://rothmediaco.com/guest/${slug}`;
   const text = `Got photos or videos from ${title}? Send them straight to us here — no app, just pick from your camera roll: ${url}`;
 
@@ -21,14 +22,22 @@ export default function GuestInvite({ slug, title, className = "" }) {
       }
     } catch (err) {
       if (err?.name === "AbortError") return;
-      try { await navigator.clipboard.writeText(text); setDone("Copied — paste it anywhere"); } catch { window.prompt("Copy this link:", url); }
+      // Embedded/preview browsers block share, clipboard AND prompt — never look dead.
+      try { await navigator.clipboard.writeText(text); setDone("Copied — paste it anywhere"); } catch { setShowLink(true); setDone("Here's the link"); }
     }
     setTimeout(() => setDone(""), 2500);
   }
 
   return (
-    <button type="button" className={`guest-invite ${className}`} onClick={share}>
-      {done || "Ask your guests for their photos ↗"}
-    </button>
+    <>
+      <button type="button" className={`guest-invite ${className}`} onClick={share}>
+        {done || "Ask your guests for their photos ↗"}
+      </button>
+      {showLink && (
+        <p className="gcard-meta guest-invite-link">
+          Send this to your guests: <a href={url}>{url.replace("https://", "")}</a>
+        </p>
+      )}
+    </>
   );
 }

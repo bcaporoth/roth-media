@@ -5356,6 +5356,7 @@ a.svc-cta:hover {
 .guest-invite { font: inherit; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em; color: var(--bone); background: var(--ink); border: 1px solid var(--ink); border-radius: 999px; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.2s; }
 .guest-invite:hover { background: var(--clay); border-color: var(--clay); }
 .guest-invite-top { margin: -0.75rem 0 1.5rem; }
+.guest-invite-link { margin: 0.5rem 0 0; } .guest-invite-link a { color: var(--ink); text-decoration: underline; word-break: break-all; }
 
 /* Studio → Clients */
 .clients-flash { font-size: 0.85rem; color: #2e7d4f; margin: 0.5rem 0; }
