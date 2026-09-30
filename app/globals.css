@@ -5496,3 +5496,21 @@ select.achip { appearance: auto; }
   .shoot-facts, .shoot-cols { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 520px) { .shoot-new, .shoot-facts, .shoot-cols { grid-template-columns: 1fr; } }
+
+/* ── STUDIO CALENDAR (built from Shoots) ── */
+.scal-head { display: flex; align-items: center; gap: 0.6rem; margin: 0.5rem 0 0.8rem; }
+.scal-head h3 { margin: 0 0.4rem; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.3rem; }
+.scal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 1.5rem; }
+.scal-dow { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); padding: 0 0.3rem 0.3rem; }
+.scal-cell { min-height: 84px; border: 1px solid var(--line); border-radius: 10px; padding: 0.35rem 0.4rem; background: rgba(250, 246, 238, 0.5); display: grid; align-content: start; gap: 0.2rem; }
+.scal-cell.is-blank { border-color: transparent; background: transparent; }
+.scal-cell.is-today { border-color: var(--clay); }
+.scal-cell.is-today .scal-num { color: var(--clay); font-weight: 700; }
+.scal-num { font-size: 0.78rem; color: var(--ink-soft); }
+.scal-ev { display: block; font-size: 0.72rem; line-height: 1.25; padding: 0.15rem 0.35rem; border-radius: 6px; background: var(--clay); color: #fff; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scal-ev.is-family { background: #4a7c59; } .scal-ev.is-business { background: #3e5c8a; } .scal-ev.is-event { background: #8a6a3e; } .scal-ev.is-other { background: var(--ink-soft); }
+.scal-agenda { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+.scal-agenda li { display: grid; grid-template-columns: 90px 1fr auto; gap: 0.6rem; align-items: center; }
+.scal-agenda time { font-size: 0.8rem; color: var(--ink-soft); }
+.scal-agenda strong { display: block; } .scal-agenda em { display: block; font-style: normal; font-size: 0.78rem; color: var(--ink-soft); }
+@media (max-width: 640px) { .scal-cell { min-height: 56px; padding: 0.25rem; } .scal-ev { font-size: 0.6rem; } .scal-agenda li { grid-template-columns: 1fr; } }
