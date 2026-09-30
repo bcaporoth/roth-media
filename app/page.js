@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import BrandMark from "../components/BrandMark";
 import Gallery from "../components/Gallery";
+import { stripeConfigured } from "../lib/stripe";
 import QuoteFlow from "../components/QuoteFlow";
 import PromoPill from "../components/PromoPill";
 import FilmCard from "../components/FilmCard";
@@ -249,7 +250,7 @@ export default function Home() {
               </p>
             </div>
             <div id="quote">
-              <QuoteFlow />
+              <QuoteFlow checkout={stripeConfigured} />
             </div>
           </div>
         </section>

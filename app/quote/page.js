@@ -2,6 +2,7 @@ import Link from "next/link";
 import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
+import { stripeConfigured } from "../../lib/stripe";
 import QuoteFlow from "../../components/QuoteFlow";
 
 export const metadata = {
@@ -52,7 +53,7 @@ export default async function QuotePage({ searchParams }) {
           Pick what you need and I&apos;ll walk you to a tailored starting
           price, step by step. Real prices, no obligation.
         </p>
-        <QuoteFlow initialCategory={category} />
+        <QuoteFlow initialCategory={category} checkout={stripeConfigured} />
       </main>
 
       <footer className="rm-footer">

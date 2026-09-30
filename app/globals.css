@@ -5407,3 +5407,9 @@ a.svc-cta:hover {
 /* album members */
 .client-members { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
 .client-members .itag button { background: none; border: 0; color: inherit; cursor: pointer; padding: 0 0 0 0.2rem; font-size: 0.9em; opacity: 0.7; }
+
+/* ── BOOK IT NOW (quote → Stripe) ── */
+.qmatch-today { margin: 1rem 0 0.5rem; padding: 0.85rem 1rem; border-radius: 12px; background: rgba(176, 106, 79, 0.1); border: 1px solid rgba(176, 106, 79, 0.25); font-size: 0.95rem; line-height: 1.5; }
+.qmatch-today strong { color: var(--clay); }
+.qflow-buy { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 640px) { .qflow-buy { width: 100%; flex-direction: column; } .qflow-buy button { width: 100%; } }

@@ -22,7 +22,9 @@ function fullGet(category, pkg) {
   return base ? [...fullGet(category, base), ...rest] : pkg.get;
 }
 
-export default function QuoteFlow({ initialCategory = "" }) {
+const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
+
+export default function QuoteFlow({ initialCategory = "", checkout = false }) {
   const formRef = useRef(null);
   const topRef = useRef(null);
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
@@ -33,6 +35,7 @@ export default function QuoteFlow({ initialCategory = "" }) {
   const [contactPref, setContactPref] = useState("Text me");
   const [status, setStatus] = useState("idle");
   const [sent, setSent] = useState(null);
+  const [bookError, setBookError] = useState("");
 
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
@@ -40,6 +43,10 @@ export default function QuoteFlow({ initialCategory = "" }) {
   const chosen = addonList.filter((a) => addons[a.id]);
   const estimate = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
   const catTitle = CATEGORIES.find((c) => c.id === category)?.title || "";
+  // Book-it-now: what they'd pay today. "from" add-ons (scoped on a call) can't be bought.
+  const buyable = checkout && pkg && !chosen.some((a) => a.from);
+  const retainer = category === "wedding";
+  const dueToday = retainer ? Math.round(estimate * RETAINER_RATE) : estimate;
 
   function jump(n) {
     setStep(n);
@@ -88,6 +95,28 @@ export default function QuoteFlow({ initialCategory = "" }) {
       setStatus("sent");
     } catch {
       setStatus("error");
+    }
+  }
+
+  async function bookNow() {
+    const form = formRef.current;
+    if (!form || !form.reportValidity()) return;
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (data._honey) return;
+    setStatus("booking");
+    track("book_now_click", { category, package: pkg.id, total: estimate, today: dueToday });
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, packageId: pkg.id, addons: chosen.map((a) => a.id), name: `${data.firstName} ${data.lastName}`.trim(), email: data.email, phone: data.phone, date: data.date, where: data.where, notes: data.notes, contactPref }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) throw new Error(json.error || "Checkout didn't open");
+      window.location.href = json.url;
+    } catch (err) {
+      setStatus("bookerror");
+      setBookError(err.message);
     }
   }
 
@@ -190,7 +219,11 @@ export default function QuoteFlow({ initialCategory = "" }) {
                 {fullGet(category, pkg).map((g) => <li key={g}>{g}</li>)}
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
               </ul>
-              <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
+              {buyable ? (
+                <p className="qmatch-today"><strong>{money(dueToday)} today</strong>{retainer ? ` holds your date — 30% retainer, balance ${money(estimate - dueToday)} due 14 days before.` : " — paid in full, done."} Have a promo code? Enter it on the payment screen.</p>
+              ) : (
+                <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
+              )}
               <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
             </div>
           )}
@@ -213,10 +246,17 @@ export default function QuoteFlow({ initialCategory = "" }) {
             </div>
           </div>
           {status === "error" && <p className="cform-error">That didn&apos;t send. Try again, or text me at 845-549-4425.</p>}
+          {status === "bookerror" && <p className="cform-error">{bookError || "Checkout didn't open."} You can still send the quote below, or text 845-549-4425.</p>}
           <div className="qnav-row">
             <button type="button" className="qsecondary" onClick={() => jump(1)}>Back</button>
-            <p className="consent">By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
-            <button type="submit" className="qprimary" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Send my quote"}</button>
+            <p className="consent">
+              {buyable ? <>Booking means you agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>{retainer ? " (the retainer is non-refundable; one free reschedule with 30 days' notice)" : ""}. </> : null}
+              By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+            </p>
+            <div className="qflow-go qflow-buy">
+              {buyable && <button type="button" className="qprimary" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(dueToday)} today`}</button>}
+              <button type="submit" className={buyable ? "qsecondary" : "qprimary"} disabled={status === "sending" || status === "booking"}>{status === "sending" ? "Sending…" : buyable ? "Just send me the quote" : "Send my quote"}</button>
+            </div>
           </div>
         </div>
       </form>
