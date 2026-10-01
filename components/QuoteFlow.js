@@ -55,8 +55,10 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
     setStep(n);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function pickCategory(id) { track("quote_started", { category: id }); setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
-  function pickPackage(id) { setPkgId(id); setAddons({}); }
+  function pickCategory(id) { markStarted(id); setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
+  const startedRef = useRef(false);
+  function markStarted(id) { if (!startedRef.current) { startedRef.current = true; track("quote_started", { category: id }); } }
+  function pickPackage(id) { markStarted(category); setPkgId(id); setAddons({}); }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -200,7 +202,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
                     <span className="qflow-total">Starting at <strong>{money(estimate)}{pkg.per || ""}</strong></span>
-                    <button type="button" className="qprimary" onClick={() => jump(2)}>Continue</button>
+                    <button type="button" className="qprimary" onClick={() => { markStarted(category); jump(2); }}>Continue</button>
                   </div>
                 </div>
               </div>
