@@ -184,9 +184,9 @@ export default async function StatsPage({ searchParams }) {
       visits: visits.size,
       pageviews: views.length,
       pagesPerVisit: visits.size ? views.length / visits.size : 0,
-      leads: subs.length,
+      leads: subs.filter((x) => x.kind !== "booking").length, // paid bookings are their own inbox rows, not new leads
       booked: subs.filter((s) => s.status === "booked").length,
-      conversion: visits.size ? subs.length / visits.size : 0,
+      conversion: visits.size ? subs.filter((x) => x.kind !== "booking").length / visits.size : 0,
       qr: qrVisits,
       live,
       bookings: bookings.length,
