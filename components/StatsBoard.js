@@ -130,6 +130,99 @@ function Ranked({ title, rows, unit = "visits", empty = "Nothing yet." }) {
   );
 }
 
+const money0 = (n) => `$${fmt(n)}`;
+const age = (h) => (h < 1 ? `${Math.max(1, Math.round(h * 60))}m` : h < 48 ? `${Math.round(h)}h` : `${Math.round(h / 24)}d`);
+
+// What each lead actually did on the site, as small chips.
+function Did({ d }) {
+  const chips = [
+    d.bookedCall && ["good", "booked a call"],
+    d.openedCheckout && ["hot", "opened checkout"],
+    !d.bookedCall && d.clickedCall && ["warm", "looked at call times"],
+    d.sawPricing && ["", "saw pricing"],
+    d.savedContact && ["", "saved contact"],
+    d.fromQr && ["", "from QR"],
+    d.pages > 0 && ["", `${d.pages} page${d.pages > 1 ? "s" : ""}`],
+  ].filter(Boolean);
+  if (!chips.length) return <span className="inbox-hint">no site activity matched</span>;
+  return <span className="lchips">{chips.map(([tone, label]) => <span key={label} className={`lchip ${tone ? `is-${tone}` : ""}`}>{label}</span>)}</span>;
+}
+
+function LeadIntel({ data }) {
+  const i = data.intel;
+  return (
+    <>
+      <section className="spanel spanel-wide lintel">
+        <div className="spanel-head">
+          <h3>What&apos;s going on</h3>
+          <span className="gcard-meta"><Link href="/portal/admin/inbox">Open inbox →</Link></span>
+        </div>
+        <ul className="lsignals">
+          {i.signals.map((s) => (
+            <li key={s.text} className={`is-${s.tone}`}><span className="lsignal-dot" aria-hidden="true" />{s.text}</li>
+          ))}
+        </ul>
+        <div className="astats lintel-tiles">
+          <Tile value={fmt(i.overdue)} label="Overdue leads" hint="no reply in 24h+" help="Leads still marked New in the inbox more than 24 hours after they came in. This should always be zero. Mark a lead Contacted in the inbox the moment you text, call, or email." />
+          <Tile value={fmt(i.callsBooked)} label="Calls booked" hint={i.pickerShown ? `${pct(i.callsBooked / i.pickerShown)} of ${fmt(i.pickerShown)} who saw the picker` : "from the site's call picker"} help="Calls booked through the picker that now appears right after every form. The goal is every lead with a call on the calendar inside 24 hours." />
+          <Tile value={fmt(i.checkoutOpens)} label="Checkout opens" hint={`${fmt(data.kpis.bookings)} paid`} help="Times someone hit 'Book it' and went to Stripe. Opens minus paid is people who were one step from paying — the warmest follow-up you have." />
+          <Tile value={money0(i.pipeline)} label="Open pipeline" hint={`${fmt(i.open)} open lead${i.open === 1 ? "" : "s"}`} help="The quoted starting price of every lead still New or Contacted. It's what's on the table right now." />
+          <Tile value={money0(i.expected)} label="Expected to book" hint={`${pct(i.closeRate)} close rate${i.hasHistory ? "" : " (assumed)"}`} help="Open pipeline times your close rate, weighted up for hot leads and down for cold ones. Until you've closed or lost 5 leads in the window it uses an assumed 20% — mark leads Booked or Lost in the inbox and this gets real." />
+          <Tile value={i.replyMed === null ? "—" : i.replyMed < 1 ? `${Math.round(i.replyMed * 60)}m` : `${i.replyMed.toFixed(1)}h`} label="Time to first touch" hint="typical, target 15m" help="How long a lead typically waits before you mark them Contacted. It's measured from the inbox status change, so mark it right when you reach out." />
+        </div>
+      </section>
+
+      <section className="spanel spanel-wide sforms">
+        <div className="spanel-head">
+          <h3>Lead tracker</h3>
+          <span className="gcard-meta">Hottest open leads first · heat is 0–100</span>
+        </div>
+        {data.board.length === 0 ? (
+          <p className="inbox-hint">No leads in this window.</p>
+        ) : (
+          <div className="ltable-wrap">
+            <table className="idet-fields stable sforms-table">
+              <thead><tr><th>In</th><td>Who</td><td>Wants</td><td>What they did</td><td>Heat</td><td>Your next move</td></tr></thead>
+              <tbody>
+                {data.board.map((l) => (
+                  <tr key={l.id} className={l.open ? "" : "is-closed"}>
+                    <th scope="row" title={fullWhen(l.at)}>{age(l.ageHours)} ago</th>
+                    <td><Link href={`/portal/admin/inbox?open=${l.id}`}>{l.name}</Link><br /><span className={`itag itag-${l.status}`}>{STATUS[l.status] || l.status}</span></td>
+                    <td>{l.summary || KIND[l.kind] || l.kind}</td>
+                    <td><Did d={l.did} /></td>
+                    <td>{l.open ? <span className="lheat" title={`Heat ${l.heat} of 100`}><span style={{ width: `${l.heat}%` }} /><b>{l.heat}</b></span> : "—"}</td>
+                    <td><span className={`lnext is-${l.next.tone}`}>{l.next.text}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="spanel spanel-wide">
+        <h3>Warm right now, no form yet</h3>
+        <p className="inbox-hint">Visitors in the last 48 hours who acted like buyers but didn&apos;t leave their info. Anonymous — this is a read on demand, not a call list.</p>
+        {data.hot.length === 0 ? (
+          <p className="inbox-hint">Nobody right now.</p>
+        ) : (
+          <ul className="sfeed">
+            {data.hot.map((h, n) => (
+              <li key={n}>
+                <time>{ago(h.last)}</time>
+                <span>
+                  <strong>{h.did.join(" · ")}</strong>
+                  <em>{[h.where, h.device, h.fromQr && "from your QR card"].filter(Boolean).join(" · ")}</em>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
 export default function StatsBoard({ data }) {
   const k = data.kpis;
   const [tableOpen, setTableOpen] = useState(false);
@@ -164,6 +257,8 @@ export default function StatsBoard({ data }) {
           {k.live} on the site now
         </span>
       </div>
+
+      <LeadIntel data={data} />
 
       <div className="astats">
         <Tile value={fmt(k.visits)} label="Visits" hint="unique people per day" help="How many different people came to the site. The same person twice in one day counts once; tomorrow they count again. Your own visits from this device aren't counted. This is your reach — ads, posts, and the QR card all feed it." />

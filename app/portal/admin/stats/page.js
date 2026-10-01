@@ -5,6 +5,7 @@ import StatsBoard from "../../../../components/StatsBoard";
 import { requireAdminPage } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../lib/studio-data";
+import { buildLeadBoard, hotVisitors, forecast } from "../../../../lib/lead-intel";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,8 @@ export default async function StatsPage({ searchParams }) {
   const since = new Date(Date.now() - range * 24 * 3600 * 1000);
   const db = supabaseAdmin();
 
-  const [{ rows, error }, subsRes, actRes, newCount, bookRes, guestRes] = await Promise.all([
+  const prevSince = new Date(since.getTime() - range * 24 * 3600 * 1000);
+  const [{ rows, error }, subsRes, actRes, newCount, bookRes, guestRes, prevLeadsRes, prevViewsRes] = await Promise.all([
     fetchAll(() =>
       db
         .from("site_events")
@@ -75,7 +77,7 @@ export default async function StatsPage({ searchParams }) {
     ),
     db
       .from("submissions")
-      .select("id, created_at, kind, status, name, email, summary, source_path, utm")
+      .select("id, created_at, updated_at, kind, status, name, email, phone, summary, source_path, utm, visitor")
       .gte("created_at", since.toISOString()),
     db
       .from("gallery_activity")
@@ -87,6 +89,9 @@ export default async function StatsPage({ searchParams }) {
     // Both tables may not exist yet (bookings.sql / guest.sql) — tolerated below.
     db.from("bookings").select("paid_cents, total_cents, mode").gte("created_at", since.toISOString()),
     db.from("guest_uploads").select("id", { count: "exact", head: true }).gte("created_at", since.toISOString()),
+    // The window before this one — for "up or down" in What's going on.
+    db.from("submissions").select("id", { count: "exact", head: true }).neq("kind", "booking").neq("status", "archived").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
+    db.from("site_events").select("id", { count: "exact", head: true }).eq("type", "pageview").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
   ]);
   const bookings = bookRes?.data || [];
   const guestUploads = guestRes?.count || 0;
@@ -132,6 +137,7 @@ export default async function StatsPage({ searchParams }) {
     },
     { label: "Started a quote", n: visitsWhere((r) => r.type === "event" && r.name === "quote_started") },
     { label: "Sent a quote", n: subs.filter((s) => s.kind === "quote").length },
+    { label: "Opened checkout", n: visitsWhere((r) => r.type === "event" && r.name === "book_now_click") },
     { label: "Booked & paid", n: bookings.length },
   ];
 
@@ -153,8 +159,26 @@ export default async function StatsPage({ searchParams }) {
     byGallery.set(a.gallery_id, g);
   }
 
+  // Lead tracker + the predictive read. Pure logic lives in lib/lead-intel.js.
+  const board = buildLeadBoard(subs, rows);
+  const hot = hotVisitors(subs, rows);
+  const peak = hours.map((s) => s.size);
+  const intel = forecast({
+    board,
+    hot,
+    range,
+    visits: views.length,
+    visitsPrev: prevViewsRes?.error ? null : prevViewsRes?.count ?? null,
+    leadsPrev: prevLeadsRes?.error ? null : prevLeadsRes?.count ?? null,
+    events,
+    peakHour: peak.some(Boolean) ? peak.indexOf(Math.max(...peak)) : null,
+  });
+
   const data = {
     range,
+    intel,
+    board: board.slice(0, 40),
+    hot,
     ready: !error,
     kpis: {
       visits: visits.size,

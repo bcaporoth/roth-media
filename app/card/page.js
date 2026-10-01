@@ -3,6 +3,17 @@ import BrandMark from "../../components/BrandMark";
 import CardLeadForm from "../../components/CardLeadForm";
 import CardLink from "../../components/CardLink";
 import { CALENDLY, EMAIL, PHONE, OWNER_NAME, REVIEW_URL, SOCIAL } from "../../lib/site";
+import { CATEGORIES, PACKAGES, money } from "../../lib/packages";
+import { stripeConfigured } from "../../lib/stripe";
+
+const MENU_LABEL = { wedding: "Weddings", business: "For your business", family: "Families" };
+const STEPS = [
+  ["Say hi", "Send the form, text, or book a call. You hear back the same day."],
+  ["15-minute call", "I ask about your day or your business and what a win looks like."],
+  ["Your plan + price", "A written plan and a firm number, the same day as the call."],
+  ["Lock the date", "Book and pay online. Weddings hold the date with 30% down."],
+  ["Shoot + delivery", "Sneak peek in 48 hours. Everything in your own private gallery."],
+];
 
 export const metadata = {
   title: "Brandon Roth",
@@ -48,6 +59,12 @@ export default function CardPage() {
             <strong>Book a 15-minute call</strong>
             <span>Pick a time that works for you</span>
           </CardLink>
+          {stripeConfigured && (
+            <CardLink className="bcard-link" href="/quote" event="card_book_online">
+              <strong>Book &amp; pay online</strong>
+              <span>Pick a package, lock your date — secure checkout</span>
+            </CardLink>
+          )}
           <CardLink className="bcard-link" href="/" event="card_see_work">
             <strong>See my work</strong>
             <span>Weddings, brands, families</span>
@@ -59,6 +76,32 @@ export default function CardPage() {
             </CardLink>
           )}
         </div>
+
+        <section className="bcard-sec">
+          <h2>The menu</h2>
+          {CATEGORIES.map((c) => (
+            <div key={c.id} className="bcard-menu">
+              <h3>{MENU_LABEL[c.id] || c.title}</h3>
+              {PACKAGES[c.id].map((pkg) => (
+                <CardLink key={pkg.id} className="bcard-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
+                  <span className="bcard-pkg-top"><strong>{pkg.name}</strong><b>{money(pkg.price)}</b></span>
+                  <span>{pkg.scope}</span>
+                  <ul>{pkg.get.slice(0, 3).map((g) => <li key={g}>{g}</li>)}</ul>
+                  <em>{stripeConfigured ? "See everything + book online →" : "See everything + get a quote →"}</em>
+                </CardLink>
+              ))}
+            </div>
+          ))}
+        </section>
+
+        <section className="bcard-sec">
+          <h2>What to expect</h2>
+          <ol className="bcard-steps">
+            {STEPS.map(([t, d]) => (
+              <li key={t}><strong>{t}</strong><span>{d}</span></li>
+            ))}
+          </ol>
+        </section>
 
         <section className="bcard-form">
           <h2>Or I&apos;ll reach out to you</h2>

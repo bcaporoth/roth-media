@@ -2,7 +2,7 @@
 
 import { track } from "../lib/track";
 import { submitLead } from "../lib/submit-lead";
-import { CALENDLY } from "../lib/site";
+import BookCall from "./BookCall";
 import { useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
 
@@ -86,6 +86,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
     try {
       await submitLead({
         kind: "quote",
+        category,
         name: `${data.firstName} ${data.lastName}`.trim(),
         email: data.email,
         phone: data.phone,
@@ -93,7 +94,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
         summary: `${catTitle} · ${pkg.name} · ${money(estimate)}${pkg.per || ""}`,
         fields: Object.entries(fieldRows),
       });
-      setSent({ name: pkg.name, total: money(estimate) + (pkg.per || "") });
+      setSent({ name: pkg.name, total: money(estimate) + (pkg.per || ""), who: `${data.firstName} ${data.lastName}`.trim(), email: data.email });
       track("quote_sent", { category, package: pkg.id, total: estimate });
       setStatus("sent");
     } catch {
@@ -126,13 +127,11 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
   if (status === "sent" && sent) {
     return (
       <div className="cform-success qflow-exit" role="status" ref={topRef}>
-        <p className="cform-success-title">Got it — I&apos;ll be in touch within 24 hours.</p>
+        <p className="cform-success-title">Got it — your quote is on its way.</p>
         <p className="cform-success-body">
-          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I&apos;ll confirm the exact number and lock your date. Usually much faster than 24 hours.
+          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. Check your email — the details are already there.
         </p>
-        <p className="cform-success-body">
-          Want to talk it through now? <a href={CALENDLY} target="_blank" rel="noopener noreferrer" onClick={() => track("book_call_click", { from: "quote" })}>Book a 15-minute call</a> and pick a time that works.
-        </p>
+        <BookCall name={sent.who} email={sent.email} from="quote" />
       </div>
     );
   }

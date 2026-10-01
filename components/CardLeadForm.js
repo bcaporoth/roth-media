@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
+import BookCall from "./BookCall";
 
 const FOR = ["A wedding", "My business", "Family photos", "Something else"];
 
@@ -11,6 +12,7 @@ const FOR = ["A wedding", "My business", "Family photos", "Something else"];
 export default function CardLeadForm() {
   const [status, setStatus] = useState("idle");
   const [what, setWhat] = useState("");
+  const [who, setWho] = useState({ name: "", email: "" });
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -22,6 +24,7 @@ export default function CardLeadForm() {
     try {
       await submitLead({
         kind: "card",
+        category: what === "A wedding" ? "wedding" : what === "My business" ? "business" : what === "Family photos" ? "family" : "",
         name: data.name,
         email: isEmail ? contact : "",
         phone: isEmail ? "" : contact,
@@ -35,6 +38,7 @@ export default function CardLeadForm() {
         ],
       });
       track("card_lead_sent", { what });
+      setWho({ name: data.name, email: isEmail ? contact : "" });
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -43,9 +47,10 @@ export default function CardLeadForm() {
 
   if (status === "sent") {
     return (
-      <p className="bcard-done" role="status">
-        Got it — talk soon. I usually reply the same day.
-      </p>
+      <div role="status">
+        <p className="bcard-done">Got it — I usually reply the same day. Want to skip the wait?</p>
+        <BookCall name={who.name} email={who.email} from="card" dark />
+      </div>
     );
   }
 

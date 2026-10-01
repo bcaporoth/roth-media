@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
-import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../../lib/studio-emails";
+import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadAutoReply, leadSmsText } from "../../../lib/studio-emails";
 import { clip, visitorId } from "../../../lib/visitor";
+import { stripeConfigured } from "../../../lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,13 @@ export async function POST(request) {
     if (LEAD_SMS_TO) {
       try {
         await sendEmail({ to: LEAD_SMS_TO, subject: "New lead", text: leadSmsText(sub) });
+      } catch {}
+    }
+    // The lead hears back in seconds, not hours. Promo entries get their own emails.
+    if (sub.email && sub.kind !== "promo" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sub.email)) {
+      const category = ["wedding", "business", "family"].includes(body.category) ? body.category : "";
+      try {
+        await sendEmail({ to: sub.email, ...leadAutoReply(sub, { category, canPay: stripeConfigured }) });
       } catch {}
     }
   }
