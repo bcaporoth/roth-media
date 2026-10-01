@@ -5575,3 +5575,5 @@ select.achip { appearance: auto; }
 .ltable-wrap .idet-fields th { width: auto; }
 .legal ol, .legal ul { margin: 0 0 1rem 1.2rem; display: grid; gap: 0.4rem; }
 .legal li strong { color: var(--ink); }
+.ltable-wrap .idet-fields tbody th { text-transform: none; }
+.lheat { white-space: nowrap; min-width: 92px; }
