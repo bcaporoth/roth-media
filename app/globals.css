@@ -5573,3 +5573,5 @@ select.achip { appearance: auto; }
 .lnext.is-good { color: #4a7c59; }
 .lnext.is-mute { color: var(--ink-soft); }
 .ltable-wrap .idet-fields th { width: auto; }
+.legal ol, .legal ul { margin: 0 0 1rem 1.2rem; display: grid; gap: 0.4rem; }
+.legal li strong { color: var(--ink); }
