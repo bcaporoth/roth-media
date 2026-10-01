@@ -5588,3 +5588,5 @@ select.achip { appearance: auto; }
 .cart-pay { display: grid; gap: 0.8rem; margin-bottom: 1.2rem; max-width: 420px; }
 .cart-pay label { display: grid; gap: 0.3rem; font-size: 0.82rem; color: var(--ink-soft); }
 .cart-pay input { font: inherit; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); }
+.cart-pay button { font: inherit; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; padding: 1rem 1.4rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--bone); cursor: pointer; }
+.cart-pay button:disabled { opacity: 0.6; }
