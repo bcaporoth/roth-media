@@ -30,9 +30,11 @@ export default async function BookedPage({ searchParams }) {
   }
 
   return (
-    <LegalPage kick="Booked" title={first ? `You're booked, ${first}.` : "You're booked."} updated="">
+    <LegalPage kick="Booked" title={m.mode === "balance" ? "You're all paid up." : first ? `You're booked, ${first}.` : "You're booked."} updated="">
       <p><strong>{q ? bookingLabel(q) : m.package}</strong>{m.date ? ` · ${m.date}` : ""}{m.where ? ` · ${m.where}` : ""}</p>
-      {q?.mode === "retainer" ? (
+      {m.mode === "balance" ? (
+        <p>Balance received — <strong>{paidAmt}</strong>. You&apos;re paid in full. Thank you!</p>
+      ) : q?.mode === "retainer" ? (
         <p>Your <strong>{paidAmt}</strong> retainer holds the date. The balance — {money(Math.max(0, q.total - (session.amount_total || 0) / 100))} — is due 14 days before, and I&apos;ll send a link for it. Retainers are non-refundable; one free reschedule with 30 days&apos; notice.</p>
       ) : (
         <p>Paid in full — <strong>{paidAmt}</strong>. Nothing else to do on your end.</p>

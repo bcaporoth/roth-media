@@ -5577,3 +5577,14 @@ select.achip { appearance: auto; }
 .legal li strong { color: var(--ink); }
 .ltable-wrap .idet-fields tbody th { text-transform: none; }
 .lheat { white-space: nowrap; min-width: 92px; }
+
+/* ── Saved cart / invoice page ── */
+.cart { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1.4rem; color: var(--ink); }
+.cart th, .cart td { padding: 0.7rem 0; border-top: 1px solid var(--line); text-align: left; vertical-align: top; font-weight: 400; }
+.cart td { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; padding-left: 1rem; }
+.cart small { display: block; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.4; }
+.cart-total th, .cart-total td { font-weight: 600; }
+.cart-due th, .cart-due td { font-weight: 700; font-size: 1.1rem; border-top: 2px solid var(--ink); }
+.cart-pay { display: grid; gap: 0.8rem; margin-bottom: 1.2rem; max-width: 420px; }
+.cart-pay label { display: grid; gap: 0.3rem; font-size: 0.82rem; color: var(--ink-soft); }
+.cart-pay input { font: inherit; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); }

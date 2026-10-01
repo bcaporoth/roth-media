@@ -3,6 +3,8 @@ import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
 import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../../lib/studio-emails";
 import { clip, visitorId } from "../../../lib/visitor";
+import { priceQuote } from "../../../lib/booking";
+import { cartUrl } from "../../../lib/cart";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,14 @@ export async function POST(request) {
         .slice(0, 40)
         .map(([k, v]) => [clip(k, 80), clip(v, 4000)])
     : [];
+
+  // A quote's cart (package + add-ons) is saved as pay links Brandon can send.
+  const cq = body.cart && priceQuote({ category: body.cart.category, packageId: body.cart.packageId, addons: body.cart.addons });
+  if (cq) {
+    const base = { category: cq.cat.id, packageId: cq.pkg.id, addons: cq.chosen.map((a) => a.id), name: clip(body.name, 120), email: clip(body.email, 160).toLowerCase(), phone: clip(body.phone, 40) };
+    fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", cartUrl(base)]);
+    if (cq.mode === "retainer") fields.push(["pay link — balance (send 14 days before)", cartUrl({ ...base, pay: "balance" })]);
+  }
 
   const sub = {
     kind: KINDS.has(body.kind) ? body.kind : "contact",

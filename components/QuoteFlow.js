@@ -87,6 +87,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
       await submitLead({
         kind: "quote",
         category,
+        cart: { category, packageId: pkg.id, addons: chosen.map((a) => a.id) },
         name: `${data.firstName} ${data.lastName}`.trim(),
         email: data.email,
         phone: data.phone,

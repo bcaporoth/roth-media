@@ -27,7 +27,17 @@ export async function POST(request) {
   const label = bookingLabel(q);
   const cents = (n) => Math.round(n * 100);
 
-  const line_items = q.mode === "retainer"
+  const balance = body.pay === "balance" && q.mode === "retainer";
+  const line_items = balance
+    ? [{
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: cents(q.total - q.dueToday),
+          product_data: { name: `Balance — ${label}`, description: `${money(q.total)} total, less the ${money(q.dueToday)} retainer already paid.` },
+        },
+      }]
+    : q.mode === "retainer"
     ? [{
         quantity: 1,
         price_data: {
@@ -48,7 +58,7 @@ export async function POST(request) {
     category: q.cat.id,
     package: q.pkg.id,
     addons: q.chosen.map((a) => a.id).join(","),
-    mode: q.mode,
+    mode: balance ? "balance" : q.mode,
     total: String(q.total),
     name,
     phone: clip(body.phone, 40),
@@ -68,8 +78,8 @@ export async function POST(request) {
       metadata,
       payment_intent_data: { description: `${label} — ${name}`, metadata },
       success_url: `${site}/booked?s={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${site}/quote?for=${q.cat.id}&back=1`,
-      custom_text: { submit: { message: q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
+      cancel_url: body.pay !== undefined ? `${site}/pay/cart?c=${q.cat.id}&p=${q.pkg.id}${q.chosen.length ? `&a=${q.chosen.map((a) => a.id).join(",")}` : ""}${balance ? "&pay=balance" : ""}` : `${site}/quote?for=${q.cat.id}&back=1`,
+      custom_text: { submit: { message: balance ? "This settles your booking in full. Thank you!" : q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
     });
     return NextResponse.json({ url: session.url });
   } catch (err) {
