@@ -5707,3 +5707,17 @@ select.achip { appearance: auto; }
 
 /* Phones: the page itself never slides sideways (carousels still swipe inside). */
 html, body { overflow-x: clip; overscroll-behavior-x: none; }
+
+/* Gallery card editors (Edit album, Set cover, Design, Premiere): when one is
+   open it takes the card's full width and never runs past the card's edge;
+   fields stack whenever the card is narrow. */
+.gcard .cover-picker:has(> .cover-picker-panel),
+.gcard .cover-picker:has(> .design-panel),
+.gcard .cover-picker:has(> .premiere-panel) { display: block; flex-basis: 100%; width: 100%; min-width: 0; }
+.gcard .cover-picker-panel, .gcard .design-panel, .gcard .premiere-panel { box-sizing: border-box; min-width: 0; }
+.gedit-panel { container-type: inline-size; }
+.gedit-panel input { min-width: 0; width: 100%; box-sizing: border-box; }
+@container (max-width: 460px) {
+  .gedit-form, .gedit-add { grid-template-columns: 1fr; }
+  .gedit-add .achip { justify-self: start; }
+}
