@@ -53,7 +53,7 @@ export default async function CartPage({ searchParams }) {
         </tbody>
       </table>
       {monthly.map((a) => (
-        <p key={a.id} className="cart-note">{a.name}: then {money(a.monthly)}/month after launch — billed separately, cancel anytime.</p>
+        <p key={a.id} className="cart-note">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay. Checkout saves your card for it; manage or cancel anytime at <a href="/billing">rothmediaco.com/billing</a>.</p>
       ))}
       {!balance && (
         <form className="cart-code" method="get">

@@ -61,6 +61,10 @@ export async function POST(request) {
         ...q.chosen.map((a) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: cents(a.price), product_data: { name: a.name, description: clip(a.get, 200) } } })),
       ];
 
+  // A monthly add-on (the website plan): save the card now, the plan starts
+  // itself 30 days out (lib/booking.js → startMonthlyPlan).
+  const monthly = balance || q.mode !== "full" ? 0 : q.chosen.reduce((sum, a) => sum + (a.monthly || 0), 0);
+
   const metadata = {
     category: q.cat.id,
     package: q.pkg.id,
@@ -72,6 +76,7 @@ export async function POST(request) {
     code: clip(body.code, 30).toUpperCase(),
     booking: owed ? String(owed.id) : "",
     intake: clip(body.intake, 490),
+    monthly: monthly ? String(monthly) : "",
     name,
     phone: clip(body.phone, 40),
     date: clip(body.date, 120),
@@ -87,10 +92,11 @@ export async function POST(request) {
       customer_email: email,
       phone_number_collection: { enabled: false },
       metadata,
-      payment_intent_data: { description: `${label} — ${name}`, metadata },
+      payment_intent_data: { description: `${label} — ${name}`, metadata, ...(monthly ? { setup_future_usage: "off_session" } : {}) },
+      ...(monthly ? { customer_creation: "always" } : {}),
       success_url: `${site}/booked?s={CHECKOUT_SESSION_ID}`,
       cancel_url: body.pay !== undefined ? `${site}/pay/cart?c=${q.cat.id}&p=${q.pkg.id}${q.chosen.length ? `&a=${q.chosen.map((a) => a.id).join(",")}` : ""}${balance ? "&pay=balance" : ""}${body.code ? `&code=${encodeURIComponent(clip(body.code, 30))}` : ""}` : `${site}/quote?for=${q.cat.id}&back=1`,
-      custom_text: { submit: { message: balance ? "This settles your booking in full. Thank you!" : q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
+      custom_text: { submit: { message: balance ? "This settles your booking in full. Thank you!" : q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : monthly ? `Your card is saved for the ${money(monthly)}/month website plan — first charge in 30 days. Cancel anytime at rothmediaco.com/billing.` : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
     });
     return NextResponse.json({ url: session.url });
   } catch (err) {
