@@ -3,7 +3,7 @@ import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail } from "../../../../lib/studio-emails";
 import { PARTNERS } from "../../../../lib/partners";
-import { reportUrl } from "../../../../lib/partner-stats";
+import { reportUrl, partnerAgreement } from "../../../../lib/partner-stats";
 import { clip, visitorId } from "../../../../lib/visitor";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,8 @@ export async function POST(request) {
   const { error } = await supabaseAdmin().from("submissions").insert(row);
   if (error) return NextResponse.json({ error: "That didn't save — try again." }, { status: 500 });
   if (resendConfigured) {
-    const team = (p.lead.leadsTo || []).filter(Boolean);
+    const signed = await partnerAgreement(b.slug).catch(() => null);
+    const team = [...(p.lead.leadsTo || []), ...(signed?.utm?.leads_to || [])].filter(Boolean);
     const lines = [`Name: ${name}`, `Phone: ${phone}`, email ? `Email: ${email}` : "", `From ad: ${utm.utm_content || utm.utm_campaign || "direct"}`, `When: ${new Date().toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })}`].filter(Boolean);
     const report = reportUrl(b.slug);
     if (team.length) {

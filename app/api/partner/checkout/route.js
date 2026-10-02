@@ -21,6 +21,9 @@ export async function POST(request) {
   const business = clip(b.business, 160), address = clip(b.address, 240), signer = clip(b.signer, 120), signature = clip(b.signature, 120);
   const email = clip(b.email, 160).toLowerCase(), phone = clip(b.phone, 40);
   if (!business || !address || !signer) return bad("Fill in the business name, address, and your name");
+  const leadsTo = String(b.leadsTo || "").split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => EMAIL_RE.test(e)).slice(0, 5);
+  if (!leadsTo.length) return bad("Add the email where new leads should go");
+  const bookingUrl = /^https:\/\/\S+$/.test(String(b.bookingUrl || "").trim()) ? clip(b.bookingUrl, 300).trim() : "";
   if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
   if (!b.agree || signature.toLowerCase() !== signer.toLowerCase()) return bad("Type your name to sign, and check the box");
 
@@ -29,7 +32,7 @@ export async function POST(request) {
   const plan = [q.plan.name, ...q.picked.map((a) => a.name)].join(" + ");
   const fields = [
     ["business (legal name)", business], ["address", address], ["signed by", signer], ["email", email], ["phone", phone],
-    ["plan", plan], ["leads", "sent straight to the partner's team"],
+    ["plan", plan], ["new leads go to", leadsTo.join(", ")], ...(bookingUrl ? [["orientation booking link", bookingUrl]] : []),
     ["each month", money(q.monthly)], ...(q.once ? [["one-time today", money(q.once)]] : []),
     ["partner rate", `${q.partner.pct}% off list`],
     ["signature", `Typed "${signature}" and checked "I agree" — ${signedAt}${ip ? ` from ${ip}` : ""}`],
@@ -41,7 +44,7 @@ export async function POST(request) {
     subject: `Partner signed — ${business} · ${plan} · ${money(q.monthly)}/mo`,
     summary: `${business} · ${plan} · ${money(q.monthly)}/mo`,
     fields, status: "new", source_path: `/partner/${q.slug}`,
-    utm: { partner: q.slug, agreement: AGREEMENT_VERSION, signed_at: signedAt, ip, ua: clip(request.headers.get("user-agent"), 200) },
+    utm: { partner: q.slug, agreement: AGREEMENT_VERSION, signed_at: signedAt, ip, ua: clip(request.headers.get("user-agent"), 200), leads_to: leadsTo, booking_url: bookingUrl },
   }).select("id").single();
   if (error) return bad("Couldn't save your signature — try again or text Brandon.", 500);
 

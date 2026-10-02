@@ -88,6 +88,8 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
           <label><span>Your full name *</span><input id="pa-signer" name="signer" required autoComplete="name" /></label>
           <label><span>Email *</span><input id="pa-email" name="email" type="email" required autoComplete="email" /></label>
           <label><span>Phone</span><input id="pa-phone" name="phone" type="tel" autoComplete="tel" /></label>
+          <label className="wide"><span>Where should new leads go? (management email; add more with commas) *</span><input id="pa-leads-to" name="leadsTo" required placeholder="frontdesk@yourgym.com" /></label>
+          <label className="wide"><span>Orientation booking link (optional)</span><input id="pa-booking" name="bookingUrl" type="url" placeholder="https://…" /></label>
         </div>
       </section>
 

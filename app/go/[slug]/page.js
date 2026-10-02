@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import PartnerLeadForm from "../../../components/PartnerLeadForm";
 import { PARTNERS } from "../../../lib/partners";
 import { videoUrl } from "../../../lib/media";
+import { partnerAgreement } from "../../../lib/partner-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,8 @@ export default async function PartnerLeadPage({ params, searchParams }) {
   const sp = await searchParams;
   const lead = PARTNERS[slug]?.lead;
   if (!lead) notFound();
+  const signed = await partnerAgreement(slug).catch(() => null);
+  const bookingUrl = lead.bookingUrl || signed?.utm?.booking_url || "";
   const utm = Object.fromEntries(["utm_source", "utm_medium", "utm_campaign", "utm_content", "fbclid"].filter((k) => sp?.[k]).map((k) => [k, String(sp[k]).slice(0, 120)]));
   return (
     <main className="golead">
@@ -28,7 +31,7 @@ export default async function PartnerLeadPage({ params, searchParams }) {
         {lead.video && (
           <video className="golead-video" src={videoUrl(lead.video)} poster={lead.poster} autoPlay muted loop playsInline />
         )}
-        <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} cta={lead.cta} bookingUrl={lead.bookingUrl} />
+        <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} cta={lead.cta} bookingUrl={bookingUrl} />
       </div>
     </main>
   );
