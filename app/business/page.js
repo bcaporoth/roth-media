@@ -10,7 +10,7 @@ import { videoUrl } from "../../lib/media";
 export const metadata = {
   title: "Brand Video & Content Days for Twin Tiers Businesses",
   description:
-    "Content Days for local businesses — a promo, reels, and photos shot at your place. Sayre, Athens, Waverly, Elmira & Corning. From $450, real prices up front.",
+    "Content Days for local businesses — a promo, reels, and photos shot at your place. Sayre, Athens, Waverly, Elmira & Corning. From $600, real prices up front.",
   alternates: { canonical: "/business" },
 };
 
