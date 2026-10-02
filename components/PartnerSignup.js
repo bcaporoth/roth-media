@@ -5,12 +5,14 @@ import { CONTENT_PLANS, PARTNER_ADDONS, partnerQuote, partnerPrice } from "../li
 import { money } from "../lib/packages";
 
 // Pick → read → sign → pay, on one page. The server re-prices everything.
-export default function PartnerSignup({ slug, pct, months = 3, checkout, children }) {
+export default function PartnerSignup({ slug, pct: partnerPct, months = 3, checkout, initialCode = "", children }) {
   const [content, setContent] = useState("full");
   const [addons, setAddons] = useState(["ads"]);
   const [status, setStatus] = useState("idle");
   const [err, setErr] = useState("");
-  const q = partnerQuote(slug, { content, addons });
+  const [code, setCode] = useState(initialCode);
+  const q = partnerQuote(slug, { content, addons, code });
+  const pct = q?.pct || 0;
   const toggle = (id) => setAddons((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
   const price = (i) => [
     i.monthly ? `${money(partnerPrice(i.monthly, pct))}/mo` : "",
@@ -31,7 +33,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
       const res = await fetch("/api/partner/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, content, addons, ...f, agree: f.agree === "on" }),
+        body: JSON.stringify({ slug, content, addons, code, ...f, agree: f.agree === "on" }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.url) throw new Error(json.error || "Checkout didn't open");
@@ -44,6 +46,11 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
 
   return (
     <form className="pa-form" onSubmit={onSubmit}>
+      <section className="pa-step pa-codebox">
+        <label htmlFor="pa-code"><span>Partner code</span></label>
+        <input id="pa-code" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="characters" placeholder="Enter your code" />
+        <small>{q?.codeOk ? `Code applied: ${partnerPct}% off your first ${months} months.` : code.trim() ? "That code isn’t right. Prices below are list prices." : `Enter your partner code to see your ${partnerPct}% rate.`}</small>
+      </section>
       <section className="pa-step">
         <h2>1. Your content</h2>
         <div className="pa-opts" role="radiogroup" aria-label="Content plan">
@@ -51,7 +58,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
             <label key={p.id} className={`pa-opt ${content === p.id ? "on" : ""}`}>
               <input type="radio" name="content-plan" checked={content === p.id} onChange={() => setContent(p.id)} />
               <span className="pa-name">{p.name}<small>{p.get}</small></span>
-              <span className="pa-price">{price(p)}<s>{list(p)}</s></span>
+              <span className="pa-price">{price(p)}{pct ? <s>{list(p)}</s> : null}</span>
             </label>
           ))}
         </div>
@@ -64,7 +71,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
             <label key={a.id} className={`pa-opt ${addons.includes(a.id) ? "on" : ""}`}>
               <input type="checkbox" checked={addons.includes(a.id)} onChange={() => toggle(a.id)} />
               <span className="pa-name">{a.name}<small>{a.get}</small></span>
-              <span className="pa-price">{price(a)}<s>{list(a)}</s></span>
+              <span className="pa-price">{price(a)}{pct ? <s>{list(a)}</s> : null}</span>
             </label>
           ))}
         </div>
@@ -76,7 +83,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
           <div><span>Each month</span><strong>{money(q.monthly)}</strong></div>
           {q.once > 0 && <div><span>Once, today</span><strong>{money(q.once)}</strong></div>}
           <div className="pa-today"><span>Due today</span><strong>{money(q.today)}</strong></div>
-          <p>Partner prices are locked for your first {months} months; then we review the results together. Your ad budget (if you picked ads) is paid to Meta directly. Events are charged only when you book one, after Brandon sends you the amount.</p>
+          <p>{pct ? `Partner prices are locked for your first ${months} months; then we review the results together. ` : ""} Your ad budget (if you picked ads) is paid to Meta directly. Events are charged only when you book one, after Brandon sends you the amount.</p>
         </section>
       )}
 
@@ -104,7 +111,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
 
       {status === "error" && <p className="cform-error">{err}</p>}
       {checkout ? (
-        <button type="submit" className="qprimary pa-go" disabled={status === "going"}>{status === "going" ? "Opening secure checkout…" : `Sign and pay ${q ? money(q.today) : ""}`}</button>
+        <button type="submit" className="qprimary pa-go" disabled={status === "going" || !q?.codeOk}>{!q?.codeOk ? "Enter your partner code above" : status === "going" ? "Opening secure checkout…" : `Sign and pay ${q ? money(q.today) : ""}`}</button>
       ) : (
         <p className="cform-error">Online payment isn’t switched on yet. Text Brandon at 845-549-4425.</p>
       )}

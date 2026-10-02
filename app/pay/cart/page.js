@@ -43,7 +43,7 @@ export default async function CartPage({ searchParams }) {
             <tr key={a.id}><th>{a.name}<small>{a.get}</small></th><td>{money(a.price)}</td></tr>
           ))}
           {!owed && q.deal && (
-            <tr className="cart-deal"><th>{q.deal.label} — {q.deal.pct}% off<small>Ends {q.deal.endsLabel}</small></th><td>− {money(q.discount)}</td></tr>
+            <tr className="cart-deal"><th>{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.discount)}</td></tr>
           )}
           <tr className="cart-total"><th>Total{owed?.promo_code ? <small>{owed.promo_code}</small> : null}</th><td>{money(total)}</td></tr>
           {q.mode === "retainer" && (

@@ -16,8 +16,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function POST(request) {
   if (!stripeConfigured || !adminConfigured) return bad("Online signup isn't switched on yet — text Brandon at 845-549-4425.", 503);
   const b = await request.json().catch(() => ({}));
-  const q = partnerQuote(String(b.slug || ""), { content: b.content, addons: Array.isArray(b.addons) ? b.addons.map(String) : [] });
+  const q = partnerQuote(String(b.slug || ""), { content: b.content, addons: Array.isArray(b.addons) ? b.addons.map(String) : [], code: b.code });
   if (!q) return bad("Pick a content plan first");
+  if (!q.codeOk) return bad("Enter your partner code first");
   const business = clip(b.business, 160), address = clip(b.address, 240), signer = clip(b.signer, 120), signature = clip(b.signature, 120);
   const email = clip(b.email, 160).toLowerCase(), phone = clip(b.phone, 40);
   if (!business || !address || !signer) return bad("Fill in the business name, address, and your name");
@@ -34,7 +35,7 @@ export async function POST(request) {
     ["business (legal name)", business], ["address", address], ["signed by", signer], ["email", email], ["phone", phone],
     ["plan", plan], ["new leads go to", leadsTo.join(", ")], ...(bookingUrl ? [["orientation booking link", bookingUrl]] : []),
     ["each month", money(q.monthly)], ...(q.once ? [["one-time today", money(q.once)]] : []),
-    ["partner rate", `${q.partner.pct}% off list`],
+    ["partner rate", `${q.pct}% off list (code ${q.partner.code || "none"})`],
     ["signature", `Typed "${signature}" and checked "I agree" — ${signedAt}${ip ? ` from ${ip}` : ""}`],
     ["agreement version", AGREEMENT_VERSION],
     ["status", "signed — waiting on payment"],
