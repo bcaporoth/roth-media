@@ -8,21 +8,22 @@ export const metadata = {
 };
 
 // The Welcome Packet. Brandon sends this link himself once someone books
-// (?for=wedding|business|family tailors the lists).
+// (?for=wedding|business|portraits tailors the lists; family still works).
 const NEED = {
   wedding: ["Your day-of timeline, as soon as you have one", "Your vendor list — planner, photographer or videographer, DJ", "The family shot list and the three moments you can't miss", "One point of contact for the day who isn't you two"],
   business: ["Your logo and brand colors", "What you want to promote — an offer, a dish, a service", "Any must-have shots, and anyone who'd rather not be on camera", "One point of contact for shoot day"],
-  family: ["Who's coming, and the kids' ages", "A couple of location ideas, or I'll suggest some", "What you're wearing, roughly — I'll help you coordinate", "Any must-have groupings"],
+  family: ["Who's in the photos (and the kids' ages, if any)", "A couple of location ideas, or I'll suggest some", "What you're wearing, roughly — I'll help you coordinate", "Any must-have groupings"],
 };
 const WHEN = {
   wedding: ["Sneak peek: within 48 hours", "Photo gallery: within 4 weeks", "Wedding film: within 6 weeks"],
   business: ["Sneak peek: within 48 hours", "Finished content: within 2 weeks", "One round of revisions included"],
-  family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks"],
+  family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks", "A year of access in your client account, unlimited downloads"],
 };
 
 export default async function WelcomePage({ searchParams }) {
   const sp = await searchParams;
-  const cat = ["wedding", "business", "family"].includes(sp?.for) ? sp.for : "";
+  const want = sp?.for === "portraits" ? "family" : sp?.for;
+  const cat = ["wedding", "business", "family"].includes(want) ? want : "";
   const tel = PHONE.replace(/\D/g, "");
   const need = cat ? NEED[cat] : ["The short questionnaire, back within 3 days", "Any must-have shots or moments", "One point of contact for shoot day"];
   const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Photo galleries: within 4 weeks", "Wedding films: within 6 weeks"];

@@ -7,7 +7,7 @@ import BrandMark from "../components/BrandMark";
 import Gallery from "../components/Gallery";
 import { stripeConfigured } from "../lib/stripe";
 import QuoteFlow from "../components/QuoteFlow";
-import PromoPill from "../components/PromoPill";
+import DealPill from "../components/DealPill";
 import FilmCard from "../components/FilmCard";
 import Reveal from "../components/Reveal";
 import { videoUrl, mediaOffloaded } from "../lib/media";
@@ -106,7 +106,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
       <Reveal />
-      <PromoPill />
+      <DealPill />
 
       <nav className="rm-nav" aria-label="Main navigation">
         <Link href="/" className="brand">

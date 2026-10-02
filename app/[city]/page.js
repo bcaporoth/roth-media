@@ -4,11 +4,16 @@ import BrandMark from "../../components/BrandMark";
 import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import { PACKAGES, money } from "../../lib/packages";
+import DealPill from "../../components/DealPill";
+import DealPrice from "../../components/DealPrice";
 import { CITIES, findCity } from "../../lib/cities";
 import { videoUrl } from "../../lib/media";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
+
+// Deal prices (lib/deals.js) are baked in at render — refresh hourly.
+export const revalidate = 3600;
 
 export function generateStaticParams() {
   return CITIES.map((c) => ({ city: c.slug }));
@@ -20,7 +25,7 @@ export async function generateMetadata({ params }) {
   if (!c) return {};
   return {
     title: `Wedding Videographer & Brand Video in ${c.name}, ${c.state}`,
-    description: `Cinematic wedding films and Content Days for businesses in ${c.name}, ${c.state} — ${c.drive} from Waverly. Real prices: wedding films from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(PACKAGES.business[0].price)}. Instant quote.`,
+    description: `Cinematic wedding films and Content Days for businesses in ${c.name}, ${c.state} — ${c.drive} from Waverly. Real prices: wedding films from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
     alternates: { canonical: `/${c.slug}` },
   };
 }
@@ -51,15 +56,16 @@ export default async function CityPage({ params }) {
   };
 
   const FAQS = [
-    { q: `Do you travel to ${c.name}?`, a: `Yes — ${c.name} is ${c.drive} from Waverly and there's no travel fee anywhere in the Twin Tiers or the southern Finger Lakes. I also film in ${c.nearby.slice(0, 3).join(", ")}.` },
+    { q: `Do you travel to ${c.name}?`, a: `Yes — ${c.name} is ${c.drive} from Waverly and travel's included anywhere within an hour of Corning, Waverly, Sayre, or Athens. I also film in ${c.nearby.slice(0, 3).join(", ")}.` },
     { q: `How much does a wedding videographer cost in ${c.name}?`, a: `My prices are public. ${PACKAGES.wedding[0].name} starts at ${money(PACKAGES.wedding[0].price)}; ${film.name} — the full day — starts at ${money(film.price)}. You can build your exact quote online in two minutes.` },
-    { q: `What does a Content Day cost for a ${c.name} business?`, a: `${PACKAGES.business[0].name} starts at ${money(PACKAGES.business[0].price)} and the ${day.name} at ${money(day.price)} — a 60–90 second brand video, vertical reels, and edited photos, delivered within two weeks and cleared for ads.` },
-    { q: "When do we get everything?", a: "Wedding films are delivered online within six weeks, with a next-day sneak peek on The Wedding Film. Business content lands within two weeks, edited and sized to post." },
+    { q: `What does a Content Day cost for a ${c.name} business?`, a: `The ${day.name} is ${money(day.price)} — a 45–90 second promo, 5 vertical reels, and 15–30 edited photos, delivered within two weeks and cleared for ads. Reels-first? The Mini Content Day is ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}.` },
+    { q: "When do we get everything?", a: "Wedding films are delivered online within six weeks, with a sneak peek within 48 hours. Business content lands within two weeks, edited and sized to post." },
   ];
   const FAQ_LD = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
 
   return (
     <>
+      <DealPill />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
@@ -98,7 +104,7 @@ export default async function CityPage({ params }) {
               <Link key={p.id} href="/quote?for=wedding" className={`qpkg ${p.popular ? "popular" : ""}`}>
                 {p.popular && <span className="qpkg-flag">Most booked</span>}
                 <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price">{money(p.price)} <small>starting at</small></span>
+                <span className="qpkg-price"><DealPrice price={p.price} /> <small>starting at</small></span>
                 <span className="qpkg-scope">{p.scope}</span>
                 <span className="qpkg-you">You get</span>
                 <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -116,7 +122,7 @@ export default async function CityPage({ params }) {
               <Link key={p.id} href="/quote?for=business" className={`qpkg ${p.popular ? "popular" : ""}`}>
                 {p.popular && <span className="qpkg-flag">Most booked</span>}
                 <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price">{money(p.price)}{p.per ? <small>{p.per}</small> : <small>starting at</small>}</span>
+                <span className="qpkg-price"><DealPrice price={p.price} />{p.per ? <small>{p.per}</small> : <small>starting at</small>}</span>
                 <span className="qpkg-scope">{p.scope}</span>
                 <span className="qpkg-you">You get</span>
                 <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>

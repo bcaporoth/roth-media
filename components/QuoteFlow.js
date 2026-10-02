@@ -4,7 +4,8 @@ import { track } from "../lib/track";
 import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
 import { useRef, useState } from "react";
-import { CATEGORIES, PACKAGES, ADDONS, DETAIL, money } from "../lib/packages";
+import { CATEGORIES, PACKAGES, ADDONS, DETAIL, TRAVEL, money } from "../lib/packages";
+import { bestDeal, applyDeal, codeDeal } from "../lib/deals";
 
 // ── Three screens. One way in, one way out. ─────────────────────────
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
@@ -24,7 +25,13 @@ function fullGet(category, pkg) {
 
 const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
 
-export default function QuoteFlow({ initialCategory = "", checkout = false, promo = null }) {
+// "Wedding Videography" with a deal: the new price, the old one struck through.
+function Price({ list, deal }) {
+  const now = applyDeal(list, deal);
+  return <>{money(now)}{now !== list && <> <s>{money(list)}</s></>}</>;
+}
+
+export default function QuoteFlow({ initialCategory = "", checkout = false, code: initialCode = "" }) {
   const formRef = useRef(null);
   const topRef = useRef(null);
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
@@ -36,20 +43,24 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
   const [status, setStatus] = useState("idle");
   const [sent, setSent] = useState(null);
   const [bookError, setBookError] = useState("");
+  const [code, setCode] = useState(initialCode);
 
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
   const addonList = pkg ? ADDONS[category].filter((a) => !pkg.includes.includes(a.id)) : [];
   const chosen = addonList.filter((a) => addons[a.id]);
-  const estimate = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
+  const list = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
+  // Biggest live deal wins (lib/deals.js); checkout re-checks it on the server.
+  const deal = pkg ? bestDeal({ category, packageId: pkg.id, code }) : null;
+  const estimate = applyDeal(list, deal);
+  const typed = code.trim().toUpperCase();
+  const codeNote = !typed ? "" : deal?.code === typed ? `${deal.pct}% off applied.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
+  const monthly = chosen.filter((a) => a.monthly);
   const catTitle = CATEGORIES.find((c) => c.id === category)?.title || "";
   // Book-it-now: what they'd pay today. "from" add-ons (scoped on a call) can't be bought.
   const buyable = checkout && pkg && !chosen.some((a) => a.from);
   const retainer = category === "wedding";
   const dueToday = retainer ? Math.round(estimate * RETAINER_RATE) : estimate;
-  // Campaign code from the landing page (?code=): show the math; Stripe applies it.
-  const promoPct = promo && category === "wedding" ? promo.percent : 0;
-  const discounted = promoPct ? Math.round(dueToday * (1 - promoPct / 100)) : dueToday;
 
   function jump(n) {
     setStep(n);
@@ -60,6 +71,11 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
   function markStarted(id) { if (!startedRef.current) { startedRef.current = true; track("quote_started", { category: id }); } }
   function pickPackage(id) { markStarted(category); setPkgId(id); setAddons({}); }
 
+  // The package's own questions (lib/packages.js → intake), answered ones only.
+  function intakeRows(data) {
+    return (pkg?.intake || []).map((f) => [f.label.replace(/\?$/, "").toLowerCase(), String(data[`intake_${f.id}`] || "").trim()]).filter(([, v]) => v);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (step !== 2) return;
@@ -68,13 +84,14 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
     if (data._honey) return;
     setStatus("sending");
     const L = DETAIL[category];
+    const intake = intakeRows(data);
     const rows = {
       _subject: `Quote — ${data.firstName} ${data.lastName} · ${catTitle} · ${pkg.name} (${money(estimate)}${pkg.per || ""})`,
       _template: "table",
       "what it's for": catTitle,
       package: `${pkg.name} — ${money(pkg.price)}${pkg.per || ""}`,
       "add-ons": chosen.length ? chosen.map((a) => `${a.name} (${money(a.price)})`).join("; ") : "none",
-      "starting price": money(estimate) + (pkg.per || ""),
+      "starting price": money(estimate) + (pkg.per || "") + (deal ? ` (${deal.label}, ${deal.pct}% off ${money(list)})` : ""),
       "they get": [...fullGet(category, pkg), ...chosen.map((a) => a.get)].join(" · "),
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
@@ -82,6 +99,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
       "best way to reach": contactPref,
       [L.date.toLowerCase()]: data.date,
       [L.where.toLowerCase()]: data.where,
+      ...Object.fromEntries(intake),
       "anything else": data.notes,
     };
     const { _subject, _template, ...fieldRows } = rows;
@@ -89,7 +107,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
       await submitLead({
         kind: "quote",
         category,
-        cart: { category, packageId: pkg.id, addons: chosen.map((a) => a.id) },
+        cart: { category, packageId: pkg.id, addons: chosen.map((a) => a.id), code: typed },
         name: `${data.firstName} ${data.lastName}`.trim(),
         email: data.email,
         phone: data.phone,
@@ -116,7 +134,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, packageId: pkg.id, addons: chosen.map((a) => a.id), name: `${data.firstName} ${data.lastName}`.trim(), email: data.email, phone: data.phone, date: data.date, where: data.where, notes: data.notes, contactPref }),
+        body: JSON.stringify({ category, packageId: pkg.id, addons: chosen.map((a) => a.id), code: typed, name: `${data.firstName} ${data.lastName}`.trim(), email: data.email, phone: data.phone, date: data.date, where: data.where, notes: data.notes, intake: intakeRows(data).map(([k, v]) => `${k}: ${v}`).join(" · "), contactPref }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.url) throw new Error(json.error || "Checkout didn't open");
@@ -163,7 +181,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
                 </button>
               ))}
             </div>
-            <p className="qhelp qflow-foot">Something else — seniors, headshots, an event? Pick the closest option and tell me in the notes — I&apos;ll quote it.</p>
+            <p className="qhelp qflow-foot">Something else — headshots, a team photo? Pick the closest option and tell me in the notes — I&apos;ll quote it.</p>
           </div>
         )}
 
@@ -176,7 +194,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
                 <button type="button" key={p.id} className={`qpkg ${pkgId === p.id ? "on" : ""} ${p.popular ? "popular" : ""}`} onClick={() => pickPackage(p.id)} aria-pressed={pkgId === p.id}>
                   {p.popular && <span className="qpkg-flag">Most booked</span>}
                   <span className="qpkg-name">{p.name}</span>
-                  <span className="qpkg-price">{money(p.price)}{p.per || ""} <small>starting at</small></span>
+                  <span className="qpkg-price"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code })} />{p.per || ""} <small>starting at</small></span>
                   <span className="qpkg-scope">{p.scope}</span>
                   <span className="qpkg-you">You get</span>
                   <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -193,7 +211,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
                       <label className="qaddon-main">
                         <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
                         <span className="qaddon-name">{a.name}<small>{a.get}</small></span>
-                        <span className="qaddon-price">{a.from ? "from " : ""}+{money(a.price)}</span>
+                        <span className="qaddon-price">{a.from ? "from " : ""}+{money(a.price)}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
                       </label>
                     </div>
                   ))}
@@ -201,7 +219,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
                 <div className="qnav-row">
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
-                    <span className="qflow-total">Starting at <strong>{money(estimate)}{pkg.per || ""}</strong></span>
+                    <span className="qflow-total">Starting at <strong><Price list={list} deal={deal} />{pkg.per || ""}</strong>{deal && <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small>}</span>
                     <button type="button" className="qprimary" onClick={() => { markStarted(category); jump(2); }}>Continue</button>
                   </div>
                 </div>
@@ -219,20 +237,22 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
           {pkg && (
             <div className="qmatch qflow-summary">
               <div className="qmatch-kick">Your quote</div>
-              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at {money(estimate)}{pkg.per || ""}</span></div>
+              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at <Price list={list} deal={deal} />{pkg.per || ""}</span></div>
               <ul className="qflow-get">
                 {fullGet(category, pkg).map((g) => <li key={g}>{g}</li>)}
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
               </ul>
               {buyable ? (
                 <p className="qmatch-today">
-                  {promoPct ? <><strong>{money(discounted)} today</strong> with code <code>{promo.code}</code> ({promoPct}% off — enter it on the payment screen). </> : <><strong>{money(dueToday)} today</strong></>}
-                  {retainer ? `${promoPct ? "That's the 30% retainer that" : " —"} holds your date; the balance is due 14 days before.` : " — paid in full, done."}
-                  {!promoPct && " Have a promo code? Enter it on the payment screen."}
+                  <strong>{money(dueToday)} today</strong>
+                  {retainer ? " — the 30% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
                 </p>
               ) : (
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
               )}
+              {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(list)} — ends {deal.endsLabel}.</p>}
+              {monthly.map((a) => <p key={a.id} className="qmatch-fineprint">{a.name}: then {money(a.monthly)}/month after launch, billed separately — cancel anytime.</p>)}
+              {category !== "business" || pkg.id === "event" ? <p className="qmatch-fineprint">{TRAVEL.line}</p> : null}
               <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
             </div>
           )}
@@ -244,8 +264,28 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
             <div className="qf-field"><label htmlFor="qf-phone">Phone *</label><input id="qf-phone" name="phone" type="tel" required={step === 2} autoComplete="tel" /></div>
             <div className="qf-field"><label htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input id="qf-date" name="date" type="text" placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : category === "family" ? "A weekend in October, golden hour if we can…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
             <div className="qf-field"><label htmlFor="qf-where">{DETAIL[category || "wedding"].where}</label><input id="qf-where" name="where" /></div>
+            {(pkg?.intake || []).map((f) => (
+              <div className="qf-field wide" key={`${pkg.id}-${f.id}`}>
+                <label htmlFor={`qf-i-${f.id}`}>{f.label}</label>
+                {f.options ? (
+                  <select id={`qf-i-${f.id}`} name={`intake_${f.id}`} defaultValue="">
+                    <option value="" disabled>Pick one</option>
+                    {f.options.map((o) => <option key={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input id={`qf-i-${f.id}`} name={`intake_${f.id}`} placeholder={f.placeholder} />
+                )}
+              </div>
+            ))}
             <div className="qf-field wide"><label htmlFor="qf-notes">Anything I should know?</label><textarea id="qf-notes" name="notes" rows={3} placeholder="Must-have moments, a second location, photos only, a tight deadline…" /></div>
           </div>
+          {pkg && (
+            <div className="qf-field qcode">
+              <label htmlFor="qf-code">Promo code</label>
+              <input id="qf-code" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="characters" />
+              {codeNote && <small>{codeNote}</small>}
+            </div>
+          )}
           <div className="qgroup">
             <span className="qgroup-label">Best way to reach you</span>
             <div className="qtoggle" role="radiogroup" aria-label="Best way to reach you">
@@ -263,7 +303,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, prom
               By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
             </p>
             <div className="qflow-go qflow-buy">
-              {buyable && <button type="button" className="qprimary" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(discounted)} today`}</button>}
+              {buyable && <button type="button" className="qprimary" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(dueToday)} today`}</button>}
               <button type="submit" className={buyable ? "qsecondary" : "qprimary"} disabled={status === "sending" || status === "booking"}>{status === "sending" ? "Sending…" : buyable ? "Just send me the quote" : "Send my quote"}</button>
             </div>
           </div>

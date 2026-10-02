@@ -3,10 +3,12 @@ import BrandMark from "../../components/BrandMark";
 import CardLeadForm from "../../components/CardLeadForm";
 import CardLink from "../../components/CardLink";
 import { CALENDLY, EMAIL, PHONE, OWNER_NAME, REVIEW_URL, SOCIAL } from "../../lib/site";
-import { CATEGORIES, PACKAGES, money } from "../../lib/packages";
+import { CATEGORIES, PACKAGES } from "../../lib/packages";
 import { stripeConfigured } from "../../lib/stripe";
+import { autoDeal } from "../../lib/deals";
+import DealPrice from "../../components/DealPrice";
 
-const MENU_LABEL = { wedding: "Weddings", business: "For your business", family: "Families" };
+const MENU_LABEL = { wedding: "Weddings", business: "Businesses & events", family: "Portraits" };
 const STEPS = [
   ["Say hi", "Send the form, text, or book a call. You hear back the same day."],
   ["15-minute call", "I ask about your day or your business and what a win looks like."],
@@ -18,14 +20,18 @@ const STEPS = [
 export const metadata = {
   title: "Brandon Roth",
   description:
-    "Save my contact, get an instant quote, or book a quick call. Video & photo for weddings, families, and local businesses in the Twin Tiers.",
+    "Save my contact, get an instant quote, or book a quick call. Video & photo for weddings, portraits, and local businesses in the Twin Tiers.",
   alternates: { canonical: "/card" },
 };
+
+// Deal prices (lib/deals.js) are baked in at render — refresh hourly.
+export const revalidate = 3600;
 
 // The digital business card — where the QR code lands. Built for a phone
 // held at arm's length: big tap targets, the save-contact button first.
 export default function CardPage() {
   const tel = PHONE.replace(/\D/g, "");
+  const deal = autoDeal();
   return (
     <main className="bcard">
       <div className="bcard-inner">
@@ -79,12 +85,13 @@ export default function CardPage() {
 
         <section className="bcard-sec">
           <h2>The menu</h2>
+          {deal && <p className="bcard-deal">{deal.label}: {deal.pct}% off everything through {deal.endsLabel}.</p>}
           {CATEGORIES.map((c) => (
             <div key={c.id} className="bcard-menu">
               <h3>{MENU_LABEL[c.id] || c.title}</h3>
               {PACKAGES[c.id].map((pkg) => (
                 <CardLink key={pkg.id} className="bcard-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
-                  <span className="bcard-pkg-top"><strong>{pkg.name}</strong><b>{money(pkg.price)}</b></span>
+                  <span className="bcard-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} /></b></span>
                   <span>{pkg.scope}</span>
                   <ul>{pkg.get.slice(0, 3).map((g) => <li key={g}>{g}</li>)}</ul>
                   <em>{stripeConfigured ? "See everything + book online →" : "See everything + get a quote →"}</em>

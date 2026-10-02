@@ -5590,3 +5590,23 @@ select.achip { appearance: auto; }
 .cart-pay input { font: inherit; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); }
 .cart-pay button { font: inherit; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; padding: 1rem 1.4rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--bone); cursor: pointer; }
 .cart-pay button:disabled { opacity: 0.6; }
+.cart-deal th, .cart-deal td { color: var(--clay); font-weight: 600; }
+.cart-note { font-size: 0.88rem; color: var(--ink-soft); margin: -0.6rem 0 1rem; }
+.cart-code { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem; margin: 0 0 1.2rem; max-width: 420px; }
+.cart-code label { display: grid; gap: 0.3rem; font-size: 0.82rem; color: var(--ink-soft); flex: 1 1 160px; }
+.cart-code input { font: inherit; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); text-transform: uppercase; }
+.cart-code button { font: inherit; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.7rem 1.2rem; border: 1px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+.cart-code small { flex-basis: 100%; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* ── Deals (lib/deals.js): struck list price, deal tag, code box ── */
+.qpkg-price s, .qmatch-price s, .qflow-total s, .svc-price s { font-size: 0.6em; font-weight: 500; color: var(--ink-soft); margin-left: 0.25rem; }
+.qpkg.on .qpkg-price s { color: rgba(244, 239, 230, 0.6); }
+.qdeal-tag { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--clay); }
+.qaddon-price small { display: block; font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.7rem; font-weight: 600; color: var(--ink-soft); text-align: right; }
+.qcode { max-width: 260px; margin-bottom: 1rem; }
+.qcode input { text-transform: uppercase; }
+.qcode small { font-size: 0.8rem; color: var(--ink-soft); }
+.deal-banner { display: block; text-align: center; padding: 0.55rem 1rem; background: var(--clay); color: var(--bone); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; }
+.deal-banner a { color: inherit; text-decoration: underline; }
+.bcard-pkg-top b s { font-weight: 400; opacity: 0.6; font-size: 0.85em; margin-left: 0.2rem; }
+.bcard-deal { margin: -0.2rem 0 0.8rem; padding: 0.55rem 0.8rem; border-radius: 10px; background: rgba(205, 144, 117, 0.16); color: #cd9075; font-weight: 700; font-size: 0.88rem; }

@@ -3,14 +3,22 @@ import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
+import DealPill from "../../components/DealPill";
+import DealPrice from "../../components/DealPrice";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
   title: "Brand Video & Content Days for Twin Tiers Businesses",
   description:
-    "A Content Day gets you a 60–90 second promo shot at your business — Sayre, Athens, Waverly, Elmira & Corning. $750, real prices up front.",
+    "Content Days for local businesses — a promo, reels, and photos shot at your place. Sayre, Athens, Waverly, Elmira & Corning. From $450, real prices up front.",
   alternates: { canonical: "/business" },
 };
+
+// Deal prices (lib/deals.js) are baked in at render — refresh hourly.
+export const revalidate = 3600;
+
+const pkg = (id) => PACKAGES.business.find((p) => p.id === id);
+const addon = (id) => ADDONS.business.find((a) => a.id === id);
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
@@ -18,23 +26,27 @@ const PHONE_HREF = "tel:+18455494425";
 const FAQS = [
   {
     q: "What does a Content Day cost, and what do I get?",
-    a: "A Content Day is $750 — one visit to your business, typically a half day, and you walk away with a 60–90 second promo for anything you want to promote, sized for your website, Instagram, Facebook, and TikTok. Want more from the same shoot? A second promo is a $400 add-on.",
+    a: `A Full Content Day is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 5 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
   },
   {
     q: "How fast do I get my content?",
     a: "Everything is delivered within two weeks, edited and sized to post. One round of revisions is included.",
   },
   {
+    q: "Do you cover events?",
+    a: `Yes — Event Coverage is ${money(pkg("event").price)}: a 45–90 second highlight short and a gallery of 50+ edited photos.`,
+  },
+  {
+    q: "Can you run ads with the videos?",
+    a: `Yes — Facebook ads + lead generation is a ${money(addon("ads").price)} add-on: ads built from your videos, aimed at local customers, with leads sent straight to you.`,
+  },
+  {
     q: "Can I use the videos in paid ads?",
     a: "Yes. All music is licensed through Epidemic Sound and your finished videos are cleared for your website, socials, and online advertising.",
   },
   {
-    q: "Do you do photos too?",
-    a: "Yes — a brand photo session is a $650 add-on: a dedicated 2-hour photo visit on its own day, 30 edited photos licensed for web and social.",
-  },
-  {
     q: "Do you build websites too?",
-    a: "Yes — a full site built from your Content Day footage, photos, and words is available from $2,000. We scope it together on a call.",
+    a: `Yes — a full site built from your Content Day footage, photos, and words is ${money(addon("website").price)}, then ${money(addon("website").monthly)}/month to keep it running.`,
   },
 ];
 
@@ -60,6 +72,7 @@ const FAQ_LD = {
 export default function BusinessPage() {
   return (
     <>
+      <DealPill href="/quote?for=business" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
@@ -79,11 +92,11 @@ export default function BusinessPage() {
 
       <main className="quote-wrap svc-wrap">
         <div className="kick">Branded content · Twin Tiers</div>
-        <h1>One Content Day. One promo that sells.</h1>
+        <h1>One Content Day. A month of posts.</h1>
         <p className="lead">
-          A 60–90 second promo shot at your business, for anything you want
-          to promote — for shops, gyms, restaurants, builders, and makers in
-          Sayre, Athens, Waverly, Elmira, and Corning.
+          A promo, reels, and photos shot at your business, for anything you
+          want to promote — for shops, gyms, restaurants, builders, and makers
+          in Sayre, Athens, Waverly, Elmira, and Corning.
         </p>
         <p className="svc-cta-row">
           <Link href="/quote?for=business" className="qprimary svc-cta">Build my quote →</Link>
@@ -102,13 +115,13 @@ export default function BusinessPage() {
         </div>
 
         <section className="svc-section">
-          <h2>One package. One real price.</h2>
+          <h2>Real prices, up front.</h2>
           <div className={`qpkgs svc-pkgs ${PACKAGES.business.length === 1 ? "one" : PACKAGES.business.length === 2 ? "two" : ""}`}>
             {PACKAGES.business.map((p) => (
               <Link key={p.id} href="/quote?for=business" className={`qpkg ${p.popular ? "popular" : ""}`}>
                 {p.popular && <span className="qpkg-flag">Most booked</span>}
                 <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price">{money(p.price)}{p.per || ""} <small>starting at</small></span>
+                <span className="qpkg-price"><DealPrice price={p.price} />{p.per || ""} <small>starting at</small></span>
                 <span className="qpkg-scope">{p.scope}</span>
                 <span className="qpkg-you">You get</span>
                 <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -116,7 +129,7 @@ export default function BusinessPage() {
             ))}
           </div>
           <p className="qhelp svc-note">
-            Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder.
+            Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
           </p>
         </section>
 

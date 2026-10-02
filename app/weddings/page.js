@@ -2,15 +2,23 @@ import Link from "next/link";
 import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS } from "../../lib/site";
 import BrandMark from "../../components/BrandMark";
-import { PACKAGES, ADDONS, money } from "../../lib/packages";
+import { PACKAGES, ADDONS, TRAVEL, money } from "../../lib/packages";
+import DealPill from "../../components/DealPill";
+import DealPrice from "../../components/DealPrice";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
   title: "Wedding & Engagement Films — Sayre, Athens, Waverly & the Twin Tiers",
   description:
-    "Wedding photography and cinematic wedding films — serving Sayre PA, Athens PA, Waverly NY, Elmira, and Corning. Real prices from $2,500. Instant quote, no obligation.",
+    `Wedding photography and cinematic wedding films — serving Sayre PA, Athens PA, Waverly NY, Elmira, and Corning. Real prices from ${money(PACKAGES.wedding[0].price)}. Instant quote, no obligation.`,
   alternates: { canonical: "/weddings" },
 };
+
+// Deal prices (lib/deals.js) are baked in at render — refresh hourly.
+export const revalidate = 3600;
+
+const [PHOTO, FILM] = PACKAGES.wedding;
+const addon = (id) => ADDONS.wedding.find((a) => a.id === id);
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
@@ -18,15 +26,15 @@ const PHONE_HREF = "tel:+18455494425";
 const FAQS = [
   {
     q: "How much does a wedding photographer or videographer cost in the Twin Tiers?",
-    a: "My prices are public: full-day Wedding Photography is $2,500 (300–500 edited photos) and full-day Wedding Videography is $3,500 (two reels, your full ceremony, and speeches). Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.",
+    a: `My prices are public: full-day Wedding Photography is ${money(PHOTO.price)} (200–400 fully edited photos) and full-day Wedding Videography is ${money(FILM.price)} (two short films, your full ceremony, and the speeches). Build your exact quote online in two minutes; I confirm the final number in writing before we shoot.`,
   },
   {
-    q: "Do you film engagements too?",
-    a: "Yes — an engagement film is a $450 add-on to any wedding package, perfect for save-the-dates and your wedding website.",
+    q: "Do you do engagement photos too?",
+    a: `Yes — stack an engagement session onto your wedding for ${money(addon("engagement").price)}, perfect for save-the-dates and your wedding website.`,
   },
   {
     q: "When do we get everything?",
-    a: "Sneak peeks land within 48 hours — photos or video, ready to post while everyone's still talking about the day. Your full delivery follows online within six weeks.",
+    a: "Sneak peeks land within 48 hours — photos or video, ready to post while everyone's still talking about the day. Your full delivery follows online within six weeks, in your own client account: a year of access, unlimited downloads.",
   },
   {
     q: "Can we post our films anywhere? What about the music?",
@@ -34,11 +42,11 @@ const FAQS = [
   },
   {
     q: "Can our guests share their photos with us?",
-    a: "Yes — Guest photos & video messages is a $250 add-on. A QR card goes on every table; guests scan it, pick from their camera roll, and it lands in your private gallery. No app to download. They can record a 60-second video message for you too, and uploads stay open for a month after the wedding.",
+    a: `Yes — Guest photos & video messages is a ${money(addon("guest").price)} add-on. A QR card goes on every table; guests scan it, pick from their camera roll, and it lands in your private gallery. No app to download. They can record a 60-second video message for you too, and uploads stay open for a month after the wedding.`,
   },
   {
     q: "What areas do you serve?",
-    a: "I'm local to the Valley — Sayre, Athens, and Waverly — and film weddings across the Twin Tiers, including Elmira, Corning, Towanda, and the surrounding area.",
+    a: `I'm local to the Valley — Sayre, Athens, and Waverly — and film weddings across the Twin Tiers, including Elmira, Corning, Towanda, and the surrounding area. ${TRAVEL.line}`,
   },
 ];
 
@@ -64,6 +72,7 @@ const FAQ_LD = {
 export default function WeddingsPage() {
   return (
     <>
+      <DealPill href="/quote?for=wedding" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
@@ -105,7 +114,7 @@ export default function WeddingsPage() {
               <Link key={p.id} href="/quote?for=wedding" className={`qpkg ${p.popular ? "popular" : ""}`}>
                 {p.popular && <span className="qpkg-flag">Most booked</span>}
                 <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price">{money(p.price)} <small>starting at</small></span>
+                <span className="qpkg-price"><DealPrice price={p.price} /> <small>starting at</small></span>
                 <span className="qpkg-scope">{p.scope}</span>
                 <span className="qpkg-you">You get</span>
                 <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -115,6 +124,7 @@ export default function WeddingsPage() {
           <p className="qhelp svc-note">
             Add what fits: {ADDONS.wedding.map((a) => `${a.name.replace(/^Add /, "").toLowerCase()} (+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder — no phone call required.
           </p>
+          <p className="qhelp svc-note">{TRAVEL.line}</p>
         </section>
 
         <section className="svc-section">

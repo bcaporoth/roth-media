@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage kick="Terms" title="The short version of how we work." updated="September 30, 2026">
-      <p>These terms cover everything Roth Media does — wedding photo and video, family sessions, Content Days for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
+    <LegalPage kick="Terms" title="The short version of how we work." updated="October 1, 2026">
+      <p>These terms cover everything Roth Media does — wedding photo and video, portrait sessions, Content Days and event coverage for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
 
       <h2>Quotes</h2>
       <p>Prices on this site are real starting prices. The instant quote is an estimate; we confirm the final number in writing before anything is booked. Prices can change, but a number we&apos;ve confirmed to you in writing is locked.</p>
@@ -40,11 +40,11 @@ export default function TermsPage() {
       <p>Aerial footage is included where your package says so, but flights only happen where the FAA, the weather, the venue, and common sense allow. Restricted airspace, wind, rain, crowds, or a venue&apos;s no-drone policy mean no flight, and that&apos;s not a discount or a refund — it&apos;s the law and your guests&apos; safety.</p>
 
       <h2>Travel</h2>
-      <p>There&apos;s no travel fee anywhere in the Twin Tiers or the southern Finger Lakes — roughly an hour from Waverly in any direction. Farther than that, travel is quoted up front with your estimate: round-trip mileage at the current IRS rate, plus lodging when the schedule needs an overnight (an early start or a late finish more than about two hours out). It&apos;s confirmed in writing with the rest of the quote, so it never shows up as a surprise on the invoice.</p>
+      <p>Travel is included anywhere within an hour of Corning, Waverly, Sayre, or Athens. Farther than that, it&apos;s $65 per hour of driving, counted round trip. When the shoot is three or more hours away, or the schedule needs an overnight (an early start or a late finish far from home), travel is a flat $1,000 that covers the drive and lodging. Travel is confirmed in writing with the rest of the quote, so it never shows up as a surprise on the invoice.</p>
 
       <h2>Delivery</h2>
-      <p>Wedding films are delivered online within six weeks of the wedding; wedding and family photo galleries within four weeks; business content within two. Peak season can stretch that a bit, and we&apos;ll tell you if it does. Sneak peeks come within 48 hours where your package includes them. Delivery is digital, through your private gallery — you get full-resolution files you can print anywhere.</p>
-      <p>Raw footage and unedited photos aren&apos;t part of any package. Wedding couples can add every raw moment as an add-on; otherwise, unedited files stay with us. What you receive is the finished work, and it&apos;s complete when delivered — we don&apos;t re-edit a full gallery or re-cut a film after delivery except as covered under Revisions below.</p>
+      <p>Wedding films are delivered online within six weeks of the wedding; wedding and portrait photo galleries within four weeks; business content within two. Peak season can stretch that a bit, and we&apos;ll tell you if it does. Sneak peeks come within 48 hours where your package includes them. Delivery is digital, through your private gallery — you get full-resolution files you can print anywhere.</p>
+      <p>Raw footage and unedited photos aren&apos;t part of any package. Businesses can add all the raw footage as an add-on; otherwise, unedited files stay with us. What you receive is the finished work, and it&apos;s complete when delivered — we don&apos;t re-edit a full gallery or re-cut a film after delivery except as covered under Revisions below.</p>
 
       <h2>Revisions</h2>
       <p>Business content includes one round of revisions — a single consolidated list of changes, sent within fourteen days of delivery. Wedding films get one round of small fixes (a name spelled wrong, a clip you&apos;d rather not have in there). Anything beyond that, or a change of direction after the edit is built, is quoted as additional editing.</p>
