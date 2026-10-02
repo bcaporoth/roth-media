@@ -22,7 +22,7 @@ export async function GET(request) {
   const since = new Date(Date.now() - 14 * 86400000).toISOString();
 
   const [subsRes, evRes] = await Promise.all([
-    db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").gte("created_at", since),
+    db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").not("kind", "in", "(partner,partner_lead,partner_month)").gte("created_at", since),
     db.from("site_events").select("created_at, type, name, path, utm_source, visitor").eq("type", "event").gte("created_at", since).limit(5000),
   ]);
   if (subsRes.error) return NextResponse.json({ error: subsRes.error.message }, { status: 500 });

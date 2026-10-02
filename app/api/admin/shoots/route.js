@@ -51,7 +51,7 @@ export async function GET() {
   const db = supabaseAdmin();
   const [{ data: shoots, error }, { data: leads }, { data: galleries }] = await Promise.all([
     db.from("shoots").select("*").order("date", { ascending: true, nullsFirst: false }),
-    db.from("submissions").select("id, created_at, kind, name, email, phone, summary, fields, status").in("status", ["new", "contacted", "booked"]).order("created_at", { ascending: false }).limit(60),
+    db.from("submissions").select("id, created_at, kind, name, email, phone, summary, fields, status").in("status", ["new", "contacted", "booked"]).not("kind", "in", "(partner,partner_lead,partner_month)").order("created_at", { ascending: false }).limit(60),
     db.from("galleries").select("id, title").order("created_at", { ascending: false }),
   ]);
   if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/shoots.sql first" : error.message, 500);

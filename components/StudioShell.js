@@ -20,6 +20,7 @@ export const STUDIO_TABS = [
   { key: "clients", label: "Clients", href: "/portal/admin/clients" },
   { key: "card", label: "Card & QR", href: "/portal/admin/card" },
   { key: "pay", label: "Payments", href: "/portal/admin/pay" },
+  { key: "partners", label: "Partners", href: "/portal/admin/partners" },
 ];
 
 export function StudioTabs({ active, newCount = 0 }) {

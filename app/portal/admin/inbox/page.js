@@ -20,6 +20,7 @@ export default async function InboxPage() {
     .select(
       "id, created_at, kind, name, email, phone, subject, summary, fields, status, notes, read_at, source_path, utm"
     )
+    .not("kind", "in", "(partner_lead,partner_month)") // partner leads live in Studio → Partners
     .order("created_at", { ascending: false })
     .limit(500);
   const newCount = await newLeadCount();

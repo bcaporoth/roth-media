@@ -78,6 +78,7 @@ export default async function StatsPage({ searchParams }) {
     db
       .from("submissions")
       .select("id, created_at, updated_at, kind, status, name, email, phone, summary, source_path, utm, visitor")
+      .not("kind", "in", "(partner,partner_lead,partner_month)") // partner work isn't Brandon's own pipeline
       .gte("created_at", since.toISOString()),
     db
       .from("gallery_activity")
@@ -90,7 +91,7 @@ export default async function StatsPage({ searchParams }) {
     db.from("bookings").select("paid_cents, total_cents, mode").gte("created_at", since.toISOString()),
     db.from("guest_uploads").select("id", { count: "exact", head: true }).gte("created_at", since.toISOString()),
     // The window before this one — for "up or down" in What's going on.
-    db.from("submissions").select("id", { count: "exact", head: true }).neq("kind", "booking").neq("status", "archived").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
+    db.from("submissions").select("id", { count: "exact", head: true }).neq("kind", "booking").not("kind", "in", "(partner,partner_lead,partner_month)").neq("status", "archived").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
     db.from("site_events").select("id", { count: "exact", head: true }).eq("type", "pageview").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
   ]);
   const bookings = bookRes?.data || [];

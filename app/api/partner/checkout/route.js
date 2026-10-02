@@ -65,7 +65,7 @@ export async function POST(request) {
       line_items: q.lines.map(line),
       customer_email: email,
       metadata,
-      subscription_data: { description: `Roth Media partner plan — ${business}`, metadata },
+      subscription_data: { description: `Roth Ventures partner plan — ${business}`, metadata },
       success_url: `${site}/partner/${q.slug}/welcome?s={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/partner/${q.slug}`,
       custom_text: { submit: { message: `Your card is saved for the ${money(q.monthly)}/month plan and for closing fees or events you'll be told about first (agreement §3). Cancel anytime at rothmediaco.com/billing.` } },

@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 // One partner's charge box: write it, text the notice, then charge.
-export default function PartnerCharge({ id, name, phone }) {
-  const [amount, setAmount] = useState("");
-  const [what, setWhat] = useState("");
+export default function PartnerCharge({ id, name, phone, defaultAmount = "", defaultWhat = "" }) {
+  const [amount, setAmount] = useState(defaultAmount);
+  const [what, setWhat] = useState(defaultWhat);
   const [status, setStatus] = useState("idle");
   const [msg, setMsg] = useState("");
   const first = String(name || "").split(/\s+/)[0] || "there";
