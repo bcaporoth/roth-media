@@ -5704,3 +5704,6 @@ select.achip { appearance: auto; }
 .golead-prices strong { color: var(--clay); font-size: 1.15rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .golead-prices s { color: var(--ink-soft); font-weight: 400; font-size: 0.8em; margin-left: 0.25rem; }
 .golead-proof { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+
+/* Phones: the page itself never slides sideways (carousels still swipe inside). */
+html, body { overflow-x: clip; overscroll-behavior-x: none; }
