@@ -8,6 +8,7 @@ import { R2_BUCKET, r2Configured, photoKey, signedUrl, getDims, putDims } from "
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
+import { setOwner, sendAccessInvite } from "../../../../lib/album-access";
 
 export const dynamic = "force-dynamic";
 
@@ -100,24 +101,25 @@ export async function POST(request) {
       if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return NextResponse.json({ error: "Bad date" }, { status: 422 });
       patch.event_date = d || null;
     }
+    // Changing the owner moves the album to that person and emails them an
+    // access invite (the one automated client email Brandon approved).
+    let owner = null;
     if (body.ownerEmail !== undefined) {
-      const email = String(body.ownerEmail || "").trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "That email doesn't look right" }, { status: 422 });
-      let { data: client } = await db.from("clients").select("id").eq("email", email).maybeSingle();
-      if (!client) {
-        const name = String(body.ownerName || "").trim().slice(0, 80) || email.split("@")[0].replace(/[._]/g, " ");
-        const { data, error } = await db.from("clients").insert({ email, name }).select("id").single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-        client = data;
-      } else if (body.ownerName) {
-        await db.from("clients").update({ name: String(body.ownerName).trim().slice(0, 80) }).eq("id", client.id);
+      try {
+        owner = await setOwner(db, { galleryId, email: body.ownerEmail, name: body.ownerName });
+      } catch (err) {
+        return NextResponse.json({ error: err.message }, { status: /doesn't look right|not found/i.test(err.message) ? 422 : 500 });
       }
-      patch.client_id = client.id;
+      if (owner.changed) patch.client_id = owner.clientId;
     }
-    if (!Object.keys(patch).length) return NextResponse.json({ ok: true });
-    const { error } = await db.from("galleries").update(patch).eq("id", galleryId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
+    if (Object.keys(patch).length) {
+      const { error } = await db.from("galleries").update(patch).eq("id", galleryId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    const invite = owner?.changed
+      ? await sendAccessInvite({ email: owner.client.email || body.ownerEmail, name: owner.client.name, gallery: { ...owner.gallery, title: patch.title || owner.gallery.title } })
+      : null;
+    return NextResponse.json({ ok: true, invite });
   }
 
   // Roster for the uploader's client picker — every client ever added.

@@ -57,6 +57,7 @@ export default function PortalLogin() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [autoSetup, setAutoSetup] = useState(false);
   const codeRef = useRef(null);
 
   // Consume an emailed sign-in link landing here (works on any device),
@@ -110,8 +111,27 @@ export default function PortalLogin() {
 
     if (/error=/.test(hash) || params.get("error") === "link") {
       fail();
+      return;
+    }
+
+    // Access-invite email: /portal?email=…&setup=1 prefills the address and
+    // goes straight to the one-time-code step (once — the URL is cleaned so
+    // a refresh doesn't resend).
+    const invited = params.get("email");
+    if (invited) {
+      setEmail(cleanEmail(invited));
+      if (params.get("setup") === "1") setAutoSetup(true);
+      window.history.replaceState(null, "", "/portal");
     }
   }, []);
+
+  useEffect(() => {
+    if (autoSetup && email) {
+      setAutoSetup(false);
+      handleSendSetup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSetup, email]);
 
   useEffect(() => {
     if (mode === "sent") codeRef.current?.focus();
@@ -144,7 +164,7 @@ export default function PortalLogin() {
   // First-time setup & forgot password: email a one-time code/link that
   // lands on the choose-a-password page.
   async function handleSendSetup(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const addr = cleanEmail(email);
     if (!addr) {
       setError("Type your email first, then tap that again.");

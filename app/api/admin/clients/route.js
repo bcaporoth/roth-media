@@ -3,6 +3,7 @@ import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
+import { addMember } from "../../../../lib/album-access";
 
 export const dynamic = "force-dynamic";
 
@@ -136,21 +137,15 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
-  // Put another person on an album: ensures they're on the roster, then links them.
+  // Put another person on an album: ensures they're on the roster, links them,
+  // and (only when they're new to it) emails them an access invite.
   if (body.action === "add-member") {
-    const { galleryId } = body;
-    const email = cleanEmail(body.email);
-    const name = String(body.name || "").trim().slice(0, 80);
-    if (!galleryId || !EMAIL_RE.test(email)) return bad("Need a gallery and a real email");
-    let { data: client } = await db.from("clients").select("id").eq("email", email).maybeSingle();
-    if (!client) {
-      const { data, error } = await db.from("clients").insert({ email, name: name || email.split("@")[0] }).select("id").single();
-      if (error) return bad(error.message, 500);
-      client = data;
+    try {
+      const r = await addMember(db, { galleryId: body.galleryId, email: body.email, name: body.name });
+      return NextResponse.json({ ok: true, ...r });
+    } catch (err) {
+      return bad(err.message, /real email|not found/i.test(err.message) ? 422 : 500);
     }
-    const { error } = await db.from("gallery_members").upsert({ gallery_id: galleryId, client_id: client.id });
-    if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/gallery-members.sql first" : error.message, 500);
-    return NextResponse.json({ ok: true, clientId: client.id });
   }
 
   if (body.action === "remove-member") {

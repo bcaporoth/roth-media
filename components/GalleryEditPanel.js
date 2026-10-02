@@ -21,6 +21,14 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
   const [memberEmail, setMemberEmail] = useState("");
   const [memberName, setMemberName] = useState("");
 
+  // What the access invite did: "Invite sent to x ✓", or why it didn't go.
+  const inviteMsg = (invite, fallback) => {
+    if (!invite) return fallback;
+    if (invite.sent) return `${fallback} · Invite sent to ${invite.to} ✓`;
+    if (invite.skipped === "admin") return `${fallback} · No invite (that's your own address)`;
+    return `${fallback} · ${invite.error || "Invite not sent"}`;
+  };
+
   async function load() {
     try { const r = await api("/api/admin/gallery", { action: "detail", galleryId }); setData(r); setMsg(""); }
     catch (err) { setMsg(err.message); }
@@ -32,8 +40,8 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     const f = Object.fromEntries(new FormData(e.currentTarget).entries());
     setBusy(true); setMsg("");
     try {
-      await api("/api/admin/gallery", { action: "update", galleryId, title: f.title, eventDate: f.eventDate, ownerEmail: f.ownerEmail, ownerName: f.ownerName });
-      setMsg("Saved ✓"); await load(); onSaved?.();
+      const r = await api("/api/admin/gallery", { action: "update", galleryId, title: f.title, eventDate: f.eventDate, ownerEmail: f.ownerEmail, ownerName: f.ownerName });
+      setMsg(inviteMsg(r.invite, "Saved ✓")); await load(); onSaved?.();
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function addMember(e) {
@@ -41,8 +49,8 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     if (!memberEmail) return;
     setBusy(true); setMsg("");
     try {
-      await api("/api/admin/clients", { action: "add-member", galleryId, email: memberEmail, name: memberName });
-      setMemberEmail(""); setMemberName(""); setMsg("Added — they log in with their own email"); await load();
+      const r = await api("/api/admin/clients", { action: "add-member", galleryId, email: memberEmail, name: memberName });
+      setMemberEmail(""); setMemberName(""); setMsg(r.isNew ? inviteMsg(r.invite, "Added ✓") : "Already on this album — nothing sent"); await load();
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function removeMember(m) {
@@ -63,7 +71,7 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
                 <label>Event date<input name="eventDate" type="date" defaultValue={data.gallery.event_date || ""} /></label>
                 <label>Owner email<input name="ownerEmail" type="email" defaultValue={data.gallery.ownerEmail} required /></label>
                 <label>Owner name<input name="ownerName" defaultValue={data.gallery.ownerName} maxLength={80} /></label>
-                <p className="gcard-meta gedit-hint">The owner sees this album when they log in. Changing the email moves it to that person (added to your roster if new).</p>
+                <p className="gcard-meta gedit-hint">The owner sees this album when they log in. Changing the email moves it to that person (added to your roster if new) and emails them an invite with the share link and login setup.</p>
                 <button type="submit" className="abtn" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>
               </form>
 
@@ -80,7 +88,7 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
                 <input placeholder="Name (optional)" value={memberName} onChange={(e) => setMemberName(e.target.value)} />
                 <button type="submit" className="achip" disabled={busy}>+ Add someone</button>
               </form>
-              <p className="gcard-meta gedit-hint">They get their own login (set a temp password under Clients) and see this album in their portal. The share link works for anyone without a login.</p>
+              <p className="gcard-meta gedit-hint">New people get an email right away: the share link (no login) plus steps to set up their own portal login. The share link works for anyone without a login.</p>
               {msg && <p className="gcard-meta gedit-msg">{msg}</p>}
             </>
           )}
