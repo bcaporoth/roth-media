@@ -5610,3 +5610,43 @@ select.achip { appearance: auto; }
 .deal-banner a { color: inherit; text-decoration: underline; }
 .bcard-pkg-top b s { font-weight: 400; opacity: 0.6; font-size: 0.85em; margin-left: 0.2rem; }
 .bcard-deal { margin: -0.2rem 0 0.8rem; padding: 0.55rem 0.8rem; border-radius: 10px; background: rgba(205, 144, 117, 0.16); color: #cd9075; font-weight: 700; font-size: 0.88rem; }
+
+/* ── Partner signup (/partner/<slug>) ── */
+.pa-form { display: grid; gap: 1.8rem; margin-top: 1.5rem; }
+.pa-step { display: grid; gap: 0.8rem; }
+.pa-step h2 small { font-weight: 400; color: var(--ink-soft); font-size: 0.8em; }
+.pa-help { color: var(--ink-soft); font-size: 0.92rem; margin: 0; }
+.pa-opts { display: grid; gap: 0.6rem; }
+.pa-opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.8rem; align-items: start; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--paper); }
+.pa-opt.on { border-color: var(--clay); box-shadow: 0 0 0 1px var(--clay); }
+.pa-opt input { margin-top: 0.3rem; accent-color: var(--clay); }
+.pa-name { font-weight: 600; color: var(--ink); }
+.pa-name small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.45; margin-top: 0.2rem; }
+.pa-price { text-align: right; font-weight: 700; color: var(--clay); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pa-price s { display: block; font-weight: 400; font-size: 0.8rem; color: var(--ink-soft); }
+.pa-total { display: grid; gap: 0.4rem; padding: 1rem 1.2rem; border-radius: 12px; background: var(--ink); color: var(--bone); }
+.pa-total div { display: flex; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; }
+.pa-total .pa-today { border-top: 1px solid rgba(244, 239, 230, 0.25); padding-top: 0.4rem; font-size: 1.15rem; }
+.pa-total p { margin: 0.3rem 0 0; font-size: 0.82rem; opacity: 0.75; }
+.pa-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
+.pa-fields label, .pa-sign label { display: grid; gap: 0.3rem; font-size: 0.82rem; color: var(--ink-soft); }
+.pa-fields .wide { grid-column: 1 / -1; }
+.pa-fields input, .pa-sign input:not([type="checkbox"]) { font: inherit; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); }
+.pa-agreement { max-height: 420px; overflow-y: auto; padding: 1rem 1.2rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); font-size: 0.92rem; }
+.pa-text h4 { margin: 1rem 0 0.3rem; font-size: 0.95rem; }
+.pa-text ul { padding-left: 1.1rem; }
+.pa-sign { display: grid; gap: 0.8rem; }
+.pa-sigline { font-family: "Brush Script MT", "Segoe Script", cursive !important; font-size: 1.4rem !important; }
+.pa-sign .pa-check { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.92rem; color: var(--ink); }
+.pa-check input { margin-top: 0.25rem; accent-color: var(--clay); }
+.pa-go { justify-self: start; }
+.psection { margin: 0 0 1.6rem; display: grid; gap: 0.8rem; }
+.pcard { display: grid; gap: 0.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; }
+.pcard em { font-size: 0.82rem; color: var(--ink-soft); font-style: normal; }
+.pcharge { display: grid; gap: 0.6rem; }
+.pcharge-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
+.pcharge-row label { display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--ink-soft); min-width: 90px; }
+.pcharge-row label.grow { flex: 1 1 220px; }
+.pcharge-row input { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); }
+.pcharge-ok { color: var(--clay); font-weight: 600; margin: 0; }
+@media (max-width: 520px) { .pa-opt { grid-template-columns: auto minmax(0, 1fr); } .pa-price { grid-column: 2; text-align: left; } }

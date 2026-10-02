@@ -6,6 +6,8 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { OPEN_AMOUNT_LINK, RETAINER_RATE, payablePackages } from "../../../../lib/payments";
 import { money } from "../../../../lib/packages";
+import PartnerCharge from "../../../../components/PartnerCharge";
+import { supabaseAdmin } from "../../../../lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,8 @@ export default async function PayAdminPage() {
   const newCount = await newLeadCount();
   const pkgs = payablePackages();
   const live = pkgs.filter((p) => p.link).length + (OPEN_AMOUNT_LINK ? 1 : 0);
+  // Active partners (signed + paid at /partner/<slug>) — for closing fees and events.
+  const { data: partners } = await supabaseAdmin().from("submissions").select("id, name, phone, summary, fields, utm").eq("kind", "partner").eq("status", "booked").order("created_at", { ascending: false });
 
   return (
     <>
@@ -43,6 +47,20 @@ export default async function PayAdminPage() {
           {live} of {pkgs.length + 1} pay buttons are live. Retainer = {Math.round(RETAINER_RATE * 100)}% of the
           package. Text a client the link below, or send them to rothmediaco.com/pay.
         </p>
+
+        {(partners || []).filter((p) => p.utm?.stripe_customer).length > 0 && (
+          <section className="psection">
+            <h2>Partner charges</h2>
+            <p className="inbox-hint">Closing fees and events go on the partner’s saved card. Text them the amount first, then charge 3 or more days later (their agreement, §3).</p>
+            {(partners || []).filter((p) => p.utm?.stripe_customer).map((p) => (
+              <div key={p.id} className="pcard">
+                <strong>{p.summary}</strong>
+                {(p.fields || []).filter(([k]) => k === "charge").slice(-3).map(([, v]) => <em key={v}>{v}</em>)}
+                <PartnerCharge id={p.id} name={p.name} phone={p.phone} />
+              </div>
+            ))}
+          </section>
+        )}
 
         <ul className="paylist">
           {pkgs.map((p) => (
