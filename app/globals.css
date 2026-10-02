@@ -5697,3 +5697,10 @@ select.achip { appearance: auto; }
 .pa-codebox label { font-size: 0.82rem; color: var(--ink-soft); }
 .pa-codebox input { font: inherit; font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); max-width: 320px; }
 .pa-codebox small { color: var(--ink-soft); }
+.golead-prices { display: grid; gap: 0.5rem; }
+.golead-prices div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.8rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.golead-prices span { font-weight: 600; }
+.golead-prices small { display: block; font-weight: 400; font-size: 0.78rem; color: var(--ink-soft); }
+.golead-prices strong { color: var(--clay); font-size: 1.15rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.golead-prices s { color: var(--ink-soft); font-weight: 400; font-size: 0.8em; margin-left: 0.25rem; }
+.golead-proof { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
