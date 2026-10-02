@@ -25,7 +25,7 @@ export async function generateMetadata({ params }) {
   if (!c) return {};
   return {
     title: `Wedding Videographer & Brand Video in ${c.name}, ${c.state}`,
-    description: `Cinematic wedding films and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding films from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
+    description: `Cinematic wedding films and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding photo from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
     alternates: { canonical: `/${c.slug}` },
   };
 }
