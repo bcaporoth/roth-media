@@ -44,10 +44,21 @@ export async function GET(request) {
       if (days <= 14 && days >= -30) reviews.push(`${a.business || p.first}: ${p.months || 3}-month partner review ${days >= 0 ? `due in ${days} day${days === 1 ? "" : "s"}` : `${-days} days overdue`} (by ${d.reviewBy.toLocaleDateString("en-US", { month: "short", day: "numeric" })}). Go over the report together and agree the rate after ${d.lockedUntil.toLocaleDateString("en-US", { month: "short", day: "numeric" })}. A new rate needs 30 days' written notice.\nReport + numbers: https://rothmediaco.com/portal/admin/partners`);
     } catch {}
   }
-  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
+  // Mondays: the weekly Google Business Profile post (town names help the map ranking).
+  const POST_IDEAS = [
+    "A reel from your latest shoot + \"Filmed in [town]. Booking [month] dates now.\"",
+    "A behind-the-scenes photo + one line on what the client wanted and how it turned out",
+    "A wedding sneak-peek still + \"Sneak peeks in 48 hours, full film in 6 weeks. Waverly, Sayre, Athens, Elmira, Corning.\"",
+    "A local business you filmed + \"Content Day at [business], [town]: one shoot, a month of posts.\"",
+  ];
+  const etDay = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long" });
+  const weekNo = Math.floor(Date.now() / (7 * 86400000));
+  const gbpNudge = etDay === "Monday" ? [`GOOGLE POST THIS WEEK (2 min, helps you rank in the map results):\n${POST_IDEAS[weekNo % POST_IDEAS.length]}\nPost it: search "my business" on Google → Posts → Add post. Add a Book button to rothmediaco.com/quote.`] : [];
+  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
   const body = [
+    ...gbpNudge,
     ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),
     ...(bal.unclear.length ? [`Balances with a date I can't read (${bal.unclear.length}). Check the date and send when it's 14 days out:`, ...bal.unclear.map((r) => `${r.name} — $${r.owed.toLocaleString("en-US")} · date on file: "${r.event || "none"}"\nLink: ${r.link}`)] : []),
@@ -55,7 +66,7 @@ export async function GET(request) {
   ].join("\n\n");
   const subject = bal.due.length
     ? `${bal.due.length} wedding balance${bal.due.length > 1 ? "s" : ""} to send${open.length ? ` · ${open.length} open lead${open.length > 1 ? "s" : ""}` : ""}`
-    : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : reviews.length ? "Partner review coming up" : "A wedding balance needs a date check";
+    : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : reviews.length ? "Partner review coming up" : gbpNudge.length ? "This week's Google post" : "A wedding balance needs a date check";
 
   let sent = false;
   if (!dry && resendConfigured) {
