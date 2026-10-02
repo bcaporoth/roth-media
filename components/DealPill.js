@@ -13,7 +13,7 @@ export default function DealPill({ href = "/quote" }) {
   return (
     <Link href={href} className="promo-pill">
       <span className="promo-pill-dot" aria-hidden="true" />
-      {deal.label}: {deal.pct}% off everything <em>· through {deal.endsLabel}</em>
+      {deal.label}: {deal.pct}% off every shoot <em>· through {deal.endsLabel}</em>
     </Link>
   );
 }

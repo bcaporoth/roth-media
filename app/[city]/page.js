@@ -58,7 +58,7 @@ export default async function CityPage({ params }) {
   const FAQS = [
     { q: `Do you travel to ${c.name}?`, a: `Yes — ${c.name} is ${c.drive} from Waverly and travel's included anywhere within an hour of Corning, Waverly, Sayre, or Athens. I also film in ${c.nearby.slice(0, 3).join(", ")}.` },
     { q: `How much does a wedding videographer cost in ${c.name}?`, a: `My prices are public. ${PACKAGES.wedding[0].name} starts at ${money(PACKAGES.wedding[0].price)}; ${film.name} — the full day — starts at ${money(film.price)}. You can build your exact quote online in two minutes.` },
-    { q: `What does a Content Day cost for a ${c.name} business?`, a: `The ${day.name} is ${money(day.price)} — a 45–90 second promo, 5 vertical reels, and 15–30 edited photos, delivered within two weeks and cleared for ads. Reels-first? The Mini Content Day is ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}.` },
+    { q: `What does a Content Day cost for a ${c.name} business?`, a: `The ${day.name} is ${money(day.price)} — a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, delivered within two weeks and cleared for ads. Skip the promo? The Mini Content Day is ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}.` },
     { q: "When do we get everything?", a: "Wedding films are delivered online within six weeks, with a sneak peek within 48 hours. Business content lands within two weeks, edited and sized to post." },
   ];
   const FAQ_LD = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };

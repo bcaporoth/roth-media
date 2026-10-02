@@ -5,7 +5,7 @@ import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
 import { useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, TRAVEL, money } from "../lib/packages";
-import { bestDeal, applyDeal, codeDeal } from "../lib/deals";
+import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal } from "../lib/deals";
 
 // ── Three screens. One way in, one way out. ─────────────────────────
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
@@ -26,8 +26,7 @@ function fullGet(category, pkg) {
 const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
 
 // "Wedding Videography" with a deal: the new price, the old one struck through.
-function Price({ list, deal }) {
-  const now = applyDeal(list, deal);
+function Price({ list, deal, now = applyDeal(list, deal) }) {
   return <>{money(now)}{now !== list && <> <s>{money(list)}</s></>}</>;
 }
 
@@ -47,14 +46,15 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
 
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
-  const addonList = pkg ? ADDONS[category].filter((a) => !pkg.includes.includes(a.id)) : [];
+  const addonList = pkg ? ADDONS[category].filter((a) => !pkg.includes.includes(a.id) && !a.hidden) : [];
   const chosen = addonList.filter((a) => addons[a.id]);
   const list = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
   // Biggest live deal wins (lib/deals.js); checkout re-checks it on the server.
   const deal = pkg ? bestDeal({ category, packageId: pkg.id, code }) : null;
-  const estimate = applyDeal(list, deal);
+  const estimate = pkg ? dealTotal([pkg, ...chosen], deal) : 0;
+  const dealBase = pkg ? [pkg, ...chosen].filter((i) => !i.noDeal).reduce((s, i) => s + i.price, 0) : 0;
   const typed = code.trim().toUpperCase();
-  const codeNote = !typed ? "" : deal?.code === typed ? `${deal.pct}% off applied.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
+  const codeNote = !typed ? "" : deal?.code === typed ? `${deal.pct}% off applied.` : upcomingCode(typed) ? `${typed} opens ${upcomingCode(typed).startsLabel} — right now you're getting ${deal ? `the ${deal.pct}% ${deal.label.toLowerCase()}` : "today's price"}.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
   const monthly = chosen.filter((a) => a.monthly);
   const catTitle = CATEGORIES.find((c) => c.id === category)?.title || "";
   // Book-it-now: what they'd pay today. "from" add-ons (scoped on a call) can't be bought.
@@ -219,7 +219,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 <div className="qnav-row">
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
-                    <span className="qflow-total">Starting at <strong><Price list={list} deal={deal} />{pkg.per || ""}</strong>{deal && <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small>}</span>
+                    <span className="qflow-total">Starting at <strong><Price list={list} now={estimate} />{pkg.per || ""}</strong>{deal && <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small>}</span>
                     <button type="button" className="qprimary" onClick={() => { markStarted(category); jump(2); }}>Continue</button>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
           {pkg && (
             <div className="qmatch qflow-summary">
               <div className="qmatch-kick">Your quote</div>
-              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at <Price list={list} deal={deal} />{pkg.per || ""}</span></div>
+              <div className="qmatch-name"><span>{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</span><span className="qmatch-price">starting at <Price list={list} now={estimate} />{pkg.per || ""}</span></div>
               <ul className="qflow-get">
                 {fullGet(category, pkg).map((g) => <li key={g}>{g}</li>)}
                 {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
@@ -250,7 +250,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
               ) : (
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
               )}
-              {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(list)} — ends {deal.endsLabel}.</p>}
+              {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""} — ends {deal.endsLabel}.</p>}
               {monthly.map((a) => <p key={a.id} className="qmatch-fineprint">{a.name}: then {money(a.monthly)}/month after launch, billed separately — cancel anytime.</p>)}
               {category !== "business" || pkg.id === "event" ? <p className="qmatch-fineprint">{TRAVEL.line}</p> : null}
               <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>

@@ -3,7 +3,7 @@ import CartPay from "../../../components/CartPay";
 import { priceQuote, bookingLabel, openRetainer } from "../../../lib/booking";
 import { money } from "../../../lib/packages";
 import { stripeConfigured } from "../../../lib/stripe";
-import { codeDeal } from "../../../lib/deals";
+import { codeDeal, upcomingCode } from "../../../lib/deals";
 
 export const metadata = { title: "Your quote — review and pay", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -60,7 +60,7 @@ export default async function CartPage({ searchParams }) {
           {Object.entries(keep).filter(([, v]) => v).map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
           <label><span>Promo code</span><input name="code" defaultValue={code} autoCapitalize="characters" /></label>
           <button type="submit" className="qsecondary">Apply</button>
-          {codeTried && <small>{!codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
+          {codeTried && <small>{upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
         </form>
       )}
       {stripeConfigured ? (

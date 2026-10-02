@@ -122,7 +122,7 @@ export default function WeddingsPage() {
             ))}
           </div>
           <p className="qhelp svc-note">
-            Add what fits: {ADDONS.wedding.map((a) => `${a.name.replace(/^Add /, "").toLowerCase()} (+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder — no phone call required.
+            Add what fits: {ADDONS.wedding.filter((a) => !a.hidden).map((a) => `${a.name.replace(/^Add /, "").toLowerCase()} (+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder — no phone call required.
           </p>
           <p className="qhelp svc-note">{TRAVEL.line}</p>
         </section>

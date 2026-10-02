@@ -6,6 +6,7 @@ import { EMAIL } from "../../../lib/site";
 import { videoUrl } from "../../../lib/media";
 import { PACKAGES, money } from "../../../lib/packages";
 import { CAMPAIGN } from "../../../lib/campaign";
+import { autoDeal, applyDeal } from "../../../lib/deals";
 
 export const metadata = {
   title: "Still need a wedding videographer this year? Open dates + 2027 early pricing",
@@ -14,14 +15,24 @@ export const metadata = {
   alternates: { canonical: "/weddings/open-dates" },
 };
 
+// The launch special (lib/deals.js) can beat these codes — refresh hourly.
+export const revalidate = 3600;
+
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
 
 export default function OpenDatesPage() {
   const film = PACKAGES.wedding.find((p) => p.id === "film");
   const c = CAMPAIGN;
-  const priceAfter = (pct) => money(Math.round(film.price * (1 - pct / 100)));
-  const todayAfter = (pct) => money(Math.round(film.price * 0.3 * (1 - pct / 100)));
+  const priceAfter = (pct) => money(applyDeal(film.price, { pct }));
+  const todayAfter = (pct) => money(Math.round(applyDeal(film.price, { pct }) * 0.3));
+  // While a bigger site-wide deal runs, show that instead of the code.
+  const launch = autoDeal();
+  const offer = (o) => (launch && launch.pct > o.percent
+    ? { pct: launch.pct, note: `Through ${launch.endsLabel} it's ${launch.pct}% off, no code needed. After that, ${o.percent}% with code ${o.code}.`, cta: `${launch.pct}% off through ${launch.endsLabel}`, href: "/quote?for=wedding" }
+    : { pct: o.percent, note: "", cta: `code ${o.code}`, href: `/quote?for=wedding&code=${o.code}` });
+  const now = offer(c.thisYear);
+  const next = offer(c.nextYear);
 
   return (
     <>
@@ -57,23 +68,25 @@ export default function OpenDatesPage() {
 
         <div className="camp-offers">
           <section className="promo-box camp-offer">
-            <div className="qmatch-kick">This year · {c.thisYear.percent}% off</div>
+            <div className="qmatch-kick">This year · {now.pct}% off</div>
             <h2>Open {new Date().getFullYear()} dates</h2>
             <ul className="camp-dates">
               {c.openDates2026.map((d) => <li key={d}>{d}</li>)}
             </ul>
             <p>{c.thisYear.blurb}</p>
-            <p className="camp-price"><strong>{priceAfter(c.thisYear.percent)}</strong> <s>{money(film.price)}</s> · {todayAfter(c.thisYear.percent)} holds it today</p>
-            <Link className="qprimary camp-cta" href={`/quote?for=wedding&code=${c.thisYear.code}`}>Grab a date — code {c.thisYear.code}</Link>
+            {now.note && <p className="gcard-meta">{now.note}</p>}
+            <p className="camp-price"><strong>{priceAfter(now.pct)}</strong> <s>{money(film.price)}</s> · {todayAfter(now.pct)} holds it today</p>
+            <Link className="qprimary camp-cta" href={now.href}>Grab a date — {now.cta}</Link>
           </section>
 
           <section className="promo-box camp-offer">
-            <div className="qmatch-kick">Next year · {c.nextYear.percent}% off</div>
+            <div className="qmatch-kick">Next year · {next.pct}% off</div>
             <h2>Reserve 2027 now</h2>
             <p>{c.nextYear.blurb}</p>
-            <p className="camp-price"><strong>{priceAfter(c.nextYear.percent)}</strong> <s>{money(film.price)}</s> · {todayAfter(c.nextYear.percent)} holds it today</p>
+            {next.note && <p className="gcard-meta">{next.note}</p>}
+            <p className="camp-price"><strong>{priceAfter(next.pct)}</strong> <s>{money(film.price)}</s> · {todayAfter(next.pct)} holds it today</p>
             <p className="gcard-meta">Ends {c.endsLabel}. Prices go up in January.</p>
-            <Link className="qprimary camp-cta" href={`/quote?for=wedding&code=${c.nextYear.code}`}>Lock my 2027 date — code {c.nextYear.code}</Link>
+            <Link className="qprimary camp-cta" href={next.href}>Lock my 2027 date — {next.cta}</Link>
           </section>
         </div>
 
@@ -89,7 +102,7 @@ export default function OpenDatesPage() {
           <h2>How it works</h2>
           <ol>
             <li><strong>Pick a date above</strong> and build your package — two minutes, real prices.</li>
-            <li><strong>Book it online.</strong> The 30% retainer holds the date; enter the code on the payment screen. Balance is due two weeks before, not today.</li>
+            <li><strong>Book it online.</strong> The 30% retainer holds the date; the code fills in from the button above. Balance is due two weeks before, not today.</li>
             <li><strong>I call you within 24 hours</strong> to plan the day. Sneak peek video lands within 48 hours of the wedding.</li>
           </ol>
         </section>

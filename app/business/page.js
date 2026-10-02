@@ -26,7 +26,7 @@ const PHONE_HREF = "tel:+18455494425";
 const FAQS = [
   {
     q: "What does a Content Day cost, and what do I get?",
-    a: `A Full Content Day is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 5 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
+    a: `A Full Content Day is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
   },
   {
     q: "How fast do I get my content?",
@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     q: "Do you cover events?",
-    a: `Yes — Event Coverage is ${money(pkg("event").price)}: a 45–90 second highlight short and a gallery of 50+ edited photos.`,
+    a: `Yes — Event Coverage is ${money(pkg("event").price)}: up to 3 hours of coverage, a 45–90 second highlight short, and a gallery of 50+ edited photos.`,
   },
   {
     q: "Can you run ads with the videos?",

@@ -32,7 +32,7 @@ export async function POST(request) {
   // Balance = what's left on their retainer booking (keeps the deal they booked with).
   const owed = balance ? await openRetainer(email) : null;
   const balanceCents = owed ? owed.total_cents - owed.paid_cents : cents(q.total - q.dueToday);
-  const dealNote = q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.list)}.` : "";
+  const dealNote = q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "";
   const line_items = balance
     ? [{
         quantity: 1,

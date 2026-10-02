@@ -85,7 +85,7 @@ export default function CardPage() {
 
         <section className="bcard-sec">
           <h2>The menu</h2>
-          {deal && <p className="bcard-deal">{deal.label}: {deal.pct}% off everything through {deal.endsLabel}.</p>}
+          {deal && <p className="bcard-deal">{deal.label}: {deal.pct}% off every shoot through {deal.endsLabel}.</p>}
           {CATEGORIES.map((c) => (
             <div key={c.id} className="bcard-menu">
               <h3>{MENU_LABEL[c.id] || c.title}</h3>
