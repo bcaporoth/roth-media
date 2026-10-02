@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function PartnerLeadForm({ slug, brand, utm }) {
+export default function PartnerLeadForm({ slug, brand, utm, cta = "Send", bookingUrl = "" }) {
   const [status, setStatus] = useState("idle");
   const [err, setErr] = useState("");
   async function onSubmit(e) {
@@ -17,16 +17,23 @@ export default function PartnerLeadForm({ slug, brand, utm }) {
       setStatus("sent");
     } catch (e2) { setErr(e2.message); setStatus("error"); }
   }
-  if (status === "sent") return <p className="golead-done" role="status">Got it! Watch for a text from us shortly.</p>;
+  if (status === "sent") {
+    return (
+      <div className="golead-done" role="status">
+        <p>You’re on the list! {brand}’s team will reach out to set up your orientation.</p>
+        {bookingUrl && <a className="qprimary golead-book" href={bookingUrl} target="_blank" rel="noopener noreferrer">Book your orientation now</a>}
+      </div>
+    );
+  }
   return (
     <form className="golead-form" onSubmit={onSubmit}>
       <input type="text" name="website" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
       <label><span>First name</span><input id="gl-name" name="name" required autoComplete="given-name" /></label>
       <label><span>Mobile number</span><input id="gl-phone" name="phone" type="tel" required autoComplete="tel" /></label>
       <label><span>Email (optional)</span><input id="gl-email" name="email" type="email" autoComplete="email" /></label>
-      <button type="submit" className="qprimary" disabled={status === "going"}>{status === "going" ? "Sending…" : "Text me the class times"}</button>
+      <button type="submit" className="qprimary" disabled={status === "going"}>{status === "going" ? "Sending…" : cta}</button>
       {status === "error" && <p className="cform-error">{err}</p>}
-      <p className="golead-consent">By sending this, you agree {brand} and the people helping run it may call or text you about classes. Msg &amp; data rates may apply. Reply STOP anytime.</p>
+      <p className="golead-consent">By sending this, you agree {brand} and the people helping run it may call, text, or email you about your orientation. Msg &amp; data rates may apply. Reply STOP anytime.</p>
     </form>
   );
 }

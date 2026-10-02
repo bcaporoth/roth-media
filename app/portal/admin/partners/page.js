@@ -15,7 +15,7 @@ import { money } from "../../../../lib/packages";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Partners — Studio", robots: { index: false } };
 
-const STATUS = { new: "New", contacted: "Contacted", booked: "Closed", lost: "Lost" };
+const STATUS = { new: "New", contacted: "Contacted", booked: "Joined", lost: "Lost" };
 const nextMonth = (m) => { const [y, mo] = m.split("-").map(Number); return mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, "0")}`; };
 
 // Each partner's month: leads to work, the numbers for their report, and
@@ -47,7 +47,7 @@ export default async function PartnersAdmin({ searchParams }) {
               {a?.active && rateDates(a, p.months) && (
                 <p className="inbox-hint"><strong>Partner rate ({p.pct}% off) locked through {rateDates(a, p.months).lockedUntil.toLocaleDateString("en-US", { month: "long", day: "numeric" })}.</strong> Review results and agree the next rate with {p.first} by {rateDates(a, p.months).reviewBy.toLocaleDateString("en-US", { month: "long", day: "numeric" })}; a new rate needs 30 days’ written notice.</p>
               )}
-              <p className="inbox-hint">Leads come from <a href={`/go/${slug}`} target="_blank" rel="noreferrer">rothmediaco.com/go/{slug}</a> (put that link in every ad, with utm_content = the ad’s name). Enter the ad spend from Meta Ads Manager once a month; everything else fills in by itself.</p>
+              <p className="inbox-hint">Leads come from <a href={`/go/${slug}`} target="_blank" rel="noreferrer">rothmediaco.com/go/{slug}</a> (put that link in every ad, with utm_content = the ad’s name) and go straight to {p.first}’s team{p.lead?.leadsTo?.length ? "" : " (once their email is in lib/partners.js; until then they come to you to forward)"}. Her team taps “Joined” on their report. You enter the ad spend from Meta Ads Manager once a month; everything else fills in by itself.</p>
               <PartnerMonthForm slug={slug} month={month} spend={s.spend} hours={s.hours} hourly={a?.closing === "hourly"} />
               <PartnerReportView s={s} closing={a?.closing} />
               <div className="pcharge-row">
@@ -65,7 +65,7 @@ export default async function PartnersAdmin({ searchParams }) {
                 <ul className="pl-list">
                   {s.leads.map((l) => (
                     <li key={l.id}>
-                      <div><strong>{l.name}</strong> <span className={`itag itag-${l.status}`}>{STATUS[l.status] || l.status}</span>{l.utm?.close_value ? <em> · {l.utm.close_what} {money(l.utm.close_value)}</em> : null}<br /><small>{new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <a href={`tel:${l.phone}`}>{l.phone}</a>{l.utm?.utm_content ? ` · ad: ${l.utm.utm_content}` : ""}</small></div>
+                      <div><strong>{l.name}</strong> <span className={`itag itag-${l.status}`}>{STATUS[l.status] || l.status}</span>{l.status === "booked" && (l.utm?.close_what || l.utm?.close_value) ? <em> · {l.utm.close_what} {l.utm.close_value ? money(l.utm.close_value) : ""}</em> : null}<br /><small>{new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · <a href={`tel:${l.phone}`}>{l.phone}</a>{l.utm?.utm_content ? ` · ad: ${l.utm.utm_content}` : ""}</small></div>
                       <PartnerLeadActions id={l.id} status={l.status} />
                     </li>
                   ))}

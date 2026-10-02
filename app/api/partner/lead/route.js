@@ -3,12 +3,15 @@ import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail } from "../../../../lib/studio-emails";
 import { PARTNERS } from "../../../../lib/partners";
+import { reportUrl } from "../../../../lib/partner-stats";
 import { clip, visitorId } from "../../../../lib/visitor";
 
 export const dynamic = "force-dynamic";
 
-// A lead for a partner (from /go/<slug>): counted for their report, and
-// Brandon gets the alert with a ready-to-send text. Nothing goes to the lead.
+// A lead for a partner (from /go/<slug>): counted for their report and sent
+// to the partner's management (lead.leadsTo), who follow up and book the
+// orientation. No leadsTo yet → it comes to Brandon with a one-tap forward.
+// Nothing goes to the lead.
 export async function POST(request) {
   const b = await request.json().catch(() => ({}));
   if (b.website) return NextResponse.json({ ok: true });
@@ -29,9 +32,15 @@ export async function POST(request) {
   const { error } = await supabaseAdmin().from("submissions").insert(row);
   if (error) return NextResponse.json({ error: "That didn't save — try again." }, { status: 500 });
   if (resendConfigured) {
-    const fn = name.split(/\s+/)[0];
-    try { await sendEmail({ to: LEAD_ALERT_TO, ...leadAlertEmail({ ...row, kind: "partner_lead", partnerText: p.lead.textScript(fn), subject: `🔥 ${p.first}'s lead — ${name} (text within 5 min)` }) }); } catch {}
-    if (LEAD_SMS_TO) { try { await sendEmail({ to: LEAD_SMS_TO, subject: `${p.first} lead`, text: `${name} ${phone} wants ${p.lead.brand} info` }); } catch {} }
+    const team = (p.lead.leadsTo || []).filter(Boolean);
+    const lines = [`Name: ${name}`, `Phone: ${phone}`, email ? `Email: ${email}` : "", `From ad: ${utm.utm_content || utm.utm_campaign || "direct"}`, `When: ${new Date().toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })}`].filter(Boolean);
+    const report = reportUrl(b.slug);
+    if (team.length) {
+      const text = `New lead from your ads — they'd like an orientation:\n\n${lines.join("\n")}\n\nReach out soon (within the hour books the most). When they join, tap "Joined" next to their name on your report so it counts:\n${report}\n\n— sent by your Roth Ventures ads`;
+      for (const to of team) { try { await sendEmail({ to, subject: `New orientation lead — ${name}`, text }); } catch {} }
+    } else {
+      try { await sendEmail({ to: LEAD_ALERT_TO, ...leadAlertEmail({ ...row, kind: "partner_lead", partnerFirst: p.first, forwardBody: `New lead from your ads — they'd like an orientation:\n\n${lines.join("\n")}\n\nWhen they join, tap "Joined" next to their name on your report:\n${report}`, subject: `${p.first}'s lead — ${name} (forward to her team)` }) }); } catch {}
+    }
   }
   return NextResponse.json({ ok: true });
 }

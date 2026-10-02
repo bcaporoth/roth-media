@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CONTENT_PLANS, PARTNER_ADDONS, CLOSING, partnerQuote, partnerPrice } from "../lib/partners";
+import { CONTENT_PLANS, PARTNER_ADDONS, partnerQuote, partnerPrice } from "../lib/partners";
 import { money } from "../lib/packages";
 
 // Pick → read → sign → pay, on one page. The server re-prices everything.
 export default function PartnerSignup({ slug, pct, months = 3, checkout, children }) {
   const [content, setContent] = useState("full");
   const [addons, setAddons] = useState(["ads"]);
-  const [closing, setClosing] = useState("percent");
   const [status, setStatus] = useState("idle");
   const [err, setErr] = useState("");
-  const q = partnerQuote(slug, { content, addons, closing });
+  const q = partnerQuote(slug, { content, addons });
   const toggle = (id) => setAddons((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
   const price = (i) => [
     i.monthly ? `${money(partnerPrice(i.monthly, pct))}/mo` : "",
@@ -32,7 +31,7 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
       const res = await fetch("/api/partner/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, content, addons, closing, ...f, agree: f.agree === "on" }),
+        body: JSON.stringify({ slug, content, addons, ...f, agree: f.agree === "on" }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.url) throw new Error(json.error || "Checkout didn't open");
@@ -71,30 +70,18 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
         </div>
       </section>
 
-      <section className="pa-step">
-        <h2>3. Lead follow-up</h2>
-        <p className="pa-help">Want Brandon to call or text the people your ads bring in and sign them up?</p>
-        <div className="pa-opts" role="radiogroup" aria-label="Lead follow-up">
-          {CLOSING.map((c) => (
-            <label key={c.id} className={`pa-opt ${closing === c.id ? "on" : ""}`}>
-              <input type="radio" name="closing-plan" checked={closing === c.id} onChange={() => setClosing(c.id)} />
-              <span className="pa-name">{c.name}<small>{c.get}</small></span>
-            </label>
-          ))}
-        </div>
-      </section>
 
       {q && (
         <section className="pa-total" aria-live="polite">
           <div><span>Each month</span><strong>{money(q.monthly)}</strong></div>
           {q.once > 0 && <div><span>Once, today</span><strong>{money(q.once)}</strong></div>}
           <div className="pa-today"><span>Due today</span><strong>{money(q.today)}</strong></div>
-          <p>Partner prices are locked for your first {months} months; then we review the results together. Your ad budget (if you picked ads) is paid to Meta directly. Closing fees and events are charged only when they happen, after Brandon sends you the amount.</p>
+          <p>Partner prices are locked for your first {months} months; then we review the results together. Your ad budget (if you picked ads) is paid to Meta directly. Events are charged only when you book one, after Brandon sends you the amount.</p>
         </section>
       )}
 
       <section className="pa-step">
-        <h2>4. Your details</h2>
+        <h2>3. Your details</h2>
         <div className="pa-fields">
           <label className="wide"><span>Business legal name *</span><input id="pa-business" name="business" required autoComplete="organization" /></label>
           <label className="wide"><span>Business address *</span><input id="pa-address" name="address" required autoComplete="street-address" /></label>
@@ -105,11 +92,11 @@ export default function PartnerSignup({ slug, pct, months = 3, checkout, childre
       </section>
 
       <section className="pa-step">
-        <h2>5. The agreement</h2>
+        <h2>4. The agreement</h2>
         <div className="pa-agreement">{children}</div>
         <div className="pa-sign">
           <label><span>Type your full name to sign *</span><input id="pa-signature" name="signature" required className="pa-sigline" /></label>
-          <label className="pa-check"><input type="checkbox" name="agree" required /> <span>I’ve read this agreement and agree to it for the business above, including the card charges in §3.</span></label>
+          <label className="pa-check"><input type="checkbox" name="agree" required /> <span>I’ve read this agreement and agree to it for the business above, including the event charges in §3.</span></label>
         </div>
       </section>
 

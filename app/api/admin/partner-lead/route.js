@@ -17,8 +17,7 @@ export async function POST(request) {
   if (!row) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   const utm = { ...(row.utm || {}) };
   if (status === "booked") {
-    const value = Math.round(Number(b.value));
-    if (!(value > 0)) return NextResponse.json({ error: "Enter what they signed up for, in dollars" }, { status: 422 });
+    const value = Math.max(0, Math.round(Number(b.value) || 0));
     Object.assign(utm, { close_value: value, close_what: clip(b.what, 120), closed_at: new Date().toISOString() });
   } else {
     delete utm.close_value; delete utm.close_what; delete utm.closed_at;

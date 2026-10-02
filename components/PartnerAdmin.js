@@ -25,7 +25,7 @@ export function PartnerMonthForm({ slug, month, spend, hours, hourly }) {
   );
 }
 
-// One lead's buttons: Contacted / Closed (what + $) / Lost.
+// One lead's buttons: Contacted / Joined (what, optional $) / Lost.
 export function PartnerLeadActions({ id, status }) {
   const router = useRouter();
   const [closing, setClosing] = useState(false);
@@ -41,10 +41,10 @@ export function PartnerLeadActions({ id, status }) {
     return (
       <div className="pcharge-row">
         <label className="grow"><span>What they signed up for</span><input id={`pl-what-${id}`} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Monthly unlimited" /></label>
-        <label><span>Value ($)</span><input id={`pl-val-${id}`} inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="180" /></label>
+        <label><span>Value ($, optional)</span><input id={`pl-val-${id}`} inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="180" /></label>
         <button type="button" className="abtn" onClick={() => set("closed", { value, what })}>Save</button>
         <button type="button" className="abtn abtn-ghost" onClick={() => setClosing(false)}>Cancel</button>
-        <small className="pl-hint">Membership? Enter 3 months’ worth.</small>
+        <small className="pl-hint">Usually her team marks this from their report.</small>
         {err && <span className="cform-error">{err}</span>}
       </div>
     );
@@ -52,7 +52,7 @@ export function PartnerLeadActions({ id, status }) {
   return (
     <div className="pl-actions">
       {status !== "contacted" && status !== "booked" && <button type="button" className="abtn abtn-ghost" onClick={() => set("contacted")}>Contacted</button>}
-      {status !== "booked" && <button type="button" className="abtn" onClick={() => setClosing(true)}>Closed</button>}
+      {status !== "booked" && <button type="button" className="abtn" onClick={() => setClosing(true)}>Joined</button>}
       {status !== "lost" && status !== "booked" && <button type="button" className="abtn abtn-ghost" onClick={() => set("lost")}>Lost</button>}
       {(status === "booked" || status === "lost") && <button type="button" className="abtn abtn-ghost" onClick={() => set("new")}>Undo</button>}
       {err && <span className="cform-error">{err}</span>}

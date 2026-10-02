@@ -5687,3 +5687,9 @@ select.achip { appearance: auto; }
 .pl-list li > div:first-child { min-width: 0; }
 .pl-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .pl-hint { flex-basis: 100%; color: var(--ink-soft); font-size: 0.78rem; }
+.golead-done p { margin: 0 0 0.8rem; }
+.golead-book { display: block; text-align: center; padding: 0.9rem; border-radius: 999px; background: var(--ink); color: var(--bone); font-weight: 700; text-decoration: none; letter-spacing: 0.04em; }
+.pj { display: inline-flex; gap: 0.5rem; align-items: center; }
+.pj-btn { font: inherit; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 0.9rem; border-radius: 999px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+.pj-undo { font: inherit; font-size: 0.8rem; background: none; border: 0; color: var(--ink-soft); text-decoration: underline; cursor: pointer; }
+.small-note { font-size: 0.9rem; color: var(--ink-soft); }

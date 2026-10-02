@@ -28,7 +28,7 @@ export default async function PartnerLeadPage({ params, searchParams }) {
         {lead.video && (
           <video className="golead-video" src={videoUrl(lead.video)} poster={lead.poster} autoPlay muted loop playsInline />
         )}
-        <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} />
+        <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} cta={lead.cta} bookingUrl={lead.bookingUrl} />
       </div>
     </main>
   );
