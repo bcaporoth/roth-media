@@ -3,14 +3,15 @@ import { money } from "../lib/packages";
 
 // The partner agreement as it's signed on /partner/<slug>. Changing the
 // wording? Bump AGREEMENT_VERSION in lib/partners.js.
-export default function PartnerAgreement({ pct }) {
+export default function PartnerAgreement({ pct, months = 3 }) {
   const event = PARTNER_EXTRAS.find((e) => e.id === "event");
   return (
     <div className="pa-text">
       <p>This agreement is between <strong>Roth Ventures NY LLC</strong> (“Roth Ventures”), and the business named in the form above (“Client”). It starts the day Client signs.</p>
 
       <h4>1. Partner rate</h4>
-      <p>Client pays {pct}% less than Roth Ventures’ list prices on everything in the plan Client picks, and on Event Coverage ({money(partnerPrice(event.once, pct))} per event, booked when Client needs it), for as long as this agreement runs. The partner rate replaces any other discount; discounts don’t stack.</p>
+      <p>For Client’s first {months} months ({months} monthly payments), Client pays {pct}% less than Roth Ventures’ list prices on everything in the plan Client picks, and on Event Coverage ({money(partnerPrice(event.once, pct))} per event, booked when Client needs it). The partner rate replaces any other discount; discounts don’t stack.</p>
+      <p>Before the {months === 3 ? "third" : `${months}th`} monthly payment, Roth Ventures and Client review together how it’s going and agree on the rate from then on. Until a new rate is agreed in writing, the partner rate continues. Roth Ventures may change it with 30 days’ written notice, and Client may cancel within that notice period.</p>
 
       <h4>2. Content Days</h4>
       <ul>

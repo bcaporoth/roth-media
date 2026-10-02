@@ -5,6 +5,8 @@ import { LEAD_ALERT_TO } from "../../../../lib/studio-emails";
 import { wrapHtml } from "../../../../lib/client-email";
 import { buildLeadBoard } from "../../../../lib/lead-intel";
 import { balancesToSend, balanceLine } from "../../../../lib/balances";
+import { PARTNERS } from "../../../../lib/partners";
+import { partnerAgreement, rateDates } from "../../../../lib/partner-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -31,17 +33,29 @@ export async function GET(request) {
   const overdue = open.filter((l) => l.overdue);
   let bal = { due: [], unclear: [] };
   try { bal = await balancesToSend(db); } catch {}
-  if (!open.length && !bal.due.length && !bal.unclear.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
+  // Partner-rate reviews coming up (or just missed) — from 14 days before to 30 after.
+  const reviews = [];
+  for (const [slug, p] of Object.entries(PARTNERS)) {
+    try {
+      const a = await partnerAgreement(slug);
+      const d = a?.active && rateDates(a, p.months || 3);
+      if (!d) continue;
+      const days = Math.round((d.reviewBy.getTime() - Date.now()) / 86400000);
+      if (days <= 14 && days >= -30) reviews.push(`${a.business || p.first}: ${p.months || 3}-month partner review ${days >= 0 ? `due in ${days} day${days === 1 ? "" : "s"}` : `${-days} days overdue`} (by ${d.reviewBy.toLocaleDateString("en-US", { month: "short", day: "numeric" })}). Go over the report together and agree the rate after ${d.lockedUntil.toLocaleDateString("en-US", { month: "short", day: "numeric" })}. A new rate needs 30 days' written notice.\nReport + numbers: https://rothmediaco.com/portal/admin/partners`);
+    } catch {}
+  }
+  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
   const body = [
+    ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),
     ...(bal.unclear.length ? [`Balances with a date I can't read (${bal.unclear.length}). Check the date and send when it's 14 days out:`, ...bal.unclear.map((r) => `${r.name} — $${r.owed.toLocaleString("en-US")} · date on file: "${r.event || "none"}"\nLink: ${r.link}`)] : []),
     ...(open.length ? [`${open.length} open lead${open.length > 1 ? "s" : ""}${overdue.length ? `, ${overdue.length} overdue` : ""}. Hottest first:`, ...[...overdue, ...open.filter((l) => !l.overdue)].slice(0, 15).map(line)] : []),
   ].join("\n\n");
   const subject = bal.due.length
     ? `${bal.due.length} wedding balance${bal.due.length > 1 ? "s" : ""} to send${open.length ? ` · ${open.length} open lead${open.length > 1 ? "s" : ""}` : ""}`
-    : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : "A wedding balance needs a date check";
+    : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : reviews.length ? "Partner review coming up" : "A wedding balance needs a date check";
 
   let sent = false;
   if (!dry && resendConfigured) {

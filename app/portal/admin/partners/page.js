@@ -9,7 +9,7 @@ import { PartnerMonthForm, PartnerLeadActions } from "../../../../components/Par
 import { requireAdminPage } from "../../../../lib/admin-guard";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { PARTNERS } from "../../../../lib/partners";
-import { monthStats, partnerAgreement, reportUrl, thisMonth, prevMonth, monthLabel } from "../../../../lib/partner-stats";
+import { monthStats, partnerAgreement, reportUrl, thisMonth, prevMonth, monthLabel, rateDates } from "../../../../lib/partner-stats";
 import { money } from "../../../../lib/packages";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +44,9 @@ export default async function PartnersAdmin({ searchParams }) {
           return (
             <section key={slug} className="psection">
               <h2>{a?.business || p.lead?.brand || p.first} <small className="itag">{a?.active ? `active · ${a.closing === "percent" ? "per-customer follow-up" : a.closing === "hourly" ? "hourly follow-up" : "no follow-up"}` : "not signed up yet"}</small></h2>
+              {a?.active && rateDates(a, p.months) && (
+                <p className="inbox-hint"><strong>Partner rate ({p.pct}% off) locked through {rateDates(a, p.months).lockedUntil.toLocaleDateString("en-US", { month: "long", day: "numeric" })}.</strong> Review results and agree the next rate with {p.first} by {rateDates(a, p.months).reviewBy.toLocaleDateString("en-US", { month: "long", day: "numeric" })}; a new rate needs 30 days’ written notice.</p>
+              )}
               <p className="inbox-hint">Leads come from <a href={`/go/${slug}`} target="_blank" rel="noreferrer">rothmediaco.com/go/{slug}</a> (put that link in every ad, with utm_content = the ad’s name). Enter the ad spend from Meta Ads Manager once a month; everything else fills in by itself.</p>
               <PartnerMonthForm slug={slug} month={month} spend={s.spend} hours={s.hours} hourly={a?.closing === "hourly"} />
               <PartnerReportView s={s} closing={a?.closing} />

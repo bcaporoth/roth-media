@@ -5,7 +5,7 @@ import { CONTENT_PLANS, PARTNER_ADDONS, CLOSING, partnerQuote, partnerPrice } fr
 import { money } from "../lib/packages";
 
 // Pick → read → sign → pay, on one page. The server re-prices everything.
-export default function PartnerSignup({ slug, pct, checkout, children }) {
+export default function PartnerSignup({ slug, pct, months = 3, checkout, children }) {
   const [content, setContent] = useState("full");
   const [addons, setAddons] = useState(["ads"]);
   const [closing, setClosing] = useState("percent");
@@ -89,7 +89,7 @@ export default function PartnerSignup({ slug, pct, checkout, children }) {
           <div><span>Each month</span><strong>{money(q.monthly)}</strong></div>
           {q.once > 0 && <div><span>Once, today</span><strong>{money(q.once)}</strong></div>}
           <div className="pa-today"><span>Due today</span><strong>{money(q.today)}</strong></div>
-          <p>Your ad budget (if you picked ads) is paid to Meta directly. Closing fees and events are charged only when they happen, after Brandon sends you the amount.</p>
+          <p>Partner prices are locked for your first {months} months; then we review the results together. Your ad budget (if you picked ads) is paid to Meta directly. Closing fees and events are charged only when they happen, after Brandon sends you the amount.</p>
         </section>
       )}
 
