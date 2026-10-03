@@ -41,7 +41,7 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     setBusy(true); setMsg("");
     try {
       const r = await api("/api/admin/gallery", { action: "update", galleryId, title: f.title, eventDate: f.eventDate, ownerEmail: f.ownerEmail, ownerName: f.ownerName });
-      setMsg(inviteMsg(r.invite, "Saved ✓")); await load(); onSaved?.();
+      await load(); setMsg(inviteMsg(r.invite, "Saved ✓")); onSaved?.();
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function addMember(e) {
@@ -50,7 +50,7 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     setBusy(true); setMsg("");
     try {
       const r = await api("/api/admin/clients", { action: "add-member", galleryId, email: memberEmail, name: memberName });
-      setMemberEmail(""); setMemberName(""); setMsg(r.isNew ? inviteMsg(r.invite, "Added ✓") : "Already on this album — nothing sent"); await load();
+      setMemberEmail(""); setMemberName(""); await load(); setMsg(r.isNew ? inviteMsg(r.invite, "Added ✓") : "Already on this album — nothing sent");
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function removeMember(m) {
