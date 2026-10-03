@@ -4,7 +4,7 @@ import IntakeForm from "../../components/IntakeForm";
 import { PHONE } from "../../lib/site";
 
 export const metadata = {
-  title: "Before we talk — Roth Media",
+  title: "Before we talk",
   description: "A short questionnaire so our first call is about you.",
   robots: { index: false },
 };
