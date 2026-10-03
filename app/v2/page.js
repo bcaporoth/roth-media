@@ -48,6 +48,7 @@ export default function HomeV2() {
           <Link href="/weddings">Weddings</Link>
           <Link href="/business">For business</Link>
           <a href={PHONE_HREF} className="v2-nav-phone">{PHONE}</a>
+          <Link href="/portal" className="v2-nav-login">Client login</Link>
           <a href="#quote" className="v2-pill v2-pill--light">Get a quote</a>
         </div>
       </nav>

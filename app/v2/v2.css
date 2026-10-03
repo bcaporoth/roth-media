@@ -349,7 +349,9 @@
 .v2-footer-row a:hover { color: var(--paper); }
 
 @media (max-width: 720px) {
-  .v2-nav-links a:not(.v2-pill):not(.v2-nav-phone) { display: none; }
+  /* Phone header keeps three things: the number, Client login, and the quote pill */
+  .v2-nav-links a:not(.v2-pill):not(.v2-nav-phone):not(.v2-nav-login) { display: none; }
+  .v2-nav-links { gap: 0.25rem 1.1rem; }
   .v2-hero-inner { padding-top: 7rem; }
   .v2-statement .v2-kick { flex-basis: 100%; padding-top: 0; }
 }
