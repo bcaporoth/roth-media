@@ -28,9 +28,10 @@ export default function OpenDatesPage() {
   const todayAfter = (pct) => money(Math.round(applyDeal(film.price, { pct }) * 0.3));
   // While a bigger site-wide deal runs, show that instead of the code.
   const launch = autoDeal();
+  // One number per card: whichever deal is actually live is the one the card talks about.
   const offer = (o) => (launch && launch.pct > o.percent
-    ? { pct: launch.pct, note: `Through ${launch.endsLabel} it's ${launch.pct}% off, no code needed. After that, ${o.percent}% with code ${o.code}.`, cta: `${launch.pct}% off through ${launch.endsLabel}`, href: "/quote?for=wedding" }
-    : { pct: o.percent, note: "", cta: `code ${o.code}`, href: `/quote?for=wedding&code=${o.code}` });
+    ? { pct: launch.pct, live: true, note: `After ${launch.endsLabel} it's ${o.percent}% off with code ${o.code}.`, cta: `${launch.pct}% off through ${launch.endsLabel}`, href: "/quote?for=wedding&pkg=film" }
+    : { pct: o.percent, live: false, note: "", cta: `code ${o.code}`, href: `/quote?for=wedding&pkg=film&code=${o.code}` });
   const now = offer(c.thisYear);
   const next = offer(c.nextYear);
 
@@ -71,10 +72,10 @@ export default function OpenDatesPage() {
             <div className="qmatch-kick">This year · {now.pct}% off</div>
             <h2>Open {new Date().getFullYear()} dates</h2>
             <ul className="camp-dates">
-              {c.openDates2026.map((d) => <li key={d}>{d}</li>)}
+              {c.openDates2026.map((d) => <li key={d}><Link href={`${now.href}&date=${encodeURIComponent(`${d}, ${new Date().getFullYear()}`)}`}>{d}</Link></li>)}
             </ul>
-            <p>{c.thisYear.blurb}</p>
-            {now.note && <p className="gcard-meta">{now.note}</p>}
+            <p>{now.live ? `Any open ${new Date().getFullYear()} date, ${now.pct}% off Wedding Videography through ${launch.endsLabel} — no code needed. Tap your date to hold it.` : c.thisYear.blurb}</p>
+            {now.note && <p className="camp-note">{now.note}</p>}
             <p className="camp-price"><strong>{priceAfter(now.pct)}</strong> <s>{money(film.price)}</s> · {todayAfter(now.pct)} holds it today</p>
             <Link className="qprimary camp-cta" href={now.href}>Grab a date — {now.cta}</Link>
           </section>
@@ -82,10 +83,10 @@ export default function OpenDatesPage() {
           <section className="promo-box camp-offer">
             <div className="qmatch-kick">Next year · {next.pct}% off</div>
             <h2>Reserve 2027 now</h2>
-            <p>{c.nextYear.blurb}</p>
-            {next.note && <p className="gcard-meta">{next.note}</p>}
+            <p>{next.live ? `Reserve any 2027 date at this year's prices, ${next.pct}% off through ${launch.endsLabel} — no code needed. The 30% retainer holds it; balance isn't due until two weeks before.` : c.nextYear.blurb}</p>
+            {next.note && <p className="camp-note">{next.note}</p>}
             <p className="camp-price"><strong>{priceAfter(next.pct)}</strong> <s>{money(film.price)}</s> · {todayAfter(next.pct)} holds it today</p>
-            <p className="gcard-meta">Ends {c.endsLabel}. Prices go up in January.</p>
+            <p className="camp-note">2027 early pricing ends {c.endsLabel}. Prices go up in January.</p>
             <Link className="qprimary camp-cta" href={next.href}>Lock my 2027 date — {next.cta}</Link>
           </section>
         </div>

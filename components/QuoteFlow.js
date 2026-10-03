@@ -30,13 +30,14 @@ function Price({ list, deal, now = applyDeal(list, deal) }) {
   return <>{money(now)}{now !== list && <> <s>{money(list)}</s></>}</>;
 }
 
-export default function QuoteFlow({ initialCategory = "", checkout = false, code: initialCode = "" }) {
+export default function QuoteFlow({ initialCategory = "", checkout = false, code: initialCode = "", initialPkg = "", initialDate = "" }) {
   const formRef = useRef(null);
   const topRef = useRef(null);
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
   const [step, setStep] = useState(valid ? 1 : 0);
   const [category, setCategory] = useState(valid ? initialCategory : "");
-  const [pkgId, setPkgId] = useState(valid && PACKAGES[initialCategory].length === 1 ? PACKAGES[initialCategory][0].id : "");
+  // A campaign link can arrive with the package already chosen (?pkg=film) and a date (?date=).
+  const [pkgId, setPkgId] = useState(valid && PACKAGES[initialCategory].some((p) => p.id === initialPkg) ? initialPkg : valid && PACKAGES[initialCategory].length === 1 ? PACKAGES[initialCategory][0].id : "");
   const [addons, setAddons] = useState({});
   const [contactPref, setContactPref] = useState("Text me");
   const [status, setStatus] = useState("idle");
@@ -262,7 +263,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
             <div className="qf-field"><label htmlFor="qf-last">Last name *</label><input id="qf-last" name="lastName" required={step === 2} autoComplete="family-name" /></div>
             <div className="qf-field"><label htmlFor="qf-email">Email *</label><input id="qf-email" name="email" type="email" required={step === 2} autoComplete="email" /></div>
             <div className="qf-field"><label htmlFor="qf-phone">Phone *</label><input id="qf-phone" name="phone" type="tel" required={step === 2} autoComplete="tel" /></div>
-            <div className="qf-field"><label htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input id="qf-date" name="date" type="text" placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : category === "family" ? "A weekend in October, golden hour if we can…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
+            <div className="qf-field"><label htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input id="qf-date" name="date" type="text" defaultValue={initialDate} placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : category === "family" ? "A weekend in October, golden hour if we can…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
             <div className="qf-field"><label htmlFor="qf-where">{DETAIL[category || "wedding"].where}</label><input id="qf-where" name="where" /></div>
             {(pkg?.intake || []).map((f) => (
               <div className="qf-field wide" key={`${pkg.id}-${f.id}`}>

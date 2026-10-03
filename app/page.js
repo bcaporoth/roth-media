@@ -245,8 +245,8 @@ export default function Home() {
                 A wedding, an engagement, or content for your business — pick
                 what you&apos;re here for and I&apos;ll walk you to a tailored
                 starting price, step by step. Every number is tied to what you
-                walk away with, not hours on a clock. Prefer to talk? Call or
-                text <a href={PHONE_HREF}>{PHONE}</a>.
+                walk away with, not hours on a clock. Prefer to talk?{" "}
+                <a href={PHONE_HREF.replace("tel:", "sms:")}>Text</a> or <a href={PHONE_HREF}>call {PHONE}</a>.
               </p>
             </div>
             <div id="quote">

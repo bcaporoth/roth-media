@@ -20,6 +20,8 @@ export default async function QuotePage({ searchParams }) {
   const want = params?.for === "portraits" ? "family" : params?.for;
   const category = ["wedding", "business", "family"].includes(want) ? want : "";
   const code = String(params?.code || "").trim().toUpperCase().slice(0, 30);
+  const pkg = String(params?.pkg || "").replace(/[^a-z0-9-]/gi, "").slice(0, 30);
+  const date = String(params?.date || "").replace(/[^\w ,.\/-]/g, "").trim().slice(0, 40);
 
   return (
     <>
@@ -54,7 +56,7 @@ export default async function QuotePage({ searchParams }) {
           Pick what you need and I&apos;ll walk you to a tailored starting
           price, step by step. Real prices, no obligation.
         </p>
-        <QuoteFlow initialCategory={category} checkout={stripeConfigured} code={code} />
+        <QuoteFlow initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />
       </main>
 
       <footer className="rm-footer">
