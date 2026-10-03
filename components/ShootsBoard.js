@@ -4,6 +4,10 @@
 // far it is, when the sun sets there, a checklist from the guide for that
 // kind of shoot, and notes. New shoots can be spun up from a lead in the
 // inbox (address + date pulled from the form).
+//
+// Prep: every shoot carries two lists — gear to pack and shots to get —
+// seeded from lib/shoot-guides.js and edited per job (add, remove, tick).
+// "Print prep sheet" opens a one-page version to print or save as PDF.
 
 import { useEffect, useMemo, useState } from "react";
 import { sunsetLocal, resolveTimeNote, shiftTime, fmt12 } from "../lib/sun";
@@ -127,7 +131,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null }) {
         </select>
       </label>
       <label>Title<input value={f.title} onChange={set("title")} required placeholder="Nicole — golden hour session" /></label>
-      <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
+      <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
       <label>…or relative to sunset<input value={f.time_note} onChange={set("time_note")} placeholder="two hours before sunset" /></label>
@@ -142,26 +146,35 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null }) {
   );
 }
 
-function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guides }) {
+export function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guides }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
   const [notes, setNotes] = useState(s.notes);
   const [edit, setEdit] = useState(false);
   useEffect(() => setNotes(s.notes), [s.notes]);
 
-  function toggleItem(i) {
-    const list = s.checklist.map((c, j) => (j === i ? { ...c, done: !c.done } : c));
-    onUpdate(s.id, { checklist: list }, list[i].done ? "Checked ✓" : "Unchecked");
+  // Items without a group came from before gear/shots were split — treat them as shots.
+  const items = (s.checklist || []).map((c) => ({ ...c, group: c.group === "gear" ? "gear" : "shots" }));
+  const save = (list, msg) => onUpdate(s.id, { checklist: list }, msg);
+  function toggleItem(item) {
+    save(items.map((c) => (c === item ? { ...c, done: !c.done } : c)), item.done ? "Unchecked" : "Checked ✓");
   }
-  function addItem() {
-    const text = window.prompt("Add to the checklist:");
-    if (text) onUpdate(s.id, { checklist: [...s.checklist, { text, done: false }] }, "Added");
+  function addItem(group, text) {
+    save([...items, { text, done: false, group }], "Added");
   }
-  function resetFromGuide() {
-    if (!window.confirm(`Replace the checklist with the ${guides[s.kind]?.label} guide?`)) return;
-    onUpdate(s.id, { checklist: guides[s.kind].items.map((text) => ({ text, done: false })) }, "Guide loaded");
+  function removeItem(item) {
+    save(items.filter((c) => c !== item), "Removed");
   }
-  const done = s.checklist.filter((c) => c.done).length;
+  function resetGroup(group) {
+    const label = group === "gear" ? "gear list" : "shot list";
+    if (!window.confirm(`Replace the ${label} with the ${guides[s.kind]?.label} guide? Your edits to this list go away.`)) return;
+    const fresh = (group === "gear" ? [...(guides.__base || []), ...(guides[s.kind]?.gear || [])] : guides[s.kind]?.shots || []).map((text) => ({ text, done: false, group }));
+    save([...items.filter((c) => c.group !== group), ...fresh], "Guide loaded");
+  }
+  function uncheckAll() {
+    if (!items.some((c) => c.done)) return;
+    save(items.map((c) => ({ ...c, done: false })), "Reset for the day");
+  }
 
   return (
     <li className={"shoot" + (open ? " is-open" : "") + ` is-${s.status}`}>
@@ -187,6 +200,7 @@ function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guid
             {s.client_email && <a className="achip" href={`mailto:${s.client_email}`}>Email</a>}
             {s.address && !s.lat && <button type="button" className="achip" onClick={() => api({ action: "relocate", id: s.id }).then(() => onUpdate(s.id, {}, "Located")).catch((e) => alert(e.message))}>Find on map</button>}
             <select className="achip" value={s.status} onChange={(e) => onUpdate(s.id, { status: e.target.value })}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <a className="achip" href={`/portal/admin/shoots/print?id=${s.id}`} target="_blank" rel="noreferrer">Print prep sheet ↗</a>
             <button type="button" className="achip" onClick={() => setEdit((v) => !v)}>{edit ? "Close edit" : "Edit details"}</button>
             <button type="button" className="achip achip-danger" onClick={() => onRemove(s)}>Delete</button>
           </div>
@@ -194,7 +208,7 @@ function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guid
           {edit && (
             <form className="shoot-new shoot-edit" key={s.updated_at} onSubmit={(e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); onUpdate(s.id, f); setEdit(false); }}>
               <label>Title<input name="title" defaultValue={s.title} required /></label>
-              <label>Type<select name="kind" defaultValue={s.kind}>{Object.entries(guides).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
+              <label>Type<select name="kind" defaultValue={s.kind}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
               <label>Date<input type="date" name="date" defaultValue={s.date || ""} /></label>
               <label>Start time<input type="time" name="start_time" defaultValue={s.start_time} /></label>
               <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>
@@ -207,20 +221,57 @@ function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guid
             </form>
           )}
 
-          <div className="shoot-cols">
-            <section>
-              <div className="shoot-sec-head"><span className="kick-sm">Checklist · {done}/{s.checklist.length}</span><span><button type="button" className="achip" onClick={addItem}>+ Add</button> <button type="button" className="achip" onClick={resetFromGuide}>Load {guides[s.kind]?.label} guide</button></span></div>
-              <ul className="shoot-check">
-                {s.checklist.map((c, i) => <li key={i} className={c.done ? "is-done" : ""}><label><input type="checkbox" checked={c.done} onChange={() => toggleItem(i)} /> {c.text}</label></li>)}
-              </ul>
-            </section>
-            <section>
-              <div className="shoot-sec-head"><span className="kick-sm">Notes</span>{notes !== s.notes && <button type="button" className="achip" onClick={() => onUpdate(s.id, { notes })} disabled={busy}>Save notes</button>}</div>
-              <textarea className="shoot-notes" rows={8} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Must-have shots, who's who, parking, the thing they said on the phone…" />
-            </section>
+          <div className="shoot-prep">
+            <div className="shoot-sec-head shoot-prep-head">
+              <span className="kick-sm">Prep</span>
+              <span>{items.some((c) => c.done) && <button type="button" className="achip" onClick={uncheckAll}>Uncheck all</button>}</span>
+            </div>
+            <div className="shoot-cols">
+              <PrepList title="Gear to pack" group="gear" items={items.filter((c) => c.group === "gear")} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onReset={resetGroup} placeholder="Add gear…" />
+              <PrepList title="Shots to get" group="shots" items={items.filter((c) => c.group === "shots")} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onReset={resetGroup} placeholder="Add a shot…" />
+            </div>
           </div>
+          <section>
+            <div className="shoot-sec-head"><span className="kick-sm">Notes</span>{notes !== s.notes && <button type="button" className="achip" onClick={() => onUpdate(s.id, { notes })} disabled={busy}>Save notes</button>}</div>
+            <textarea className="shoot-notes" rows={6} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Must-have shots, who's who, parking, the thing they said on the phone…" />
+          </section>
         </div>
       )}
     </li>
+  );
+}
+
+
+// One prep list (gear or shots): tick, add inline, remove, reset to the guide.
+function PrepList({ title, group, items, onToggle, onAdd, onRemove, onReset, placeholder }) {
+  const [text, setText] = useState("");
+  const done = items.filter((c) => c.done).length;
+  function submit(e) {
+    e.preventDefault();
+    const t = text.trim();
+    if (!t) return;
+    onAdd(group, t);
+    setText("");
+  }
+  return (
+    <section className="prep-list">
+      <div className="shoot-sec-head">
+        <span className="kick-sm">{title} · {done}/{items.length}</span>
+        <button type="button" className="achip" onClick={() => onReset(group)}>Reset to guide</button>
+      </div>
+      <ul className="shoot-check">
+        {items.map((c, i) => (
+          <li key={`${c.text}-${i}`} className={c.done ? "is-done" : ""}>
+            <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span>{c.text}</span></label>
+            <button type="button" className="prep-x" aria-label={`Remove ${c.text}`} title="Remove" onClick={() => onRemove(c)}>×</button>
+          </li>
+        ))}
+        {items.length === 0 && <li className="prep-empty">Nothing here yet — add one below or reset to the guide.</li>}
+      </ul>
+      <form className="prep-add" onSubmit={submit}>
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} aria-label={placeholder} />
+        <button type="submit" className="achip" disabled={!text.trim()}>+ Add</button>
+      </form>
+    </section>
   );
 }

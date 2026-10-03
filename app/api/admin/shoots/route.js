@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { geocode, drive } from "../../../../lib/geo";
-import { GUIDES } from "../../../../lib/shoot-guides";
+import { GUIDES, GEAR_BASE, seedChecklist } from "../../../../lib/shoot-guides";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,7 @@ function clean(body, existing = {}) {
   if (body.date !== undefined) { const d = clip(body.date, 10); if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Bad date"); out.date = d || null; }
   if (body.start_time !== undefined) { const t = clip(body.start_time, 5); if (t && !/^\d{2}:\d{2}$/.test(t)) throw new Error("Bad time"); out.start_time = t; }
   if (body.notes !== undefined) out.notes = clip(body.notes, 8000);
-  if (body.checklist !== undefined) out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 60).map((c) => ({ text: clip(c.text, 200), done: Boolean(c.done) })).filter((c) => c.text);
+  if (body.checklist !== undefined) out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 120).map((c) => ({ text: clip(c.text, 200), done: Boolean(c.done), group: c.group === "gear" ? "gear" : "shots" })).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
   return out;
@@ -59,7 +59,7 @@ export async function GET() {
     shoots: shoots || [],
     leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
     galleries: galleries || [],
-    guides: GUIDES,
+    guides: { ...GUIDES, __base: GEAR_BASE },
   });
 }
 
@@ -72,7 +72,7 @@ export async function POST(request) {
     if (body.action === "create") {
       const row = clean(body);
       if (!row.title) return bad("Give the shoot a title");
-      if (!row.checklist?.length) row.checklist = (GUIDES[row.kind || "other"]?.items || []).map((text) => ({ text, done: false }));
+      if (!row.checklist?.length) row.checklist = seedChecklist(row.kind || "other");
       if (row.address) Object.assign(row, await locate(row.address));
       const { data, error } = await db.from("shoots").insert(row).select("*").single();
       if (error) return bad(error.message, 500);
