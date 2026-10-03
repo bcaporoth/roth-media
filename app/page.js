@@ -14,9 +14,9 @@ import { videoUrl, mediaOffloaded } from "../lib/media";
 
 const PHONE = "845-549-4425";
 const PHONE_HREF = "tel:+18455494425";
-const HERO_VIDEO = "/nolan-kennedy-wedding-hero.mp4"; // full sneak peek, plays in the film card
-const HERO_LOOP = "/hero-loop.mp4"; // 30-second silent loop for the header — 7 MB instead of 46
-const HERO_POSTER = "/nolan-kennedy-cover.png";
+const HERO_VIDEO = "/matt-april-wedding.mp4"; // full sneak peek, plays in the film card
+const HERO_LOOP = "/matt-april-loop.mp4"; // 30-second silent loop for the header (the ceremony), 7 MB
+const HERO_POSTER = "/matt-april-cover.jpg";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -195,9 +195,9 @@ export default function Home() {
               <FilmCard
                 feature
                 src={videoUrl(HERO_VIDEO)}
-                poster="/nolan-kennedy-wedding-poster.jpg"
-                title="Nolan & Kennedy"
-                sub="Wedding sneak peek · The Pines, Corning"
+                poster="/matt-april-wedding-poster.jpg"
+                title="Matt & April"
+                sub="Wedding sneak peek · September 2026"
               />
             </div>
 
