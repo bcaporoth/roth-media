@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandMark from "../../../components/BrandMark";
 import { notFound } from "next/navigation";
+import { resolveShareToken } from "../../../lib/share-aliases";
 import PortalGallery from "../../../components/PortalGallery";
 import GalleryBeacon from "../../../components/GalleryBeacon";
 import PremiereGate from "../../../components/PremiereGate";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }) {
     twitter: { card: "summary_large_image" },
   };
   try {
-    const { token } = await params;
+    const { token } = await params.then((p) => ({ ...p, token: resolveShareToken(p.token) }));
     if (!adminConfigured || !/^[0-9a-f-]{36}$/.test(token)) return base;
     const db = supabaseAdmin();
     const { data: gallery } = await db
@@ -57,7 +58,7 @@ const dateFmt = (d) =>
 // Public share-link gallery: anyone with the token URL can view and
 // download — no login. Token is an unguessable uuid.
 export default async function SharedGalleryPage({ params }) {
-  const { token } = await params;
+  const { token } = await params.then((p) => ({ ...p, token: resolveShareToken(p.token) }));
   if (!adminConfigured || !r2Configured) notFound();
   if (!/^[0-9a-f-]{36}$/.test(token)) notFound();
 
