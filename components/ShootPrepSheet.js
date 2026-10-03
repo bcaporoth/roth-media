@@ -4,7 +4,7 @@
 
 import { sunsetLocal, resolveTimeNote, shiftTime, fmt12 } from "../lib/sun";
 import { HOME } from "../lib/geo";
-import { GEAR_BASE, GUIDES } from "../lib/shoot-guides";
+import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL } from "../lib/shoot-guides";
 import { OWNER_NAME, PHONE } from "../lib/site";
 
 const KIND_LABEL = { wedding: "Wedding / engagement", family: "Family / portraits", business: "Content Day", event: "Event", other: "Shoot" };
@@ -22,10 +22,13 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
   const k = shoot?.kind || kind;
   const guide = GUIDES[k] || GUIDES.other;
   const items = shoot
-    ? (shoot.checklist || []).map((c) => ({ ...c, group: c.group === "gear" ? "gear" : "shots" }))
+    ? (shoot.checklist || []).map((c) => ({ ...c, group: groupOf(c) }))
     : [...GEAR_BASE.map((text) => ({ text, done: false, group: "gear" })), ...guide.gear.map((text) => ({ text, done: false, group: "gear" })), ...guide.shots.map((text) => ({ text, done: false, group: "shots" }))];
   const gear = items.filter((c) => c.group === "gear");
   const shots = items.filter((c) => c.group === "shots");
+  const poses = items.filter((c) => c.group === "poses");
+  const flowAll = items.filter((c) => c.group === "flow");
+  const flow = [...flowAll.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...flowAll.filter((c) => !c.time)];
   const t = timing(shoot);
   const title = shoot ? shoot.title : `${guide.label} — prep sheet`;
 
@@ -52,10 +55,13 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
         <div><span className="sprint-label">Client</span><strong>{shoot?.client_name || "______________________"}</strong>{shoot?.client_phone && <em>{shoot.client_phone}</em>}</div>
       </section>
 
+      {flow.length > 0 && <List title={GROUP_LABEL.flow} items={flow} timed />}
+
       <div className="sprint-cols">
-        <List title="Gear to pack" items={gear} />
         <List title="Shots to get" items={shots} />
+        {poses.length > 0 ? <List title={GROUP_LABEL.poses} items={poses} /> : <List title="Gear to pack" items={gear} />}
       </div>
+      {poses.length > 0 && <List title="Gear to pack" items={gear} wide />}
 
       <section className="sprint-notes">
         <span className="sprint-label">Notes</span>
@@ -69,12 +75,12 @@ function Fact({ label, value, note }) {
   return <div><span className="sprint-label">{label}</span><strong>{value}</strong>{note && <em>{note}</em>}</div>;
 }
 
-function List({ title, items }) {
+function List({ title, items, timed = false, wide = false }) {
   return (
-    <section className="sprint-list">
+    <section className={"sprint-list" + (timed ? " is-timed" : "") + (wide ? " is-wide" : "")}>
       <h2>{title}</h2>
       <ul>
-        {items.map((c, i) => <li key={i} className={c.done ? "is-done" : ""}><span className="sprint-box" aria-hidden="true">{c.done ? "✓" : ""}</span>{c.text}</li>)}
+        {items.map((c, i) => <li key={i} className={c.done ? "is-done" : ""}><span className="sprint-box" aria-hidden="true">{c.done ? "✓" : ""}</span>{timed && <span className="sprint-time">{c.time ? fmt12(c.time) : "—"}</span>}{c.text}</li>)}
         {items.length === 0 && <li className="is-empty">—</li>}
       </ul>
     </section>

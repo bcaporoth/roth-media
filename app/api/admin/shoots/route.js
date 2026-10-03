@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { geocode, drive } from "../../../../lib/geo";
-import { GUIDES, GEAR_BASE, seedChecklist } from "../../../../lib/shoot-guides";
+import { GUIDES, GEAR_BASE, seedChecklist, GROUPS, checklistFromPlaybook } from "../../../../lib/shoot-guides";
+import { loadPlaybook } from "../../../../lib/playbook";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,12 @@ function clean(body, existing = {}) {
   if (body.date !== undefined) { const d = clip(body.date, 10); if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error("Bad date"); out.date = d || null; }
   if (body.start_time !== undefined) { const t = clip(body.start_time, 5); if (t && !/^\d{2}:\d{2}$/.test(t)) throw new Error("Bad time"); out.start_time = t; }
   if (body.notes !== undefined) out.notes = clip(body.notes, 8000);
-  if (body.checklist !== undefined) out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 120).map((c) => ({ text: clip(c.text, 200), done: Boolean(c.done), group: c.group === "gear" ? "gear" : "shots" })).filter((c) => c.text);
+  if (body.checklist !== undefined)
+    out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 300).map((c) => {
+      const group = GROUPS.includes(c.group) ? c.group : "shots";
+      const time = group === "flow" && /^\d{2}:\d{2}$/.test(String(c.time || "")) ? c.time : "";
+      return { text: clip(c.text, 240), done: Boolean(c.done), group, ...(time ? { time } : {}) };
+    }).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
   return out;
@@ -49,10 +55,11 @@ function clean(body, existing = {}) {
 export async function GET() {
   if (!(await isAdminRequest())) return deny();
   const db = supabaseAdmin();
-  const [{ data: shoots, error }, { data: leads }, { data: galleries }] = await Promise.all([
+  const [{ data: shoots, error }, { data: leads }, { data: galleries }, playbook] = await Promise.all([
     db.from("shoots").select("*").order("date", { ascending: true, nullsFirst: false }),
     db.from("submissions").select("id, created_at, kind, name, email, phone, summary, fields, status").in("status", ["new", "contacted", "booked"]).not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)").order("created_at", { ascending: false }).limit(60),
     db.from("galleries").select("id, title").order("created_at", { ascending: false }),
+    loadPlaybook(db),
   ]);
   if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/shoots.sql first" : error.message, 500);
   return NextResponse.json({
@@ -60,6 +67,7 @@ export async function GET() {
     leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
     galleries: galleries || [],
     guides: { ...GUIDES, __base: GEAR_BASE },
+    playbook: playbook.lists,
   });
 }
 
@@ -72,7 +80,11 @@ export async function POST(request) {
     if (body.action === "create") {
       const row = clean(body);
       if (!row.title) return bad("Give the shoot a title");
-      if (!row.checklist?.length) row.checklist = seedChecklist(row.kind || "other");
+      if (!row.checklist?.length) {
+        const { lists } = await loadPlaybook(db);
+        row.checklist = checklistFromPlaybook(lists, row.kind || "other");
+        if (!row.checklist.length) row.checklist = seedChecklist(row.kind || "other");
+      }
       if (row.address) Object.assign(row, await locate(row.address));
       const { data, error } = await db.from("shoots").insert(row).select("*").single();
       if (error) return bad(error.message, 500);

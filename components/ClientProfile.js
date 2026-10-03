@@ -1,10 +1,11 @@
 "use client";
 
 // Studio → Clients → one person. Intake answers, orientation-call sheets
-// (autosave), shoots, galleries, payments, messages — and the next step.
+// (autosave), shoots with their day plan (flow, shots, poses, gear), galleries, payments, messages — and the next step.
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ClientShoots } from "./ShootsBoard";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
 
 async function api(path, payload) {
@@ -143,14 +144,7 @@ export default function ClientProfile({ initial, emailReady }) {
             ))}
           </section>
 
-          <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Shoots</h2>
-              <Link className="achip" href={`/portal/admin/shoots?new=1&name=${encodeURIComponent(c.name)}&email=${encodeURIComponent(c.email)}&phone=${encodeURIComponent(c.phone)}&kind=${type}`}>+ Plan a shoot</Link>
-            </div>
-            {d.shoots.length === 0 ? <p className="gcard-meta">None planned.</p> : (
-              <ul className="cprof-list">{d.shoots.map((s) => <li key={s.id}><strong>{s.title}</strong> <span className="gcard-meta">· {s.status}{s.date ? ` · ${fmt(s.date)}` : ""}{s.start_time ? ` ${s.start_time}` : ""}{s.place_label ? ` · ${s.place_label}` : ""}</span></li>)}</ul>
-            )}
-          </section>
+          <ClientShoots client={c} type={type} />
 
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Galleries</h2></div>

@@ -5839,3 +5839,50 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
   .sprint { box-shadow: none; max-width: none; padding: 0; gap: 0.8rem; font-size: 11pt; }
   .sprint-facts strong { font-size: 15pt; }
 }
+
+/* ── Studio → Playbook (gear, shot lists, flows, poses) + the same lists on a shoot ── */
+.pbook { display: grid; gap: 0.8rem; }
+.pbook-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+.pbook-tab { text-align: left; font: inherit; color: inherit; background: rgba(250, 246, 238, 0.6); border: 1px solid var(--line); border-radius: 14px; padding: 0.8rem 1rem; cursor: pointer; display: grid; gap: 0.1rem; }
+.pbook-tab strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; }
+.pbook-tab em { font-style: normal; font-size: 0.78rem; color: var(--ink-soft); }
+.pbook-tab:hover { border-color: var(--clay); }
+.pbook-tab.is-on { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.pbook-tab.is-on em { color: inherit; opacity: 0.7; }
+.pbook-kinds { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.pbook-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; align-items: start; }
+.pbook-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(250, 246, 238, 0.6); padding: 0.9rem 1rem; display: grid; gap: 0.65rem; }
+.pbook-card-head { display: grid; gap: 0.4rem; }
+.pbook-title { font: inherit; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; font-weight: 600; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.2rem 0.4rem; margin-left: -0.4rem; width: calc(100% + 0.4rem); }
+.pbook-title:hover, .pbook-title:focus { border-color: rgba(0, 0, 0, 0.18); outline: none; }
+.pbook-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
+.pbook-autochip { display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+.pbook-auto { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 0.5rem; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.88rem !important; }
+.pbook-auto input { width: auto !important; }
+.pbook-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
+.pbook-items li { display: flex; align-items: center; gap: 0.4rem; }
+.pbook-n { flex: none; width: 1.4rem; font-size: 0.75rem; color: var(--ink-soft); text-align: right; }
+.pbook-text { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.3rem 0.45rem; }
+.pbook-text:hover, .pbook-text:focus { border-color: rgba(0, 0, 0, 0.18); outline: none; }
+.pbook-time { flex: none; width: 6.6rem; font: inherit; font-size: 0.82rem; color: inherit; background: transparent; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; padding: 0.25rem 0.35rem; }
+.pbook-row-actions { display: flex; flex: none; opacity: 0.35; }
+.pbook-items li:hover .pbook-row-actions, .pbook-items li:focus-within .pbook-row-actions { opacity: 1; }
+.pbook-row-actions .prep-x[disabled] { opacity: 0.2; cursor: default; }
+.pbook-notes { font-size: 0.88rem; }
+.prep-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.35rem; }
+.prep-tools select.achip { max-width: 11.5rem; }
+.prep-list .shoot-check li { align-items: center; }
+.prep-flow { grid-column: 1 / -1; }
+.cprof-shoots .shoot-row { grid-template-columns: 1fr; gap: 0.3rem; }
+.cprof-shoots .shoot-far { text-align: left; }
+.cprof-shoots .shoot-facts { grid-template-columns: 1fr 1fr; }
+.cprof-shoots .shoot-cols, .cprof-shoots .shoot-new { grid-template-columns: 1fr; }
+.admin-shell.is-dark .pbook-tab, .admin-shell.is-dark .pbook-card { background: rgba(255, 255, 255, 0.03); }
+.admin-shell.is-dark .pbook-title:hover, .admin-shell.is-dark .pbook-title:focus, .admin-shell.is-dark .pbook-text:hover, .admin-shell.is-dark .pbook-text:focus, .admin-shell.is-dark .pbook-time { border-color: rgba(255, 255, 255, 0.25); }
+.admin-shell.is-dark .pbook-time { color-scheme: dark; }
+.sprint-list.is-timed ul { grid-template-columns: 1fr 1fr; column-gap: 1.2rem; }
+.sprint-list.is-wide ul { grid-template-columns: 1fr 1fr; column-gap: 1.2rem; }
+.sprint-time { flex: none; width: 4.4rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 820px) { .pbook-tabs { grid-template-columns: 1fr 1fr; } .pbook-row-actions { opacity: 1; } }
+@media (max-width: 520px) { .pbook-grid { grid-template-columns: 1fr; } .sprint-list.is-timed ul, .sprint-list.is-wide ul { grid-template-columns: 1fr; } }
+.prep-add .pbook-time { flex: none; width: 6.6rem; }
