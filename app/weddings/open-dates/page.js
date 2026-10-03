@@ -59,10 +59,10 @@ export default function OpenDatesPage() {
         <div className="camp-film">
           <FilmCard
             feature
-            src={videoUrl("/nolan-kennedy-wedding-hero.mp4")}
-            poster="/nolan-kennedy-wedding-poster.jpg"
-            title="Nolan & Kennedy"
-            sub="Booked 9 days out · The Pines, Corning"
+            src={videoUrl("/matt-april-wedding.mp4")}
+            poster="/matt-april-wedding-poster.jpg"
+            title="Matt & April"
+            sub="Wedding sneak peek · September 2026"
           />
         </div>
 

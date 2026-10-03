@@ -15,7 +15,7 @@ export default function WeddingAdPage() {
         <div className="golead-brand">Roth Media · Twin Tiers weddings</div>
         <h1>Your wedding, filmed the way it felt.</h1>
         <p className="golead-sub">Photo and film for Waverly, Sayre, Athens, Elmira, and Corning. Your real vows, the speeches, the dance floor. Real prices up front.</p>
-        <video className="golead-video" src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} poster="/nolan-kennedy-cover.png" autoPlay muted loop playsInline />
+        <video className="golead-video" src={videoUrl("/matt-april-loop.mp4")} poster="/matt-april-cover.jpg" autoPlay muted loop playsInline />
         <div className="golead-prices">
           <div><span>{photo.name}</span><strong><DealPrice price={photo.price} /></strong></div>
           <div><span>{film.name}</span><strong><DealPrice price={film.price} /></strong></div>

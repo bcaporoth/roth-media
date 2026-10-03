@@ -93,8 +93,8 @@ export default async function CityPage({ params }) {
         </p>
 
         <figure className="svc-video">
-          <video controls playsInline preload="none" poster="/nolan-kennedy-cover.png" src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
-          <figcaption>Nolan &amp; Kennedy — wedding sneak peek, Twin Tiers</figcaption>
+          <video controls playsInline preload="none" poster="/matt-april-wedding-poster.jpg" src={videoUrl("/matt-april-wedding.mp4")} />
+          <figcaption>Matt &amp; April — wedding sneak peek, Twin Tiers</figcaption>
         </figure>
 
         <section className="svc-section">
