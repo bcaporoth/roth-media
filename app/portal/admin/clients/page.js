@@ -6,6 +6,7 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { resendConfigured } from "../../../../lib/resend";
+import { clientStage, clientType } from "../../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -47,11 +48,31 @@ export default async function ClientsPage() {
     const { data } = await db.auth.admin.listUsers({ page: 1, perPage: 200 });
     for (const u of data?.users || []) accounts[(u.email || "").toLowerCase()] = { lastSignIn: u.last_sign_in_at || null };
   } catch {}
-  const initial = (clients || []).map((c) => ({
-    ...c, phone: c.phone || "", notes: c.notes || "",
-    galleries: byClient[c.id] || [],
-    account: accounts[c.email.toLowerCase()] || null,
-  }));
+  // Pipeline position per client: intakes/calls/bookings (submissions) + shoots, joined by email.
+  const subsBy = {};
+  const shootsBy = {};
+  try {
+    const { data: subs } = await db.from("submissions").select("kind, status, created_at, email, utm").not("kind", "in", "(partner,partner_lead,partner_month)").order("created_at", { ascending: false }).limit(2000);
+    for (const s of subs || []) (subsBy[(s.email || "").toLowerCase()] ||= []).push(s);
+  } catch {}
+  try {
+    const { data: shoots } = await db.from("shoots").select("kind, status, client_email");
+    for (const s of shoots || []) (shootsBy[(s.client_email || "").toLowerCase()] ||= []).push(s);
+  } catch {}
+  const initial = (clients || []).map((c) => {
+    const key = c.email.toLowerCase();
+    const subs = subsBy[key] || [];
+    const shoots = shootsBy[key] || [];
+    const galleries = byClient[c.id] || [];
+    return {
+      ...c, phone: c.phone || "", notes: c.notes || "",
+      galleries,
+      account: accounts[key] || null,
+      stage: clientStage({ subs, shoots, galleries }),
+      type: clientType({ subs, shoots }),
+      lastTouch: subs[0]?.created_at || null,
+    };
+  });
   const newCount = await newLeadCount();
 
   return (

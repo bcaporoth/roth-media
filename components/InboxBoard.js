@@ -24,7 +24,7 @@ const FILTERS = [
   { key: "all", label: "All" },
 ];
 
-const KIND_LABEL = { quote: "Quote", booking: "Booked 💸", promo: "Promo entry", card: "Business card", contact: "Message" };
+const KIND_LABEL = { quote: "Quote", booking: "Booked 💸", promo: "Promo entry", card: "Business card", contact: "Message", intake: "Intake 📝" };
 
 function when(d) {
   const date = new Date(d);

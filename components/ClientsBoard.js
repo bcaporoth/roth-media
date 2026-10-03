@@ -5,6 +5,8 @@
 // broadcast composer for everyone or a checked few.
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
 
 async function api(payload) {
   const res = await fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -27,6 +29,8 @@ export default function ClientsBoard({ initial, emailReady }) {
   const [sending, setSending] = useState(false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ name: "", email: "", phone: "" });
+  const [stage, setStage] = useState("");   // "" = everyone
+  const [type, setType] = useState("");
 
   const refresh = async () => {
     const res = await fetch("/api/admin/clients");
@@ -38,9 +42,14 @@ export default function ClientsBoard({ initial, emailReady }) {
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return clients;
-    return clients.filter((c) => [c.name, c.email, c.phone, ...(c.galleries || []).map((g) => g.title)].join(" ").toLowerCase().includes(q));
-  }, [clients, query]);
+    return clients.filter((c) => {
+      if (stage && c.stage !== stage) return false;
+      if (type && c.type !== type) return false;
+      if (!q) return true;
+      return [c.name, c.email, c.phone, STAGE_LABEL[c.stage], TYPE_LABEL[c.type], ...(c.galleries || []).map((g) => g.title)].join(" ").toLowerCase().includes(q);
+    });
+  }, [clients, query, stage, type]);
+  const stageCounts = useMemo(() => { const n = {}; for (const c of clients) n[c.stage] = (n[c.stage] || 0) + 1; return n; }, [clients]);
   const checkedIds = Object.keys(checked).filter((k) => checked[k]);
 
   async function copy(text, label) {
@@ -101,6 +110,16 @@ export default function ClientsBoard({ initial, emailReady }) {
           ✉ Email {checkedIds.length ? `${checkedIds.length} checked` : "everyone"}
         </button>
       </div>
+      <div className="inbox-filters" role="tablist" aria-label="Filter by stage">
+        <button type="button" role="tab" aria-selected={!stage} className={"ifilter" + (!stage ? " is-on" : "")} onClick={() => setStage("")}>Everyone <span className="ifilter-n">{clients.length}</span></button>
+        {STAGES.filter((s) => stageCounts[s.key]).map((s) => (
+          <button key={s.key} type="button" role="tab" aria-selected={stage === s.key} className={"ifilter" + (stage === s.key ? " is-on" : "")} onClick={() => setStage(stage === s.key ? "" : s.key)}>{s.label} <span className="ifilter-n">{stageCounts[s.key]}</span></button>
+        ))}
+        <span className="ifilter-sep" aria-hidden="true" />
+        {TYPES.map((t) => (
+          <button key={t.id} type="button" className={"ifilter" + (type === t.id ? " is-on" : "")} aria-pressed={type === t.id} onClick={() => setType(type === t.id ? "" : t.id)}>{t.label}</button>
+        ))}
+      </div>
       {!emailReady && <p className="inbox-hint">Email sending isn&apos;t switched on yet — add <code>RESEND_API_KEY</code> in Vercel → Settings → Environment Variables, redeploy, and the email buttons light up. Everything else here works now.</p>}
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error" style={{ whiteSpace: "pre-wrap" }}>{error}</p>}
@@ -126,7 +145,7 @@ export default function ClientsBoard({ initial, emailReady }) {
         </form>
       )}
 
-      {shown.length === 0 && <p className="portal-empty">{clients.length ? "Nothing matches that search." : "No clients yet — they're added automatically when you create a gallery, or add one above."}</p>}
+      {shown.length === 0 && <p className="portal-empty">{clients.length ? "Nothing matches that filter." : "No clients yet — they're added automatically when you create a gallery, or add one above."}</p>}
 
       <ul className="clients-list">
         {shown.map((c) => {
@@ -136,7 +155,7 @@ export default function ClientsBoard({ initial, emailReady }) {
               <div className="client-row">
                 <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${c.email}`} />
                 <button type="button" className="client-main" onClick={() => setOpen(isOpen ? null : c.id)}>
-                  <strong>{c.name || c.email}</strong>
+                  <strong>{c.name || c.email} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}</strong>
                   <span className="gcard-meta">{c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
                   <span className="gcard-meta">
                     {c.galleries.length} {c.galleries.length === 1 ? "gallery" : "galleries"}
@@ -145,6 +164,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                   </span>
                 </button>
                 <div className="client-quick">
+                  <Link className="achip achip-primary" href={`/portal/admin/clients/${c.id}`}>Profile</Link>
                   <a className="achip" href={`mailto:${c.email}`}>Email</a>
                   {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
                 </div>

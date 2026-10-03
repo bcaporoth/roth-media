@@ -4,6 +4,7 @@ import { supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
 import { addMember } from "../../../../lib/album-access";
+import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -272,6 +273,56 @@ export async function POST(request) {
       }
     }
     return NextResponse.json({ ok: true, sent, skipped, failed });
+  }
+
+  // "Send intake link" — remembers that it went out (the client's answers replace this row).
+  if (body.action === "intake-sent") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("Bad email");
+    const type = typeOf(body.type);
+    const { data: dup } = await db.from("submissions").select("id").eq("kind", "intake_sent").eq("email", email).maybeSingle();
+    if (dup) return NextResponse.json({ ok: true, id: dup.id, already: true });
+    const { data, error } = await db.from("submissions").insert({
+      kind: "intake_sent", status: "contacted", read_at: new Date().toISOString(),
+      name: String(body.name || "").slice(0, 120), email, phone: String(body.phone || "").slice(0, 40),
+      subject: `Intake link sent — ${body.name || email}`, summary: `${TYPE_LABEL[type]} intake link sent`,
+      fields: [], source_path: "/portal/admin/clients", utm: { type },
+    }).select("id").single();
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true, id: data.id });
+  }
+
+  // Orientation-call sheet: create on first tap, then every change saves the whole sheet.
+  if (body.action === "call-save") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("Bad email");
+    const type = typeOf(body.type);
+    const prompts = CALL[type].prompts;
+    const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
+    const fields = prompts.map((q) => [q, String(answers[q] || "").slice(0, 4000)]);
+    const checks = {};
+    for (const c of CALL[type].checks) checks[c] = Boolean(body.checks?.[c]);
+    const callDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.callDate || "")) ? body.callDate : new Date().toISOString().slice(0, 10);
+    const followUp = /^\d{4}-\d{2}-\d{2}$/.test(String(body.followUp || "")) ? body.followUp : "";
+    const row = {
+      kind: "call", status: "contacted", read_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      name: String(body.name || "").slice(0, 120), email, phone: String(body.phone || "").slice(0, 40),
+      subject: `Call sheet — ${body.name || email}`,
+      summary: `${TYPE_LABEL[type]} call · ${callDate}`,
+      fields, notes: String(body.notes || "").slice(0, 10000),
+      source_path: "/portal/admin/clients", utm: { type, checks, call_date: callDate, follow_up: followUp },
+    };
+    const q = body.id ? db.from("submissions").update(row).eq("id", body.id).eq("kind", "call") : db.from("submissions").insert(row);
+    const { data, error } = await q.select("id, created_at, updated_at, kind, name, email, phone, summary, fields, notes, status, utm").single();
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true, item: data });
+  }
+
+  if (body.action === "call-delete") {
+    if (!body.id) return bad("Bad request");
+    const { error } = await db.from("submissions").delete().eq("id", body.id).eq("kind", "call");
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true });
   }
 
   return bad("Unknown action", 400);

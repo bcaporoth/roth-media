@@ -38,8 +38,18 @@ export default function ShootsBoard() {
   const [flash, setFlash] = useState("");
   const [showPast, setShowPast] = useState(false);
 
+  const [prefill, setPrefill] = useState(null);
   const refresh = () => api().then(setData).catch((e) => setError(e.message));
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    // From a client profile: ?new=1&name=&email=&phone=&kind= opens the form filled in.
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("new") === "1") {
+      setPrefill({ client_name: q.get("name") || "", client_email: q.get("email") || "", client_phone: q.get("phone") || "", kind: q.get("kind") || "" });
+      setShowNew(true);
+      window.history.replaceState(null, "", "/portal/admin/shoots");
+    }
+  }, []);
 
   const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 2500); };
   const shoots = data?.shoots || [];
@@ -75,7 +85,7 @@ export default function ShootsBoard() {
       </div>
       {error && <p className="cform-error">{error}</p>}
 
-      {showNew && <NewShoot leads={data.leads} guides={data.guides} busy={busy} onCreate={create} />}
+      {showNew && <NewShoot prefill={prefill} leads={data.leads} guides={data.guides} busy={busy} onCreate={create} />}
 
       {upcoming.length === 0 && !showNew && <p className="portal-empty">Nothing on the books. Hit “+ New shoot” — or start one from a lead.</p>}
 
@@ -93,10 +103,10 @@ export default function ShootsBoard() {
   );
 }
 
-function NewShoot({ leads, guides, busy, onCreate }) {
+function NewShoot({ leads, guides, busy, onCreate, prefill = null }) {
   const [lead, setLead] = useState("");
-  const [kind, setKind] = useState("wedding");
-  const [f, setF] = useState({ title: "", client_name: "", client_email: "", client_phone: "", date: "", start_time: "", time_note: "", address: "", notes: "" });
+  const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
+  const [f, setF] = useState({ title: prefill?.client_name ? `${prefill.client_name} — ` : "", client_name: prefill?.client_name || "", client_email: prefill?.client_email || "", client_phone: prefill?.client_phone || "", date: "", start_time: "", time_note: "", address: "", notes: "" });
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
 
   function pickLead(id) {

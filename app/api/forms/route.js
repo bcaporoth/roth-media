@@ -8,7 +8,7 @@ import { cartUrl } from "../../../lib/cart";
 
 export const dynamic = "force-dynamic";
 
-const KINDS = new Set(["quote", "promo", "card", "contact"]);
+const KINDS = new Set(["quote", "promo", "card", "contact", "intake"]);
 
 // Every site form posts here: the submission is saved to the Studio inbox
 // and Brandon gets an instant alert. The response says whether the alert
@@ -47,12 +47,23 @@ export async function POST(request) {
     visitor: visitorId(request),
     utm: body.utm && typeof body.utm === "object" ? body.utm : {},
   };
+  // Intakes remember what they're for (wedding/family/business) → Studio → Clients.
+  if (sub.kind === "intake" && ["wedding", "family", "business"].includes(body.type)) sub.utm = { ...sub.utm, type: body.type };
   if (!sub.name && !sub.email && !sub.phone)
     return NextResponse.json({ error: "Add a name, email, or phone." }, { status: 422 });
 
   let stored = false;
   if (adminConfigured) {
-    const { error } = await supabaseAdmin().from("submissions").insert(sub);
+    const db = supabaseAdmin();
+    // An intake fills in the "link sent" placeholder Brandon created, if there is one.
+    let placeholder = null;
+    if (sub.kind === "intake" && sub.email) {
+      const { data } = await db.from("submissions").select("id").eq("kind", "intake_sent").eq("email", sub.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      placeholder = data;
+    }
+    const { error } = placeholder
+      ? await db.from("submissions").update({ ...sub, status: "new", read_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", placeholder.id)
+      : await db.from("submissions").insert(sub);
     stored = !error;
   }
 

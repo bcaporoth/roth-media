@@ -5721,3 +5721,56 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
   .gedit-form, .gedit-add { grid-template-columns: 1fr; }
   .gedit-add .achip { justify-self: start; }
 }
+
+/* Intake page (public) + Studio → Clients profile, stages, call sheets */
+.intake-wrap { max-width: 640px; }
+.intake-form { margin-top: 1.5rem; }
+.intake-types { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.3rem; }
+.intake-form .intake-hint { margin: -0.15rem 0 0.4rem; font-size: 0.86rem; color: var(--ink-soft); }
+.intake-opt { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.65; }
+.intake-done { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.ifilter-sep { width: 1px; height: 1.4rem; background: var(--line); margin: 0 0.2rem; }
+.achip-primary { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.achip-primary:hover { color: var(--bone); }
+.client-main strong .itag { margin-left: 0.4rem; font-weight: 400; vertical-align: middle; white-space: nowrap; display: inline-block; }
+.stage-new { border-color: var(--clay); color: var(--clay); }
+.stage-intake_sent, .stage-intake { border-color: #b08a3a; color: #9a7628; }
+.stage-call { border-color: #6b5bd6; color: #5a4bc4; }
+.stage-booked, .stage-shot { border-color: #4a7c59; color: #4a7c59; }
+.stage-delivered { opacity: 0.65; }
+.cprof { display: grid; gap: 1rem; }
+.cprof-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.6rem; }
+.cprof-stages { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.78rem; }
+.cprof-stages li { padding: 0.3rem 0.65rem; border: 1px solid var(--line); border-radius: 999px; opacity: 0.55; }
+.cprof-stages li.is-past { opacity: 0.85; text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.3); }
+.cprof-stages li.is-now { opacity: 1; background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.cprof-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.35); padding: 1rem; display: grid; gap: 0.75rem; }
+.is-dark .cprof-card { background: rgba(255, 255, 255, 0.04); }
+.cprof-cardhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.6rem; }
+.cprof-cardhead h2 { margin: 0; font-size: 1.05rem; }
+.cprof-type { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.cprof-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.cprof-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.cprof-toggle { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; width: 100%; text-align: left; background: none; border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.cprof-answers dl { margin: 0.5rem 0 0; display: grid; gap: 0.55rem; padding: 0 0.3rem; }
+.cprof-answers dt { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clay); }
+.cprof-answers dd { margin: 0.1rem 0 0; white-space: pre-wrap; line-height: 1.45; }
+.callsheet-body { display: grid; gap: 0.7rem; padding: 0.75rem 0.3rem 0.3rem; }
+.callsheet-meta { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem 1rem; }
+.callsheet-meta label { display: grid; gap: 0.2rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
+.callsheet-meta input { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
+.callsheet-state { font-size: 0.8rem; margin-left: auto; opacity: 0.7; }
+.callsheet-state.is-saved { color: #2e7d4f; opacity: 1; }
+.callsheet-checks { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.callsheet-checks .achip { cursor: pointer; }
+.callsheet-checks input { margin: 0 0.1rem 0 0; vertical-align: middle; }
+.callsheet-q { display: grid; gap: 0.3rem; }
+.callsheet-q span { font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
+.callsheet-q textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; resize: vertical; }
+.is-dark .callsheet-q textarea, .is-dark .callsheet-meta input { border-color: rgba(255, 255, 255, 0.22); }
+@media (max-width: 720px) {
+  .client-quick { display: flex; }                       /* phones: just the Profile chip */
+  .client-quick > :not(.achip-primary) { display: none; }
+  .cprof-card { padding: 0.8rem; }
+  .callsheet-state { margin-left: 0; width: 100%; }
+}
