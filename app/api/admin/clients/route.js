@@ -275,6 +275,34 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, sent, skipped, failed });
   }
 
+  // Make sure someone who only inquired is on the roster (opens their profile).
+  if (body.action === "ensure") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("Bad email");
+    const { data: hit } = await db.from("clients").select("id").eq("email", email).maybeSingle();
+    if (hit) return NextResponse.json({ ok: true, id: hit.id });
+    const name = String(body.name || "").trim().slice(0, 80) || email.split("@")[0].replace(/[._]/g, " ");
+    const { data, error } = await db.from("clients").insert({ email, name, ...(body.phone ? { phone: String(body.phone).slice(0, 40) } : {}) }).select("id").single();
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true, id: data.id });
+  }
+
+  // An inquiry that came in before Studio existed (texted, emailed, old form) — pasted in by hand.
+  if (body.action === "add-inquiry") {
+    const email = cleanEmail(body.email);
+    const text = String(body.text || "").trim().slice(0, 8000);
+    if (!EMAIL_RE.test(email) || !text) return bad("Need the email and the text");
+    const when = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || "")) ? `${body.date}T12:00:00Z` : new Date().toISOString();
+    const { data, error } = await db.from("submissions").insert({
+      kind: "contact", status: "contacted", read_at: new Date().toISOString(), created_at: when,
+      name: String(body.name || "").slice(0, 120), email, phone: String(body.phone || "").slice(0, 40),
+      subject: `Inquiry — ${body.name || email}`, summary: "Inquiry (added by hand)",
+      fields: [["what they sent", text]], source_path: "/portal/admin/clients", utm: {},
+    }).select("id, created_at, kind, name, email, phone, subject, summary, fields, notes, status, utm").single();
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true, item: data });
+  }
+
   // "Send intake link" — remembers that it went out (the client's answers replace this row).
   if (body.action === "intake-sent") {
     const email = cleanEmail(body.email);

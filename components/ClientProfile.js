@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CALL, INTAKE, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
+import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -23,6 +23,8 @@ export default function ClientProfile({ initial, emailReady }) {
   const [error, setError] = useState("");
   const [type, setType] = useState(initial.type || "wedding");
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
+  const [pasting, setPasting] = useState(false);
+  const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
   const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 3000); };
   const fail = (e) => { setError(e.message || String(e)); setTimeout(() => setError(""), 6000); };
@@ -44,10 +46,20 @@ export default function ClientProfile({ initial, emailReady }) {
     } catch (err) { fail(err); }
   }
   async function newCall() {
+    // Anything they already answered on /intake lands in the sheet, so the call starts from there.
+    const answers = {};
+    for (const it of [...d.intakes].reverse()) for (const [q, a] of it.fields || []) if (q !== "for" && a) answers[q] = String(a);
     try {
-      const r = await api("/api/admin/clients", { action: "call-save", email: c.email, name: c.name, phone: c.phone, type, answers: {}, checks: {}, callDate: today() });
+      const r = await api("/api/admin/clients", { action: "call-save", email: c.email, name: c.name, phone: c.phone, type, answers, checks: {}, callDate: today() });
       setD({ ...d, calls: [r.item, ...d.calls], stage: ["new", "intake_sent", "intake"].includes(d.stage) ? "call" : d.stage });
       setOpenCall(r.item.id);
+    } catch (err) { fail(err); }
+  }
+  async function addInquiry(e) {
+    e.preventDefault();
+    try {
+      const r = await api("/api/admin/clients", { action: "add-inquiry", email: c.email, name: c.name, phone: c.phone, text: paste.text, date: paste.date });
+      setD({ ...d, messages: [r.item, ...d.messages] }); setPasting(false); setPaste({ text: "", date: "" }); say("Added");
     } catch (err) { fail(err); }
   }
   async function deleteCall(call) {
@@ -89,56 +101,75 @@ export default function ClientProfile({ initial, emailReady }) {
         </div>
       </section>
 
-      <section className="cprof-card">
-        <div className="cprof-cardhead"><h2>Intake</h2>
-          <div className="gcard-actions">
-            <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
-            {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
-            <button type="button" className="achip" onClick={() => intakeSent("mail")}>Email it</button>
-          </div>
+      <div className="cprof-cols">
+        <div className="cprof-col cprof-ref">
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Initial inquiry</h2>
+              <button type="button" className="achip" onClick={() => setPasting(!pasting)}>{pasting ? "Cancel" : "+ Paste an old one"}</button>
+            </div>
+            {pasting && (
+              <form className="cprof-paste" onSubmit={addInquiry}>
+                <textarea rows={6} required placeholder="Paste what they sent — the old form, the text, the email…" value={paste.text} onChange={(e) => setPaste({ ...paste, text: e.target.value })} />
+                <div className="gcard-actions"><label className="gcard-meta">Sent on <input type="date" value={paste.date} onChange={(e) => setPaste({ ...paste, date: e.target.value })} /></label><button type="submit" className="abtn">Save</button></div>
+              </form>
+            )}
+            {d.messages.length === 0 && !pasting && <p className="gcard-meta">No form from them on file. If they reached out before Studio existed, paste it in so it&apos;s beside you on the call.</p>}
+            {d.messages.map((m, i) => <Answers key={m.id} item={m} title={`${m.summary || m.subject || m.kind} · ${fmt(m.created_at)}`} closed={i > 0} />)}
+          </section>
+
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Before the call</h2>
+              <div className="gcard-actions">
+                <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
+                {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
+                <button type="button" className="achip" onClick={() => intakeSent("mail")}>Email it</button>
+              </div>
+            </div>
+            {d.intakes.length === 0 && (
+              <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "Optional: send the questionnaire and their answers land here (and prefill the call sheet)."}</p>
+            )}
+            {d.intakes.map((it) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} questionnaire · ${fmt(it.created_at)}`} />)}
+          </section>
         </div>
-        {d.intakes.length === 0 && (
-          <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "Nothing yet. Send the link; their answers show up here and you get an alert."}</p>
-        )}
-        {d.intakes.map((it) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} intake · ${fmt(it.created_at)}`} />)}
-      </section>
 
-      <section className="cprof-card">
-        <div className="cprof-cardhead"><h2>Orientation call</h2>
-          <button type="button" className="abtn" onClick={newCall}>+ New call sheet</button>
+        <div className="cprof-col">
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Orientation call</h2>
+              <button type="button" className="abtn" onClick={newCall}>+ New call sheet</button>
+            </div>
+            {d.calls.length === 0 && <p className="gcard-meta">Start a sheet when you&apos;re on the call. Their inquiry stays on the left; the sheet saves as you type.</p>}
+            {d.calls.map((call) => (
+              <CallSheet key={call.id} call={call} client={c} open={openCall === call.id} onToggle={() => setOpenCall(openCall === call.id ? null : call.id)} onDelete={() => deleteCall(call)} onError={fail} />
+            ))}
+          </section>
+
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Shoots</h2>
+              <Link className="achip" href={`/portal/admin/shoots?new=1&name=${encodeURIComponent(c.name)}&email=${encodeURIComponent(c.email)}&phone=${encodeURIComponent(c.phone)}&kind=${type}`}>+ Plan a shoot</Link>
+            </div>
+            {d.shoots.length === 0 ? <p className="gcard-meta">None planned.</p> : (
+              <ul className="cprof-list">{d.shoots.map((s) => <li key={s.id}><strong>{s.title}</strong> <span className="gcard-meta">· {s.status}{s.date ? ` · ${fmt(s.date)}` : ""}{s.start_time ? ` ${s.start_time}` : ""}{s.place_label ? ` · ${s.place_label}` : ""}</span></li>)}</ul>
+            )}
+          </section>
+
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Galleries</h2></div>
+            {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
+              <ul className="cprof-list">{d.galleries.map((g) => (
+                <li key={g.id + (g.shared ? "-s" : "")}><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
+                  <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a></span></li>
+              ))}</ul>
+            )}
+          </section>
+
+          {d.payments.length > 0 && (
+            <section className="cprof-card">
+              <div className="cprof-cardhead"><h2>Payments</h2></div>
+              <ul className="cprof-list">{d.payments.map((p) => <li key={p.id}><strong>{money(p.amount_cents)}</strong> <span className="gcard-meta">· {fmt(p.paid_on)}{p.note ? ` · ${p.note}` : ""}</span></li>)}</ul>
+            </section>
+          )}
         </div>
-        {d.calls.length === 0 && <p className="gcard-meta">Start a sheet when you&apos;re on the call. It saves as you type.</p>}
-        {d.calls.map((call) => (
-          <CallSheet key={call.id} call={call} client={c} open={openCall === call.id} onToggle={() => setOpenCall(openCall === call.id ? null : call.id)} onDelete={() => deleteCall(call)} onError={fail} />
-        ))}
-      </section>
-
-      <section className="cprof-card">
-        <div className="cprof-cardhead"><h2>Shoots</h2>
-          <Link className="achip" href={`/portal/admin/shoots?new=1&name=${encodeURIComponent(c.name)}&email=${encodeURIComponent(c.email)}&phone=${encodeURIComponent(c.phone)}&kind=${type}`}>+ Plan a shoot</Link>
-        </div>
-        {d.shoots.length === 0 ? <p className="gcard-meta">None planned.</p> : (
-          <ul className="cprof-list">{d.shoots.map((s) => <li key={s.id}><strong>{s.title}</strong> <span className="gcard-meta">· {s.status}{s.date ? ` · ${fmt(s.date)}` : ""}{s.start_time ? ` ${s.start_time}` : ""}{s.place_label ? ` · ${s.place_label}` : ""}</span></li>)}</ul>
-        )}
-      </section>
-
-      <section className="cprof-card">
-        <div className="cprof-cardhead"><h2>Galleries</h2></div>
-        {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
-          <ul className="cprof-list">{d.galleries.map((g) => (
-            <li key={g.id + (g.shared ? "-s" : "")}><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
-              <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a></span></li>
-          ))}</ul>
-        )}
-      </section>
-
-      {(d.payments.length > 0 || d.messages.length > 0) && (
-        <section className="cprof-card">
-          <div className="cprof-cardhead"><h2>Money &amp; messages</h2></div>
-          {d.payments.length > 0 && <ul className="cprof-list">{d.payments.map((p) => <li key={p.id}><strong>{money(p.amount_cents)}</strong> <span className="gcard-meta">· {fmt(p.paid_on)}{p.note ? ` · ${p.note}` : ""}</span></li>)}</ul>}
-          {d.messages.map((m) => <Answers key={m.id} item={m} title={`${m.summary || m.subject || m.kind} · ${fmt(m.created_at)}`} closed />)}
-        </section>
-      )}
+      </div>
     </div>
   );
 }
@@ -205,8 +236,13 @@ function CallSheet({ call, client, open, onToggle, onDelete, onError }) {
               <label key={k} className={"achip" + (checks[k] ? " is-done" : "")}><input type="checkbox" checked={!!checks[k]} onChange={(e) => setChecks({ ...checks, [k]: e.target.checked })} /> {k}</label>
             ))}
           </div>
-          {def.prompts.map((q, i) => (
-            <label key={q} className="callsheet-q"><span>{i + 1}. {q}</span><textarea rows={2} value={answers[q] || ""} onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })} /></label>
+          {def.sections.map((sec) => (
+            <div key={sec.title} className="callsheet-sec">
+              <div className="kick-sm">{sec.title}</div>
+              {sec.prompts.map((q) => (
+                <label key={q} className="callsheet-q"><span>{q}</span><textarea rows={2} value={answers[q] || ""} onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })} /></label>
+              ))}
+            </div>
           ))}
           <label className="callsheet-q"><span>Anything else</span><textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
           <div className="gcard-actions"><button type="button" className="achip achip-danger" onClick={onDelete}>Delete sheet</button></div>

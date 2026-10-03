@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
 
 async function api(payload) {
@@ -17,6 +18,7 @@ async function api(payload) {
 const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
 
 export default function ClientsBoard({ initial, emailReady }) {
+  const router = useRouter();
   const [clients, setClients] = useState(initial);
   const [query, setQuery] = useState("");
   const [checked, setChecked] = useState({});
@@ -54,6 +56,10 @@ export default function ClientsBoard({ initial, emailReady }) {
 
   async function copy(text, label) {
     try { await navigator.clipboard.writeText(text); say(`${label} copied`); } catch { window.prompt("Copy:", text); }
+  }
+  // Someone who only inquired: put them on the roster, then open their profile.
+  async function openLead(c) {
+    try { const r = await api({ action: "ensure", email: c.email, name: c.name, phone: c.phone }); router.push(`/portal/admin/clients/${r.id}`); } catch (err) { fail(err); }
   }
   async function add(e) {
     e.preventDefault();
@@ -150,27 +156,29 @@ export default function ClientsBoard({ initial, emailReady }) {
       <ul className="clients-list">
         {shown.map((c) => {
           const isOpen = open === c.id;
+          const key = c.id || `lead-${c.email}`;
           return (
-            <li key={c.id} className={"client" + (isOpen ? " is-open" : "")}>
+            <li key={key} className={"client" + (isOpen ? " is-open" : "") + (c.lead ? " is-lead" : "")}>
               <div className="client-row">
-                <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${c.email}`} />
-                <button type="button" className="client-main" onClick={() => setOpen(isOpen ? null : c.id)}>
+                {c.lead ? <span className="client-leaddot" title="Inquired — not on the roster yet" /> : <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${c.email}`} />}
+                <button type="button" className="client-main" onClick={() => c.lead ? openLead(c) : setOpen(isOpen ? null : c.id)}>
                   <strong>{c.name || c.email} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}</strong>
                   <span className="gcard-meta">{c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
                   <span className="gcard-meta">
-                    {c.galleries.length} {c.galleries.length === 1 ? "gallery" : "galleries"}
-                    {" · "}{c.account ? (c.account.lastSignIn ? `logs in · last ${fmt(c.account.lastSignIn)}` : "has a login · never signed in") : "no login yet — share link only"}
+                    {c.lead ? `Inquired ${fmt(c.created_at)} · not on the roster yet` : null}
+                    {!c.lead && <>{c.galleries.length} {c.galleries.length === 1 ? "gallery" : "galleries"}</>}
+                    {!c.lead && " · "}{!c.lead && (c.account ? (c.account.lastSignIn ? `logs in · last ${fmt(c.account.lastSignIn)}` : "has a login · never signed in") : "no login yet — share link only")}
                     {c.email_opt_out && <> · <em>unsubscribed</em></>}
                   </span>
                 </button>
                 <div className="client-quick">
-                  <Link className="achip achip-primary" href={`/portal/admin/clients/${c.id}`}>Profile</Link>
+                  {c.lead ? <button type="button" className="achip achip-primary" onClick={() => openLead(c)}>Profile</button> : <Link className="achip achip-primary" href={`/portal/admin/clients/${c.id}`}>Profile</Link>}
                   <a className="achip" href={`mailto:${c.email}`}>Email</a>
                   {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
                 </div>
               </div>
 
-              {isOpen && (
+              {isOpen && !c.lead && (
                 <div className="client-detail" key={`${c.id}-${c.name}-${c.email}-${c.phone}`}>
                   <div className="client-fields">
                     <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && save(c, { name: e.target.value })} /></label>

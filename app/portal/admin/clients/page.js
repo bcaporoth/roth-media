@@ -6,7 +6,7 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { resendConfigured } from "../../../../lib/resend";
-import { clientStage, clientType } from "../../../../lib/intake";
+import { clientStage, clientType, INQUIRY_KINDS } from "../../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -52,14 +52,26 @@ export default async function ClientsPage() {
   const subsBy = {};
   const shootsBy = {};
   try {
-    const { data: subs } = await db.from("submissions").select("kind, status, created_at, email, utm").not("kind", "in", "(partner,partner_lead,partner_month)").order("created_at", { ascending: false }).limit(2000);
+    const { data: subs } = await db.from("submissions").select("kind, status, created_at, email, name, phone, utm").not("kind", "in", "(partner,partner_lead,partner_month)").order("created_at", { ascending: false }).limit(2000);
     for (const s of subs || []) (subsBy[(s.email || "").toLowerCase()] ||= []).push(s);
   } catch {}
   try {
     const { data: shoots } = await db.from("shoots").select("kind, status, client_email");
     for (const s of shoots || []) (shootsBy[(s.client_email || "").toLowerCase()] ||= []).push(s);
   } catch {}
-  const initial = (clients || []).map((c) => {
+  // People who reached out (quote/contact/card/booking/intake) but aren't on the roster yet.
+  const onRoster = new Set((clients || []).map((c) => c.email.toLowerCase()));
+  const leads = [];
+  const seen = new Set();
+  for (const [email, subs] of Object.entries(subsBy)) {
+    if (!email || onRoster.has(email) || seen.has(email) || email === "brandon@rothventures.co") continue;
+    const inq = subs.find((s) => [...INQUIRY_KINDS, "intake"].includes(s.kind));
+    if (!inq) continue;
+    seen.add(email);
+    leads.push({ id: null, email, name: inq.name || "", phone: inq.phone || "", notes: "", galleries: [], account: null, lead: true, created_at: inq.created_at, stage: clientStage({ subs, shoots: shootsBy[email] || [], galleries: [] }), type: clientType({ subs, shoots: shootsBy[email] || [] }), lastTouch: subs[0]?.created_at || null });
+  }
+  const initial = [...leads, ...(clients || [])].map((c) => {
+    if (c.lead) return c;
     const key = c.email.toLowerCase();
     const subs = subsBy[key] || [];
     const shoots = shootsBy[key] || [];
@@ -72,7 +84,7 @@ export default async function ClientsPage() {
       type: clientType({ subs, shoots }),
       lastTouch: subs[0]?.created_at || null,
     };
-  });
+  }).sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
   const newCount = await newLeadCount();
 
   return (
