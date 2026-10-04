@@ -9,7 +9,7 @@ import Player from "../components/home/Player";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME } from "../lib/site";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
-import { autoDeal, applyDeal } from "../lib/deals";
+import { autoDeal, autoDealFor, applyDeal } from "../lib/deals";
 import { videoUrl } from "../lib/media";
 
 export const metadata = {
@@ -180,6 +180,7 @@ function Skip({ label, links }) {
 
 export default function CinemaHome() {
   const deal = autoDeal();
+  const bizDeal = autoDealFor("business", "day"); // null while the special skips business
   const weddingAddons = ADDONS.wedding.filter((a) => !a.hidden);
   const weddings = [...PACKAGES.wedding].sort((a, b) => Number(!!b.popular) - Number(!!a.popular));
   const today = new Date().toISOString().slice(0, 10);
@@ -566,10 +567,10 @@ export default function CinemaHome() {
                 Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} +${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""}`).join(" · ")}.
                 The price is confirmed in writing before we shoot.
               </p>
-              {deal && (
+              {bizDeal && (
                 <p className="cin-offer">
-                  <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —{" "}
-                  {BIZ.map((p) => `${p.name} ${money(applyDeal(p.price, deal))}`).join(", ")}. Applied to your quote automatically.
+                  <strong>Booked by {bizDeal.endsLabel}:</strong> the {bizDeal.label.toLowerCase()} takes {bizDeal.pct}% off —{" "}
+                  {BIZ.map((p) => `${p.name} ${money(applyDeal(p.price, bizDeal))}`).join(", ")}. Applied to your quote automatically.
                 </p>
               )}
             </div>

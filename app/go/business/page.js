@@ -21,8 +21,8 @@ export default function BusinessAdPage() {
           <a href="#plan" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block bz-go-jump">Get my content plan</a>
           <video className="bz-go-video" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline />
           <ul className="cx-rows bz-go-prices">
-            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">promo + 8 reels + 15–30 photos</span><strong className="cx-row-price"><DealPrice price={day.price} /></strong></li>
-            <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">8 reels + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} /></strong></li>
+            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">promo + 8 reels + 15–30 photos</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
+            <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">8 reels + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} category="business" packageId={mini.id} /></strong></li>
           </ul>
           <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks, ready to post</p>
         </div>

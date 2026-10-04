@@ -113,14 +113,14 @@ export default function CardPage() {
 
           <section className="mx-card-sec cx-reveal">
             <h2 className="cx-h2">The menu</h2>
-            {deal && <p className="cx-offer"><strong>{deal.label}:</strong> {deal.pct}% off every shoot through {deal.endsLabel}.</p>}
+            {deal && <p className="cx-offer"><strong>{deal.label}:</strong> {deal.pct}% off weddings and portraits through {deal.endsLabel}.</p>}
             {CATEGORIES.map((c) => (
               <div key={c.id} className="mx-menu">
                 <h3 className="cx-kick">{MENU_LABEL[c.id] || c.title}</h3>
                 <div className="mx-menu-list">
                   {PACKAGES[c.id].map((pkg) => (
                     <CardLink key={pkg.id} className="mx-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
-                      <span className="mx-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} /></b></span>
+                      <span className="mx-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} category={c.id} packageId={pkg.id} /></b></span>
                       <span className="mx-pkg-scope">{pkg.scope}</span>
                       <ul className="cx-list">{pkg.get.slice(0, 3).map((g) => <li key={g}>{g}</li>)}</ul>
                       <em className="mx-pkg-go">{stripeConfigured ? "See everything + book online" : "See everything + get a quote"} <Arrow /></em>

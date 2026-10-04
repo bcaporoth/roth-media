@@ -524,7 +524,7 @@ export default function CloserHome() {
 
           {deal && (
             <p className="clo-start-offer">
-              <strong>Launch offer</strong> {deal.pct}% off shoots booked by {deal.endsLabel}. It’s applied in your quote automatically.
+              <strong>Launch offer</strong> {deal.pct}% off wedding and portrait shoots booked by {deal.endsLabel}. It’s applied in your quote automatically.
             </p>
           )}
         </section>

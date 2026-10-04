@@ -6,9 +6,8 @@ import Reveal from "../../components/Reveal";
 import BizFilm from "../../components/BizFilm";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
-import DealPill from "../../components/DealPill";
 import DealPrice from "../../components/DealPrice";
-import { autoDeal, applyDeal } from "../../lib/deals";
+import { autoDealFor, applyDeal } from "../../lib/deals";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
@@ -91,10 +90,9 @@ const FAQ_LD = {
 };
 
 export default function BusinessPage() {
-  const deal = autoDeal();
+  const deal = autoDealFor("business", "day"); // null while the special skips business
   return (
     <>
-      <DealPill href={QUOTE} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
@@ -190,7 +188,7 @@ export default function BusinessPage() {
                     <span className="bz-pkg-name">{p.name}</span>
                     {p.popular && <span className="cx-flag">Most booked</span>}
                   </span>
-                  <span className="bz-pkg-price"><DealPrice price={p.price} />{p.per || ""} <small>starting at</small></span>
+                  <span className="bz-pkg-price"><DealPrice price={p.price} category="business" packageId={p.id} />{p.per || ""} <small>starting at</small></span>
                   <span className="bz-pkg-scope">{p.scope}</span>
                   <span className="cx-kick bz-pkg-you">You get</span>
                   <ul className="cx-list">{p.get.map((g) => <li key={g}>{g}</li>)}</ul>

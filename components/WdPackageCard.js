@@ -13,7 +13,7 @@ export default function WdPackageCard({ p, href }) {
           <span className="wd-pkg-scope">{p.scope}</span>
         </span>
         <span className="wd-pkg-price">
-          <span className="cx-num"><DealPrice price={p.price} /></span>
+          <span className="cx-num"><DealPrice price={p.price} category="wedding" packageId={p.id} /></span>
           <small>{p.per ? p.per : "starting at"}</small>
         </span>
       </span>
