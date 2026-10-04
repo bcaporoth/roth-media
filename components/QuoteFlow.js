@@ -177,7 +177,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
         <p className="cx-kick">Quote sent</p>
         <h2 className="cx-h2">Got it — your quote is on its way.</h2>
         <p className="cx-lede">
-          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. Check your email — the details are already there.
+          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
         </p>
         <BookCall name={sent.who} email={sent.email} from="quote" />
       </div>
@@ -376,7 +376,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
       <div className="cform-success qflow-exit" role="status" ref={topRef}>
         <p className="cform-success-title">Got it — your quote is on its way.</p>
         <p className="cform-success-body">
-          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. Check your email — the details are already there.
+          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
         </p>
         <BookCall name={sent.who} email={sent.email} from="quote" />
       </div>
