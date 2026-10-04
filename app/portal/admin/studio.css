@@ -364,3 +364,8 @@ a.trow:hover strong { color: var(--clay); }
   .st-more-body { padding: 0 0.6rem 0.2rem; }
 }
 /* == /stats-money == */
+
+/* == dark page == */
+/* In the dark look the page behind the shell (below a short screen's footer) is dark too. */
+body:has(.admin-shell.is-dark) { background: #191612; }
+/* == /dark page == */

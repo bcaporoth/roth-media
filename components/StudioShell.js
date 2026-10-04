@@ -12,7 +12,9 @@ import "../app/portal/admin/studio.css";
 // the section you're in, and the flag that keeps the owner's own browsing out
 // of the stats.
 
-const LOOK_KEY = "rm-admin-look";
+// "-2": the Oct 2026 refresh made dark the default, so an old saved "light" from
+// before the refresh no longer applies. Picking Light again in Look is remembered.
+const LOOK_KEY = "rm-admin-look-2";
 
 // Seven tabs that fit a phone. A tab with `subs` shows them as a second row
 // while you're inside it. `key` in a sub is the `active` name its page passes
