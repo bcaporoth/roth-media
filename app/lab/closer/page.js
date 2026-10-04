@@ -495,9 +495,9 @@ export default function CloserHome() {
               </div>
             </div>
             <div className="clo-start-side">
-              <p className="clo-start-k">Or let me go first</p>
-              <p className="clo-start-quote">“I’ll buy your product, shoot it, and send you the photos. No pitch, no strings. If you love them, we talk.”</p>
-              <a href={smsWith("Hi Brandon — I’d like to take you up on the free product shoot.")} className="clo-link">Text me your shop’s name <Arrow /></a>
+              <p className="clo-start-k">Or we’ve already met</p>
+              <p className="clo-start-quote">“Odds are I’ve already walked into your place on my day off, asking if I could shoot something for you.”</p>
+              <a href={smsWith("Hi Brandon — come by the shop. Here’s where we are:")} className="clo-link">Tell me where to stop in <Arrow /></a>
             </div>
           </div>
 
@@ -803,9 +803,9 @@ export default function CloserHome() {
               I’m all about candid work that feels real. The good moments usually happen in the flow — when you’re laughing, moving, working, or forgetting the camera is even there.
             </p>
             <div className="clo-offer clo-rise">
-              <p className="clo-offer-k">My favorite way to start with a business</p>
-              <p className="clo-offer-t">“I’ll buy your product, shoot it, and send you the photos. No pitch, no strings. If you love them, we talk.”</p>
-              <a href={smsWith("Hi Brandon — I’d like to take you up on the free product shoot.")} className="clo-link">Text me your shop’s name <Arrow /></a>
+              <p className="clo-offer-k">If you run a business around here</p>
+              <p className="clo-offer-t">“I probably walked into your store in my free time to see if I could shoot something for you, lol. I just love the random acts of getting to know people and connecting with them — and helping everybody prosper.”</p>
+              <a href={smsWith("Hi Brandon — come by the shop. Here’s where we are:")} className="clo-link">Haven’t made it to yours yet? Tell me where <Arrow /></a>
             </div>
             <p className="clo-sig clo-rise">— {OWNER_NAME}, local to the Valley</p>
           </div>

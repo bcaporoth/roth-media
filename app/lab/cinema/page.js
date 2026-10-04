@@ -468,8 +468,9 @@ export default function CinemaHome() {
             </div>
             <div className="cin-bento-say cin-rise">
               <blockquote>
-                “I’ll buy your product, shoot it, and send you the photos. No
-                pitch, no strings. If you love them, we talk.”
+                “I probably walked into your store in my free time to see if
+                I could shoot something for you, lol. I just love getting to
+                know people — and helping everybody prosper.”
                 <cite>— Brandon</cite>
               </blockquote>
               <a href={SMS_HREF} className="cin-link">Text Brandon <Arrow /></a>

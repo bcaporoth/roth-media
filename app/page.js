@@ -276,9 +276,10 @@ export default function Home() {
               what actually feels like your story.
             </p>
             <p>
-              My favorite way to start working with a business? I&apos;ll
-              buy your product, shoot it, and send you the photos. No pitch,
-              no strings. If you love them, we talk.
+              Run a business around here? I probably walked into your store
+              in my free time to see if I could shoot something for you, lol.
+              I just love the random acts of getting to know people and
+              connecting with them — and helping everybody prosper.
             </p>
             <p>I&apos;m local to the Valley, and I&apos;d love to work with you.</p>
             <div className="sig">— Brandon Roth</div>
