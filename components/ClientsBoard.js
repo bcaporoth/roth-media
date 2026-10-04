@@ -179,7 +179,7 @@ export default function ClientsBoard({ initial, emailReady }) {
           return (
             <li key={key} className={"client" + (isOpen ? " is-open" : "") + (c.lead ? " is-lead" : "")}>
               <div className="client-row">
-                {c.lead ? <span className="client-leaddot" title="Inquired — not on the roster yet" /> : <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${c.email}`} />}
+                {c.lead ? <span className="client-leaddot" title="Inquired — not on the roster yet" /> : <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${isNoEmail(c.email) ? c.name || "client" : c.email}`} />}
                 <button type="button" className="client-main" onClick={() => c.lead ? openLead(c) : setOpen(isOpen ? null : c.id)}>
                   <strong>{c.name || (isNoEmail(c.email) ? "Unnamed" : c.email)} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}</strong>
                   <span className="gcard-meta">{isNoEmail(c.email) ? "no email yet" : c.email}{c.phone ? ` · ${c.phone}` : ""}</span>

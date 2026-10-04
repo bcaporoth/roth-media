@@ -5,6 +5,7 @@ import GuestEventsPanel from "./GuestEventsPanel";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
 import GalleryManage from "./GalleryManage";
+import { isNoEmail } from "../lib/no-email";
 import { useRouter } from "next/navigation";
 
 // Studio → Galleries: compact counts, search/sort, cover-photo cards, the
@@ -182,9 +183,9 @@ export default function AdminDashboard({ galleries }) {
                 <div className="gcard-body">
                   <strong className="gcard-title">{g.title}</strong>
                   <span className="gcard-meta">
-                    {g.clientName || g.clientEmail}
+                    {g.clientName || (isNoEmail(g.clientEmail) ? "no email yet" : g.clientEmail)}
                     {g.clientName && g.clientEmail
-                      ? ` · ${g.clientEmail}`
+                      ? ` · ${isNoEmail(g.clientEmail) ? "no email yet" : g.clientEmail}`
                       : ""}
                   </span>
                   <span className="gcard-meta">

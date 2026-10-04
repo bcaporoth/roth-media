@@ -13,6 +13,7 @@ import DesignPanel from "./DesignPanel";
 import PremierePanel from "./PremierePanel";
 import ReviewButton from "./ReviewButton";
 import TypedConfirm from "./TypedConfirm";
+import { isNoEmail } from "../lib/no-email";
 
 async function api(payload) {
   const res = await fetch("/api/admin/gallery", {
@@ -292,7 +293,7 @@ export default function GalleryManage({ gallery, open, onChanged }) {
             {t.label}
           </button>
         ))}
-        <ReviewButton galleryId={g.id} clientEmail={g.clientEmail} requestedAt={g.reviewRequestedAt} />
+        <ReviewButton galleryId={g.id} clientEmail={isNoEmail(g.clientEmail) ? "" : g.clientEmail} requestedAt={g.reviewRequestedAt} />
       </div>
       <div className="gmanage-body">
         {pane(

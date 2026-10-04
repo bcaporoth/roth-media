@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { timing, fmt12 } from "../lib/sun";
 import { mapsUrl, HOME } from "../lib/geo";
 import { GROUPS, GROUP_LABEL, groupOf } from "../lib/shoot-guides";
+import { isNoEmail } from "../lib/no-email";
 import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
 import StudioCalendar, { gcalUrl } from "./StudioCalendar";
 
@@ -497,7 +498,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
             {s.address && <a className="achip" href={mapsUrl(s.address, s.lat, s.lng)} target="_blank" rel="noreferrer">Directions ↗</a>}
             {s.client_phone && <a className="achip" href={`sms:${s.client_phone.replace(/[^\d+]/g, "")}`}>Text {s.client_name.split(" ")[0] || "client"}</a>}
             {s.client_phone && <a className="achip" href={`tel:${s.client_phone.replace(/[^\d+]/g, "")}`}>Call</a>}
-            {s.client_email && <a className="achip" href={`mailto:${s.client_email}`}>Email</a>}
+            {s.client_email && !isNoEmail(s.client_email) && <a className="achip" href={`mailto:${s.client_email}`}>Email</a>}
             {s.address && !s.lat && <button type="button" className="achip" onClick={() => (onRelocate ? onRelocate(s) : api({ action: "relocate", id: s.id }).then(() => onUpdate(s.id, {}, "Located")).catch((e) => alert(e.message)))}>Find on map</button>}
             {s.date && s.status !== "cancelled" && <a className="achip" href={gcalUrl(s)} target="_blank" rel="noreferrer">+ Google Cal</a>}
             <select className="achip" value={s.status} onChange={(e) => onUpdate(s.id, { status: e.target.value })}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
