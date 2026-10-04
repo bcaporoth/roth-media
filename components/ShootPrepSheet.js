@@ -2,20 +2,12 @@
 // browser. Pure render: the page that wraps it does the admin check and
 // the data fetch. With no shoot it prints the blank guide for a type.
 
-import { sunsetLocal, resolveTimeNote, shiftTime, fmt12 } from "../lib/sun";
-import { HOME } from "../lib/geo";
+import { timing, fmt12 } from "../lib/sun";
 import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL } from "../lib/shoot-guides";
 import { OWNER_NAME, PHONE } from "../lib/site";
 
-const KIND_LABEL = { wedding: "Wedding / engagement", family: "Family / portraits", business: "Content Day", event: "Event", other: "Shoot" };
+import { SHOOT_KIND_LABEL as KIND_LABEL } from "../lib/studio-labels";
 
-function timing(s) {
-  if (!s?.date) return { sunset: null, golden: "", start: s?.start_time || "", leave: "" };
-  const sunset = s.lat && s.lng ? sunsetLocal(s.lat, s.lng, s.date) : sunsetLocal(HOME.lat, HOME.lng, s.date);
-  const start = s.start_time || resolveTimeNote(s.time_note, sunset) || "";
-  const leave = start && s.drive_min ? shiftTime(start, -(s.drive_min + 20)) : "";
-  return { sunset, golden: sunset ? shiftTime(sunset, -60) : "", start, leave };
-}
 const longDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date TBD");
 
 export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
@@ -29,14 +21,14 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
   const poses = items.filter((c) => c.group === "poses");
   const flowAll = items.filter((c) => c.group === "flow");
   const flow = [...flowAll.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...flowAll.filter((c) => !c.time)];
-  const t = timing(shoot);
+  const t = timing(shoot, { blankWithoutDate: true });
   const title = shoot ? shoot.title : `${guide.label} — prep sheet`;
 
   return (
     <article className="sprint">
       <header className="sprint-head">
         <div>
-          <span className="sprint-kick">Roth Media · {KIND_LABEL[k]} · prep sheet</span>
+          <span className="sprint-kick">Roth Media · {k && k !== "other" && KIND_LABEL[k] ? `${KIND_LABEL[k]} · ` : ""}prep sheet</span>
           <h1>{title}</h1>
           <p className="sprint-when">{shoot ? longDate(shoot.date) : "Date: ______________________"}</p>
         </div>

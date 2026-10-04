@@ -20,8 +20,10 @@ export default async function ClientsPage() {
   const db = supabaseAdmin();
   let { data: clients, error } = await db
     .from("clients")
-    .select("id, email, name, phone, notes, created_at")
+    .select("id, email, name, phone, notes, email_opt_out, created_at")
     .order("name", { ascending: true });
+  // email_opt_out arrives with clients-optout.sql, phone/notes with clients.sql — step down, same as the API.
+  if (error) ({ data: clients, error } = await db.from("clients").select("id, email, name, phone, notes, created_at").order("name", { ascending: true }));
   if (error) ({ data: clients } = await db.from("clients").select("id, email, name, created_at").order("name"));
   const { data: galleries } = await db
     .from("galleries")

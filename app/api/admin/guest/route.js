@@ -112,6 +112,36 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
+  // What guests have sent for one event, newest first, with small previews —
+  // feeds the "Review uploads" list (download / remove).
+  if (body.action === "list-uploads") {
+    const { eventId } = body;
+    if (!/^[0-9a-f-]{36}$/i.test(String(eventId || ""))) return bad("Bad request");
+    const { data: rows, error } = await db
+      .from("guest_uploads")
+      .select("id, guest_name, kind, filename, key, web_key, bytes, created_at")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+    if (error) return bad(error.message, 500);
+    const uploads = await Promise.all(
+      (rows || []).map(async (r) => ({
+        id: r.id,
+        guestName: r.guest_name || "",
+        kind: r.kind,
+        filename: r.filename,
+        bytes: Number(r.bytes || 0),
+        createdAt: r.created_at,
+        // Photos preview from their web-size copy; videos and messages show a
+        // play tile (their file is the video itself — too heavy for a list).
+        thumbUrl:
+          r.kind === "photo"
+            ? await signedUrl(r.web_key || r.key, { expiresIn: 3600 }).catch(() => null)
+            : null,
+      }))
+    );
+    return NextResponse.json({ uploads });
+  }
+
   if (body.action === "delete-upload") {
     const { uploadId } = body;
     if (!uploadId) return bad("Bad request");

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Per-gallery cover chooser for Studio Admin. Pick any photo already in the
-// album, or upload a custom image (resized to web/thumb in the browser and
+// gallery, or upload a custom image (resized to web/thumb in the browser and
 // PUT straight to R2 via presigned URLs — same pipeline as AdminUploader).
 
 async function api(payload) {
@@ -32,13 +32,29 @@ async function resizeToJpeg(file, maxDim, quality) {
   );
 }
 
-export default function CoverPicker({ galleryId, cover }) {
-  const [open, setOpen] = useState(false);
+// `embedded`: rendered inside the card's Manage drawer — always open, no
+// toggle button of its own.
+export default function CoverPicker({ galleryId, cover, embedded = false }) {
+  const [open, setOpen] = useState(embedded);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState(null);
   const [current, setCurrent] = useState(cover || null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+
+  async function loadItems() {
+    setLoading(true);
+    try {
+      const j = await api({ action: "list-media", galleryId });
+      setItems(j.items || []);
+      setCurrent(j.cover || null);
+    } catch (e) {
+      setMsg(e.message);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function openPicker() {
     if (open) {
@@ -47,20 +63,13 @@ export default function CoverPicker({ galleryId, cover }) {
     }
     setOpen(true);
     setMsg("");
-    if (items === null) {
-      setLoading(true);
-      try {
-        const j = await api({ action: "list-media", galleryId });
-        setItems(j.items || []);
-        setCurrent(j.cover || null);
-      } catch (e) {
-        setMsg(e.message);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (items === null) await loadItems();
   }
+
+  useEffect(() => {
+    if (embedded) loadItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedded, galleryId]);
 
   async function choose(coverName) {
     setBusy(true);
@@ -113,10 +122,12 @@ export default function CoverPicker({ galleryId, cover }) {
   const photos = (items || []).filter((i) => i.kind === "photo" && i.thumbUrl);
 
   return (
-    <div className="cover-picker">
-      <button type="button" className="cover-picker-toggle" onClick={openPicker}>
-        {open ? "Close" : "Set cover"}
-      </button>
+    <div className={"cover-picker" + (embedded ? " is-embedded" : "")}>
+      {!embedded && (
+        <button type="button" className="cover-picker-toggle" onClick={openPicker}>
+          {open ? "Close" : "Set cover"}
+        </button>
+      )}
       {open && (
         <div className="cover-picker-panel">
           {loading && <p className="cover-picker-hint">Loading photos…</p>}
@@ -142,7 +153,7 @@ export default function CoverPicker({ galleryId, cover }) {
           )}
           {!loading && photos.length === 0 && (
             <p className="cover-picker-hint">
-              No photos in this album — upload a custom cover below.
+              No photos in this gallery — upload a custom cover below.
             </p>
           )}
           <label className="cover-picker-upload">

@@ -10,34 +10,41 @@
 // library and edited per job (add, remove, tick, pull in another list).
 // "Print prep sheet" opens a one-page version to print or save as PDF.
 //
+// Delivery clock: once a shoot has happened it shows what's owed — the
+// sneak peek (48 hours) and the finished work (film six weeks, galleries
+// four, business content two — lib/delivery.js) — with one-tap "sent" /
+// "delivered". Everything still owed is listed at the top, most urgent first.
+//
+// List | Month: the month grid from the Calendar tab, right here; tapping
+// an event opens that shoot. ?open=<id> opens and scrolls to a shoot.
+//
 // ClientShoots is the same thing scoped to one person, for their profile.
 
-import { useEffect, useMemo, useState } from "react";
-import { sunsetLocal, resolveTimeNote, shiftTime, fmt12 } from "../lib/sun";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { timing, fmt12 } from "../lib/sun";
 import { mapsUrl, HOME } from "../lib/geo";
 import { GROUPS, GROUP_LABEL, groupOf } from "../lib/shoot-guides";
+import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
+import StudioCalendar, { gcalUrl } from "./StudioCalendar";
 
-async function api(payload) {
-  const res = await fetch("/api/admin/shoots", { method: payload ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: payload ? JSON.stringify(payload) : undefined });
+async function api(payload, { keepalive = false } = {}) {
+  const res = await fetch("/api/admin/shoots", { method: payload ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: payload ? JSON.stringify(payload) : undefined, keepalive });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  if (!res.ok) { const err = new Error(json.error || `Request failed (${res.status})`); err.status = res.status; err.needsMigration = Boolean(json.needsMigration); throw err; }
   return json;
 }
 
-const KIND_LABEL = { wedding: "Wedding", family: "Family", business: "Business", event: "Event", other: "Other" };
-const STATUS_LABEL = { planned: "Planned", confirmed: "Confirmed", done: "Done", cancelled: "Cancelled" };
+import { SHOOT_KIND_LABEL as KIND_LABEL, SHOOT_STATUS_LABEL as STATUS_LABEL } from "../lib/studio-labels";
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "No date yet");
 const daysOut = (d) => (d ? Math.round((new Date(`${d}T12:00:00`) - new Date()) / 86400000) : null);
 
-// Everything time-related for one shoot, derived on the client.
-function timing(s) {
-  const sunset = s.lat && s.lng && s.date ? sunsetLocal(s.lat, s.lng, s.date) : s.date ? sunsetLocal(HOME.lat, HOME.lng, s.date) : null;
-  const start = s.start_time || resolveTimeNote(s.time_note, sunset) || "";
-  const leave = start && s.drive_min ? shiftTime(start, -(s.drive_min + 20)) : "";
-  return { sunset, golden: sunset ? shiftTime(sunset, -60) : "", start, leave, resolved: !s.start_time && Boolean(start) };
-}
+const SQL_HINT = "Run supabase/studio-2.sql once (Supabase → SQL editor) to tick deliveries off.";
+// Same order the server sends: by date, undated last.
+const byDate = (a, b) => (a.date && b.date ? a.date.localeCompare(b.date) : a.date ? -1 : b.date ? 1 : 0);
 
-// Shoots data + the three writes, shared by the board and the client profile.
+// Shoots data + the writes, shared by the board and the client profile.
+// A write puts the row the server sent back straight into the list — no
+// refetch of shoots + leads + galleries + playbook for every change.
 function useShoots() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -46,7 +53,13 @@ function useShoots() {
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState("");
   const refresh = () => api().then(setData).catch((e) => setError(e.message));
-  const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 2500); };
+  const say = useCallback((m) => { setFlash(m); setTimeout(() => setFlash(""), 2500); }, []);
+  const patch = useCallback((rows) => {
+    const list = (Array.isArray(rows) ? rows : [rows]).filter(Boolean);
+    if (!list.length) return;
+    const map = new Map(list.map((r) => [r.id, r]));
+    setData((d) => (d ? { ...d, shoots: d.shoots.map((x) => map.get(x.id) || x).sort(byDate) } : d));
+  }, []);
 
   async function create(fields) {
     setBusy(true); setError("");
@@ -55,36 +68,174 @@ function useShoots() {
   }
   async function update(id, fields, msg = "Saved ✓") {
     setBusy(true); setError("");
-    try { await api({ action: "update", id, ...fields }); await refresh(); say(msg); }
+    try { const r = await api({ action: "update", id, ...fields }); patch(r.shoot); say(msg); }
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   async function remove(s) {
     if (!window.confirm(`Delete "${s.title}"?`)) return;
     try { await api({ action: "delete", id: s.id }); setOpenId(null); await refresh(); } catch (e) { setError(e.message); }
   }
-  return { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, update, remove };
+  async function relocate(s) {
+    setError("");
+    try { const r = await api({ action: "relocate", id: s.id }); patch(r.shoot); say("Located"); } catch (e) { alert(e.message); }
+  }
+  // Delivery clock: stamp (or un-stamp) "sneak peek sent" / "delivered".
+  async function deliver(s, which, undo = false) {
+    setError("");
+    try {
+      const r = await api({ action: "deliver", id: s.id, which, undo });
+      patch(r.shoot);
+      say(undo ? "Put back on the list" : which === "sneak" ? "Sneak peek sent ✓" : "Delivered ✓");
+    } catch (e) {
+      if (e.needsMigration) setData((d) => (d ? { ...d, delivery: { ready: false } } : d));
+      setError(e.needsMigration ? SQL_HINT : e.message);
+    }
+  }
+  async function deliverBulk(ids) {
+    setError("");
+    try { const r = await api({ action: "deliver_bulk", ids }); patch(r.shoots); say(`Marked ${r.shoots.length} delivered`); }
+    catch (e) { setError(e.needsMigration ? SQL_HINT : e.message); }
+  }
+  const clock = { ready: data?.delivery?.ready === true, deliver };
+  return { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, say, patch, refresh, create, update, remove, relocate, deliverBulk, clock };
 }
 
+// The prep lists for one shoot, saved without ever losing a tick.
+//   · a tick shows instantly (local copy), the save follows
+//   · saves go one at a time, and each one sends the newest list — a slow
+//     early save can't land after, or overwrite, a later one
+//   · a failed save keeps the list and retries (and again when signal's back)
+//   · leaving the page with a save waiting sends it on the way out
+// status: "" | "saving" | "saved" | "retrying" | "failed"
+function useChecklist(s, onSaved) {
+  const server = useMemo(() => (s.checklist || []).map((c) => ({ ...c, group: groupOf(c) })), [s.checklist]);
+  const [local, setLocal] = useState(null); // null = showing what the server has
+  const [status, setStatus] = useState("");
+  const r = useRef({ list: server, pending: null, inFlight: false, timer: null, tries: 0, alive: true }).current;
+  const items = local || server;
+  const savedCb = useRef(onSaved);
+  savedCb.current = onSaved;
+  if (!r.pending && !r.inFlight) r.list = items;
+
+  const flush = useCallback(async (keepalive = false) => {
+    clearTimeout(r.timer); r.timer = null;
+    if (r.inFlight || !r.pending) return;
+    const list = r.pending;
+    r.pending = null; r.inFlight = true;
+    if (r.alive) setStatus(r.tries ? "retrying" : "saving");
+    try {
+      const out = await api({ action: "update", id: s.id, checklist: list }, { keepalive });
+      r.inFlight = false; r.tries = 0;
+      if (r.pending) return flush(); // ticks landed while this was in the air — send the newest
+      if (r.alive) setStatus("saved");
+      savedCb.current?.(out.shoot);
+    } catch (e) {
+      r.inFlight = false; r.tries += 1;
+      if (!r.pending) r.pending = list; // nothing newer waiting: this list still has to land
+      // The server said no (not a signal problem): stop hammering, offer a retry.
+      const refused = e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429;
+      if (r.alive) setStatus(refused ? "failed" : "retrying");
+      if (!refused) r.timer = setTimeout(() => flush(), Math.min(15000, 1500 * 2 ** (r.tries - 1)));
+    }
+  }, [r, s.id]);
+
+  // Take the newest list, show it now, save it shortly (so a run of ticks is one save).
+  const commit = useCallback((change) => {
+    const next = change(r.list);
+    if (next === r.list) return;
+    r.list = next; r.pending = next;
+    setLocal(next); setStatus((st) => (st === "retrying" ? st : "saving"));
+    clearTimeout(r.timer);
+    r.timer = setTimeout(() => flush(), 450);
+  }, [r, flush]);
+
+  // The server's copy changed (our own save came back, or another edit):
+  // follow it, unless there are ticks it hasn't seen yet.
+  useEffect(() => { if (!r.pending && !r.inFlight) setLocal(null); }, [r, s.checklist]);
+  useEffect(() => { if (status !== "saved") return; const t = setTimeout(() => setStatus((st) => (st === "saved" ? "" : st)), 2500); return () => clearTimeout(t); }, [status]);
+
+  useEffect(() => {
+    r.alive = true;
+    const out = () => { if (r.pending) flush(true); };
+    const hidden = () => { if (document.visibilityState === "hidden") out(); };
+    const online = () => { if (r.pending) flush(); };
+    const leaving = (e) => { if (r.pending || r.inFlight) { out(); e.preventDefault(); e.returnValue = ""; } };
+    window.addEventListener("pagehide", out);
+    document.addEventListener("visibilitychange", hidden);
+    window.addEventListener("online", online);
+    window.addEventListener("beforeunload", leaving);
+    return () => {
+      r.alive = false;
+      window.removeEventListener("pagehide", out);
+      document.removeEventListener("visibilitychange", hidden);
+      window.removeEventListener("online", online);
+      window.removeEventListener("beforeunload", leaving);
+      out(); // leaving this screen with a save waiting: send it now
+    };
+  }, [r, flush]);
+
+  return { items, commit, status, retry: () => { r.tries = 0; flush(); } };
+}
+// The same item in the newest list (the object itself, or its twin after a re-render).
+const indexOfItem = (list, item) => { const i = list.indexOf(item); return i >= 0 ? i : list.findIndex((c) => c.text === item.text && c.group === item.group && (c.time || "") === (item.time || "")); };
+
 export default function ShootsBoard() {
-  const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, update, remove } = useShoots();
+  const sh = useShoots();
+  const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, deliverBulk, clock } = sh;
   const [showPast, setShowPast] = useState(false);
   const [prefill, setPrefill] = useState(null);
+  const [view, setView] = useState("list"); // list | month
+  const [wanted, setWanted] = useState(null); // { id } a shoot to open + scroll to
+  const first = useRef(true);
   useEffect(() => {
     refresh();
-    // From a link elsewhere: ?new=1&name=&email=&phone=&kind= opens the form filled in.
     const q = new URLSearchParams(window.location.search);
+    // From a link elsewhere: ?new=1&name=&email=&phone=&kind= opens the form filled in.
     if (q.get("new") === "1") {
       setPrefill({ client_name: q.get("name") || "", client_email: q.get("email") || "", client_phone: q.get("phone") || "", kind: q.get("kind") || "" });
       setShowNew(true);
+      first.current = false;
       window.history.replaceState(null, "", "/portal/admin/shoots");
     }
+    // From the calendar (or anywhere): ?open=<shoot id> opens that shoot and scrolls to it.
+    if (/^[0-9a-f-]{36}$/.test(q.get("open") || "")) {
+      setWanted({ id: q.get("open") });
+      first.current = false;
+      window.history.replaceState(null, "", "/portal/admin/shoots");
+    } else if (q.get("view") === "month") setView("month");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const shoots = data?.shoots || [];
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayEastern(); // the Eastern calendar day, not UTC's — tonight's shoot stays "today" all evening
+  const isPast = (s) => (s.date && s.date < today) || s.status === "done" || s.status === "cancelled";
+
+  // A shoot dated today opens by itself (the flow of the day is the first list).
+  useEffect(() => {
+    if (!data || !first.current) return;
+    first.current = false;
+    const now = data.shoots.find((s) => s.date === today && s.status !== "cancelled" && s.status !== "done");
+    if (now) setOpenId(now.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  // Open a shoot wherever it sits (list view, past list unfolded) and bring it into view.
+  useEffect(() => {
+    if (!wanted || !data) return;
+    const s = data.shoots.find((x) => x.id === wanted.id);
+    if (!s) { setWanted(null); return; }
+    setView("list");
+    if (isPast(s)) setShowPast(true);
+    setOpenId(s.id);
+    const t = setTimeout(() => { document.getElementById(`shoot-${s.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setWanted(null); }, 60);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wanted, data]);
+  const reveal = (id) => setWanted({ id });
+
+  const rowProps = (s) => ({ s, open: openId === s.id, onToggle: () => setOpenId(openId === s.id ? null : s.id), onUpdate: sh.update, onRemove: sh.remove, onRelocate: sh.relocate, onPatched: sh.patch, onSay: sh.say, clock, busy, galleries: data.galleries, guides: data.guides, playbook: data.playbook });
   const upcoming = shoots.filter((s) => !s.date || s.date >= today).filter((s) => s.status !== "cancelled" && s.status !== "done");
-  const past = shoots.filter((s) => (s.date && s.date < today) || s.status === "done" || s.status === "cancelled").reverse();
+  const past = shoots.filter(isPast).reverse();
 
   if (!data && !error) return <p className="portal-empty">Loading…</p>;
   if (error && !data) return <p className="portal-empty">{error}</p>;
@@ -94,26 +245,112 @@ export default function ShootsBoard() {
       <div className="atoolbar shoots-bar">
         <button type="button" className="abtn" onClick={() => setShowNew((v) => !v)}>{showNew ? "Close" : "+ New shoot"}</button>
         <span className="gcard-meta">{upcoming.length} coming up · from {HOME.label}</span>
-        <a className="achip" href="/portal/admin/playbook">Playbook: gear, shots, flows, poses →</a>
+        <span className="sview" role="group" aria-label="View">
+          <button type="button" className={view === "list" ? "is-on" : ""} aria-pressed={view === "list"} onClick={() => setView("list")}>List</button>
+          <button type="button" className={view === "month" ? "is-on" : ""} aria-pressed={view === "month"} onClick={() => setView("month")}>Month</button>
+        </span>
         {flash && <span className="clients-flash">{flash}</span>}
       </div>
       {error && <p className="cform-error">{error}</p>}
 
       {showNew && <NewShoot prefill={prefill} leads={data.leads} guides={data.guides} busy={busy} onCreate={create} />}
 
-      {upcoming.length === 0 && !showNew && <p className="portal-empty">Nothing on the books. Hit “+ New shoot” — or start one from a lead.</p>}
+      <OwedPanel shoots={shoots} clock={clock} onOpen={reveal} onBulk={deliverBulk} tucked={shoots.some((s) => s.date === today && s.status !== "cancelled" && s.status !== "done")} />
 
-      <ul className="shoot-list">
-        {upcoming.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={update} onRemove={remove} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
-      </ul>
-
-      {past.length > 0 && (
+      {view === "month" ? (
+        <StudioCalendar shoots={shoots} onOpen={reveal} />
+      ) : (
         <>
-          <button type="button" className="achip shoots-past-toggle" onClick={() => setShowPast((v) => !v)}>{showPast ? "Hide" : "Show"} {past.length} past / done</button>
-          {showPast && <ul className="shoot-list is-past">{past.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={update} onRemove={remove} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}</ul>}
+          {upcoming.length === 0 && !showNew && <p className="portal-empty">Nothing on the books. Hit “+ New shoot” — or start one from a lead.</p>}
+
+          <ul className="shoot-list">
+            {upcoming.map((s) => <ShootRow key={s.id} {...rowProps(s)} />)}
+          </ul>
+
+          {past.length > 0 && (
+            <>
+              <button type="button" className="achip shoots-past-toggle" onClick={() => setShowPast((v) => !v)}>{showPast ? "Hide" : "Show"} {past.length} past / done</button>
+              {showPast && <ul className="shoot-list is-past">{past.map((s) => <ShootRow key={s.id} {...rowProps(s)} />)}</ul>}
+            </>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+// "Owed": every shoot that's happened and isn't delivered yet, most urgent
+// first, with the two one-tap buttons. Before studio-2.sql is run the due
+// dates still show (worked out from the shoot date) for the last 60 days of
+// shoots, with a note on how to switch the buttons on.
+const OWED_SHOWN = 3;
+const BACKLOG_DAYS = 30; // "older ones": finished work more than this far past due
+function OwedPanel({ shoots, clock, onOpen, onBulk, tucked = false }) {
+  const [all, setAll] = useState(false);
+  // On a shoot day the list folds down to its one-line summary, so today's
+  // flow is the first thing on the screen. null = follow `tucked`.
+  const [folded, setFolded] = useState(null);
+  const isFolded = folded ?? tucked;
+  const now = new Date();
+  let rows = owedList(shoots, now);
+  if (!clock.ready) { const cutoff = addDays(todayEastern(now), -60); rows = rows.filter((x) => x.shoot.date && x.shoot.date >= cutoff); }
+  if (!rows.length) return null;
+  const overdue = rows.filter((x) => x.d.overdue).length;
+  const old = rows.filter((x) => x.d.final.due && now - x.d.final.due > BACKLOG_DAYS * 86400000);
+  const shown = all ? rows : rows.slice(0, OWED_SHOWN);
+  function clearOld() {
+    if (!window.confirm(`Mark ${old.length} older shoot${old.length > 1 ? "s" : ""} as delivered? (Everything more than ${BACKLOG_DAYS} days past its due date. You can undo any one of them on its shoot.)`)) return;
+    onBulk(old.map((x) => x.shoot.id));
+  }
+  return (
+    <section className="owed" aria-label="Owed to clients">
+      <div className="owed-head">
+        <span className="kick-sm">Owed · {rows.length}</span>
+        {overdue > 0 && <span className="dchip is-over">{overdue} overdue</span>}
+        <em>Done, not delivered yet — most urgent first.</em>
+        {(tucked || folded !== null) && <button type="button" className="achip owed-fold" aria-expanded={!isFolded} onClick={() => setFolded(!isFolded)}>{isFolded ? "Show" : "Hide"}</button>}
+      </div>
+      {isFolded ? null : <>
+      {!clock.ready && <p className="owed-hint">These due dates are worked out from each shoot&apos;s date. {SQL_HINT}</p>}
+      <ul className="owed-list">
+        {shown.map(({ shoot, d }) => (
+          <li key={shoot.id} className={d.overdue ? "is-over" : ""}>
+            <button type="button" className="owed-title" onClick={() => onOpen(shoot.id)}>
+              <strong>{shoot.title}</strong>
+              <em>{fmtDate(shoot.date)} · {KIND_LABEL[shoot.kind]}</em>
+            </button>
+            <DeliveryChips d={d} />
+            <DeliveryButtons s={shoot} d={d} clock={clock} />
+          </li>
+        ))}
+      </ul>
+      <div className="owed-foot">
+        {rows.length > OWED_SHOWN && <button type="button" className="achip" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${rows.length}`}</button>}
+        {clock.ready && old.length > 0 && <button type="button" className="achip" onClick={clearOld}>Mark the {old.length} older one{old.length > 1 ? "s" : ""} delivered</button>}
+      </div>
+      </>}
+    </section>
+  );
+}
+
+function DeliveryChips({ d, done = true }) {
+  const parts = [d.sneak, d.final].filter((x) => x && (x.open || (done && x.deliveredAt)));
+  if (!parts.length) return null;
+  return (
+    <span className="dchips">
+      {parts.map((x) => <span key={x.label} className={"dchip" + (x.deliveredAt ? " is-done" : x.overdue ? " is-over" : "")}>{x.text}</span>)}
+    </span>
+  );
+}
+function DeliveryButtons({ s, d, clock }) {
+  const [going, setGoing] = useState("");
+  if (!clock.ready || !d.owed) return null;
+  const tap = (which) => async () => { setGoing(which); try { await clock.deliver(s, which); } finally { setGoing(""); } };
+  return (
+    <span className="dbtns">
+      {d.sneak?.open && <button type="button" className="achip dbtn" disabled={Boolean(going)} onClick={tap("sneak")}>{going === "sneak" ? "Saving…" : "Sneak peek sent"}</button>}
+      {d.final.open && <button type="button" className="achip achip-primary dbtn" disabled={Boolean(going)} onClick={tap("final")}>{going === "final" ? "Saving…" : "Delivered"}</button>}
+    </span>
   );
 }
 
@@ -121,7 +358,8 @@ export default function ShootsBoard() {
 // the same prep lists as the Shoots tab, filtered to their email.
 const PLAN_LABEL = { wedding: "Plan the wedding day", business: "Plan a Content Day", family: "Plan a session" };
 export function ClientShoots({ client, type = "wedding" }) {
-  const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, update, remove } = useShoots();
+  const sh = useShoots();
+  const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, clock } = sh;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refresh(); }, []);
   const email = (client.email || "").toLowerCase();
@@ -140,7 +378,7 @@ export function ClientShoots({ client, type = "wedding" }) {
       {data && mine.length === 0 && !showNew && <p className="gcard-meta">Nothing planned yet. Start one and the flow of the day, shot list, poses and gear from your playbook come with it — all editable for this client.</p>}
       {data && mine.length > 0 && (
         <ul className="shoot-list">
-          {sorted.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={update} onRemove={remove} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
+          {sorted.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
         </ul>
       )}
     </section>
@@ -188,52 +426,64 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
   );
 }
 
-export function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, galleries, guides, playbook = [] }) {
+const NO_CLOCK = { ready: false, deliver: () => {} };
+const SAVE_LABEL = { saving: "Saving…", saved: "Saved ✓", retrying: "No signal — still trying. Your ticks are safe.", failed: "Couldn't save." };
+export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
+  const d = deliveryState(s);
   const [notes, setNotes] = useState(s.notes);
   const [edit, setEdit] = useState(false);
   useEffect(() => setNotes(s.notes), [s.notes]);
+  const say = onSay || (() => {});
 
   // Items without a group came from before the lists were split — treat them as shots.
-  const items = (s.checklist || []).map((c) => ({ ...c, group: groupOf(c) }));
-  const save = (list, msg) => onUpdate(s.id, { checklist: list }, msg);
+  // Every change goes through commit(): shown at once, saved in order (useChecklist).
+  const { items, commit, status, retry } = useChecklist(s, onPatched);
   function toggleItem(item) {
-    save(items.map((c) => (c === item ? { ...c, done: !c.done } : c)), item.done ? "Unchecked" : "Checked ✓");
+    commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, done: !c.done } : c)); });
   }
   function addItem(group, text, time = "") {
-    save([...items, { text, done: false, group, ...(time ? { time } : {}) }], "Added");
+    commit((list) => [...list, { text, done: false, group, ...(time ? { time } : {}) }]);
   }
   function removeItem(item) {
-    save(items.filter((c) => c !== item), "Removed");
+    commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.filter((_, j) => j !== i); });
   }
   function setTime(item, time) {
-    save(items.map((c) => (c === item ? { ...c, time } : c)), time ? "Time set" : "Time cleared");
+    commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, time } : c)); });
   }
   // Pull a playbook list into this shoot: adds what isn't already there.
   function loadList(list) {
     const have = new Set(items.filter((c) => c.group === list.section).map((c) => c.text));
     const fresh = (list.items || []).filter((it) => it.text && !have.has(it.text)).map((it) => ({ text: it.text, done: false, group: list.section, ...(it.time ? { time: it.time } : {}) }));
-    if (!fresh.length) return onUpdate(s.id, {}, "Already all here");
-    save([...items, ...fresh], `Added ${fresh.length} from “${list.title}”`);
+    if (!fresh.length) return say("Already all here");
+    commit((cur) => [...cur, ...fresh]);
+    say(`Added ${fresh.length} from “${list.title}”`);
   }
   function clearGroup(group) {
     if (!window.confirm(`Empty “${GROUP_LABEL[group]}” on this shoot? The playbook isn't touched.`)) return;
-    save(items.filter((c) => c.group !== group), "Cleared");
+    commit((list) => list.filter((c) => c.group !== group));
   }
   function uncheckAll() {
     if (!items.some((c) => c.done)) return;
-    save(items.map((c) => ({ ...c, done: false })), "Reset for the day");
+    commit((list) => list.map((c) => ({ ...c, done: false })));
+    say("Reset for the day");
   }
 
   return (
-    <li className={"shoot" + (open ? " is-open" : "") + ` is-${s.status}`}>
+    <li id={`shoot-${s.id}`} className={"shoot" + (open ? " is-open" : "") + ` is-${s.status}`}>
       <button type="button" className="shoot-row" onClick={onToggle}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
         <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.address ? ` · ${s.address}` : " · no address yet"}</em></span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>
+      {d.applies && (
+        <div className="shoot-clock">
+          <DeliveryChips d={d} />
+          <DeliveryButtons s={s} d={d} clock={clock} />
+        </div>
+      )}
 
       {open && (
         <div className="shoot-detail">
@@ -248,7 +498,8 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, gallerie
             {s.client_phone && <a className="achip" href={`sms:${s.client_phone.replace(/[^\d+]/g, "")}`}>Text {s.client_name.split(" ")[0] || "client"}</a>}
             {s.client_phone && <a className="achip" href={`tel:${s.client_phone.replace(/[^\d+]/g, "")}`}>Call</a>}
             {s.client_email && <a className="achip" href={`mailto:${s.client_email}`}>Email</a>}
-            {s.address && !s.lat && <button type="button" className="achip" onClick={() => api({ action: "relocate", id: s.id }).then(() => onUpdate(s.id, {}, "Located")).catch((e) => alert(e.message))}>Find on map</button>}
+            {s.address && !s.lat && <button type="button" className="achip" onClick={() => (onRelocate ? onRelocate(s) : api({ action: "relocate", id: s.id }).then(() => onUpdate(s.id, {}, "Located")).catch((e) => alert(e.message)))}>Find on map</button>}
+            {s.date && s.status !== "cancelled" && <a className="achip" href={gcalUrl(s)} target="_blank" rel="noreferrer">+ Google Cal</a>}
             <select className="achip" value={s.status} onChange={(e) => onUpdate(s.id, { status: e.target.value })}>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
             <a className="achip" href={`/portal/admin/shoots/print?id=${s.id}`} target="_blank" rel="noreferrer">Print prep sheet ↗</a>
             <button type="button" className="achip" onClick={() => setEdit((v) => !v)}>{edit ? "Close edit" : "Edit details"}</button>
@@ -266,15 +517,20 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, gallerie
               <label>Client<input name="client_name" defaultValue={s.client_name} /></label>
               <label>Phone<input name="client_phone" defaultValue={s.client_phone} /></label>
               <label>Email<input type="email" name="client_email" defaultValue={s.client_email} /></label>
-              <label className="wide">Album<select name="gallery_id" defaultValue={s.gallery_id || ""}><option value="">— none yet —</option>{galleries.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>
+              <label className="wide">Gallery<select name="gallery_id" defaultValue={s.gallery_id || ""}><option value="">— none yet —</option>{galleries.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>
               <button type="submit" className="abtn" disabled={busy}>Save</button>
             </form>
           )}
 
+          {d.applies && <DeliveryDetail s={s} d={d} clock={clock} onUpdate={onUpdate} />}
+
           <div className="shoot-prep">
             <div className="shoot-sec-head shoot-prep-head">
               <span className="kick-sm">Prep</span>
-              <span>{items.some((c) => c.done) && <button type="button" className="achip" onClick={uncheckAll}>Uncheck all</button>}</span>
+              <span className="prep-headtools">
+                {status && <span className={`prep-save is-${status}`} role="status" aria-live="polite">{SAVE_LABEL[status]}{status === "failed" && <button type="button" className="achip" onClick={retry}>Try again</button>}</span>}
+                {items.some((c) => c.done) && <button type="button" className="achip" onClick={uncheckAll}>Uncheck all</button>}
+              </span>
             </div>
             <div className="shoot-cols">
               {GROUPS.map((g) => (
@@ -292,6 +548,37 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, busy, gallerie
   );
 }
 
+
+// Delivery, inside an open shoot: what was promised, when it's due, when it
+// went out — with undo, and a way to move the due date for this one job.
+const dayWords = (when) => new Date(when).toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric" });
+function DeliveryDetail({ s, d, clock, onUpdate }) {
+  const p = promiseFor(s.kind);
+  const lines = [d.sneak && { key: "sneak", x: d.sneak, promise: "within 48 hours" }, { key: "final", x: d.final, promise: `within ${p.days / 7} weeks` }].filter(Boolean);
+  return (
+    <section className="shoot-delivery">
+      <div className="shoot-sec-head"><span className="kick-sm">Delivery</span></div>
+      <ul>
+        {lines.map(({ key, x, promise }) => (
+          <li key={key}>
+            <span className="sd-what"><strong>{x.label}</strong><em>promised {promise}{x.due ? ` — by ${dayWords(x.due)}` : ""}</em></span>
+            {x.deliveredAt
+              ? <span className="dchip is-done">{key === "sneak" ? "Sent" : "Delivered"} {dayWords(x.deliveredAt)}</span>
+              : x.open ? <span className={"dchip" + (x.overdue ? " is-over" : "")}>{x.text}</span> : <span className="dchip is-done">Not needed now</span>}
+            {clock.ready && x.deliveredAt && <button type="button" className="achip" onClick={() => clock.deliver(s, key, true)}>Undo</button>}
+            {clock.ready && key === "final" && !x.deliveredAt && (
+              <label className="sd-move">Move due date
+                <input type="date" key={s.final_due || "auto"} defaultValue={x.due ? easternDateOf(x.due) : ""} onBlur={(e) => e.target.value && e.target.value !== (x.due ? easternDateOf(x.due) : "") && onUpdate(s.id, { final_due: e.target.value }, "Due date moved")} />
+              </label>
+            )}
+          </li>
+        ))}
+      </ul>
+      {p.also && s.date && !d.final.deliveredAt && <p className="gcard-meta">{p.also.label}, if this one has photos: promised within {p.also.days / 7} weeks — by {dayWords(`${addDays(s.date, p.also.days)}T12:00:00Z`)}.</p>}
+      {!clock.ready && <p className="owed-hint">{SQL_HINT}</p>}
+    </section>
+  );
+}
 
 // One prep list (flow, shots, poses or gear): tick, add inline, remove,
 // pull in a list from the playbook. The flow carries a time per step and

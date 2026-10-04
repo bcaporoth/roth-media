@@ -6,8 +6,10 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { OPEN_AMOUNT_LINK, RETAINER_RATE, payablePackages } from "../../../../lib/payments";
 import { money } from "../../../../lib/packages";
-import PartnerCharge from "../../../../components/PartnerCharge";
+import Link from "next/link";
+import BalanceList from "../../../../components/BalanceList";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { BOOKING_COLS, splitBookings, usd } from "../../../../lib/money-view";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +23,27 @@ export default async function PayAdminPage() {
   const newCount = await newLeadCount();
   const pkgs = payablePackages();
   const live = pkgs.filter((p) => p.link).length + (OPEN_AMOUNT_LINK ? 1 : 0);
-  // Active partners (signed + paid at /partner/<slug>) — for closing fees and events.
-  const { data: partners } = await supabaseAdmin().from("submissions").select("id, name, phone, summary, fields, utm").eq("kind", "partner").eq("status", "booked").order("created_at", { ascending: false });
+  // Who owes what: every booking paid through the site (Stripe checkout writes
+  // the `bookings` table — lib/booking.js). Tolerant: before supabase/bookings.sql
+  // has been run the rest of this page still works.
+  const db = supabaseAdmin();
+  let bookingRows = [];
+  let bookingsOk = true;
+  try {
+    const { data, error } = await db.from("bookings").select(BOOKING_COLS).order("created_at", { ascending: false }).limit(500);
+    if (error) bookingsOk = false;
+    else bookingRows = data || [];
+  } catch { bookingsOk = false; }
+  const { owing, settled, owedCents } = splitBookings(bookingRows);
+  // Link each one to its client profile when they're on the roster.
+  const profiles = {};
+  const emails = [...new Set(bookingRows.map((b) => String(b.email || "").toLowerCase()).filter(Boolean))];
+  if (emails.length) {
+    try {
+      const { data } = await db.from("clients").select("id, email").in("email", emails.slice(0, 500));
+      for (const c of data || []) profiles[String(c.email).toLowerCase()] = c.id;
+    } catch {}
+  }
 
   return (
     <>
@@ -43,24 +64,34 @@ export default async function PayAdminPage() {
           </a>
         </div>
 
+        <section className="psection">
+          <h2>Who owes what</h2>
+          {!bookingsOk ? (
+            <p className="sm-sqlhint">Bookings aren&apos;t set up yet — run <code>supabase/bookings.sql</code> once in the Supabase SQL editor and everyone who pays through the site shows up here with what they still owe.</p>
+          ) : owing.length === 0 ? (
+            <p className="inbox-hint">{bookingRows.length ? "Nobody owes a balance right now." : "No bookings paid through the site yet. When someone books, they show up here with what they still owe."}</p>
+          ) : (
+            <>
+              <p className="sm-total"><b>{usd(owedCents)}</b> still to come from {owing.length} booking{owing.length === 1 ? "" : "s"}.</p>
+              <p className="inbox-hint">Balances are due 14 days before the date. Copy the link and send it yourself — nothing here messages a client for you. It&apos;s the same link your morning email gives you.</p>
+              <BalanceList rows={owing} profiles={profiles} />
+            </>
+          )}
+          {settled.length > 0 && (
+            <details className="st-more">
+              <summary>Settled <em>{settled.length} booking{settled.length === 1 ? "" : "s"} paid in full{settled.some((v) => v.state === "closed") ? ", refunded or cancelled" : ""}</em></summary>
+              <div className="st-more-body">
+                <BalanceList rows={settled.slice(0, 100)} profiles={profiles} />
+              </div>
+            </details>
+          )}
+        </section>
+
+        <h2>Pay links</h2>
         <p className="inbox-hint">
           {live} of {pkgs.length + 1} pay buttons are live. Retainer = {Math.round(RETAINER_RATE * 100)}% of the
           package. Text a client the link below, or send them to rothmediaco.com/pay.
         </p>
-
-        {(partners || []).filter((p) => p.utm?.stripe_customer).length > 0 && (
-          <section className="psection">
-            <h2>Partner charges</h2>
-            <p className="inbox-hint">Closing fees and events go on the partner’s saved card. Text them the amount first, then charge 3 or more days later (their agreement, §3).</p>
-            {(partners || []).filter((p) => p.utm?.stripe_customer).map((p) => (
-              <div key={p.id} className="pcard">
-                <strong>{p.summary}</strong>
-                {(p.fields || []).filter(([k]) => k === "charge").slice(-3).map(([, v]) => <em key={v}>{v}</em>)}
-                <PartnerCharge id={p.id} name={p.name} phone={p.phone} />
-              </div>
-            ))}
-          </section>
-        )}
 
         <ul className="paylist">
           {pkgs.map((p) => (
@@ -90,6 +121,10 @@ export default async function PayAdminPage() {
             )}
           </li>
         </ul>
+
+        <p className="inbox-hint" style={{ marginTop: "1.2rem" }}>
+          Partner closing fees and event charges are on the <Link href="/portal/admin/partners">Partners tab →</Link>
+        </p>
       </StudioShell>
       <StudioFooter />
     </>

@@ -8,7 +8,7 @@ import {
   resolveDesign,
 } from "../lib/design";
 
-// Studio Admin — per-album design: font pairing, light/dark mood, accent.
+// Studio Admin — per-gallery design: font pairing, light/dark mood, accent.
 // Live preview updates as you click; Save writes galleries.design.
 
 async function api(payload) {
@@ -56,7 +56,7 @@ export default function DesignPanel({ galleryId, design: initial, shareToken, ti
     setMsg("");
     try {
       await api({ action: "set-design", galleryId, design });
-      setMsg("Design saved ✓ — it's live on the album now.");
+      setMsg("Design saved ✓ — it's live on the gallery now.");
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -172,7 +172,7 @@ export default function DesignPanel({ galleryId, design: initial, shareToken, ti
             </button>
             {shareToken && (
               <a href={`/g/${shareToken}`} target="_blank" rel="noreferrer">
-                Open album ↗
+                Open gallery ↗
               </a>
             )}
           </div>

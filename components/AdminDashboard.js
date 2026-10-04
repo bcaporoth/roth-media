@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import GuestEventsPanel from "./GuestEventsPanel";
-import { Tile } from "./StatsBoard";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
-import CoverPicker from "./CoverPicker";
-import GalleryEditPanel from "./GalleryEditPanel";
-import DesignPanel from "./DesignPanel";
-import PremierePanel from "./PremierePanel";
-import ReviewButton from "./ReviewButton";
-import { StudioTabs } from "./StudioShell";
-import { DESIGN_ACCENTS } from "../lib/design";
+import GalleryManage from "./GalleryManage";
+import { useRouter } from "next/navigation";
 
-// Studio Admin dashboard — stats, search/sort, cover-photo cards, and a
-// personal "Look" (light/dark + accent) saved per-device in localStorage.
-
-const LOOK_KEY = "rm-admin-look";
+// Studio → Galleries: compact counts, search/sort, cover-photo cards, the
+// uploader and Guest Reel. The frame around it (tabs, Look, footer) is the
+// shared StudioShell — the page wraps this in it.
 
 function fmtDate(d) {
   if (!d) return null;
@@ -37,41 +30,22 @@ function initials(title) {
     .join("");
 }
 
-export default function AdminDashboard({ galleries, newCount = 0 }) {
-  const [look, setLook] = useState({ mode: "light", accent: "clay" });
-  const [lookOpen, setLookOpen] = useState(false);
+export default function AdminDashboard({ galleries }) {
   const [uploaderOpen, setUploaderOpen] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
   const [copiedId, setCopiedId] = useState(null);
-
-  // Restore the saved look after mount (avoids SSR hydration mismatch).
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(LOOK_KEY) || "null");
-      if (saved && (saved.mode || saved.accent)) {
-        setLook({
-          mode: saved.mode === "dark" ? "dark" : "light",
-          accent: DESIGN_ACCENTS[saved.accent] ? saved.accent : "clay",
-        });
-      }
-    } catch {
-      /* first visit */
-    }
-  }, []);
-
-  function setLookPart(part) {
-    setLook((l) => {
-      const next = { ...l, ...part };
-      try {
-        localStorage.setItem(LOOK_KEY, JSON.stringify(next));
-      } catch {
-        /* private mode */
-      }
+  // Which cards have their Manage drawer open (several can be).
+  const [managing, setManaging] = useState(() => new Set());
+  const router = useRouter();
+  const toggleManage = (id) =>
+    setManaging((m) => {
+      const next = new Set(m);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
-  }
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -115,28 +89,16 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
     }
   }
 
-  const accent = DESIGN_ACCENTS[look.accent] || DESIGN_ACCENTS.clay;
-  const shellStyle =
-    look.accent !== "clay"
-      ? { "--clay": accent.main, "--clay-soft": accent.soft }
-      : undefined;
+  const plural = (n, one, many = `${one}s`) => `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
 
   return (
-    <div
-      className={"admin-shell" + (look.mode === "dark" ? " is-dark" : "")}
-      style={shellStyle}
-    >
-      <main className="admin-wrap">
-        <StudioTabs active="galleries" newCount={newCount} />
-        <div className="kick">Studio admin</div>
-        <h1>Your studio.</h1>
-
-        <div className="astats">
-          <Tile value={galleries.length} label="Galleries" help="Every album you've published, sneak peeks included. Each one is a share link you can text a client and a login they can use in the portal." />
-          <Tile value={totalItems.toLocaleString("en-US")} label="Photos & videos" help="Total files across all galleries — the size of what you're hosting and backing up. Galleries stay online 12 months after delivery." />
-          <Tile value={clientCount} label="Clients" help="People on your roster — anyone who owns an album or was added to one. Manage logins, emails, and broadcasts under the Clients tab." />
-          <Tile value={latest ? latest.title : "—"} label={`Latest${latest ? ` · ${fmtDate(latest.created_at)}` : ""}`} help="The most recently published gallery. If it's been a while, that's your cue to post work or reach out." />
-        </div>
+    <>
+        <p className="gcounts" aria-label="What you're hosting">
+          <span title="Every gallery you've published, sneak peeks included."><b>{plural(galleries.length, "gallery", "galleries")}</b></span>
+          <span title="Photos and videos across all galleries."><b>{plural(totalItems, "file")}</b></span>
+          <span title="People who own a gallery — manage them under Clients."><b>{plural(clientCount, "client")}</b></span>
+          {latest && <span title="The most recently published gallery.">Latest: <b>{latest.title}</b> · {fmtDate(latest.created_at)}</span>}
+        </p>
 
         <div className="atoolbar">
           <input
@@ -159,13 +121,6 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
           <button
             type="button"
             className="abtn abtn-ghost"
-            onClick={() => setLookOpen(!lookOpen)}
-          >
-            ✦ Look
-          </button>
-          <button
-            type="button"
-            className="abtn abtn-ghost"
             onClick={() => setGuestOpen(!guestOpen)}
           >
             {guestOpen ? "Close guest reel" : "◎ Guest Reel"}
@@ -179,54 +134,6 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
           </button>
         </div>
 
-        {lookOpen && (
-          <div className="alook-panel">
-            <div className="design-group">
-              <strong>Mood</strong>
-              <div className="design-modes">
-                {["light", "dark"].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={"design-mode" + (look.mode === m ? " is-on" : "")}
-                    onClick={() => setLookPart({ mode: m })}
-                  >
-                    <span
-                      className="design-mode-chip"
-                      style={{
-                        background: m === "dark" ? "#191612" : "#f4efe6",
-                        borderColor: m === "dark" ? "#b4a894" : "#6b6358",
-                      }}
-                    />
-                    {m === "dark" ? "Dark" : "Light"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="design-group">
-              <strong>Accent</strong>
-              <div className="design-accents">
-                {Object.entries(DESIGN_ACCENTS).map(([key, a]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    title={a.label}
-                    aria-label={`Accent: ${a.label}`}
-                    className={
-                      "design-accent" + (look.accent === key ? " is-on" : "")
-                    }
-                    style={{ background: a.main }}
-                    onClick={() => setLookPart({ accent: key })}
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="alook-hint">
-              Just for you — saved on this device, clients never see it.
-            </p>
-          </div>
-        )}
-
         {guestOpen && <GuestEventsPanel galleries={galleries} />}
 
         {uploaderOpen && (
@@ -234,7 +141,8 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
             <h2>Add a gallery</h2>
             <p className="anew-hint">
               Upload straight from this page — photos get web sizes made
-              automatically, and you get a share link anyone can open.
+              automatically, videos get a preview frame, and you get a share
+              link anyone can open.
             </p>
             <AdminUploader />
           </section>
@@ -250,7 +158,10 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
           )}
           <div className="agrid">
             {shown.map((g) => (
-              <article className="gcard" key={g.id}>
+              <article
+                className={"gcard" + (managing.has(g.id) ? " is-managing" : "")}
+                key={g.id}
+              >
                 <Link
                   href={`/portal/gallery/${g.id}`}
                   className="gcard-cover"
@@ -307,29 +218,26 @@ export default function AdminDashboard({ galleries, newCount = 0 }) {
                     >
                       Open ↗
                     </a>
+                    <button
+                      type="button"
+                      className={"achip gcard-manage" + (managing.has(g.id) ? " is-on" : "")}
+                      aria-expanded={managing.has(g.id)}
+                      aria-controls={`gmanage-${g.id}`}
+                      onClick={() => toggleManage(g.id)}
+                    >
+                      {managing.has(g.id) ? "Close" : "Manage ▾"}
+                    </button>
                   </div>
-                  <div className="gcard-tools">
-                    <GalleryEditPanel galleryId={g.id} onSaved={() => window.location.reload()} />
-                    <CoverPicker galleryId={g.id} cover={g.cover_filename} />
-                    <DesignPanel
-                      galleryId={g.id}
-                      design={g.design}
-                      shareToken={g.share_token}
-                      title={g.title}
-                    />
-                    <PremierePanel galleryId={g.id} />
-                    <ReviewButton
-                      galleryId={g.id}
-                      clientEmail={g.clientEmail}
-                      requestedAt={g.reviewRequestedAt}
-                    />
-                  </div>
+                  <GalleryManage
+                    gallery={g}
+                    open={managing.has(g.id)}
+                    onChanged={() => router.refresh()}
+                  />
                 </div>
               </article>
             ))}
           </div>
         </section>
-      </main>
-    </div>
+    </>
   );
 }

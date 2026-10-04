@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { fmtHours, share } from "../lib/stats-math";
+import { usd } from "../lib/money-view";
 
 // Studio stats — first-party numbers from /api/t. One hue (the accent)
 // everywhere: every chart here is a single series, so color only marks
@@ -20,8 +22,7 @@ const ago = (d) => {
   const h = Math.round(m / 60);
   return h < 24 ? `${h}h` : `${Math.round(h / 24)}d`;
 };
-const KIND = { quote: "Quote", booking: "Booked 💸", promo: "Promo entry", card: "Business card", contact: "Message" };
-const STATUS = { new: "New", contacted: "Contacted", booked: "Booked", lost: "Lost", archived: "Archived" };
+import { FORM_KIND_LABEL as KIND, LEAD_STATUS_LABEL as STATUS } from "../lib/studio-labels";
 const fullWhen = (d) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const hourLabel = (h) => (h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`);
 
@@ -164,11 +165,21 @@ function LeadIntel({ data }) {
         </ul>
         <div className="astats lintel-tiles">
           <Tile value={fmt(i.overdue)} label="Overdue leads" hint="no reply in 24h+" help="Leads still marked New in the inbox more than 24 hours after they came in. This should always be zero. Mark a lead Contacted in the inbox the moment you text, call, or email." />
-          <Tile value={fmt(i.callsBooked)} label="Calls booked" hint={i.pickerShown ? `${pct(i.callsBooked / i.pickerShown)} of ${fmt(i.pickerShown)} who saw the picker` : "from the site's call picker"} help="Calls booked through the picker that now appears right after every form. The goal is every lead with a call on the calendar inside 24 hours." />
-          <Tile value={fmt(i.checkoutOpens)} label="Checkout opens" hint={`${fmt(data.kpis.bookings)} paid`} help="Times someone hit 'Book it' and went to Stripe. Opens minus paid is people who were one step from paying — the warmest follow-up you have." />
+          <Tile value={fmt(i.callsBooked)} label="Calls booked" hint={i.pickerShown ? `${share(i.callsBooked, i.pickerShown)} who saw the picker` : "from the site's call picker"} help="Calls booked through the picker that now appears right after every form. The goal is every lead with a call on the calendar inside 24 hours." />
+          <Tile value={fmt(i.checkoutOpens)} label="Checkout opens" hint={data.kpis.bookingsOk ? `${fmt(data.kpis.bookings)} paid` : "taps on Book it"} help="Times someone hit 'Book it' and went to Stripe. Opens minus paid is people who were one step from paying — the warmest follow-up you have." />
           <Tile value={money0(i.pipeline)} label="Open pipeline" hint={`${fmt(i.open)} open lead${i.open === 1 ? "" : "s"}`} help="The quoted starting price of every lead still New or Contacted. It's what's on the table right now." />
-          <Tile value={money0(i.expected)} label="Expected to book" hint={`${pct(i.closeRate)} close rate${i.hasHistory ? "" : " (assumed)"}`} help="Open pipeline times your close rate, weighted up for hot leads and down for cold ones. Until you've closed or lost 5 leads in the window it uses an assumed 20% — mark leads Booked or Lost in the inbox and this gets real." />
-          <Tile value={i.replyMed === null ? "—" : i.replyMed < 1 ? `${Math.round(i.replyMed * 60)}m` : `${i.replyMed.toFixed(1)}h`} label="Time to first touch" hint="typical, target 15m" help="How long a lead typically waits before you mark them Contacted. It's measured from the inbox status change, so mark it right when you reach out." />
+          {i.close.known ? (
+            <Tile value={money0(i.expected)} label="Expected to book" hint={`${share(i.close.won, i.close.decided)} booked`} help="Open pipeline times your own close rate — the share of people you marked Booked out of everyone you marked Booked or Lost in this window — weighted up for hot leads and down for cold ones." />
+          ) : (
+            <Tile value={money0(i.expected)} label="Could book (a guess)" hint={`assumes 1 in ${Math.round(1 / i.assumedRate)} book · not your real rate yet`} help={`This is a placeholder, not a forecast. It assumes ${Math.round(i.assumedRate * 100)}% of open leads book, because there isn't enough history to know your real rate: ${i.close.decided} of the ${i.close.need} needed are marked Booked or Lost in this window. Mark leads Booked or Lost in the inbox and this switches to your own number.`} />
+          )}
+          {!i.touch.ready ? (
+            <Tile value="—" label="Time to first touch" hint="run supabase/studio-2.sql once" help="This needs the 'first replied' stamp the inbox adds. Run supabase/studio-2.sql once in the Supabase SQL editor and it starts measuring from your next reply. No number is shown until then, so you never see a wrong one." />
+          ) : i.touch.n === 0 ? (
+            <Tile value="—" label="Time to first touch" hint="no replies logged in this window yet" help="From the moment a lead comes in to your first reply. The inbox stamps it the first time you reply or mark a lead Contacted. Nothing to measure yet for leads in this window." />
+          ) : (
+            <Tile value={fmtHours(i.touch.medianHours)} label="Time to first touch" hint={`middle of ${i.touch.n} repl${i.touch.n === 1 ? "y" : "ies"} · target 15m`} help="From the moment a lead came in to your first reply, stamped by the inbox the first time you reply or mark them Contacted. Only leads you've replied to are in it; the ones still waiting show under Overdue leads." />
+          )}
         </div>
       </section>
 
@@ -225,7 +236,9 @@ function LeadIntel({ data }) {
 
 export default function StatsBoard({ data }) {
   const k = data.kpis;
+  const m = k.money;
   const [tableOpen, setTableOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   if (!data.ready) {
     return (
@@ -237,6 +250,7 @@ export default function StatsBoard({ data }) {
   }
 
   const topFunnel = Math.max(1, data.funnel[0].n);
+  const lastFunnel = data.funnel[data.funnel.length - 1].n;
   const peakHour = data.hours.indexOf(Math.max(...data.hours));
 
   return (
@@ -262,103 +276,48 @@ export default function StatsBoard({ data }) {
 
       <div className="astats">
         <Tile value={fmt(k.visits)} label="Visits" hint="unique people per day" help="How many different people came to the site. The same person twice in one day counts once; tomorrow they count again. Your own visits from this device aren't counted. This is your reach — ads, posts, and the QR card all feed it." />
-        <Tile value={fmt(k.pageviews)} label="Page views" hint={`${k.pagesPerVisit.toFixed(1)} pages per visit`} help="Every page load. Pages per visit tells you if people look around (2+ is good) or bounce off the first page (close to 1 means the landing page isn't hooking them)." />
-        <Tile value={fmt(k.leads)} label="Leads" hint={`${k.booked} booked`} help="Forms sent — quotes, messages, promo entries, business-card contacts. 'Booked' is the ones you've marked booked in the inbox plus paid bookings. This is the number to grow; visits only matter if they turn into these." />
-        <Tile value={pct(k.conversion)} label="Visit → lead" hint="leads ÷ visits" help="Of everyone who visited, what share sent a form. 2–5% is healthy for a service business; under 1% means the site isn't asking clearly enough, or the traffic is the wrong people." />
-        <Tile value={pct(k.visits ? k.bookings / k.visits : 0)} label="Visit → paid" hint={`${fmt(k.bookings)} booked & paid`} help="Visitors who went all the way through 'Book it' and paid. The truest number on this page: money in, no chasing. Compare it to Visit → lead to see how many leads you're closing." />
-        <Tile value={`$${fmt(k.paidCents / 100)}`} label="Collected" hint={`of $${fmt(k.bookedValueCents / 100)} booked`} help="Cash actually paid through the site in this window (retainers plus full payments). 'Booked' is the full value of those jobs — the gap is balances still due." />
+        <Tile value={fmt(k.leads)} label="Leads" hint={k.leads ? `${fmt(k.booked)} of them booked` : "none in this window"} help="Forms a new person sent from the site — quotes, messages, promo entries, business-card contacts. Not counted: intake questionnaires, call sheets, old inquiries you pasted in, partner sign-ups, payment rows, and anything you archived. 'Booked' counts people, once each, however many forms or payments they made." />
+        <Tile value={pct(k.visits ? k.leads / k.visits : 0)} label="Visit → lead" hint={`${fmt(k.leads)} of ${fmt(k.visits)} visits`} help="Of everyone who visited, what share sent a form. 2–5% is healthy for a service business; under 1% means the site isn't asking clearly enough, or the traffic is the wrong people. With only a handful of leads this swings a lot — read the counts, not just the percent." />
+        {k.bookingsOk ? (
+          <Tile value={pct(k.visits ? k.bookings / k.visits : 0)} label="Visit → paid" hint={`${fmt(k.bookings)} of ${fmt(k.visits)} visits`} help="Bookings paid through the site in this window, against visits. Each booking counts once — a balance payment later doesn't make it two." />
+        ) : (
+          <Tile value="—" label="Visit → paid" hint="run supabase/bookings.sql once" help="Paid bookings live in the bookings table, which isn't set up yet." />
+        )}
+        {m.basis === "paid" ? (
+          <Tile value={usd(m.cents)} label="Collected" hint={`paid in this window · ${fmt(m.payments)} payment${m.payments === 1 ? "" : "s"}`} help={`Money that actually came in through the site during this window — first payments and balances, each counted on the day it was paid${m.balancePayments ? ` (${m.balancePayments} of these ${m.balancePayments === 1 ? "is a balance" : "are balances"})` : ""}. Bookings made in this window are worth ${usd(m.bookedValueCents)} in all.`} />
+        ) : m.basis === "bookings" ? (
+          <Tile value={usd(m.cents)} label="Paid on new bookings" hint={`to date, on ${fmt(m.payments)} booking${m.payments === 1 ? "" : "s"} made in this window`} help={`The dated payment rows for this window couldn't be read, so this isn't "money in during the window". It's what has been paid so far on bookings made in this window (worth ${usd(m.bookedValueCents)} in all). A balance paid later is in here; a balance paid in this window on an older booking isn't.`} />
+        ) : (
+          <Tile value="—" label="Collected" hint="run supabase/bookings.sql once" help="Payments are recorded in the bookings table, which isn't set up yet." />
+        )}
         <Tile value={fmt(k.galleryOpens)} label="Gallery opens" hint={`${fmt(k.gallerySaves)} saves`} help="Times a client (or someone they shared with) opened a gallery, and how many photos they saved. High opens + low saves means they're browsing on the phone — a nudge to download everything before the 12-month window helps." />
         <Tile value={fmt(k.guestUploads)} label="Guest uploads" hint="photos, videos, messages" help="What wedding guests sent through the QR cards. Each one is a guest who now knows your name — and a couple who got extra value you can mention in the next pitch." />
-        <Tile value={fmt(k.qr)} label="QR scans" hint="business card visits" help="Visits that came from your business card or printed QR. Tells you if the cards you hand out are actually getting scanned." />
       </div>
-
-      {data.range > 1 && (
-        <section className="spanel spanel-wide">
-          <div className="spanel-head">
-            <h3>Visitors per day</h3>
-            <button type="button" className="achip" onClick={() => setTableOpen(!tableOpen)}>
-              {tableOpen ? "Hide table" : "Show table"}
-            </button>
-          </div>
-          <Bars
-            points={data.daily}
-            valueKey="visitors"
-            labelFn={(p) => shortDay(p.date)}
-            tipFn={(p) =>
-              `${shortDay(p.date)} — ${fmt(p.visitors)} visitors · ${fmt(p.pageviews)} views${p.leads ? ` · ${p.leads} lead${p.leads > 1 ? "s" : ""}` : ""}`
-            }
-          />
-          {tableOpen && (
-            <table className="idet-fields stable">
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <td>Visitors</td>
-                  <td>Views</td>
-                  <td>Leads</td>
-                </tr>
-              </thead>
-              <tbody>
-                {[...data.daily].reverse().map((d) => (
-                  <tr key={d.date}>
-                    <th scope="row">{shortDay(d.date)}</th>
-                    <td>{d.visitors}</td>
-                    <td>{d.pageviews}</td>
-                    <td>{d.leads}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      )}
 
       <div className="sgrid">
         <section className="spanel">
-          <h3>From visit to lead</h3>
+          <h3>From visit to paid</h3>
           <ol className="sfunnel">
-            {data.funnel.map((f, i) => (
+            {data.funnel.map((f) => (
               <li key={f.label}>
                 <span className="sfunnel-bar" style={{ width: `${(f.n / topFunnel) * 100}%` }} />
                 <span className="sranked-key">{f.label}</span>
                 <span className="sranked-val">
                   {fmt(f.n)}
-                  {i > 0 && data.funnel[i - 1].n > 0 && (
-                    <em> · {pct(f.n / data.funnel[i - 1].n)}</em>
-                  )}
+                  {f.of ? <em> of {fmt(f.of)} · {pct(f.n / f.of)}</em> : null}
                 </span>
               </li>
             ))}
           </ol>
-        </section>
-
-        <section className="spanel">
-          <h3>Busiest hours</h3>
-          <p className="inbox-hint">
-            {data.hours.some(Boolean)
-              ? `Most visits around ${hourLabel(peakHour)} (Eastern).`
-              : "Not enough visits yet."}
+          <p className="st-note">
+            Counted in visits (one person, one day), and each step is out of the step above it.
+            {k.bookingsOk && k.bookings !== lastFunnel
+              ? ` ${fmt(k.bookings)} paid booking${k.bookings === 1 ? "" : "s"} recorded in this window in all — someone who pays from a texted link or on another device isn't in this funnel.`
+              : ""}
           </p>
-          <Bars
-            points={data.hours.map((v, h) => ({ h, v }))}
-            valueKey="v"
-            height={90}
-            labelFn={(p) => (p.h % 6 === 0 ? hourLabel(p.h) : "")}
-            tipFn={(p) => `${hourLabel(p.h)} — ${fmt(p.v)} visits`}
-          />
         </section>
 
-        <Ranked title="Top pages" rows={data.pages} />
         <Ranked title="Where visitors came from" rows={data.sources} />
-        <Ranked title="Cities" rows={data.cities} empty="Location shows up on the live site." />
-        <Ranked title="Devices" rows={data.devices} />
-        <Ranked title="Browsers" rows={data.browsers} />
-        <Ranked title="Operating systems" rows={data.os} />
-        <Ranked
-          title="Button clicks & actions"
-          rows={data.events.map((e) => ({ ...e, key: e.key.replace(/_/g, " ") }))}
-          unit="times"
-        />
 
         <section className="spanel">
           <h3>Client galleries</h3>
@@ -377,55 +336,7 @@ export default function StatsBoard({ data }) {
             </ul>
           )}
         </section>
-      </div>
 
-      <section className="spanel spanel-wide sforms">
-        <div className="spanel-head">
-          <h3>Forms that came in</h3>
-          <span className="gcard-meta">
-            {data.formKinds.length ? data.formKinds.map(([k, n]) => `${n} ${KIND[k] || k}`).join(" · ") : "None in this window"}
-            {" · "}<Link href="/portal/admin/inbox">Open inbox →</Link>
-          </span>
-        </div>
-        {data.forms.length === 0 ? (
-          <p className="inbox-hint">No forms in this window. Quotes, messages, business-card taps, and paid bookings all land here.</p>
-        ) : (
-          <table className="idet-fields stable sforms-table">
-            <thead><tr><th>When</th><td>Who</td><td>What</td><td>Type</td><td>From</td><td>Status</td></tr></thead>
-            <tbody>
-              {data.forms.map((f) => (
-                <tr key={f.id}>
-                  <th scope="row">{fullWhen(f.at)}</th>
-                  <td><Link href={`/portal/admin/inbox?open=${f.id}`}>{f.name}</Link></td>
-                  <td>{f.summary}</td>
-                  <td>{KIND[f.kind] || f.kind}</td>
-                  <td>{f.from}</td>
-                  <td><span className={`itag itag-${f.status}`}>{STATUS[f.status] || f.status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      <div className="sgrid">
-        <section className="spanel">
-          <h3>Live feed</h3>
-          <ul className="sfeed">
-            {data.recent.length === 0 && <li className="inbox-hint">Waiting for the first visitor.</li>}
-            {data.recent.map((r, i) => (
-              <li key={i}>
-                <time>{ago(r.at)}</time>
-                <span>
-                  {r.type === "event" ? <strong>★ {r.label.replace(/_/g, " ")}</strong> : r.label}
-                  <em>
-                    {[r.where, r.device, r.source].filter(Boolean).join(" · ")}
-                  </em>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
         <section className="spanel">
           <h3>Gallery activity</h3>
           <ul className="sfeed">
@@ -447,6 +358,142 @@ export default function StatsBoard({ data }) {
           </ul>
         </section>
       </div>
+
+      {/* Everything else is still here, one tap away. */}
+      <details className="st-more" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+        <summary>
+          Traffic details
+          <em>visitors per day, pages, cities, devices, busiest hours, live feed, every form</em>
+        </summary>
+        {moreOpen && (
+          <div className="st-more-body">
+            <div className="astats">
+              <Tile value={fmt(k.pageviews)} label="Page views" hint={`${k.pagesPerVisit.toFixed(1)} pages per visit`} help="Every page load. Pages per visit tells you if people look around (2+ is good) or bounce off the first page (close to 1 means the landing page isn't hooking them)." />
+              <Tile value={fmt(k.qr)} label="QR scans" hint="business card visits" help="Visits that came from your business card or printed QR. Tells you if the cards you hand out are actually getting scanned." />
+            </div>
+
+            {data.range > 1 && (
+              <section className="spanel spanel-wide">
+                <div className="spanel-head">
+                  <h3>Visitors per day</h3>
+                  <button type="button" className="achip" onClick={() => setTableOpen(!tableOpen)}>
+                    {tableOpen ? "Hide table" : "Show table"}
+                  </button>
+                </div>
+                <Bars
+                  points={data.daily}
+                  valueKey="visitors"
+                  labelFn={(p) => shortDay(p.date)}
+                  tipFn={(p) =>
+                    `${shortDay(p.date)} — ${fmt(p.visitors)} visitors · ${fmt(p.pageviews)} views${p.leads ? ` · ${p.leads} lead${p.leads > 1 ? "s" : ""}` : ""}`
+                  }
+                />
+                {tableOpen && (
+                  <table className="idet-fields stable">
+                    <thead>
+                      <tr>
+                        <th>Day</th>
+                        <td>Visitors</td>
+                        <td>Views</td>
+                        <td>Leads</td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...data.daily].reverse().map((d) => (
+                        <tr key={d.date}>
+                          <th scope="row">{shortDay(d.date)}</th>
+                          <td>{d.visitors}</td>
+                          <td>{d.pageviews}</td>
+                          <td>{d.leads}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
+
+            <div className="sgrid">
+              <section className="spanel">
+                <h3>Busiest hours</h3>
+                <p className="inbox-hint">
+                  {data.hours.some(Boolean)
+                    ? `Most visits around ${hourLabel(peakHour)} (Eastern).`
+                    : "Not enough visits yet."}
+                </p>
+                <Bars
+                  points={data.hours.map((v, h) => ({ h, v }))}
+                  valueKey="v"
+                  height={90}
+                  labelFn={(p) => (p.h % 6 === 0 ? hourLabel(p.h) : "")}
+                  tipFn={(p) => `${hourLabel(p.h)} — ${fmt(p.v)} visits`}
+                />
+              </section>
+
+              <Ranked title="Top pages" rows={data.pages} />
+              <Ranked title="Cities" rows={data.cities} empty="Location shows up on the live site." />
+              <Ranked title="Devices" rows={data.devices} />
+              <Ranked title="Browsers" rows={data.browsers} />
+              <Ranked title="Operating systems" rows={data.os} />
+              <Ranked
+                title="Button clicks & actions"
+                rows={data.events.map((e) => ({ ...e, key: e.key.replace(/_/g, " ") }))}
+                unit="times"
+              />
+
+              <section className="spanel">
+                <h3>Live feed</h3>
+                <ul className="sfeed">
+                  {data.recent.length === 0 && <li className="inbox-hint">Waiting for the first visitor.</li>}
+                  {data.recent.map((r, i) => (
+                    <li key={i}>
+                      <time>{ago(r.at)}</time>
+                      <span>
+                        {r.type === "event" ? <strong>★ {r.label.replace(/_/g, " ")}</strong> : r.label}
+                        <em>
+                          {[r.where, r.device, r.source].filter(Boolean).join(" · ")}
+                        </em>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <section className="spanel spanel-wide sforms">
+              <div className="spanel-head">
+                <h3>Forms that came in</h3>
+                <span className="gcard-meta">
+                  {data.formKinds.length ? data.formKinds.map(([kind, n]) => `${n} ${KIND[kind] || kind}`).join(" · ") : "None in this window"}
+                  {" · "}<Link href="/portal/admin/inbox">Open inbox →</Link>
+                </span>
+              </div>
+              <p className="inbox-hint">Everything that landed in the inbox, leads or not — intake answers and payment rows are listed here but aren&apos;t counted as leads above.</p>
+              {data.forms.length === 0 ? (
+                <p className="inbox-hint">No forms in this window. Quotes, messages, business-card taps, and paid bookings all land here.</p>
+              ) : (
+                <div className="ltable-wrap">
+                  <table className="idet-fields stable sforms-table">
+                    <thead><tr><th>When</th><td>Who</td><td>What</td><td>Type</td><td>From</td><td>Status</td></tr></thead>
+                    <tbody>
+                      {data.forms.map((f) => (
+                        <tr key={f.id}>
+                          <th scope="row">{fullWhen(f.at)}</th>
+                          <td><Link href={`/portal/admin/inbox?open=${f.id}`}>{f.name}</Link></td>
+                          <td>{f.summary}</td>
+                          <td>{KIND[f.kind] || f.kind}</td>
+                          <td>{f.from}</td>
+                          <td><span className={`itag itag-${f.status}`}>{STATUS[f.status] || f.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </details>
     </div>
   );
 }

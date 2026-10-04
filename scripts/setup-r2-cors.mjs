@@ -1,8 +1,17 @@
 #!/usr/bin/env node
 /**
- * One-time R2 bucket CORS setup so the gallery page can fetch() media
- * bytes (needed for the iOS/Android "Save to Photos" share sheet).
- * Safe to re-run; it overwrites the bucket's CORS rules with this set.
+ * R2 bucket CORS setup. The bucket needs TWO things from the browser:
+ *   - GET / HEAD  so the gallery page can fetch() media bytes (the iOS/Android
+ *                 "Save to Photos" share sheet), and
+ *   - PUT         so the browser uploaders (Studio → New gallery / Add files,
+ *                 Set cover, and the Guest Reel upload page) can send files
+ *                 straight to R2 through their presigned URLs.
+ * ETag is exposed so upload code can read it back.
+ *
+ * This script OVERWRITES the bucket's CORS rules with exactly this set, so it
+ * must always list everything above. (It used to write GET/HEAD only —
+ * re-running that version would have broken every browser upload.)
+ * Safe to re-run. Allowed origins are unchanged.
  *
  *   node scripts/setup-r2-cors.mjs
  */
@@ -43,8 +52,9 @@ await s3.send(
             "https://www.rothmediaco.com",
             "http://localhost:3000",
           ],
-          AllowedMethods: ["GET", "HEAD"],
+          AllowedMethods: ["GET", "HEAD", "PUT"],
           AllowedHeaders: ["*"],
+          ExposeHeaders: ["ETag"],
           MaxAgeSeconds: 86400,
         },
       ],

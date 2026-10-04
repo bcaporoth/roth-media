@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { SECTION_LABEL } from "../lib/shoot-guides";
 
 const SECTIONS = ["gear", "shots", "flow", "poses"];
-const KINDS = [["any", "Every shoot"], ["wedding", "Wedding"], ["family", "Family"], ["business", "Business"], ["event", "Event"], ["other", "Other"]];
+import { PLAYBOOK_KIND_OPTIONS as KINDS } from "../lib/studio-labels";
 const KIND_LABEL = Object.fromEntries(KINDS);
 const BLURB = {
   gear: "What goes in the bag. The “every shoot” kit plus extras per type.",

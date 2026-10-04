@@ -4,23 +4,25 @@
 // blocks it), so the calendar is built from your Shoots instead: a month
 // grid + agenda, with one-click "Add to Google Calendar" per shoot so your
 // phone calendar stays in sync.
+//
+// Also shown inside Studio → Shoots as the "Month" view: there it's handed
+// the shoots already loaded (no second fetch) and an onOpen, so tapping an
+// event opens that shoot right on the page. On its own page every event
+// links to /portal/admin/shoots?open=<id>.
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { sunsetLocal, resolveTimeNote, fmt12, shiftTime } from "../lib/sun";
-import { HOME } from "../lib/geo";
+import { timing, fmt12, shiftTime } from "../lib/sun";
 
-const KIND_LABEL = { wedding: "Wedding", family: "Family", business: "Business", event: "Event", other: "Shoot" };
+import { SHOOT_KIND_LABEL as KIND_LABEL } from "../lib/studio-labels";
 const pad = (n) => String(n).padStart(2, "0");
 const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-function startOf(s) {
-  const sunset = s.date ? sunsetLocal(s.lat || HOME.lat, s.lng || HOME.lng, s.date) : null;
-  return s.start_time || resolveTimeNote(s.time_note, sunset) || "";
-}
+const startOf = (s) => timing(s).start;
+export const shootHref = (s) => `/portal/admin/shoots?open=${s.id}`;
 
 // calendar.google.com template link — opens prefilled, one tap to save.
-function gcalUrl(s) {
+export function gcalUrl(s) {
   const start = startOf(s) || "09:00";
   const [h, m] = start.split(":").map(Number);
   const [y, mo, d] = s.date.split("-").map(Number);
@@ -33,14 +35,22 @@ function gcalUrl(s) {
   return `https://calendar.google.com/calendar/render?${q}`;
 }
 
-export default function StudioCalendar() {
-  const [shoots, setShoots] = useState(null);
+export default function StudioCalendar({ shoots: given = null, onOpen = null }) {
+  const embedded = Boolean(given);
+  const [fetched, setShoots] = useState(null);
+  const shoots = useMemo(() => (given ? given.filter((s) => s.status !== "cancelled") : fetched), [given, fetched]);
   const [error, setError] = useState("");
   const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
 
   useEffect(() => {
+    if (embedded) return;
     fetch("/api/admin/shoots").then((r) => r.json()).then((j) => (j.error ? setError(j.error) : setShoots(j.shoots.filter((s) => s.status !== "cancelled")))).catch((e) => setError(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Tapping an event: open the shoot in place when the Shoots page is the
+  // host, otherwise follow the link to it.
+  const go = (s) => (e) => { if (onOpen) { e.preventDefault(); onOpen(s.id); } };
 
   const byDay = useMemo(() => {
     const m = {};
@@ -81,7 +91,7 @@ export default function StudioCalendar() {
           return (
             <div key={i} className={"scal-cell" + (k === today ? " is-today" : "") + (list.length ? " has-shoot" : "")}>
               <span className="scal-num">{d.getDate()}</span>
-              {list.map((s) => <Link key={s.id} href="/portal/admin/shoots" className={`scal-ev is-${s.kind}`} title={s.title}>{startOf(s) ? fmt12(startOf(s)).replace(":00", "") + " " : ""}{s.title}</Link>)}
+              {list.map((s) => <Link key={s.id} href={shootHref(s)} onClick={go(s)} className={`scal-ev is-${s.kind}`} title={s.title}>{startOf(s) ? fmt12(startOf(s)).replace(":00", "") + " " : ""}{s.title}</Link>)}
             </div>
           );
         })}
@@ -90,7 +100,7 @@ export default function StudioCalendar() {
       <div className="sgrid">
         <section className="spanel">
           <h3>Coming up</h3>
-          {upcoming.length === 0 ? <p className="inbox-hint">Nothing scheduled. Add shoots under the Shoots tab.</p> : (
+          {upcoming.length === 0 ? <p className="inbox-hint">{embedded ? "Nothing scheduled. Hit “+ New shoot” above." : "Nothing scheduled. Add shoots under the Shoots tab."}</p> : (
             <ul className="scal-agenda">
               {upcoming.map((s) => {
                 const st = startOf(s);
@@ -98,7 +108,7 @@ export default function StudioCalendar() {
                   <li key={s.id}>
                     <time>{new Date(`${s.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</time>
                     <span>
-                      <strong>{s.title}</strong>
+                      <strong><Link className="scal-open" href={shootHref(s)} onClick={go(s)}>{s.title}</Link></strong>
                       <em>{st ? fmt12(st) : s.time_note || "time TBD"}{s.drive_min ? ` · leave ${fmt12(shiftTime(st || "09:00", -(s.drive_min + 20)))} · ${s.miles} mi` : ""}{s.address ? ` · ${s.address}` : ""}</em>
                     </span>
                     <a className="achip" href={gcalUrl(s)} target="_blank" rel="noreferrer">+ Google Cal</a>
@@ -115,7 +125,7 @@ export default function StudioCalendar() {
           <div className="gcard-actions">
             <a className="achip" href="https://calendar.google.com/calendar/r" target="_blank" rel="noreferrer">Open Google Calendar ↗</a>
             <a className="achip" href="https://calendly.com/app/scheduled_events/user/me" target="_blank" rel="noreferrer">Calendly bookings ↗</a>
-            <Link className="achip" href="/portal/admin/shoots">Manage shoots →</Link>
+            {!embedded && <Link className="achip" href="/portal/admin/shoots">Manage shoots →</Link>}
           </div>
         </section>
       </div>

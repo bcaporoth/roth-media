@@ -1,7 +1,8 @@
-import BrandMark from "../../../components/BrandMark";
 import { redirect } from "next/navigation";
 import AdminDashboard from "../../../components/AdminDashboard";
 import PortalNav from "../../../components/PortalNav";
+import StudioShell from "../../../components/StudioShell";
+import StudioFooter from "../../../components/StudioFooter";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../lib/r2";
@@ -10,7 +11,7 @@ import { newLeadCount } from "../../../lib/studio-data";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Studio Admin",
+  title: "Galleries — Studio",
   robots: { index: false },
 };
 
@@ -77,17 +78,10 @@ export default async function AdminPage() {
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
 
-      <AdminDashboard galleries={items} newCount={newCount} />
-
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand">
-            <BrandMark />
-            Roth <em>Media</em>
-          </div>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
+      <StudioShell active="galleries" newCount={newCount} kick="Studio" title="Galleries">
+        <AdminDashboard galleries={items} />
+      </StudioShell>
+      <StudioFooter />
     </>
   );
 }

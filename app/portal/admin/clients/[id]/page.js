@@ -8,6 +8,7 @@ import { supabaseAdmin } from "../../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../../lib/studio-data";
 import { clientStage, clientType } from "../../../../../lib/intake";
 import { resendConfigured } from "../../../../../lib/resend";
+import { BOOKING_COLS, bookingView } from "../../../../../lib/money-view";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,16 @@ export default async function ClientPage({ params }) {
     db.from("galleries").select("id, title, share_token, media_count, event_date, created_at").eq("client_id", client.id).order("created_at", { ascending: false }),
     db.from("payments").select("id, amount_cents, paid_on, note").eq("client_id", client.id).order("paid_on", { ascending: false }).then((r) => r, () => ({ data: [] })),
   ]);
+  // What they've paid through the site. Stripe checkouts write `bookings`
+  // (lib/booking.js), matched by email; the old `payments` table above is
+  // still read so anything recorded there keeps showing.
+  let bookings = [];
+  let bookingsReady = true;
+  try {
+    const { data: b, error: bErr } = await db.from("bookings").select(BOOKING_COLS).eq("email", email).order("created_at", { ascending: false });
+    if (bErr) bookingsReady = false;
+    else bookings = (b || []).map((row) => bookingView(row));
+  } catch { bookingsReady = false; }
   let shared = [];
   try {
     const { data: m } = await db.from("gallery_members").select("galleries(id, title, share_token, media_count, event_date, created_at)").eq("client_id", client.id);
@@ -47,6 +58,8 @@ export default async function ClientPage({ params }) {
     shoots: shoots || [],
     galleries,
     payments: payments || [],
+    bookings,
+    bookingsReady,
     stage: clientStage({ subs: all, shoots: shoots || [], galleries }),
     type: clientType({ subs: all, shoots: shoots || [] }),
   };

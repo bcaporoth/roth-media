@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
+import BalanceList from "./BalanceList";
+import { usd } from "../lib/money-view";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
 
 async function api(path, payload) {
@@ -28,6 +30,8 @@ export default function ClientProfile({ initial, emailReady }) {
   const [pasting, setPasting] = useState(false);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
+  const bookings = d.bookings || [];
+  const owedCents = bookings.reduce((n, b) => n + b.owedCents, 0);
   const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 3000); };
   const fail = (e) => { setError(e.message || String(e)); setTimeout(() => setError(""), 6000); };
 
@@ -98,8 +102,9 @@ export default function ClientProfile({ initial, emailReady }) {
         </div>
         <label className="client-notes">Notes<textarea rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" onBlur={(e) => e.target.value !== c.notes && saveClient({ notes: e.target.value })} /></label>
         <div className="cprof-type">
-          <span className="kick-sm">This client is</span>
-          {TYPES.map((t) => <button key={t.id} type="button" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
+          <span className="kick-sm" id="cprof-type-label">Questions to use</span>
+          {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
+          <p className="sm-typehint" id="cprof-type-hint">Picks which questions the intake link, a new call sheet and a new shoot use. It isn&apos;t a saved setting — it starts on whatever their last intake, call sheet or shoot was.</p>
         </div>
       </section>
 
@@ -157,12 +162,20 @@ export default function ClientProfile({ initial, emailReady }) {
             )}
           </section>
 
-          {d.payments.length > 0 && (
-            <section className="cprof-card">
-              <div className="cprof-cardhead"><h2>Payments</h2></div>
-              <ul className="cprof-list">{d.payments.map((p) => <li key={p.id}><strong>{money(p.amount_cents)}</strong> <span className="gcard-meta">· {fmt(p.paid_on)}{p.note ? ` · ${p.note}` : ""}</span></li>)}</ul>
-            </section>
-          )}
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Payments</h2>
+              {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}
+            </div>
+            {d.bookingsReady === false && <p className="sm-sqlhint">Bookings aren&apos;t set up yet — run <code>supabase/bookings.sql</code> once and what they pay through the site shows here.</p>}
+            {d.bookingsReady !== false && bookings.length === 0 && d.payments.length === 0 && <p className="gcard-meta">Nothing paid through the site under {c.email} yet.</p>}
+            {bookings.length > 0 && <BalanceList rows={bookings} showName={false} />}
+            {d.payments.length > 0 && (
+              <>
+                {bookings.length > 0 && <div className="kick-sm">Recorded by hand</div>}
+                <ul className="cprof-list">{d.payments.map((p) => <li key={p.id}><strong>{money(p.amount_cents)}</strong> <span className="gcard-meta">· {fmt(p.paid_on)}{p.note ? ` · ${p.note}` : ""}</span></li>)}</ul>
+              </>
+            )}
+          </section>
         </div>
       </div>
     </div>

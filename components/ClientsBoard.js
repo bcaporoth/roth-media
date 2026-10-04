@@ -54,6 +54,22 @@ export default function ClientsBoard({ initial, emailReady }) {
   }, [clients, query, stage, type]);
   const stageCounts = useMemo(() => { const n = {}; for (const c of clients) n[c.stage] = (n[c.stage] || 0) + 1; return n; }, [clients]);
   const checkedIds = Object.keys(checked).filter((k) => checked[k]);
+  // Who a broadcast really reaches — the same rules the server applies: people
+  // on the roster (not inquiry-only rows), one email each, minus the unsubscribed.
+  const audience = useMemo(() => {
+    const roster = clients.filter((c) => c.id && !c.lead);
+    const picked = checkedIds.length ? roster.filter((c) => checked[c.id]) : roster;
+    const seen = new Set();
+    let unsubscribed = 0;
+    for (const c of picked) {
+      const email = String(c.email || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || seen.has(email)) continue;
+      if (c.email_opt_out) { unsubscribed += 1; continue; }
+      seen.add(email);
+    }
+    return { send: seen.size, unsubscribed, picked: picked.length };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clients, checked]);
 
   async function copy(text, label) {
     try { await navigator.clipboard.writeText(text); say(`${label} copied`); } catch { window.prompt("Copy:", text); }
@@ -97,8 +113,10 @@ export default function ClientsBoard({ initial, emailReady }) {
   }
   async function broadcast(e) {
     e.preventDefault();
-    const n = checkedIds.length || clients.length;
-    if (!window.confirm(`Send "${subject}" to ${n} ${n === 1 ? "client" : "clients"}?`)) return;
+    const n = audience.send;
+    if (!n) { fail(new Error(audience.unsubscribed ? "Nobody to send to — everyone picked has unsubscribed." : "Nobody to send to.")); return; }
+    const skip = audience.unsubscribed ? `\n\n${audience.unsubscribed} unsubscribed ${audience.unsubscribed === 1 ? "person is" : "people are"} left out.` : "";
+    if (!window.confirm(`Send "${subject}" to ${n} ${n === 1 ? "person" : "people"}?${skip}`)) return;
     setSending(true);
     try {
       const r = await api({ action: "broadcast", subject, message, ids: checkedIds });
@@ -114,7 +132,7 @@ export default function ClientsBoard({ initial, emailReady }) {
         <input type="search" placeholder="Search name, email, gallery…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search clients" />
         <button type="button" className="abtn abtn-ghost" onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Add client"}</button>
         <button type="button" className="abtn" onClick={() => setComposer(!composer)} disabled={!emailReady} title={emailReady ? "" : "Add RESEND_API_KEY in Vercel to send email"}>
-          ✉ Email {checkedIds.length ? `${checkedIds.length} checked` : "everyone"}
+          ✉ Email {checkedIds.length ? `${checkedIds.length} checked` : "everyone"} ({audience.send})
         </button>
       </div>
       <div className="inbox-filters" role="tablist" aria-label="Filter by stage">
@@ -142,7 +160,7 @@ export default function ClientsBoard({ initial, emailReady }) {
 
       {composer && (
         <form className="clients-compose" onSubmit={broadcast}>
-          <div className="kick-sm">To: {checkedIds.length ? `${checkedIds.length} checked` : `everyone (${clients.length})`} · write {"{name}"} for their first name</div>
+          <div className="kick-sm">To: {checkedIds.length ? `${checkedIds.length} checked` : "everyone on the roster"} — {audience.send} {audience.send === 1 ? "person" : "people"} will get it{audience.unsubscribed ? ` (${audience.unsubscribed} unsubscribed, left out)` : ""} · write {"{name}"} for their first name</div>
           <input placeholder="Subject" required value={subject} onChange={(e) => setSubject(e.target.value)} />
           <textarea rows={8} required placeholder={"Hi {name},\n\n…"} value={message} onChange={(e) => setMessage(e.target.value)} />
           <div className="gcard-actions">
@@ -201,7 +219,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                         </span>
                         {!g.shared && (
                           <span className="client-members">
-                            <span className="gcard-meta">Also on this album:</span>
+                            <span className="gcard-meta">Also on this gallery:</span>
                             {(g.members || []).map((m) => (
                               <span key={m.id} className="itag">{m.name || m.email} <button type="button" aria-label={`Remove ${m.email}`} onClick={() => removeMember(g, m)}>×</button></span>
                             ))}

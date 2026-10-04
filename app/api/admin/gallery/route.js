@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client } from "@aws-sdk/client-s3";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { R2_BUCKET, r2Configured, photoKey, signedUrl, getDims, putDims } from "../../../../lib/r2";
@@ -9,6 +13,14 @@ import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
 import { setOwner, sendAccessInvite } from "../../../../lib/album-access";
+import {
+  isUuid,
+  galleryPrefix,
+  keyInGallery,
+  normConfirm,
+  planFinalize,
+  planRemoval,
+} from "../../../../lib/gallery-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +37,46 @@ function r2() {
     });
   }
   return s3;
+}
+
+// Delete R2 objects, but ONLY keys inside this one gallery's own prefix.
+// Anything else in the list is refused before a single delete goes out.
+async function deleteGalleryKeys(galleryId, keys) {
+  const prefix = galleryPrefix(galleryId); // throws on a bad id
+  if (!prefix || !prefix.endsWith(`${galleryId}/`)) throw new Error("Bad gallery prefix");
+  const list = [...new Set(keys)];
+  if (list.some((k) => !keyInGallery(galleryId, k)))
+    throw new Error("Refusing to delete a file outside this gallery");
+  let deleted = 0;
+  for (let i = 0; i < list.length; i += 1000) {
+    const batch = list.slice(i, i + 1000);
+    const res = await r2().send(
+      new DeleteObjectsCommand({
+        Bucket: R2_BUCKET,
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+      })
+    );
+    if (res.Errors && res.Errors.length)
+      throw new Error(`Storage refused ${res.Errors.length} delete(s) — nothing else was changed`);
+    deleted += batch.length;
+  }
+  return deleted;
+}
+
+// Every object under one gallery's prefix (paged).
+async function listGalleryKeys(galleryId) {
+  const prefix = galleryPrefix(galleryId);
+  if (!prefix || !prefix.endsWith(`${galleryId}/`)) throw new Error("Bad gallery prefix");
+  const keys = [];
+  let token;
+  do {
+    const res = await r2().send(
+      new ListObjectsV2Command({ Bucket: R2_BUCKET, Prefix: prefix, ContinuationToken: token })
+    );
+    for (const o of res.Contents || []) keys.push(o.Key);
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+  return keys;
 }
 
 async function requireAdmin() {
@@ -93,7 +145,7 @@ export async function POST(request) {
     const patch = {};
     if (body.title !== undefined) {
       const title = String(body.title || "").trim().slice(0, 120);
-      if (!title) return NextResponse.json({ error: "Give the album a title" }, { status: 422 });
+      if (!title) return NextResponse.json({ error: "Give the gallery a title" }, { status: 422 });
       patch.title = title;
     }
     if (body.eventDate !== undefined) {
@@ -136,6 +188,13 @@ export async function POST(request) {
     const { galleryId, files } = body;
     if (!galleryId || !Array.isArray(files) || files.length === 0 || files.length > 60)
       return NextResponse.json({ error: "Bad sign request" }, { status: 422 });
+    if (
+      !isUuid(galleryId) ||
+      files.some(
+        (f) => !["orig", "web", "thumb"].includes(f?.size) || !String(f?.filename || "").trim()
+      )
+    )
+      return NextResponse.json({ error: "Bad sign request" }, { status: 422 });
     const urls = await Promise.all(
       files.map(async ({ size, filename, contentType }) => {
         const safe = String(filename).replace(/[^\w.\- ]/g, "_");
@@ -151,33 +210,68 @@ export async function POST(request) {
     return NextResponse.json({ urls });
   }
 
+  // Filenames already in an album — the uploader uses these so files added
+  // later never reuse (and overwrite) a name that's already there.
+  if (body.action === "media-names") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data, error } = await db.from("media").select("filename").eq("gallery_id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ filenames: (data || []).map((m) => m.filename) });
+  }
+
+  // Finalize is safe to call twice and safe on an album that already has
+  // media: rows already there (same filename) are skipped and new ones land
+  // after the current last position. That covers a retried finalize, a
+  // resumed upload, and "Add files" on an existing album.
   if (body.action === "finalize") {
     const { galleryId, media, coverFilename } = body;
-    if (!galleryId || !Array.isArray(media))
+    if (!isUuid(galleryId) || !Array.isArray(media))
       return NextResponse.json({ error: "Bad finalize request" }, { status: 422 });
-    const baseRow = (m, i) => ({
-      gallery_id: galleryId,
-      filename: String(m.filename),
-      kind: m.kind === "video" ? "video" : "photo",
-      position: i,
-    });
-    const hasSections = media.some((m) => m.section);
-    const rows = media.map((m, i) =>
-      m.section
-        ? { ...baseRow(m, i), section: String(m.section).slice(0, 80) }
-        : baseRow(m, i)
-    );
-    let { error } = await db.from("media").insert(rows);
-    // media.section doesn't exist until supabase/sections.sql has run —
-    // land the album flat rather than failing the whole upload.
-    if (error && hasSections && /section/i.test(error.message)) {
-      ({ error } = await db.from("media").insert(media.map(baseRow)));
+    const { data: gallery } = await db.from("galleries").select("*").eq("id", galleryId).maybeSingle();
+    if (!gallery) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+
+    const readExisting = () =>
+      db.from("media").select("filename, position").eq("gallery_id", galleryId);
+    const insertPlan = async (existing) => {
+      const plan = planFinalize(galleryId, existing, media);
+      if (plan.rows.length === 0) return { plan, error: null };
+      let { error } = await db.from("media").insert(plan.rows);
+      // media.section doesn't exist until supabase/sections.sql has run —
+      // land the album flat rather than failing the whole upload.
+      if (error && plan.hasSections && /section/i.test(error.message)) {
+        ({ error } = await db
+          .from("media")
+          .insert(plan.rows.map(({ section, ...row }) => row)));
+      }
+      return { plan, error };
+    };
+
+    const first = await readExisting();
+    if (first.error) return NextResponse.json({ error: first.error.message }, { status: 500 });
+    const hadMedia = (first.data || []).length > 0;
+    let { plan, error } = await insertPlan(first.data);
+    // Two finalizes racing (a retry while the first was still landing): once
+    // supabase/studio-2.sql has added the unique index the second insert is
+    // rejected — re-read and insert only what's genuinely missing.
+    if (error && (error.code === "23505" || /duplicate key/i.test(error.message))) {
+      const again = await readExisting();
+      ({ plan, error } = await insertPlan(again.data));
     }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    await db
-      .from("galleries")
-      .update({ media_count: rows.length, cover_filename: coverFilename || null })
-      .eq("id", galleryId);
+
+    const { count } = await db
+      .from("media")
+      .select("id", { count: "exact", head: true })
+      .eq("gallery_id", galleryId);
+    const patch = {
+      media_count: typeof count === "number" ? count : (first.data || []).length + plan.rows.length,
+    };
+    // Never replace a cover that's already set (a retry, or files added later).
+    if (!gallery.cover_filename && coverFilename)
+      patch.cover_filename = String(coverFilename).replace(/[^\w.\- ]/g, "_");
+    await db.from("galleries").update(patch).eq("id", galleryId);
+
     // Photo dimensions → R2 sidecar, merged so resumed uploads accumulate.
     // Best-effort: a dims failure must never fail the finalize.
     try {
@@ -192,7 +286,132 @@ export async function POST(request) {
         await putDims(galleryId, dims);
       }
     } catch {}
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      added: plan.rows.length,
+      count: patch.media_count,
+      // An older "download everything" zip doesn't know about files added later.
+      zipStale: Boolean(gallery.zip_key && hadMedia && plan.rows.length > 0),
+    });
+  }
+
+  // Take one or more files out of an album: their rows, and their own
+  // orig/web/thumb objects — nothing outside this gallery's prefix.
+  if (body.action === "remove-media") {
+    const { galleryId } = body;
+    const filenames = Array.isArray(body.filenames) ? body.filenames.map(String) : [];
+    if (!isUuid(galleryId) || filenames.length === 0 || filenames.length > 500)
+      return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    if (normConfirm(body.confirm) !== "remove")
+      return NextResponse.json({ error: "Type “remove” to confirm" }, { status: 422 });
+    const { data: gallery } = await db.from("galleries").select("*").eq("id", galleryId).maybeSingle();
+    if (!gallery) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    const { data: rows, error: rowsError } = await db
+      .from("media")
+      .select("id, filename, kind, position")
+      .eq("gallery_id", galleryId)
+      .order("position", { ascending: true });
+    if (rowsError) return NextResponse.json({ error: rowsError.message }, { status: 500 });
+
+    let plan;
+    try {
+      plan = planRemoval(galleryId, rows, filenames, gallery.cover_filename);
+    } catch {
+      return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    }
+    if (plan.removed.length === 0)
+      return NextResponse.json({ error: "Those files aren't in this gallery" }, { status: 404 });
+
+    const keys = [...plan.keys];
+    // The "download everything" zip still holds the removed files — it goes too.
+    const zipCleared = Boolean(gallery.zip_key && keyInGallery(galleryId, gallery.zip_key));
+    if (zipCleared) keys.push(gallery.zip_key);
+    try {
+      await deleteGalleryKeys(galleryId, keys);
+    } catch (err) {
+      return NextResponse.json({ error: err.message || "Storage delete failed" }, { status: 502 });
+    }
+
+    // Rows go by id, scoped to this gallery, in small batches (ids ride in the URL).
+    const ids = plan.removed.map((r) => r.id);
+    for (let i = 0; i < ids.length; i += 100) {
+      const { error: delError } = await db
+        .from("media")
+        .delete()
+        .eq("gallery_id", galleryId)
+        .in("id", ids.slice(i, i + 100));
+      if (delError) return NextResponse.json({ error: delError.message }, { status: 500 });
+    }
+    // Count what's really left rather than trusting arithmetic.
+    const { count: left } = await db
+      .from("media")
+      .select("id", { count: "exact", head: true })
+      .eq("gallery_id", galleryId);
+    if (typeof left === "number") plan.remaining = left;
+
+    const patch = { media_count: plan.remaining };
+    if (plan.coverGone) patch.cover_filename = plan.nextCover;
+    if (zipCleared) patch.zip_key = null;
+    await db.from("galleries").update(patch).eq("id", galleryId);
+
+    try {
+      const dims = await getDims(galleryId);
+      let touched = false;
+      for (const f of plan.removedFilenames)
+        if (f in dims) {
+          delete dims[f];
+          touched = true;
+        }
+      if (touched) await putDims(galleryId, dims);
+    } catch {}
+
+    return NextResponse.json({
+      ok: true,
+      removed: plan.removed.length,
+      remaining: plan.remaining,
+      cover: patch.cover_filename !== undefined ? patch.cover_filename : gallery.cover_filename,
+      zipCleared,
+    });
+  }
+
+  // Delete a whole album: every object under galleries/<this id>/ in R2, then
+  // its rows. The typed title is checked here too, not just in the browser.
+  if (body.action === "delete-gallery") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data: gallery } = await db
+      .from("galleries")
+      .select("id, title")
+      .eq("id", galleryId)
+      .maybeSingle();
+    if (!gallery) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    if (!normConfirm(gallery.title) || normConfirm(body.confirmTitle) !== normConfirm(gallery.title))
+      return NextResponse.json(
+        { error: "Type the gallery's title exactly to delete it" },
+        { status: 422 }
+      );
+
+    let files = 0;
+    try {
+      const keys = await listGalleryKeys(gallery.id);
+      files = await deleteGalleryKeys(gallery.id, keys);
+    } catch (err) {
+      // Storage first, rows second: if storage fails the album is still
+      // listed, so the delete can simply be tried again.
+      return NextResponse.json(
+        { error: `${err.message || "Storage delete failed"} — the gallery is still here, try again.` },
+        { status: 502 }
+      );
+    }
+
+    // Guest Reel events keep their uploads; they just stop pointing at a dead album.
+    try { await db.from("guest_events").update({ gallery_id: null }).eq("gallery_id", gallery.id); } catch {}
+    try { await db.from("gallery_members").delete().eq("gallery_id", gallery.id); } catch {}
+    const { error: mediaError } = await db.from("media").delete().eq("gallery_id", gallery.id);
+    if (mediaError) return NextResponse.json({ error: mediaError.message }, { status: 500 });
+    const { error } = await db.from("galleries").delete().eq("id", gallery.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, files });
   }
 
 

@@ -6,6 +6,10 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { buildLeadBoard, hotVisitors, forecast } from "../../../../lib/lead-intel";
+import {
+  DEFAULT_CLOSE_RATE, bookedPeople, buildSignals, closeRead, collected, countableLeads, expectedToBook,
+  firstTouch, isLead, liveBookings, paidEmailSet, trend, visitFunnel,
+} from "../../../../lib/stats-math";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +71,10 @@ export default async function StatsPage({ searchParams }) {
   const db = supabaseAdmin();
 
   const prevSince = new Date(since.getTime() - range * 24 * 3600 * 1000);
-  const [{ rows, error }, subsRes, actRes, newCount, bookRes, guestRes, prevLeadsRes, prevViewsRes] = await Promise.all([
+  const NOT_MINE = "(partner,partner_lead,partner_month,call,intake_sent)"; // partner work + Brandon's own call sheets
+  const SUB_COLS = "id, created_at, updated_at, kind, status, name, email, phone, summary, source_path, utm, visitor";
+  const loadSubs = (cols) => db.from("submissions").select(cols).not("kind", "in", NOT_MINE).gte("created_at", since.toISOString());
+  const [{ rows, error }, subsFirst, actRes, newCount, bookRes, guestRes, prevLeadsRes, prevViewsRes, payRes] = await Promise.all([
     fetchAll(() =>
       db
         .from("site_events")
@@ -75,11 +82,8 @@ export default async function StatsPage({ searchParams }) {
         .gte("created_at", since.toISOString())
         .order("created_at", { ascending: false })
     ),
-    db
-      .from("submissions")
-      .select("id, created_at, updated_at, kind, status, name, email, phone, summary, source_path, utm, visitor")
-      .not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)") // partner work isn't Brandon's own pipeline
-      .gte("created_at", since.toISOString()),
+    // first_contacted_at arrives with supabase/studio-2.sql — retried without it below.
+    loadSubs(`${SUB_COLS}, first_contacted_at`),
     db
       .from("gallery_activity")
       .select("created_at, action, via, viewer, filename, gallery_id, galleries(title)")
@@ -88,19 +92,32 @@ export default async function StatsPage({ searchParams }) {
       .limit(5000),
     newLeadCount(),
     // Both tables may not exist yet (bookings.sql / guest.sql) — tolerated below.
-    db.from("bookings").select("paid_cents, total_cents, mode").gte("created_at", since.toISOString()),
+    db.from("bookings").select("id, created_at, email, paid_cents, total_cents, mode, status").gte("created_at", since.toISOString()),
     db.from("guest_uploads").select("id", { count: "exact", head: true }).gte("created_at", since.toISOString()),
-    // The window before this one — for "up or down" in What's going on.
-    db.from("submissions").select("id", { count: "exact", head: true }).neq("kind", "booking").not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)").neq("status", "archived").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
+    // The window before this one — for "up or down" in What's going on. Rows, not
+    // a count, so it's judged by the same "what's a lead" rule as this window.
+    db.from("submissions").select("id, kind, status, source_path").in("kind", ["quote", "card", "contact", "promo"]).gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()).limit(5000),
     db.from("site_events").select("id", { count: "exact", head: true }).eq("type", "pageview").gte("created_at", prevSince.toISOString()).lt("created_at", since.toISOString()),
+    // Money that landed in the window: lib/booking.js writes one inbox row per payment.
+    db.from("submissions").select("id, created_at, kind, email, summary, fields, utm").eq("kind", "booking").gte("created_at", since.toISOString()),
   ]);
-  const bookings = bookRes?.data || [];
+  let subsRes = subsFirst;
+  const touchReady = !subsFirst.error;
+  if (subsFirst.error) subsRes = await loadSubs(SUB_COLS);
+  const bookingsOk = !bookRes?.error;
+  const bookingRows = bookRes?.data || [];
+  const bookings = liveBookings(bookingRows); // refunded / cancelled aren't "booked"
+  const paySubs = payRes?.data || [];
   const guestUploads = guestRes?.count || 0;
 
   const views = rows.filter((r) => r.type === "pageview");
   const events = rows.filter((r) => r.type === "event");
   const subs = subsRes.data || [];
   const acts = actRes.data || [];
+  // What counts as a lead is decided in lib/stats-math.js (and the inbox's isLead):
+  // forms a stranger sent, not intakes / pasted-in inquiries / booking rows.
+  const leads = countableLeads(subs);
+  const paidEmails = paidEmailSet({ bookings, paySubs });
 
   // Visitor ids rotate daily, so "visits" = unique people per day, summed.
   const visitKey = (r) => `${dayKey(r.created_at)}|${r.visitor}`;
@@ -117,7 +134,7 @@ export default async function StatsPage({ searchParams }) {
       d.visitors.add(r.visitor);
     }
   }
-  for (const s of subs) {
+  for (const s of leads) {
     const d = daily.get(dayKey(s.created_at));
     if (d) d.leads++;
   }
@@ -126,21 +143,8 @@ export default async function StatsPage({ searchParams }) {
   const hours = Array.from({ length: 24 }, () => new Set());
   for (const r of views) hours[hourOf(r.created_at)].add(visitKey(r));
 
-  // Funnel: visited → looked at pricing/quote → started a quote → sent it.
-  const visitsWhere = (pred) => new Set(rows.filter(pred).map(visitKey)).size;
-  const funnel = [
-    { label: "Visited the site", n: visits.size },
-    {
-      label: "Looked at pricing",
-      n: visitsWhere(
-        (r) => r.type === "pageview" && /^\/(quote|weddings|business|pay)/.test(r.path)
-      ),
-    },
-    { label: "Started a quote", n: visitsWhere((r) => r.type === "event" && r.name === "quote_started") },
-    { label: "Sent a quote", n: subs.filter((s) => s.kind === "quote").length },
-    { label: "Opened checkout", n: visitsWhere((r) => r.type === "event" && r.name === "book_now_click") },
-    { label: "Booked & paid", n: bookings.length },
-  ];
+  // Funnel: one unit (a visit) all the way down — see visitFunnel().
+  const funnel = visitFunnel(rows, subs.filter((s) => s.kind === "quote"), dayKey);
 
   const qrVisits = new Set(views.filter((r) => r.utm_source === "qr").map(visitKey)).size;
   const liveCut = Date.now() - 30 * 60 * 1000;
@@ -160,20 +164,34 @@ export default async function StatsPage({ searchParams }) {
     byGallery.set(a.gallery_id, g);
   }
 
-  // Lead tracker + the predictive read. Pure logic lives in lib/lead-intel.js.
-  const board = buildLeadBoard(subs, rows);
+  // Lead tracker + the read on it. Scoring lives in lib/lead-intel.js; what
+  // gets counted and what gets said lives in lib/stats-math.js.
+  const board = buildLeadBoard(subs.filter((s) => isLead(s) || s.kind === "booking"), rows);
   const hot = hotVisitors(subs, rows);
   const peak = hours.map((s) => s.size);
-  const intel = forecast({
-    board,
-    hot,
-    range,
-    visits: views.length,
-    visitsPrev: prevViewsRes?.error ? null : prevViewsRes?.count ?? null,
-    leadsPrev: prevLeadsRes?.error ? null : prevLeadsRes?.count ?? null,
-    events,
-    peakHour: peak.some(Boolean) ? peak.indexOf(Math.max(...peak)) : null,
-  });
+  const peakHour = peak.some(Boolean) ? peak.indexOf(Math.max(...peak)) : null;
+  const leadsPrev = prevLeadsRes?.error ? null : countableLeads(prevLeadsRes?.data || []).length;
+  const visitsPrev = prevViewsRes?.error ? null : prevViewsRes?.count ?? null;
+  const f = forecast({ board, hot, range, visits: views.length, visitsPrev, leadsPrev, events, peakHour });
+  const close = closeRead(board, Object.fromEntries(leads.map((l) => [l.id, l.email])));
+  const touch = firstTouch(leads, touchReady);
+  const leadTrend = trend(leads.length, leadsPrev);
+  const intel = {
+    overdue: f.overdue,
+    open: f.open,
+    pipeline: f.pipeline,
+    pickerShown: f.pickerShown,
+    callsBooked: f.callsBooked,
+    checkoutOpens: f.checkoutOpens,
+    close,
+    assumedRate: DEFAULT_CLOSE_RATE,
+    // A real number once enough leads are decided; until then a labelled guess.
+    expected: expectedToBook(board, close.known ? close.rate : DEFAULT_CLOSE_RATE),
+    touch,
+    signals: buildSignals({ board, hot, f, close, touch, leadTrend, visits: views.length, visitsPrev, range, peakHour }),
+  };
+  const money = collected({ bookings: bookingRows, bookingsOk, paySubs });
+  const booked = bookedPeople(leads, paidEmails);
 
   const data = {
     range,
@@ -185,14 +203,14 @@ export default async function StatsPage({ searchParams }) {
       visits: visits.size,
       pageviews: views.length,
       pagesPerVisit: visits.size ? views.length / visits.size : 0,
-      leads: subs.filter((x) => x.kind !== "booking").length, // paid bookings are their own inbox rows, not new leads
-      booked: subs.filter((s) => s.status === "booked").length,
-      conversion: visits.size ? subs.filter((x) => x.kind !== "booking").length / visits.size : 0,
+      leads: leads.length,
+      booked, // people, once each
+      otherForms: subs.length - leads.length - subs.filter((s) => s.kind === "booking").length,
       qr: qrVisits,
       live,
       bookings: bookings.length,
-      paidCents: bookings.reduce((n, b) => n + Number(b.paid_cents || 0), 0),
-      bookedValueCents: bookings.reduce((n, b) => n + Number(b.total_cents || 0), 0),
+      bookingsOk,
+      money,
       galleryOpens: acts.filter((a) => a.action === "view").length,
       gallerySaves: acts.filter((a) => a.action !== "view").length,
       guestUploads,

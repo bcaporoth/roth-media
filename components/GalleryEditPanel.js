@@ -1,10 +1,10 @@
 "use client";
 
-// Studio Admin → each gallery card: "Edit album" — rename, set the date, change
+// Studio Admin → each gallery card: "Edit gallery" — rename, set the date, change
 // who owns it, and add the extra people (spouse, parents) who should see it in
 // their own portal login.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -13,8 +13,10 @@ async function api(path, payload) {
   return json;
 }
 
-export default function GalleryEditPanel({ galleryId, onSaved }) {
-  const [open, setOpen] = useState(false);
+// `embedded`: rendered inside the card's Manage drawer — always open, no
+// toggle button of its own.
+export default function GalleryEditPanel({ galleryId, onSaved, embedded = false }) {
+  const [open, setOpen] = useState(embedded);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -34,6 +36,10 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     catch (err) { setMsg(err.message); }
   }
   async function toggle() { if (!open && !data) await load(); setOpen((o) => !o); }
+  useEffect(() => {
+    if (embedded) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedded, galleryId]);
 
   async function save(e) {
     e.preventDefault();
@@ -50,28 +56,28 @@ export default function GalleryEditPanel({ galleryId, onSaved }) {
     setBusy(true); setMsg("");
     try {
       const r = await api("/api/admin/clients", { action: "add-member", galleryId, email: memberEmail, name: memberName });
-      setMemberEmail(""); setMemberName(""); await load(); setMsg(r.isNew ? inviteMsg(r.invite, "Added ✓") : "Already on this album — nothing sent");
+      setMemberEmail(""); setMemberName(""); await load(); setMsg(r.isNew ? inviteMsg(r.invite, "Added ✓") : "Already on this gallery — nothing sent");
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function removeMember(m) {
-    if (!window.confirm(`Remove ${m.name || m.email} from this album?`)) return;
+    if (!window.confirm(`Remove ${m.name || m.email} from this gallery?`)) return;
     try { await api("/api/admin/clients", { action: "remove-member", galleryId, clientId: m.id }); await load(); }
     catch (err) { setMsg(err.message); }
   }
 
   return (
-    <div className="cover-picker gedit">
-      <button type="button" className="cover-picker-toggle" onClick={toggle}>{open ? "Close" : "Edit album"}</button>
+    <div className={"cover-picker gedit" + (embedded ? " is-embedded" : "")}>
+      {!embedded && <button type="button" className="cover-picker-toggle" onClick={toggle}>{open ? "Close" : "Edit gallery"}</button>}
       {open && (
         <div className="cover-picker-panel gedit-panel">
           {!data ? <p className="portal-empty">{msg || "Loading…"}</p> : (
             <>
               <form className="gedit-form" onSubmit={save} key={`${data.gallery.title}-${data.gallery.event_date}-${data.gallery.ownerEmail}`}>
-                <label>Album title<input name="title" defaultValue={data.gallery.title} required maxLength={120} /></label>
+                <label>Gallery title<input name="title" defaultValue={data.gallery.title} required maxLength={120} /></label>
                 <label>Event date<input name="eventDate" type="date" defaultValue={data.gallery.event_date || ""} /></label>
                 <label>Owner email<input name="ownerEmail" type="email" defaultValue={data.gallery.ownerEmail} required /></label>
                 <label>Owner name<input name="ownerName" defaultValue={data.gallery.ownerName} maxLength={80} /></label>
-                <p className="gcard-meta gedit-hint">The owner sees this album when they log in. Changing the email moves it to that person (added to your roster if new) and emails them an invite with the share link and login setup.</p>
+                <p className="gcard-meta gedit-hint">The owner sees this gallery when they log in. Changing the email moves it to that person (added to your roster if new) and emails them an invite with the share link and login setup.</p>
                 <button type="submit" className="abtn" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>
               </form>
 
