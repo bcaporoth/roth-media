@@ -25,22 +25,18 @@ const PHONE_HREF = "tel:+18455494425";
 export default function OpenDatesPage() {
   const film = PACKAGES.wedding.find((p) => p.id === "film");
   const c = CAMPAIGN;
-  const priceAfter = (pct) => money(applyDeal(film.price, { pct }));
-  const todayAfter = (pct) => money(Math.round(applyDeal(film.price, { pct }) * 0.3));
-  // While a bigger site-wide deal runs, show that instead of the code.
+  // No campaign codes: the cards show the site-wide deal while one runs
+  // (lib/deals.js), otherwise the plain price. Same number the quote shows.
   const launch = autoDeal();
-  // One number per card: whichever deal is actually live is the one the card talks about.
-  const offer = (o) => (launch && launch.pct > o.percent
-    ? { pct: launch.pct, live: true, note: `After ${launch.endsLabel} it's ${o.percent}% off with code ${o.code}.`, cta: `${launch.pct}% off through ${launch.endsLabel}`, href: "/quote?for=wedding&pkg=film" }
-    : { pct: o.percent, live: false, note: "", cta: `code ${o.code}`, href: `/quote?for=wedding&pkg=film&code=${o.code}` });
-  const now = offer(c.thisYear);
-  const next = offer(c.nextYear);
+  const price = money(applyDeal(film.price, launch));
+  const today = money(Math.round(applyDeal(film.price, launch) * 0.3));
+  const href = "/quote?for=wedding&pkg=film";
 
   const year = new Date().getFullYear();
 
   return (
     <>
-      <SiteNav active="weddings" overHero cta={{ href: now.href, label: "Grab a date" }} />
+      <SiteNav active="weddings" overHero cta={{ href, label: "Grab a date" }} />
 
       <main className="cx-page cx-page--hero wd-page wd-open">
         <Reveal />
@@ -68,25 +64,23 @@ export default function OpenDatesPage() {
           <div className="cx-wrap">
             <div className="cx-grid cx-grid--2 wd-offers">
               <section className="cx-card cx-card--accent wd-offer cx-reveal">
-                <p className="cx-kick">This year · {now.pct}% off</p>
+                <p className="cx-kick">This year{launch ? ` · ${launch.pct}% off` : ""}</p>
                 <h2 className="cx-h2">Open {year} dates</h2>
                 <ul className="cx-pills wd-dates">
-                  {c.openDates2026.map((d) => <li key={d}><Link className="cx-pill" href={`${now.href}&date=${encodeURIComponent(`${d}, ${year}`)}`}>{d}</Link></li>)}
+                  {c.openDates2026.map((d) => <li key={d}><Link className="cx-pill" href={`${href}&date=${encodeURIComponent(`${d}, ${year}`)}`}>{d}</Link></li>)}
                 </ul>
-                <p className="cx-fine">{now.live ? `Any open ${year} date, ${now.pct}% off Wedding Videography through ${launch.endsLabel} — no code needed. Tap your date to hold it.` : c.thisYear.blurb}</p>
-                {now.note && <p className="cx-offer">{now.note}</p>}
-                <p className="wd-offer-price"><strong className="cx-num">{priceAfter(now.pct)}</strong> <s>{money(film.price)}</s> <span>· {todayAfter(now.pct)} holds it today</span></p>
-                <Link className="cx-btn cx-btn--light cx-btn--lg cx-btn--block wd-offer-cta" href={now.href}>Grab a date — {now.cta}</Link>
+                <p className="cx-fine">{launch ? `Any open ${year} date, ${launch.pct}% off Wedding Videography through ${launch.endsLabel} — no code needed. Tap your date to hold it.` : `Any open ${year} date. Book it online and the date's yours tonight — tap your date to hold it.`}</p>
+                <p className="wd-offer-price"><strong className="cx-num">{price}</strong> {launch ? <s>{money(film.price)}</s> : null} <span>· {today} holds it today</span></p>
+                <Link className="cx-btn cx-btn--light cx-btn--lg cx-btn--block wd-offer-cta" href={href}>Grab a date{launch ? ` — ${launch.pct}% off through ${launch.endsLabel}` : ""}</Link>
               </section>
 
               <section className="cx-card wd-offer cx-reveal">
-                <p className="cx-kick">Next year · {next.pct}% off</p>
+                <p className="cx-kick">Next year{launch ? ` · ${launch.pct}% off` : " · this year's prices"}</p>
                 <h2 className="cx-h2">Reserve 2027 now</h2>
-                <p className="cx-fine">{next.live ? `Reserve any 2027 date at this year's prices, ${next.pct}% off through ${launch.endsLabel} — no code needed. The 30% retainer holds it; balance isn't due until two weeks before.` : c.nextYear.blurb}</p>
-                {next.note && <p className="cx-offer">{next.note}</p>}
-                <p className="wd-offer-price"><strong className="cx-num">{priceAfter(next.pct)}</strong> <s>{money(film.price)}</s> <span>· {todayAfter(next.pct)} holds it today</span></p>
-                <p className="cx-offer">2027 early pricing ends {c.endsLabel}. Prices go up in January.</p>
-                <Link className="cx-btn cx-btn--ghost cx-btn--lg cx-btn--block wd-offer-cta" href={next.href}>Lock my 2027 date — {next.cta}</Link>
+                <p className="cx-fine">{launch ? `Reserve any 2027 date at this year's prices, ${launch.pct}% off through ${launch.endsLabel} — no code needed. The 30% retainer holds it; balance isn't due until two weeks before.` : "Reserve any 2027 date before December 31 at this year's prices. The 30% retainer holds it; balance isn't due until two weeks before."}</p>
+                <p className="wd-offer-price"><strong className="cx-num">{price}</strong> {launch ? <s>{money(film.price)}</s> : null} <span>· {today} holds it today</span></p>
+                <p className="cx-offer">2027 at this year's prices ends {c.endsLabel}. Prices go up in January.</p>
+                <Link className="cx-btn cx-btn--ghost cx-btn--lg cx-btn--block wd-offer-cta" href={href}>Lock my 2027 date</Link>
               </section>
             </div>
           </div>
@@ -131,7 +125,7 @@ export default function OpenDatesPage() {
             </div>
             <ol className="cx-steps cx-reveal">
               <li><span><strong>Pick a date above</strong> and build your package — two minutes, real prices.</span></li>
-              <li><span><strong>Book it online.</strong> The 30% retainer holds the date; the code fills in from the button above. Balance is due two weeks before, not today.</span></li>
+              <li><span><strong>Book it online.</strong> The 30% retainer holds the date. Balance is due two weeks before, not today.</span></li>
               <li><span><strong>I call you within 24 hours</strong> to plan the day. Sneak peek video lands within 48 hours of the wedding.</span></li>
             </ol>
           </div>
@@ -145,7 +139,7 @@ export default function OpenDatesPage() {
             </div>
             <div className="cx-prose cx-reveal">
               <p>{c.areaLine}</p>
-              <p>Codes apply to Wedding Videography booked online through {c.endsLabel}, {year}; one code per booking. Retainers are non-refundable; one free reschedule with 30 days&apos; notice. Open dates are first-come — the list above updates as they book. Full <Link href="/terms">terms</Link>.</p>
+              <p>Prices shown are for Wedding Videography booked online through {c.endsLabel}, {year}. Retainers are non-refundable; one free reschedule with 30 days&apos; notice. Open dates are first-come — the list above updates as they book. Full <Link href="/terms">terms</Link>.</p>
               <p>Rather talk first? Text or call <a href={PHONE_HREF}>{PHONE}</a>.</p>
               <div className="cx-cta-row wd-prose-cta">
                 <a href="#dates" className="cx-btn cx-btn--ghost">Back to the open dates</a>
