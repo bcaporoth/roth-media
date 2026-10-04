@@ -8,7 +8,7 @@ import { newLeadCount } from "../../../../lib/studio-data";
 import { buildLeadBoard, hotVisitors, forecast } from "../../../../lib/lead-intel";
 import {
   DEFAULT_CLOSE_RATE, bookedPeople, buildSignals, closeRead, collected, countableLeads, expectedToBook,
-  firstTouch, isLead, liveBookings, paidEmailSet, trend, visitFunnel,
+  firstTouch, isLead, liveBookings, paidEmailSet, paymentEvent, sourceTable, trend, visitFunnel,
 } from "../../../../lib/stats-math";
 
 export const dynamic = "force-dynamic";
@@ -146,6 +146,17 @@ export default async function StatsPage({ searchParams }) {
   // Funnel: one unit (a visit) all the way down — see visitFunnel().
   const funnel = visitFunnel(rows, subs.filter((s) => s.kind === "quote"), dayKey);
 
+  // Source → leads → booked → dollars. A lead is credited to the link it came in
+  // on (utm_source), else to the first page view of that visit (rows are newest
+  // first, so the last match is the earliest).
+  const firstView = {};
+  for (const l of leads) {
+    if (!l.visitor) continue;
+    const day = dayKey(l.created_at);
+    for (const r of views) if (r.visitor === l.visitor && dayKey(r.created_at) === day) firstView[l.id] = r;
+  }
+  const leadSources = sourceTable({ leads, firstView, sourceOf: source, paidEmails, payEvents: paySubs.map(paymentEvent) });
+
   const qrVisits = new Set(views.filter((r) => r.utm_source === "qr").map(visitKey)).size;
   const liveCut = Date.now() - 30 * 60 * 1000;
   const live = new Set(views.filter((r) => new Date(r.created_at) > liveCut).map((r) => r.visitor)).size;
@@ -225,6 +236,7 @@ export default async function StatsPage({ searchParams }) {
     funnel,
     pages: tally(views, (r) => r.path, visitKey).slice(0, 12),
     sources: tally(views, source, visitKey).slice(0, 10),
+    leadSources,
     cities: tally(
       views,
       (r) => (r.city ? `${r.city}${r.region ? `, ${r.region}` : ""}` : r.country || ""),

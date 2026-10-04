@@ -320,6 +320,32 @@ export default function StatsBoard({ data }) {
         <Ranked title="Where visitors came from" rows={data.sources} />
 
         <section className="spanel">
+          <h3>What each source turned into</h3>
+          {data.leadSources.length === 0 ? (
+            <p className="inbox-hint">No leads in this window yet.</p>
+          ) : (
+            <table className="idet-fields stable ssources">
+              <thead>
+                <tr><th>Source</th><td>Leads</td><td>Booked</td><td>Collected</td></tr>
+              </thead>
+              <tbody>
+                {data.leadSources.map((r) => (
+                  <tr key={r.source}>
+                    <th scope="row">{r.source}</th>
+                    <td>{fmt(r.leads)}</td>
+                    <td>{fmt(r.booked)}</td>
+                    <td>{r.cents ? usd(r.cents) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="st-note">
+            Each lead is credited to the link it arrived on (utm_source), or failing that to where that visit came from. Booked counts people once. Money lands on the source of a person&apos;s first lead, so a balance paid later still credits the ad that found them.
+          </p>
+        </section>
+
+        <section className="spanel">
           <h3>Client galleries</h3>
           {data.galleries.length === 0 ? (
             <p className="inbox-hint">No gallery opens in this window yet.</p>
