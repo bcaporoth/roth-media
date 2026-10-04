@@ -30,6 +30,11 @@ const PHOTO_EXT = /\.(jpe?g|png|webp)$/i;
 const VIDEO_EXT = /\.(mp4|mov|m4v|webm)$/i;
 const CONCURRENCY = 4;
 const MAX_ATTEMPTS = 4;
+// Films this big go up in parts (see putMultipart): a dropped connection then
+// costs one part, not the whole file, and R2 stitches them at the end.
+const MULTIPART_MIN = 64 * 1024 * 1024;
+const PART_SIZE = 32 * 1024 * 1024;
+const PART_CONCURRENCY = 3;
 const RESUME_KEY = "rm-upload-resume";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -273,6 +278,61 @@ async function putWithRetry(url, body, onRetry) {
   }
 }
 
+// A big film in PART_SIZE pieces, each with its own retries. Part URLs are
+// signed 100 at a time as the upload gets to them. Returns the stored filename.
+async function putMultipart(galleryId, file, filename, contentType, onRetry, onNote) {
+  const started = await apiWithRetry({ action: "mp-start", galleryId, filename, contentType });
+  const { uploadId, key } = started;
+  const total = Math.max(1, Math.ceil(file.size / PART_SIZE));
+  const parts = new Array(total);
+  const urls = new Map();
+  const signing = new Map();
+  const signBatch = (from) => {
+    if (!signing.has(from)) {
+      const nums = [];
+      for (let n = from; n < from + 100 && n <= total; n++) nums.push(n);
+      signing.set(
+        from,
+        apiWithRetry({ action: "mp-sign", galleryId, key, uploadId, parts: nums }).then((r) => {
+          for (const u of r.urls || []) urls.set(u.part, u.url);
+        })
+      );
+    }
+    return signing.get(from);
+  };
+  let next = 1;
+  let landed = 0;
+  try {
+    const worker = async () => {
+      while (next <= total) {
+        const n = next++;
+        if (!urls.has(n)) await signBatch(Math.floor((n - 1) / 100) * 100 + 1);
+        const blob = file.slice((n - 1) * PART_SIZE, Math.min(n * PART_SIZE, file.size));
+        for (let attempt = 1; ; attempt++) {
+          try {
+            const res = await fetch(urls.get(n), { method: "PUT", body: blob });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            parts[n - 1] = { PartNumber: n, ETag: (res.headers.get("ETag") || "").replace(/"/g, "") };
+            break;
+          } catch (err) {
+            if (attempt >= MAX_ATTEMPTS) throw err;
+            onRetry?.(attempt);
+            await sleep(attempt * 1500);
+          }
+        }
+        landed += 1;
+        onNote?.(`${file.name} — part ${landed} of ${total}`);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(PART_CONCURRENCY, total) }, worker));
+    const fin = await apiWithRetry({ action: "mp-complete", galleryId, key, uploadId, parts: parts.filter(Boolean) });
+    return fin.filename || started.filename || filename;
+  } catch (err) {
+    api({ action: "mp-abort", galleryId, key, uploadId }).catch(() => {});
+    throw err;
+  }
+}
+
 // Resume records: v2 remembers each finished file by relative path, with the
 // name it was stored under and its size. Records written before that only
 // have bare names — still honoured, once per name.
@@ -507,9 +567,16 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
             wanted.push({ size: "thumb", filename: jpgName(name), contentType: "image/jpeg" });
             wanted.push({ size: "web", filename: jpgName(name), contentType: "image/jpeg" });
           }
-          const signed = await apiWithRetry({ action: "sign", galleryId, files: wanted });
+          // A big film goes up in parts; the poster frames still use plain PUTs.
+          const multipart = file.size >= MULTIPART_MIN;
+          const toSign = multipart ? wanted.slice(1) : wanted;
+          const signed = toSign.length ? await apiWithRetry({ action: "sign", galleryId, files: toSign }) : { urls: [] };
           const bySize = Object.fromEntries(signed.urls.map((u) => [u.size, u]));
-          await putWithRetry(bySize.orig.url, file, retry);
+          if (multipart) {
+            bySize.orig = { filename: await putMultipart(galleryId, file, name, file.type || "video/mp4", retry, bump) };
+          } else {
+            await putWithRetry(bySize.orig.url, file, retry);
+          }
           let hasPoster = false;
           if (poster) {
             // A poster that won't upload must not cost the film itself.

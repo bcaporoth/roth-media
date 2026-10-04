@@ -4,6 +4,11 @@ import {
   S3Client,
   ListObjectsV2Command,
   DeleteObjectsCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
+  ListPartsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
@@ -559,6 +564,93 @@ export async function POST(request) {
       }
     }
     return NextResponse.json({ ok: true, sent, remaining: (leads || []).length - sent });
+  }
+
+  // ── Big films, in parts ─────────────────────────────────────────────
+  // The browser calls mp-start, then mp-sign for per-part PUT URLs (100 at a
+  // time), uploads the parts straight to R2, then mp-complete; mp-abort if it
+  // gives up. Every key is checked against this gallery's own prefix, like
+  // everything else here, so a bad id can never write outside the album.
+  const mpBad = (msg = "Bad request", status = 422) => NextResponse.json({ error: msg }, { status });
+
+  if (body.action === "mp-start") {
+    const { galleryId } = body;
+    const filename = String(body.filename || "").trim();
+    if (!isUuid(galleryId) || !filename || filename.includes("/")) return mpBad();
+    const safe = filename.replace(/[^\w.\- ]/g, "_");
+    const key = photoKey(galleryId, "orig", safe);
+    if (!keyInGallery(galleryId, key)) return mpBad();
+    try {
+      const out = await r2().send(
+        new CreateMultipartUploadCommand({ Bucket: R2_BUCKET, Key: key, ContentType: String(body.contentType || "video/mp4") })
+      );
+      return NextResponse.json({ uploadId: out.UploadId, key, filename: safe });
+    } catch (err) {
+      return mpBad(err.message || "Storage refused the upload", 502);
+    }
+  }
+
+  if (body.action === "mp-sign") {
+    const { galleryId, key, uploadId } = body;
+    const parts = (Array.isArray(body.parts) ? body.parts : [])
+      .map(Number)
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 10000);
+    if (!isUuid(galleryId) || !keyInGallery(galleryId, key) || !uploadId || !parts.length || parts.length > 100) return mpBad();
+    const urls = await Promise.all(
+      parts.map(async (part) => ({
+        part,
+        url: await getSignedUrl(
+          r2(),
+          new UploadPartCommand({ Bucket: R2_BUCKET, Key: key, UploadId: String(uploadId), PartNumber: part }),
+          { expiresIn: 3600 }
+        ),
+      }))
+    );
+    return NextResponse.json({ urls });
+  }
+
+  if (body.action === "mp-complete") {
+    const { galleryId, key, uploadId } = body;
+    if (!isUuid(galleryId) || !keyInGallery(galleryId, key) || !uploadId) return mpBad();
+    let parts = (Array.isArray(body.parts) ? body.parts : [])
+      .map((p) => ({ PartNumber: Number(p?.PartNumber), ETag: String(p?.ETag || "").replace(/"/g, "") }))
+      .filter((p) => Number.isInteger(p.PartNumber) && p.PartNumber >= 1);
+    try {
+      // If the browser couldn't read the ETags back (CORS), ask R2 what landed.
+      if (!parts.length || parts.some((p) => !p.ETag)) {
+        parts = [];
+        let marker;
+        do {
+          const res = await r2().send(
+            new ListPartsCommand({ Bucket: R2_BUCKET, Key: key, UploadId: String(uploadId), PartNumberMarker: marker })
+          );
+          for (const p of res.Parts || []) parts.push({ PartNumber: p.PartNumber, ETag: String(p.ETag || "").replace(/"/g, "") });
+          marker = res.IsTruncated ? res.NextPartNumberMarker : undefined;
+        } while (marker);
+      }
+      parts.sort((a, b) => a.PartNumber - b.PartNumber);
+      if (!parts.length) return mpBad("No parts arrived — try the upload again");
+      await r2().send(
+        new CompleteMultipartUploadCommand({
+          Bucket: R2_BUCKET,
+          Key: key,
+          UploadId: String(uploadId),
+          MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.PartNumber, ETag: `"${p.ETag}"` })) },
+        })
+      );
+      return NextResponse.json({ ok: true, filename: key.split("/").pop(), parts: parts.length });
+    } catch (err) {
+      return mpBad(err.message || "Storage couldn't finish the upload", 502);
+    }
+  }
+
+  if (body.action === "mp-abort") {
+    const { galleryId, key, uploadId } = body;
+    if (!isUuid(galleryId) || !keyInGallery(galleryId, key) || !uploadId) return mpBad();
+    try {
+      await r2().send(new AbortMultipartUploadCommand({ Bucket: R2_BUCKET, Key: key, UploadId: String(uploadId) }));
+    } catch {}
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
