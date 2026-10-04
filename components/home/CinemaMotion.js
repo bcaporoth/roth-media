@@ -1,6 +1,6 @@
 "use client";
 
-// Scroll motion for /lab/cinema (GSAP + ScrollTrigger). All enhancement:
+// Scroll motion for the homepage (GSAP + ScrollTrigger). All enhancement:
 // with JS off or "reduce motion" on, the page is fully visible and scrolls.
 
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ const pad = (n) => String(n).padStart(2, "0");
 
 export default function CinemaMotion() {
   useEffect(() => {
-    const root = document.querySelector(".lab-cinema");
+    const root = document.querySelector(".rm-cinema");
     if (!root) return;
 
     // Close the phone menu after a link tap (works without this too).
@@ -79,7 +79,8 @@ export default function CinemaMotion() {
       ScrollTrigger.create({
         start: 80,
         end: "max",
-        onToggle: (self) => root.classList.toggle("cin--scrolled", self.isActive),
+        // Stays on at the very bottom of the page too (isActive drops at "max").
+        onToggle: (self) => root.classList.toggle("cin--scrolled", self.isActive || self.progress > 0),
       });
 
       // ── Opening shot: slow push-in while the title drifts up. ──
