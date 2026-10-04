@@ -29,7 +29,7 @@ export default function OpenDatesPage() {
   // (lib/deals.js), otherwise the plain price. Same number the quote shows.
   const launch = autoDeal();
   const price = money(applyDeal(film.price, launch));
-  const today = money(Math.round(applyDeal(film.price, launch) * 0.3));
+  const today = money(Math.round(applyDeal(film.price, launch) * 0.5));
   const href = "/quote?for=wedding&pkg=film";
 
   const year = new Date().getFullYear();
@@ -77,7 +77,7 @@ export default function OpenDatesPage() {
               <section className="cx-card wd-offer cx-reveal">
                 <p className="cx-kick">Next year{launch ? ` · ${launch.pct}% off` : " · this year's prices"}</p>
                 <h2 className="cx-h2">Reserve 2027 now</h2>
-                <p className="cx-fine">{launch ? `Reserve any 2027 date at this year's prices, ${launch.pct}% off through ${launch.endsLabel} — no code needed. The 30% retainer holds it; balance isn't due until two weeks before.` : "Reserve any 2027 date before December 31 at this year's prices. The 30% retainer holds it; balance isn't due until two weeks before."}</p>
+                <p className="cx-fine">{launch ? `Reserve any 2027 date at this year's prices, ${launch.pct}% off through ${launch.endsLabel} — no code needed. The 50% retainer holds it; balance isn't due until two weeks before.` : "Reserve any 2027 date before December 31 at this year's prices. The 50% retainer holds it; balance isn't due until two weeks before."}</p>
                 <p className="wd-offer-price"><strong className="cx-num">{price}</strong> {launch ? <s>{money(film.price)}</s> : null} <span>· {today} holds it today</span></p>
                 <p className="cx-offer">2027 at this year's prices ends {c.endsLabel}. Prices go up in January.</p>
                 <Link className="cx-btn cx-btn--ghost cx-btn--lg cx-btn--block wd-offer-cta" href={href}>Lock my 2027 date</Link>
@@ -125,7 +125,7 @@ export default function OpenDatesPage() {
             </div>
             <ol className="cx-steps cx-reveal">
               <li><span><strong>Pick a date above</strong> and build your package — two minutes, real prices.</span></li>
-              <li><span><strong>Book it online.</strong> The 30% retainer holds the date. Balance is due two weeks before, not today.</span></li>
+              <li><span><strong>Book it online.</strong> The 50% retainer holds the date. Balance is due two weeks before, not today.</span></li>
               <li><span><strong>I call you within 24 hours</strong> to plan the day. Sneak peek video lands within 48 hours of the wedding.</span></li>
             </ol>
           </div>

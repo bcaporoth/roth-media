@@ -48,7 +48,7 @@ export default async function WelcomePage({ searchParams }) {
         <li><strong>Hello.</strong> You reach out; you hear back from me the same day.</li>
         <li><strong>First call.</strong> Fifteen minutes. I ask about {cat === "business" ? "your business" : "your day"} and what a win looks like.</li>
         <li><strong>Your plan.</strong> A written plan and a firm price, the same day as the call.</li>
-        <li><strong>Booked.</strong> {cat === "wedding" || !cat ? "Weddings hold the date with a 30% retainer; the balance is due 14 days before." : "Booking locks your date."} I send a short questionnaire so I show up knowing your story.</li>
+        <li><strong>Booked.</strong> {cat === "wedding" || !cat ? "Weddings hold the date with a 50% retainer; the balance is due 14 days before." : "Booking locks your date."} I send a short questionnaire so I show up knowing your story.</li>
         <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : ""}.</li>
         <li><strong>Shoot day.</strong> I arrive early and I direct. You just show up as yourself.</li>
         <li><strong>Delivery.</strong> A sneak peek first, then everything in your own private online gallery — save straight to your phone.</li>

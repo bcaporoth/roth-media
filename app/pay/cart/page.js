@@ -90,7 +90,7 @@ export default async function CartPage({ searchParams }) {
                   {q.mode === "retainer" && (
                     <tr><th scope="row">{balance ? "Already paid" : "Balance, due 14 days before your date"}</th><td>{balance ? `− ${money(paidAlready)}` : money(q.total - q.dueToday)}</td></tr>
                   )}
-                  <tr className="qt-cart-due"><th scope="row">Due now{q.mode === "retainer" && !balance ? " — 30% retainer holds your date" : ""}</th><td>{money(due)}</td></tr>
+                  <tr className="qt-cart-due"><th scope="row">Due now{q.mode === "retainer" && !balance ? " — 50% retainer holds your date" : ""}</th><td>{money(due)}</td></tr>
                 </tbody>
               </table>
               {monthly.map((a) => (

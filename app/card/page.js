@@ -15,7 +15,7 @@ const STEPS = [
   ["Say hi", "Send the form, text, or book a call. You hear back the same day."],
   ["15-minute call", "I ask about your day or your business and what a win looks like."],
   ["Your plan + price", "A written plan and a firm number, the same day as the call."],
-  ["Lock the date", "Book and pay online. Weddings hold the date with 30% down."],
+  ["Lock the date", "Book and pay online. Weddings hold the date with 50% down."],
   ["Shoot + delivery", "Sneak peek in 48 hours. Everything in your own private gallery."],
 ];
 

@@ -184,7 +184,7 @@ const FAMILY_PHOTOS = [
 const STEPS = {
   wedding: [
     ["Build your quote online.", "Pick your package and add-ons — you see the real starting price in two minutes."],
-    ["I confirm it in writing.", "Exact number, locked date, no surprises. The 30% retainer holds your date; the balance is due 14 days before."],
+    ["I confirm it in writing.", "Exact number, locked date, no surprises. The 50% retainer holds your date; the balance is due 14 days before."],
     ["Your day, delivered.", "Filmed candid and unobtrusive. Sneak peek within 48 hours, everything online within six weeks."],
   ],
   business: [
@@ -479,7 +479,7 @@ export default function CloserHome() {
                 </>
               )}
               <p className="clo-start-note">
-                <strong>2027, or a Friday or Sunday?</strong> Enter any date. A 30% retainer holds it; the balance isn’t due until 14 days before.
+                <strong>2027, or a Friday or Sunday?</strong> Enter any date. A 50% retainer holds it; the balance isn’t due until 14 days before.
               </p>
             </div>
           </div>
@@ -748,7 +748,7 @@ export default function CloserHome() {
           </div>
 
           <div data-for="wedding">
-            <CloserPrice aud="wedding" quoteFor="wedding" packages={[FILM, PHOTO]} addons={ADDONS.wedding.filter((a) => !a.hidden)} deal={dealProp} cta="Continue with this quote" fine="A 30% retainer holds your date; the balance is due 14 days before." />
+            <CloserPrice aud="wedding" quoteFor="wedding" packages={[FILM, PHOTO]} addons={ADDONS.wedding.filter((a) => !a.hidden)} deal={dealProp} cta="Continue with this quote" fine="A 50% retainer holds your date; the balance is due 14 days before." />
           </div>
           <div data-for="business">
             <CloserPrice aud="business" quoteFor="business" packages={PACKAGES.business} addons={ADDONS.business} deal={dealProp} cta="Continue with this quote" fine="Paid once. Delivered within two weeks, one round of revisions included." />

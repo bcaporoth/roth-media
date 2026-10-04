@@ -23,7 +23,7 @@ function fullGet(category, pkg) {
   return base ? [...fullGet(category, base), ...rest] : pkg.get;
 }
 
-const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
+const RETAINER_RATE = 0.5; // weddings pay this today; matches /terms and lib/payments.js
 
 // ── Cinema look (pass `cinema`; styles in app/theme/quote.css). Same state, same numbers, new markup. ──
 // A real photo for each door on the first screen (decorative: the button text names it).
@@ -298,7 +298,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 {buyable ? (
                   <p className="qt-sum-today">
                     <strong>{money(dueToday)} today</strong>
-                    {retainer ? " — the 30% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
+                    {retainer ? " — the 50% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
                   </p>
                 ) : (
                   <p className="qt-fine">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
@@ -476,7 +476,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
               {buyable ? (
                 <p className="qmatch-today">
                   <strong>{money(dueToday)} today</strong>
-                  {retainer ? " — the 30% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
+                  {retainer ? " — the 50% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
                 </p>
               ) : (
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>

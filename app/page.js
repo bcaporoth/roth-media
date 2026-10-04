@@ -103,7 +103,7 @@ const PROMISES = [
   { k: "48 hours", v: "A sneak peek within 48 hours — ready to share while everyone’s still talking about the day." },
   { k: "Real audio", v: "Your real vows, your full ceremony and the speeches, with clean audio." },
   { k: "In writing", v: "I confirm the exact number in writing before we shoot. Locked date, no surprises." },
-  { k: "30% holds it", v: "A 30% retainer holds your date; the balance is due 14 days before. One free reschedule with 30 days’ notice." },
+  { k: "50% holds it", v: "A 50% retainer holds your date; the balance is due 14 days before. One free reschedule with 30 days’ notice." },
   { k: "Your guests", v: "A QR card on every table — guests send their photos and 60-second video messages to your private gallery. No app." },
   { k: "Licensed", v: "All music licensed through Epidemic Sound; your films are cleared for socials, your website and ads." },
 ];
@@ -329,7 +329,7 @@ export default function CinemaHome() {
               </form>
               <ul className="cin-date-terms">
                 <li>Your date carries straight into your quote — no retyping, no call needed.</li>
-                <li>A 30% retainer holds it; the balance is due 14 days before.</li>
+                <li>A 50% retainer holds it; the balance is due 14 days before.</li>
                 <li>Wedding coming up fast? <a href={SMS_HREF}>Text me the date</a> — that’s the quickest answer.</li>
               </ul>
             </div>
@@ -466,7 +466,7 @@ export default function CinemaHome() {
               <h3>Travel</h3>
               <p className="cin-fine">{TRAVEL.line}</p>
               <h3>Booking</h3>
-              <p className="cin-fine">A 30% retainer holds your date. The balance is due 14 days before the wedding, and the price is confirmed in writing.</p>
+              <p className="cin-fine">A 50% retainer holds your date. The balance is due 14 days before the wedding, and the price is confirmed in writing.</p>
               {deal && (
                 <p className="cin-offer">
                   <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —

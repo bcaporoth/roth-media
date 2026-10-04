@@ -11,7 +11,7 @@ import { money } from "../../lib/packages";
 export const metadata = {
   title: "Pay — book your date",
   description:
-    "Hold your date with a 30% retainer, or pay a balance or invoice — secure checkout by Stripe.",
+    "Hold your date with a 50% retainer, or pay a balance or invoice — secure checkout by Stripe.",
   alternates: { canonical: "/pay" },
 };
 

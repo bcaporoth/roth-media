@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Quote → Stripe Checkout. Weddings pay the 30% retainer today; family and
+// Quote → Stripe Checkout. Weddings pay the 50% retainer today; family and
 // business pay in full. Deals (lib/deals.js) are already in the price — no
 // codes on Stripe's page, so nothing can stack.
 export async function POST(request) {
@@ -50,7 +50,7 @@ export async function POST(request) {
           unit_amount: cents(q.dueToday),
           product_data: {
             name: `Date retainer — ${label}`,
-            description: `30% of ${money(q.total)}.${dealNote} Holds your date. Balance of ${money(q.total - q.dueToday)} due 14 days before.`,
+            description: `50% of ${money(q.total)}.${dealNote} Holds your date. Balance of ${money(q.total - q.dueToday)} due 14 days before.`,
           },
         },
       }]
