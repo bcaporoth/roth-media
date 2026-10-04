@@ -5,6 +5,7 @@
 // broadcast composer for everyone or a checked few.
 
 import { useEffect, useMemo, useState } from "react";
+import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
@@ -132,8 +133,8 @@ export default function ClientsBoard({ initial, emailReady }) {
 
       {adding && (
         <form className="clients-add" onSubmit={add}>
-          <input placeholder="Name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-          <input placeholder="Email" type="email" required value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+          <input placeholder="Name" required={!draft.email} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <input placeholder="Email (optional)" type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
           <input placeholder="Phone (optional)" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
           <button type="submit" className="abtn">Add</button>
         </form>
@@ -162,8 +163,8 @@ export default function ClientsBoard({ initial, emailReady }) {
               <div className="client-row">
                 {c.lead ? <span className="client-leaddot" title="Inquired — not on the roster yet" /> : <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${c.email}`} />}
                 <button type="button" className="client-main" onClick={() => c.lead ? openLead(c) : setOpen(isOpen ? null : c.id)}>
-                  <strong>{c.name || c.email} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}</strong>
-                  <span className="gcard-meta">{c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
+                  <strong>{c.name || (isNoEmail(c.email) ? "Unnamed" : c.email)} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}</strong>
+                  <span className="gcard-meta">{isNoEmail(c.email) ? "no email yet" : c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
                   <span className="gcard-meta">
                     {c.lead ? `Inquired ${fmt(c.created_at)} · not on the roster yet` : null}
                     {!c.lead && <>{c.galleries.length} {c.galleries.length === 1 ? "gallery" : "galleries"}</>}
@@ -173,7 +174,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                 </button>
                 <div className="client-quick">
                   {c.lead ? <button type="button" className="achip achip-primary" onClick={() => openLead(c)}>Profile</button> : <Link className="achip achip-primary" href={`/portal/admin/clients/${c.id}`}>Profile</Link>}
-                  <a className="achip" href={`mailto:${c.email}`}>Email</a>
+                  {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
                   {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
                 </div>
               </div>
@@ -182,7 +183,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                 <div className="client-detail" key={`${c.id}-${c.name}-${c.email}-${c.phone}`}>
                   <div className="client-fields">
                     <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && save(c, { name: e.target.value })} /></label>
-                    <label>Email<input defaultValue={c.email} onBlur={(e) => e.target.value !== c.email && save(c, { email: e.target.value })} /></label>
+                    <label>Email<input type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} onBlur={(e) => e.target.value.trim() && e.target.value !== c.email && save(c, { email: e.target.value })} /></label>
                     <label>Phone<input defaultValue={c.phone} onBlur={(e) => e.target.value !== c.phone && save(c, { phone: e.target.value })} /></label>
                   </div>
                   <label className="client-notes">Notes<textarea rows={3} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" onBlur={(e) => e.target.value !== c.notes && save(c, { notes: e.target.value })} /></label>
@@ -196,7 +197,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                         <span className="gcard-actions">
                           <button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button>
                           <a className="achip" href={`/portal/gallery/${g.id}`}>Open</a>
-                          <button type="button" className="achip" disabled={!emailReady} onClick={() => galleryReady(c, g)}>Email &quot;it&apos;s ready&quot;</button>
+                          <button type="button" className="achip" disabled={!emailReady || isNoEmail(c.email)} title={isNoEmail(c.email) ? "Add their email first" : ""} onClick={() => galleryReady(c, g)}>Email &quot;it&apos;s ready&quot;</button>
                         </span>
                         {!g.shared && (
                           <span className="client-members">
@@ -217,7 +218,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                     {" "}Set a temporary password and text it to them; they can change it anytime from their account page.
                   </p>
                   <div className="gcard-actions">
-                    <button type="button" className="achip" onClick={() => tempPassword(c)}>{c.account ? "Reset password" : "Create login + password"}</button>
+                    <button type="button" className="achip" disabled={isNoEmail(c.email)} title={isNoEmail(c.email) ? "Add their email first — the login is their email" : ""} onClick={() => tempPassword(c)}>{c.account ? "Reset password" : "Create login + password"}</button>
                     <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
                     {c.email_opt_out && <button type="button" className="achip" onClick={() => resubscribe(c)}>Re-subscribe</button>}
                     <button type="button" className="achip achip-danger" onClick={() => remove(c)}>Remove</button>

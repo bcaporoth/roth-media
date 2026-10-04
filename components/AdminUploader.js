@@ -531,7 +531,7 @@ export default function AdminUploader() {
           <option value="new">+ New client…</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name ? `${c.name} — ${c.email}` : c.email}
+              {c.name ? (/@no-email\.rothmediaco\.invalid$/.test(c.email) ? `${c.name} — no email yet` : `${c.name} — ${c.email}`) : c.email}
             </option>
           ))}
         </select>

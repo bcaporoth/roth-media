@@ -5,6 +5,7 @@ import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
 import { addMember } from "../../../../lib/album-access";
 import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
+import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 
 export const dynamic = "force-dynamic";
 
@@ -97,9 +98,13 @@ export async function POST(request) {
   const db = supabaseAdmin();
 
   if (body.action === "add") {
-    const email = cleanEmail(body.email);
     const name = String(body.name || "").trim().slice(0, 80);
-    if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
+    // Email is optional: a name alone is enough (they get a stand-in address until you add a real one).
+    let email = cleanEmail(body.email);
+    if (!email) {
+      if (!name) return bad("Add a name or an email");
+      email = standInEmail(name);
+    } else if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
     const { data, error } = await db
       .from("clients")
       .insert({ email, name: name || email.split("@")[0], ...(body.phone ? { phone: String(body.phone).slice(0, 40) } : {}) })
@@ -119,6 +124,15 @@ export async function POST(request) {
       const email = cleanEmail(body.email);
       if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
       patch.email = email;
+      // Was added without an email: carry their call sheets, inquiries and shoots over to the real address.
+      try {
+        const { data: was } = await db.from("clients").select("email").eq("id", id).maybeSingle();
+        const old = cleanEmail(was?.email);
+        if (isNoEmail(old) && old !== email) {
+          await db.from("submissions").update({ email }).eq("email", old);
+          await db.from("shoots").update({ client_email: email }).eq("client_email", old);
+        }
+      } catch {}
       // Keep the login in step — RLS matches on the auth email, so a roster-only
       // change would silently lock them out of every gallery.
       try {
@@ -192,6 +206,7 @@ export async function POST(request) {
   if (body.action === "set-password") {
     const email = cleanEmail(body.email);
     if (!EMAIL_RE.test(email)) return bad("Bad email");
+    if (isNoEmail(email)) return bad("Add their email first — the login is their email.");
     const password = String(body.password || "").trim() || tempPassword();
     if (password.length < 8) return bad("Password needs 8+ characters");
     try {
@@ -218,6 +233,7 @@ export async function POST(request) {
       db.from("galleries").select("id, title, share_token, media_count").eq("id", galleryId).maybeSingle(),
     ]);
     if (!c || !g) return bad("Client or gallery not found", 404);
+    if (isNoEmail(c.email)) return bad("Add their email first — or copy the share link and text it.");
     const link = `https://rothmediaco.com/g/${g.share_token}`;
     const text = `Hi ${firstName(c.name, c.email)},\n\nYour gallery is ready: ${g.title}.\n\n${note ? note + "\n\n" : ""}Open it here — no login needed, and you can share the link with family and friends:\n${link}\n\nEverything is yours to keep. Download originals anytime.\n\n— Brandon`;
     try {
@@ -252,7 +268,7 @@ export async function POST(request) {
     let skipped = 0;
     for (const c of clients || []) {
       const email = cleanEmail(c.email);
-      if (!EMAIL_RE.test(email) || seen.has(email)) continue;
+      if (!EMAIL_RE.test(email) || seen.has(email) || isNoEmail(email)) continue;
       if (c.email_opt_out) { skipped += 1; continue; }
       seen.add(email);
       const bodyText = merge(message, c);

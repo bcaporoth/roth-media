@@ -4,6 +4,7 @@
 // (autosave), shoots with their day plan (flow, shots, poses, gear), galleries, payments, messages — and the next step.
 
 import { useEffect, useRef, useState } from "react";
+import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
@@ -36,7 +37,7 @@ export default function ClientProfile({ initial, emailReady }) {
   async function saveClient(patch) {
     try { await api("/api/admin/clients", { action: "update", id: c.id, ...patch }); setD({ ...d, client: { ...c, ...patch } }); say("Saved"); } catch (err) { fail(err); }
   }
-  const link = intakeUrl({ email: c.email, name: c.name, type });
+  const link = intakeUrl({ email: isNoEmail(c.email) ? "" : c.email, name: c.name, type });
   async function intakeSent(how) {
     try {
       const r = await api("/api/admin/clients", { action: "intake-sent", email: c.email, name: c.name, phone: c.phone, type });
@@ -76,7 +77,7 @@ export default function ClientProfile({ initial, emailReady }) {
           <span className="gcard-meta"> · client since {fmt(c.created_at)}</span>
         </div>
         <div className="gcard-actions">
-          <a className="achip" href={`mailto:${c.email}`}>Email</a>
+          {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
@@ -92,7 +93,7 @@ export default function ClientProfile({ initial, emailReady }) {
       <section className="cprof-card">
         <div className="client-fields" key={`${c.name}-${c.email}-${c.phone}`}>
           <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && saveClient({ name: e.target.value })} /></label>
-          <label>Email<input defaultValue={c.email} onBlur={(e) => e.target.value !== c.email && saveClient({ email: e.target.value })} /></label>
+          <label>Email<input type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} onBlur={(e) => e.target.value.trim() && e.target.value !== c.email && saveClient({ email: e.target.value })} /></label>
           <label>Phone<input defaultValue={c.phone} onBlur={(e) => e.target.value !== c.phone && saveClient({ phone: e.target.value })} /></label>
         </div>
         <label className="client-notes">Notes<textarea rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" onBlur={(e) => e.target.value !== c.notes && saveClient({ notes: e.target.value })} /></label>
