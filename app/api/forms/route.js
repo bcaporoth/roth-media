@@ -33,6 +33,7 @@ export async function POST(request) {
     fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", cartUrl(base)]);
     if (cq.mode === "retainer") fields.push(["pay link — balance (send 14 days before)", cartUrl({ ...base, pay: "balance", code: "" })]);
     if (cq.deal) fields.push(["deal", `${cq.deal.label} — ${cq.deal.pct}% off, ends ${cq.deal.endsLabel}${cq.deal.auto ? "" : ` (code ${cq.deal.code})`}`]);
+    if (cq.free) fields.push(["free add-on", `${cq.free.label} — code ${cq.free.code}`]);
   }
 
   const sub = {

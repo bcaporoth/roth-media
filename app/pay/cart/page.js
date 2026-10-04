@@ -3,9 +3,9 @@ import SiteNav from "../../../components/SiteNav";
 import SiteFooter from "../../../components/SiteFooter";
 import CartPay from "../../../components/CartPay";
 import { priceQuote, bookingLabel, openRetainer } from "../../../lib/booking";
-import { money } from "../../../lib/packages";
+import { money, ADDONS } from "../../../lib/packages";
 import { stripeConfigured } from "../../../lib/stripe";
-import { codeDeal, upcomingCode } from "../../../lib/deals";
+import { codeDeal, upcomingCode, freebie } from "../../../lib/deals";
 import { EMAIL, PHONE } from "../../../lib/site";
 
 export const metadata = { title: "Your quote — review and pay", robots: { index: false } };
@@ -59,7 +59,9 @@ export default async function CartPage({ searchParams }) {
   const paidAlready = owed ? owed.paid_cents / 100 : q.dueToday;
   const due = balance ? total - paidAlready : q.dueToday;
   const first = String(sp?.n || "").trim().split(/\s+/)[0];
-  const codeTried = code && (!q.deal || q.deal.code !== code);
+  const codeTried = code && !q.free && (!q.deal || q.deal.code !== code);
+  // A free-add-on code typed on a cart that doesn't hold that add-on yet.
+  const freeFor = codeTried && freebie(code, { category: q.cat.id, packageId: q.pkg.id }) ? (ADDONS[q.cat.id] || []).find((x) => x.id === freebie(code, { category: q.cat.id, packageId: q.pkg.id }).addon)?.name || "" : "";
   const monthly = q.chosen.filter((a) => a.monthly);
   const keep = { c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t };
 
@@ -78,8 +80,11 @@ export default async function CartPage({ searchParams }) {
                   {q.chosen.map((a) => (
                     <tr key={a.id}><th scope="row">{a.name}<small>{a.get}</small></th><td>{money(a.price)}</td></tr>
                   ))}
+                  {!owed && q.free && (
+                    <tr className="qt-cart-deal"><th scope="row">{q.free.label}<small>Code {q.free.code}</small></th><td>− {money(q.freeValue)}</td></tr>
+                  )}
                   {!owed && q.deal && (
-                    <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.discount)}</td></tr>
+                    <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.dealDiscount)}</td></tr>
                   )}
                   <tr className="qt-cart-total"><th scope="row">Total{owed?.promo_code ? <small>{owed.promo_code}</small> : null}</th><td>{money(total)}</td></tr>
                   {q.mode === "retainer" && (
@@ -96,7 +101,7 @@ export default async function CartPage({ searchParams }) {
                   {Object.entries(keep).filter(([, v]) => v).map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
                   <label className="cx-field"><span className="cx-label">Promo code</span><input className="cx-input" name="code" defaultValue={code} autoCapitalize="characters" /></label>
                   <button type="submit" className="cx-btn cx-btn--ghost">Apply</button>
-                  {codeTried && <small className="cx-help">{upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
+                  {codeTried && <small className="cx-help">{freeFor ? `${code} makes "${freeFor}" free — add it to your quote and it drops off the total.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
                 </form>
               )}
             </div>
@@ -106,7 +111,7 @@ export default async function CartPage({ searchParams }) {
               <p className="qt-cart-amount cx-num">{money(due)}</p>
               {stripeConfigured ? (
                 <CartPay
-                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : "", code: q.deal?.code || "" }}
+                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : "", code: q.deal?.code || q.free?.code || "" }}
                   who={{ name: String(sp?.n || ""), email: String(sp?.e || ""), phone: String(sp?.t || "") }}
                   label={`Pay ${money(due)}`}
                 />

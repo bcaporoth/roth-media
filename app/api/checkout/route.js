@@ -32,7 +32,7 @@ export async function POST(request) {
   // Balance = what's left on their retainer booking (keeps the deal they booked with).
   const owed = balance ? await openRetainer(email) : null;
   const balanceCents = owed ? owed.total_cents - owed.paid_cents : cents(q.total - q.dueToday);
-  const dealNote = q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "";
+  const dealNote = (q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "") + (q.free ? ` ${q.free.label} (code ${q.free.code}).` : "");
   const line_items = balance
     ? [{
         quantity: 1,
@@ -58,7 +58,7 @@ export async function POST(request) {
     ? [{ quantity: 1, price_data: { currency: "usd", unit_amount: cents(q.total), product_data: { name: label, description: clip(`${q.pkg.scope}.${dealNote}`, 300) } } }]
     : [
         { quantity: 1, price_data: { currency: "usd", unit_amount: cents(q.pkg.price), product_data: { name: q.pkg.name, description: q.pkg.scope } } },
-        ...q.chosen.map((a) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: cents(a.price), product_data: { name: a.name, description: clip(a.get, 200) } } })),
+        ...q.chosen.filter((a) => !(q.free && a.id === q.free.addon)).map((a) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: cents(a.price), product_data: { name: a.name, description: clip(a.get, 200) } } })),
       ];
 
   // A monthly add-on (the website plan): save the card now, the plan starts
@@ -72,7 +72,7 @@ export async function POST(request) {
     mode: balance ? "balance" : q.mode,
     total: String(q.total),
     discount: String(q.discount),
-    deal: q.deal ? `${q.deal.label} (${q.deal.pct}% off)` : "",
+    deal: [q.deal ? `${q.deal.label} (${q.deal.pct}% off)` : "", q.free ? `${q.free.label} (${q.free.code})` : ""].filter(Boolean).join(" + "),
     code: clip(body.code, 30).toUpperCase(),
     booking: owed ? String(owed.id) : "",
     intake: clip(body.intake, 490),
