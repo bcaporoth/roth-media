@@ -1,5 +1,56 @@
+@import "./theme.css";
+
 /* Roth Media — adapted from the Roth Photography (Local Spot) design */
+/* ══ CINEMA THEME — site-wide tokens (dark is the default; the Studio admin is pinned to the old light set below) ══
+   Docs: .lab/THEME.md. New shared pieces (cx-* utilities, SiteNav, SiteFooter) live in app/theme.css. */
 :root {
+  /* legacy names, now carrying Cinema values */
+  --bone: #0b0a09;      /* page background */
+  --bone-2: #1c1916;    /* raised / alternate surface */
+  --paper: #141210;     /* card + field surface */
+  --ink: #f6f1e8;       /* text */
+  --ink-soft: #c9c3b8;  /* secondary text */
+  --clay: #d59a7e;      /* warm accent */
+  --clay-soft: #e6b79f;
+  --sand: #a89b86;
+  --gold: #dcbd7a;      /* label / kicker accent */
+  --line: rgba(246, 241, 232, 0.16);
+  /* homepage names, so page CSS can use either set */
+  --bg: #0b0a09;
+  --bg-2: #141210;
+  --bg-3: #1c1916;
+  --fg: #f6f1e8;
+  --dim: rgba(246, 241, 232, 0.8);
+  --faint: rgba(246, 241, 232, 0.62);
+  /* helpers */
+  --line-strong: rgba(246, 241, 232, 0.4);
+  --surface: rgba(246, 241, 232, 0.04);    /* translucent card fill */
+  --surface-2: rgba(246, 241, 232, 0.08);  /* hover / pressed fill */
+  --tint: rgba(213, 154, 126, 0.1);        /* accent wash */
+  --tint-line: rgba(213, 154, 126, 0.4);
+  --on-ink: #14110e;                       /* text on a light solid (var(--ink)) fill */
+  --on-ink-dim: rgba(20, 17, 14, 0.72);
+  --on-clay: #14110e;                      /* text on an accent fill */
+  --field-line: rgba(246, 241, 232, 0.38); /* input borders */
+  --ok: #8fc9a0;
+  --warn: #dcbd7a;
+  --err: #f0a08c;
+  --scheme: dark;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --nav-h: 56px;
+  --gut: 16px;
+  --maxw: 1320px;
+  color-scheme: dark;
+}
+@media (min-width: 800px) {
+  :root { --nav-h: 72px; --gut: 40px; }
+}
+
+/* Studio admin: pinned to the pre-Cinema light palette. Anything on a page that contains .admin-shell
+   (its app bar and footer included) keeps the old values; .admin-shell.is-dark keeps its own dark set. */
+html:has(.admin-shell, .sprint-page, .bprint) { color-scheme: light; }
+body:has(.admin-shell, .sprint-page, .bprint),
+.admin-shell {
   --bone: #f4efe6;
   --bone-2: #ebe3d5;
   --paper: #faf6ee;
@@ -10,6 +61,26 @@
   --sand: #c9b79a;
   --gold: #bd9a52;
   --line: #ddd2bf;
+  --bg: #f4efe6;
+  --bg-2: #faf6ee;
+  --bg-3: #ebe3d5;
+  --fg: #221f1a;
+  --dim: #6b6358;
+  --faint: #6b6358;
+  --line-strong: #c9b79a;
+  --surface: rgba(250, 246, 238, 0.6);
+  --surface-2: rgba(250, 246, 238, 0.72);
+  --tint: rgba(176, 106, 79, 0.07);
+  --tint-line: rgba(176, 106, 79, 0.25);
+  --on-ink: #f4efe6;
+  --on-ink-dim: rgba(244, 239, 230, 0.7);
+  --on-clay: #fff;
+  --field-line: rgba(0, 0, 0, 0.18);
+  --ok: #4a7c59;
+  --warn: #9a7628;
+  --err: #c0392b;
+  --scheme: light;
+  color-scheme: light;
 }
 
 * {
@@ -583,7 +654,7 @@ header.split:has(.split-photo:hover) .split-photo {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 1rem 1.25rem;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
 }
 
 .admin-list-row strong {
@@ -810,7 +881,7 @@ header.split:has(.split-photo:hover) .split-photo {
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 2rem 1.75rem;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease, border-color 0.3s ease;
@@ -952,7 +1023,7 @@ header.split:has(.split-photo:hover) .split-photo {
 .pricing-toggle button {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(250, 246, 238, 0.72);
+  background: var(--surface-2);
   color: var(--ink);
   padding: 1rem 1.1rem;
   text-align: left;
@@ -1059,7 +1130,7 @@ header.split:has(.split-photo:hover) .split-photo {
 .qsvc button {
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 1.15rem 1rem;
   text-align: left;
   cursor: pointer;
@@ -1093,7 +1164,7 @@ header.split:has(.split-photo:hover) .split-photo {
 }
 
 .qsvc button.on .qsvc-desc {
-  color: rgba(244, 239, 230, 0.7);
+  color: var(--on-ink-dim);
 }
 
 .quote-form {
@@ -1112,7 +1183,7 @@ header.split:has(.split-photo:hover) .split-photo {
   border: 1px solid var(--clay);
   border-radius: 16px;
   padding: 1.35rem 1.4rem;
-  background: rgba(176, 106, 79, 0.07);
+  background: var(--tint);
 }
 
 .qmatch-kick {
@@ -1341,7 +1412,7 @@ header.split:has(.split-photo:hover) .split-photo {
   padding: 0.5rem 1.1rem;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   color: var(--ink-soft);
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s, color 0.2s;
@@ -2021,7 +2092,7 @@ section.contact .lead a {
 .portal-card {
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 2rem;
 }
 
@@ -2426,17 +2497,7 @@ body:has(.lightbox) nav.rm-nav {
   }
 }
 
-.reveal {
-  opacity: 0;
-  transform: translateY(36px);
-  transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.reveal.in {
-  opacity: 1;
-  transform: translateY(0);
-}
+/* .reveal / .cx-reveal now live in theme.css (hidden only once components/Reveal.js marks them .cx-wait). */
 
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -2445,11 +2506,6 @@ body:has(.lightbox) nav.rm-nav {
   *,
   ::after {
     animation: none !important;
-  }
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
   }
 }
 
@@ -3520,7 +3576,7 @@ body:has(.lightbox) nav.rm-nav {
 
 .pgal-check.on {
   background: var(--clay);
-  color: #fff;
+  color: var(--on-clay);
 }
 
 .pgal-view.is-selected img {
@@ -3921,7 +3977,7 @@ body:has(.lightbox) nav.rm-nav {
   gap: 0.2rem;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 1.25rem 1.2rem 1.1rem;
   cursor: pointer;
   font-family: inherit;
@@ -4000,7 +4056,7 @@ body:has(.lightbox) nav.rm-nav {
 }
 
 .qpkg.on .qpkg-scope {
-  color: rgba(244, 239, 230, 0.7);
+  color: var(--on-ink-dim);
 }
 
 .qpkg ul {
@@ -4028,7 +4084,7 @@ body:has(.lightbox) nav.rm-nav {
 .qaddon {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 0.8rem 1rem;
   display: flex;
   align-items: center;
@@ -4039,7 +4095,7 @@ body:has(.lightbox) nav.rm-nav {
 
 .qaddon.on {
   border-color: var(--clay);
-  background: rgba(176, 106, 79, 0.07);
+  background: var(--tint);
 }
 
 .qaddon-main {
@@ -4234,7 +4290,7 @@ a.svc-cta:hover {
 }
 
 .qrail-sub {
-  color: rgba(244, 239, 230, 0.7);
+  color: var(--on-ink-dim);
 }
 
 .qflow-exit {
@@ -4449,7 +4505,7 @@ a.svc-cta:hover {
   padding: 0.6rem 0.5rem;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
 }
 
 .promo-cell strong {
@@ -4479,7 +4535,7 @@ a.svc-cta:hover {
   border: 1px solid var(--clay);
   border-radius: 16px;
   padding: 1.35rem 1.4rem;
-  background: rgba(176, 106, 79, 0.07);
+  background: var(--tint);
   text-align: left;
   margin-bottom: 2.2rem;
 }
@@ -4581,7 +4637,7 @@ a.svc-cta:hover {
 .promo-pill em {
   font-style: normal;
   font-weight: 500;
-  color: rgba(244, 239, 230, 0.7);
+  color: var(--on-ink-dim);
 }
 
 .promo-pill:hover {
@@ -4725,7 +4781,7 @@ a.svc-cta:hover {
 .svc-idea {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 1rem 1.2rem;
 }
 
@@ -4755,7 +4811,7 @@ a.svc-cta:hover {
 .svc-faq {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(250, 246, 238, 0.6);
+  background: var(--surface);
   padding: 0.9rem 1.1rem;
   margin-bottom: 0.7rem;
 }
@@ -4903,7 +4959,7 @@ a.svc-cta:hover {
 /* admin panel */
 .guest-admin-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; align-items: flex-end; margin-bottom: 1.25rem; }
 .guest-admin-form label { display: grid; gap: 0.3rem; font-size: 0.82rem; }
-.guest-admin-form input, .guest-admin-form select { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
+.guest-admin-form input, .guest-admin-form select { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
 .guest-admin-slug { display: flex; align-items: center; gap: 0.2rem; font-size: 0.85rem; opacity: 0.85; }
 .guest-admin-slug input { flex: 1; min-width: 0; }
 .guest-admin-form .abtn { grid-column: 1 / -1; justify-self: start; }
@@ -5367,7 +5423,7 @@ a.svc-cta:hover {
 .guest-card strong { display: block; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.05rem; line-height: 1.25; }
 .guest-card-sub { display: block; font-size: 0.85rem; opacity: 0.7; margin-top: 0.3rem; }
 .guest-admin-attach { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.3rem; }
-.guest-admin-attach select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; max-width: 260px; }
+.guest-admin-attach select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; max-width: 260px; }
 @media (max-width: 640px) { .guest-card { margin-inline: 1rem; } }
 
 /* guest reel — invite button + card actions */
@@ -5383,7 +5439,7 @@ a.svc-cta:hover {
 .clients-flash { font-size: 0.85rem; color: #2e7d4f; margin: 0.5rem 0; }
 .clients-add, .clients-compose { display: grid; gap: 0.6rem; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; margin: 0.75rem 0 1rem; }
 .clients-add { grid-template-columns: 1fr 1.4fr 1fr auto; align-items: center; }
-.clients-add input, .clients-compose input, .clients-compose textarea, .client-fields input, .client-notes textarea { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; width: 100%; }
+.clients-add input, .clients-compose input, .clients-compose textarea, .client-fields input, .client-notes textarea { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; width: 100%; }
 .clients-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .client { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.35); }
 .admin-shell.is-dark .client { background: rgba(255, 255, 255, 0.04); }
@@ -5466,11 +5522,11 @@ a.svc-cta:hover {
 .shoot-new { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; margin: 0.75rem 0 1rem; align-items: flex-end; }
 .shoot-new label { display: grid; gap: 0.25rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 .shoot-new label.wide, .shoot-new .wide { grid-column: 1 / -1; }
-.shoot-new input, .shoot-new select, .shoot-new textarea { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; width: 100%; text-transform: none; letter-spacing: 0; }
+.shoot-new input, .shoot-new select, .shoot-new textarea { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; width: 100%; text-transform: none; letter-spacing: 0; }
 .shoot-new .abtn { justify-self: start; }
 .shoot-list { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.5rem; }
 .shoot-list.is-past { opacity: 0.7; margin-top: 0.75rem; }
-.shoot { border: 1px solid var(--line); border-radius: 14px; background: rgba(250, 246, 238, 0.6); }
+.shoot { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .shoot.is-open { border-color: var(--clay); }
 .shoot-row { width: 100%; display: grid; grid-template-columns: 150px 1fr 110px auto; gap: 1rem; align-items: center; padding: 0.85rem 1rem; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .shoot-row strong { display: block; font-weight: 600; }
@@ -5486,7 +5542,7 @@ a.svc-cta:hover {
 .shoot-check { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }
 .shoot-check label { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.92rem; line-height: 1.4; cursor: pointer; }
 .shoot-check li.is-done label { text-decoration: line-through; color: var(--ink-soft); }
-.shoot-notes { width: 100%; font: inherit; padding: 0.6rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 10px; background: transparent; color: inherit; resize: vertical; }
+.shoot-notes { width: 100%; font: inherit; padding: 0.6rem 0.7rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: inherit; resize: vertical; }
 select.achip { appearance: auto; }
 .shoots-past-toggle { margin-top: 1rem; }
 @media (max-width: 820px) {
@@ -5758,7 +5814,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .callsheet-body { display: grid; gap: 0.7rem; padding: 0.75rem 0.3rem 0.3rem; }
 .callsheet-meta { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem 1rem; }
 .callsheet-meta label { display: grid; gap: 0.2rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.8; }
-.callsheet-meta input { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
+.callsheet-meta input { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
 .callsheet-state { font-size: 0.8rem; margin-left: auto; opacity: 0.7; }
 .callsheet-state.is-saved { color: #2e7d4f; opacity: 1; }
 .callsheet-checks { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -5766,7 +5822,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .callsheet-checks input { margin: 0 0.1rem 0 0; vertical-align: middle; }
 .callsheet-q { display: grid; gap: 0.3rem; }
 .callsheet-q span { font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
-.callsheet-q textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; resize: vertical; }
+.callsheet-q textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; resize: vertical; }
 .is-dark .callsheet-q textarea, .is-dark .callsheet-meta input { border-color: rgba(255, 255, 255, 0.22); }
 @media (max-width: 720px) {
   .client-quick { display: flex; }                       /* phones: just the Profile chip */
@@ -5783,8 +5839,8 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
   .cprof-ref { position: sticky; top: 0.75rem; max-height: calc(100vh - 1.5rem); overflow-y: auto; }
 }
 .cprof-paste { display: grid; gap: 0.5rem; }
-.cprof-paste textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
-.cprof-paste input[type="date"] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; margin-left: 0.3rem; }
+.cprof-paste textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
+.cprof-paste input[type="date"] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; margin-left: 0.3rem; }
 .callsheet-sec { display: grid; gap: 0.6rem; padding-top: 0.4rem; border-top: 1px solid var(--line); }
 .client.is-lead { border-style: dashed; }
 .client-leaddot { width: 1.05rem; height: 1.05rem; flex: none; border-radius: 50%; border: 2px dashed var(--clay); }
@@ -5800,7 +5856,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .prep-x:hover { opacity: 1; background: rgba(0, 0, 0, 0.06); color: #c0392b; }
 .prep-empty { font-size: 0.85rem; color: var(--ink-soft); }
 .prep-add { display: flex; gap: 0.4rem; align-items: center; }
-.prep-add input { flex: 1; min-width: 0; font: inherit; font-size: 0.9rem; padding: 0.45rem 0.6rem; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; background: transparent; color: inherit; }
+.prep-add input { flex: 1; min-width: 0; font: inherit; font-size: 0.9rem; padding: 0.45rem 0.6rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
 .prep-add .achip[disabled] { opacity: 0.5; cursor: default; }
 .admin-shell.is-dark .prep-x:hover { background: rgba(255, 255, 255, 0.08); }
 @media (max-width: 520px) { .prep-x { width: 2rem; height: 2rem; opacity: 0.8; } }
@@ -5820,12 +5876,12 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .sprint-owner { text-align: right; font-size: 0.86rem; display: grid; }
 .sprint-label { display: block; font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8a6a3e; }
 .sprint-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
-.sprint-facts > div, .sprint-who > div { border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 10px; padding: 0.5rem 0.65rem; display: grid; gap: 0.1rem; }
+.sprint-facts > div, .sprint-who > div { border: 1px solid var(--field-line); border-radius: 10px; padding: 0.5rem 0.65rem; display: grid; gap: 0.1rem; }
 .sprint-facts strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.25rem; }
 .sprint-facts em, .sprint-who em { font-style: normal; font-size: 0.76rem; color: #6b6358; }
 .sprint-who { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.6rem; }
 .sprint-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-.sprint-list h2 { margin: 0 0 0.45rem; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: #191612; border-bottom: 1px solid rgba(0, 0, 0, 0.18); padding-bottom: 0.3rem; }
+.sprint-list h2 { margin: 0 0 0.45rem; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: #191612; border-bottom: 1px solid var(--field-line); padding-bottom: 0.3rem; }
 .sprint-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.32rem; }
 .sprint-list li { display: flex; gap: 0.5rem; align-items: flex-start; break-inside: avoid; }
 .sprint-list li.is-done { color: #6b6358; }
@@ -5843,7 +5899,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 /* ── Studio → Playbook (gear, shot lists, flows, poses) + the same lists on a shoot ── */
 .pbook { display: grid; gap: 0.8rem; }
 .pbook-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
-.pbook-tab { text-align: left; font: inherit; color: inherit; background: rgba(250, 246, 238, 0.6); border: 1px solid var(--line); border-radius: 14px; padding: 0.8rem 1rem; cursor: pointer; display: grid; gap: 0.1rem; }
+.pbook-tab { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0.8rem 1rem; cursor: pointer; display: grid; gap: 0.1rem; }
 .pbook-tab strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; }
 .pbook-tab em { font-style: normal; font-size: 0.78rem; color: var(--ink-soft); }
 .pbook-tab:hover { border-color: var(--clay); }
@@ -5851,7 +5907,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .pbook-tab.is-on em { color: inherit; opacity: 0.7; }
 .pbook-kinds { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .pbook-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; align-items: start; }
-.pbook-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(250, 246, 238, 0.6); padding: 0.9rem 1rem; display: grid; gap: 0.65rem; }
+.pbook-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 0.9rem 1rem; display: grid; gap: 0.65rem; }
 .pbook-card-head { display: grid; gap: 0.4rem; }
 .pbook-title { font: inherit; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; font-weight: 600; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.2rem 0.4rem; margin-left: -0.4rem; width: calc(100% + 0.4rem); }
 .pbook-title:hover, .pbook-title:focus { border-color: rgba(0, 0, 0, 0.18); outline: none; }
@@ -5864,7 +5920,7 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .pbook-n { flex: none; width: 1.4rem; font-size: 0.75rem; color: var(--ink-soft); text-align: right; }
 .pbook-text { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.3rem 0.45rem; }
 .pbook-text:hover, .pbook-text:focus { border-color: rgba(0, 0, 0, 0.18); outline: none; }
-.pbook-time { flex: none; width: 6.6rem; font: inherit; font-size: 0.82rem; color: inherit; background: transparent; border: 1px solid rgba(0, 0, 0, 0.18); border-radius: 8px; padding: 0.25rem 0.35rem; }
+.pbook-time { flex: none; width: 6.6rem; font: inherit; font-size: 0.82rem; color: inherit; background: transparent; border: 1px solid var(--field-line); border-radius: 8px; padding: 0.25rem 0.35rem; }
 .pbook-row-actions { display: flex; flex: none; opacity: 0.35; }
 .pbook-items li:hover .pbook-row-actions, .pbook-items li:focus-within .pbook-row-actions { opacity: 1; }
 .pbook-row-actions .prep-x[disabled] { opacity: 0.2; cursor: default; }
@@ -5899,3 +5955,176 @@ a.camp-cta:hover { background: var(--clay); border-color: var(--clay); }
 @media (max-width: 820px) { body:has(.qrail) .promo-pill { display: none; } }
 /* Long helper text in the Playbook / client day plan wraps instead of truncating. */
 .pbook p.gcard-meta, .cprof-shoots p.gcard-meta, .shoot-new p.gcard-meta { white-space: normal; overflow: visible; }
+
+/* ══ CINEMA — legacy classes ══
+   Restyles the pre-Cinema class names so every public page is dark, square-cornered and coherent.
+   The guard :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) adds no specificity and keeps all of it out of the Studio admin. */
+body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a { color: inherit; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) [id] { scroll-margin-top: calc(var(--nav-h) + 20px); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) ::selection { background: var(--gold); color: #14110e; }
+
+/* ── legacy nav (.rm-nav / .portal-nav / .portal-appbar): one solid Cinema plate ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) nav.rm-nav {
+  height: var(--nav-h); padding: 0 var(--gut); gap: 0.8rem;
+  background: #0b0a09; border-bottom: 1px solid var(--line);
+  mix-blend-mode: normal; -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand-text, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links { mix-blend-mode: normal; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand { font-weight: 700; font-size: 1.02rem; letter-spacing: 0.02em; color: var(--fg); gap: 0.6rem; min-height: 44px; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand em { font-style: normal; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .brand-chip { background: transparent; color: var(--fg); padding: 0; border-radius: 0; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .brand-chip .brand-mark { width: 17px; height: auto; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links { gap: 1.5rem; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--fg); font-size: 0.88rem; font-weight: 600; letter-spacing: 0.04em; text-transform: none; white-space: nowrap;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a:hover { opacity: 1; color: #fff; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a.nav-login, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pnav-user, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-signout {
+  min-height: 44px; padding: 0 0.95rem; border-radius: 2px; border: 1px solid rgba(246, 241, 232, 0.6);
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--fg);
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-signout { display: inline-flex; align-items: center; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pnav-user { text-transform: none !important; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a.nav-login:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-signout:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pnav-user:hover { background: var(--fg); color: #14110e; border-color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pnav-link.is-active, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pnav-user.is-active { color: var(--gold) !important; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-nav { background: #0b0a09; }
+@media (max-width: 820px) {
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) nav.rm-nav { padding: 0 var(--gut); background: #0b0a09; }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand { font-size: 1.02rem; }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links { gap: 0.9rem; }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a { font-size: 0.8rem; letter-spacing: 0.02em; }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a.nav-login, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-appbar .pnav-user, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-appbar .portal-signout { padding: 0 0.7rem; font-size: 0.68rem; }
+}
+@media (max-width: 480px) {
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) nav.rm-nav { padding: 0 var(--gut); }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand { font-size: 0.98rem; }
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .nav-links a.nav-login, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-appbar .portal-signout { padding: 0 0.6rem; font-size: 0.64rem; }
+}
+@media (min-width: 800px) {
+  :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .rm-nav .brand { font-size: 1.12rem; }
+}
+
+/* ── legacy footer (.rm-footer): black, hairline, quiet row ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) footer.rm-footer { background: #000; color: var(--fg); border-top: 1px solid var(--line); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .foot-inner { color: var(--dim); font-size: 0.88rem; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .foot-inner .brand { color: var(--fg); font-weight: 700; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .foot-inner .brand em { font-style: normal; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .foot-inner a { color: var(--dim); display: inline-flex; align-items: center; min-height: 44px; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .foot-inner a:hover { color: var(--fg); }
+
+/* ── headings + labels ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-wrap > h1, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-wrap > h1, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead h1, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.contact h2 {
+  font-weight: 600; letter-spacing: -0.03em; line-height: 1.03; overflow-wrap: normal; text-wrap: balance;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-section h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-q, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-steps h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-rules h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-offer h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-card h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .legal h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-card-title, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-section-title {
+  font-weight: 600; letter-spacing: -0.02em;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-wrap > .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-wrap > .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.contact .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pricing-head .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .about-text .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-inner .kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .kick-sm, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qmatch-kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-card-kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .fc-lane-kick, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qgroup-label, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg-you {
+  font-size: 0.72rem; letter-spacing: 0.2em; font-weight: 700; color: var(--gold); text-transform: uppercase;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-wrap > .lead, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.contact .lead { color: var(--dim); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .legal { color: var(--dim); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .legal a, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-wrap a:not(.pay-btn):not(.qprimary), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .consent a, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform-success-body a, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-cta-secondary { text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--faint); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .consent { color: var(--faint); }
+
+/* ── buttons: square corners, light solid primary, ghost secondary ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qprimary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-up .qprimary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.svc-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form > button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.camp-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-form .qprimary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-book, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-pay button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-code button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-invite, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-form button[type="submit"], :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-cta-primary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-cta-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-btn.primary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-lightbox-dl {
+  border-radius: 2px; background: var(--fg); color: #14110e; border-color: var(--fg);
+  font-weight: 700; letter-spacing: 0.07em; min-height: 48px;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qprimary:hover:not(:disabled), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-up .qprimary:hover:not(:disabled), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.svc-cta:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform button:hover:not(:disabled), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form > button:hover:not(:disabled), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-btn:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.camp-cta:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-book:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-pay button:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-invite:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-cta-primary:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-cta-btn:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-btn.primary:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-lightbox-dl:hover {
+  background: #fff; border-color: #fff; color: #14110e; transform: none;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.svc-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.camp-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-book, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-cta-primary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-cta-btn { display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.camp-cta { display: flex; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qsecondary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-cta-secondary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-card-open, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pj-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-dl, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .gal-nav {
+  border-radius: 2px; border-color: rgba(246, 241, 232, 0.6); color: var(--fg);
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qsecondary { min-height: 48px; font-weight: 700; letter-spacing: 0.07em; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qsecondary:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-cta-secondary:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-card-open:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-btn:hover { border-color: var(--fg); background: rgba(246, 241, 232, 0.08); color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-btn, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .gal-nav { background: #0b0a09; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgal-tool-count { border-radius: 2px; }
+
+/* ── cards + panels: flat, square, hairline ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-entry .qsvc button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qaddon, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-idea, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-cell, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-box, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-hosted-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .price-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-opt, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-total, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-agreement, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-codebox, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qdeep-section, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qmatch, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qmatch-today, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-done, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-prices div, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-video, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-rec, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-item, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-cell, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-msg video, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .bookcall-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-video video, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .fc-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .fc--vertical .fc-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .fc--feature .fc-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .film-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .reel-card-frame, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pcard, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-list {
+  border-radius: 2px;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qaddon, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-idea, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-cell, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .price-card, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-opt, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qdeep-section, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-card { background: var(--bg-2); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg:hover, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button:hover { transform: none; border-color: var(--line-strong); background: var(--bg-3); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button { color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.popular { border-color: rgba(220, 189, 122, 0.55); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button.on { background: var(--fg); color: #14110e; border-color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsvc button.on .qsvc-title { color: #14110e; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg-flag { border-radius: 2px; background: var(--gold); color: #14110e; letter-spacing: 0.16em; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qaddon.on { border-color: var(--gold); background: rgba(220, 189, 122, 0.08); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-box, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qmatch, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qmatch-today { border-color: rgba(220, 189, 122, 0.45); background: var(--bg-2); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qrail, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-pill { border-radius: 2px; background: var(--fg); color: #14110e; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-pill:hover { background: #fff; color: #14110e; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .promo-pill-dot { background: var(--clay); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .deal-banner { background: var(--gold); color: #14110e; }
+
+/* FAQ rows (details.svc-faq) */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq { padding: 0; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq summary { display: flex; align-items: center; min-height: 52px; padding: 0.7rem 1.1rem; font-family: var(--font-display), "Syne", sans-serif; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq p { padding: 0 1.1rem 1rem; margin: 0; color: var(--dim); }
+
+/* ── pills + step markers ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-steps li span, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-steps li button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsteps span, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qtoggle button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pricing-toggle button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .filters button, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-dates li, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-dates li a, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .itag, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .lchip {
+  border-radius: 2px;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-steps { color: var(--faint); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-steps li.active span { border-color: var(--gold); color: var(--gold); background: transparent; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-dates li { border-color: var(--line-strong); color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-dates li a { min-height: 44px; display: flex; align-items: center; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .camp-dates li a:hover { background: var(--fg); color: #14110e; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qtoggle button.on, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pricing-toggle button.on, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .filters button.active { background: var(--fg); color: #14110e; border-color: var(--fg); }
+
+/* ── form fields: boxed, clearly visible, gold focus ── */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform input:where(:not([type="checkbox"], [type="radio"], [type="file"], [type="range"])), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form input:where(:not([type="checkbox"], [type="radio"], [type="file"], [type="range"])), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform select, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form select, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform textarea, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form textarea, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-up .qf-field input:where(:not([type="checkbox"], [type="radio"], [type="file"])), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-pay input, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-code input, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-fields input, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-sign input:not([type="checkbox"]), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-form input:where(:not([type="checkbox"])), :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-codebox input, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-form input[type="text"], :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-form input[type="email"] {
+  background: var(--bg-2); color: var(--fg); border: 1px solid var(--field-line); border-radius: 2px;
+  padding: 0.65rem 0.8rem; min-height: 48px;
+  font-family: var(--font-body), "Manrope", sans-serif; font-size: 1rem; font-weight: 500;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform textarea, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form textarea { min-height: 110px; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform input:where(:not([type="checkbox"], [type="radio"])):focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form input:where(:not([type="checkbox"], [type="radio"])):focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form select:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form textarea:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform select:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform textarea:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-up .qf-field input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-pay input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cart-code input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-fields input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .golead-form input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-codebox input:focus, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-form input:focus {
+  border-color: var(--fg); outline: 2px solid var(--gold); outline-offset: 2px;
+}
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform input::placeholder, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form input::placeholder, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform textarea::placeholder, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form textarea::placeholder, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-up .qf-field input::placeholder { color: var(--faint); opacity: 1; font-size: 1rem; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform label, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .quote-form label { color: var(--gold); font-size: 0.7rem; letter-spacing: 0.16em; font-weight: 700; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform-error { color: var(--err); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) input[type="checkbox"], :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) input[type="radio"] { accent-color: var(--gold); }
+
+/* sections that used to be "the dark band" on a light page */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.services { border-block: 1px solid var(--line); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pgate-card { --cream: #f6f1e8; background: var(--bg-2); border: 1px solid var(--line); }
+
+/* text that sits on photographs or on the old hard-dark bands: always light */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-inner, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .hero-scroll, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .split-content, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .split-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .split-brand, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .page-dark, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .page-dark .work-head h2, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .page-dark .statement p, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .fc-cap, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .gallery .item .cap, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .portal-hosted-caption, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .film-card figcaption strong { color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .page-dark, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .reel, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) header.split { background: var(--bg); }
+
+/* FAQ marker (the default triangle is gone because summary is a flex row) */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq summary { justify-content: space-between; gap: 1rem; list-style: none; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq summary::-webkit-details-marker { display: none; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq summary::after { content: ""; flex: none; width: 12px; height: 12px; background: linear-gradient(var(--gold), var(--gold)) 50% 50% / 100% 1.5px no-repeat, linear-gradient(var(--gold), var(--gold)) 50% 50% / 1.5px 100% no-repeat; transition: transform 0.3s var(--ease); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-faq[open] summary::after { transform: rotate(45deg); }
+
+/* choice chips inside a form (.ifilter in .cform): ghost until picked */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform .ifilter { background: transparent; color: var(--fg); border: 1px solid var(--line-strong); border-radius: 2px; min-height: 44px; margin-top: 0; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform .ifilter:hover:not(:disabled) { background: rgba(246, 241, 232, 0.08); border-color: var(--fg); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform .ifilter.is-on, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .cform .ifilter.is-on:hover:not(:disabled) { background: var(--fg); color: #14110e; border-color: var(--fg); }
+
+/* a picked package is a light solid: everything on it goes dark */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-you, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-price, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-name, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-price b, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-price strong { color: #14110e; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qprimary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qflow-form .qsecondary, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) a.svc-cta, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pay-btn { white-space: nowrap; }
+
+/* dark values for rules whose base declarations stay byte-identical to the pre-Cinema file (the Studio admin reads those) */
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pricing-toggle button.on small, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-price small, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-price s, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on .qpkg-scope, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qpkg.on ul, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qrail-label, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qrail-sub { color: var(--on-ink-dim); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .qsteps span.active { border-color: var(--gold); color: var(--gold); background: transparent; }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-item, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-cell { background: var(--surface-2); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .guest-item.is-done .guest-item-meta { color: var(--ok); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-total .pa-today { border-top-color: rgba(20, 17, 14, 0.25); }
+:where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.services, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-item { background: var(--bg-2); color: var(--fg); }
+/* ══ end CINEMA legacy ══ */

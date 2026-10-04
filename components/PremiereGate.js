@@ -1,5 +1,6 @@
 "use client";
 
+import "../app/theme/share.css";
 import { useEffect, useMemo, useState } from "react";
 
 // Same-Night Premiere gate. Two modes:
@@ -48,11 +49,11 @@ function Countdown({ revealAt }) {
     ? [[days, "days"], [hrs, "hrs"], [min, "min"], [sec, "sec"]]
     : [[hrs, "hrs"], [min, "min"], [sec, "sec"]];
   return (
-    <div className="pgate-countdown" role="timer" aria-live="off">
+    <div className="sh-count" role="timer" aria-live="off">
       {cells.map(([v, label]) => (
-        <div className="pgate-cell" key={label}>
-          <span className="pgate-num">{pad(v)}</span>
-          <span className="pgate-label">{label}</span>
+        <div className="sh-count-cell" key={label}>
+          <span className="sh-count-num">{pad(v)}</span>
+          <span className="sh-count-label">{label}</span>
         </div>
       ))}
     </div>
@@ -96,7 +97,7 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
   }
 
   const form = (
-    <form className="pgate-form" onSubmit={handleSubmit}>
+    <form className="cx-form sh-gate-form" onSubmit={handleSubmit}>
       <input
         type="text"
         name="website"
@@ -105,10 +106,11 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
         autoComplete="off"
         aria-hidden="true"
       />
-      <div>
-        <label htmlFor="pg-name">First name</label>
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pg-name">First name</label>
         <input
           id="pg-name"
+          className="cx-input"
           type="text"
           placeholder="Your name"
           autoComplete="name"
@@ -116,10 +118,11 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
           onChange={(e) => setName(e.target.value)}
         />
       </div>
-      <div>
-        <label htmlFor="pg-email">Email</label>
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pg-email">Email</label>
         <input
           id="pg-email"
+          className="cx-input"
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
@@ -128,13 +131,13 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
-      <button type="submit" disabled={status === "sending"}>
+      <button type="submit" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block" disabled={status === "sending"}>
         {status === "sending" ? "One sec…" : mode === "inline" ? "Save my seat" : "Watch the film"}
       </button>
       {error && (
-        <p className="cform-error" role="alert">{error}</p>
+        <p className="cx-error" role="alert">{error}</p>
       )}
-      <p className="pgate-fine">
+      <p className="cx-help">
         You&apos;ll get the film in your inbox the moment it premieres, plus a
         couple of notes from Roth Media afterward. No spam — unsubscribe with one tap.
       </p>
@@ -143,14 +146,14 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
 
   if (mode === "inline") {
     // Pre-reveal page body.
-    if (!checked) return <div className="pgate-card" aria-hidden="true" />;
+    if (!checked) return <div className="sh-gate sh-gate--wait" aria-hidden="true" />;
     return (
-      <div className="pgate-card">
+      <div className="sh-gate">
         {!captured ? (
           <>
-            <div className="kick">Tonight&apos;s film</div>
-            <h2 className="pgate-title">{title}</h2>
-            <p className="pgate-sub">
+            <p className="cx-kick">Tonight&apos;s film</p>
+            <h2 className="cx-h3 sh-gate-title">{title}</h2>
+            <p className="sh-gate-sub">
               The sneak peek premieres soon. Drop your email and it lands in
               your inbox the second it goes live.
             </p>
@@ -158,14 +161,14 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
           </>
         ) : (
           <>
-            <div className="kick">You&apos;re on the list</div>
-            <h2 className="pgate-title">Premieres in</h2>
+            <p className="cx-kick">You&apos;re on the list</p>
+            <h2 className="cx-h3 sh-gate-title">Premieres in</h2>
             <Countdown revealAt={revealAt} />
-            <p className="pgate-sub">
+            <p className="sh-gate-sub">
               Check your inbox — your confirmation just landed. The film will
               be right here (and in your email) at zero.
             </p>
-            <a href="/quote" className="hero-cta-secondary pgate-cta">
+            <a href="/quote" className="cx-btn cx-btn--ghost cx-btn--block sh-gate-cta">
               While you wait — book your own shoot →
             </a>
           </>
@@ -177,11 +180,11 @@ export default function PremiereGate({ galleryId, token, title, revealAt, mode }
   // Overlay mode: post-reveal, gallery rendered underneath.
   if (!checked || captured) return null;
   return (
-    <div className="pgate-overlay" role="dialog" aria-modal="true" aria-label="Sign up to watch">
-      <div className="pgate-card">
-        <div className="kick">Roth Media presents</div>
-        <h2 className="pgate-title">{title}</h2>
-        <p className="pgate-sub">
+    <div className="sh-gate-overlay" role="dialog" aria-modal="true" aria-label="Sign up to watch">
+      <div className="sh-gate">
+        <p className="cx-kick">Roth Media presents</p>
+        <h2 className="cx-h2 sh-gate-title">{title}</h2>
+        <p className="sh-gate-sub">
           Pop in your name and email and the film is all yours — plus you&apos;ll
           get the link in your inbox to rewatch anytime.
         </p>

@@ -285,14 +285,22 @@ export default function CinemaHome() {
           <div className="cin-card cin-card--split">
             <div className="cin-card-lead">
               <Slate n="01" name="Weddings" note="Film · Photography" />
-              <h2 className="cin-card-title">
-                <span className="cin-mask"><span>Your day, told</span></span>
-                <span className="cin-mask"><span>the way it felt.</span></span>
+              <h2 className="cin-card-title cin-card-title--long">
+                <span className="cin-mask"><span>You’ll laugh a lot.</span></span>
+                <span className="cin-mask"><span>And your wedding</span></span>
+                <span className="cin-mask"><span>will be better</span></span>
+                <span className="cin-mask"><span>with me there.</span></span>
               </h2>
               <p className="cin-lede cin-rise">
+                You’ve heard the horror stories. The photographer who bossed
+                everybody around. The video guy nobody could find. That’s not
+                how I work. I’m easy to be around, I learn your people’s
+                names, and I work with your DJ, your planner and your venue.
+              </p>
+              <p className="cin-say cin-rise">
                 A cinematic wedding film with your real vows and ceremony
-                audio, or full-day photography. Candid and unobtrusive — I
-                don’t do stiff, rigid posing.
+                audio, or full-day photography. You relax and have a good
+                time. I’ll be having one too.
               </p>
               <p className="cin-fromline cin-rise">
                 <span>Film <b>{money(W_FILM.price)}</b></span>
@@ -479,16 +487,24 @@ export default function CinemaHome() {
           <div className="cin-card">
             <Slate n="03" name="Business" note="Content Days · Events" />
             <h2 className="cin-card-title">
-              <span className="cin-mask"><span>One Content Day.</span></span>
-              <span className="cin-mask"><span>A month of posts.</span></span>
+              <span className="cin-mask"><span>Hate being on camera?</span></span>
+              <span className="cin-mask"><span>Give me ten minutes.</span></span>
             </h2>
             <div className="cin-card-row cin-rise">
-              <p className="cin-lede">
-                A promo, reels and photos that bring customers through the
-                door — shot at your place, for shops, gyms, restaurants,
-                builders and makers. Your people, your work, not stock
-                footage. Delivered within two weeks, sized to post.
-              </p>
+              <div>
+                <p className="cin-lede">
+                  Most owners dread this part. Then we start talking, somebody
+                  cracks a joke, and you forget the camera is there. You get
+                  content that sounds like you, and we have a good time making
+                  it. Always.
+                </p>
+                <p className="cin-say">
+                  One Content Day, a month of posts: a promo, reels and photos
+                  that bring customers through the door — shot at your place,
+                  for shops, gyms, restaurants, builders and makers. Delivered
+                  within two weeks, sized to post.
+                </p>
+              </div>
               <div className="cin-card-act">
                 <p className="cin-fromline"><span>Content Days from <b>{money(bizFrom)}</b></span></p>
                 <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--light cin-btn--lg">Book a 15-minute call <Arrow /></a>
@@ -578,13 +594,19 @@ export default function CinemaHome() {
             <div className="cin-card-lead">
               <Slate n="04" name="Family & portraits" note={SESSIONS.join(" · ")} />
               <h2 className="cin-card-title cin-card-title--long">
-                <span className="cin-mask"><span>An hour with your people.</span></span>
-                <span className="cin-mask"><span>Photos you’ll actually frame.</span></span>
+                <span className="cin-mask"><span>We’ll talk, we’ll laugh,</span></span>
+                <span className="cin-mask"><span>and somewhere in there</span></span>
+                <span className="cin-mask"><span>I’ll get the shot.</span></span>
               </h2>
               <p className="cin-lede cin-rise">
+                You don’t have to be good at this. No awkward posing and no
+                “say cheese.” Just a good time with a camera nearby. That’s
+                how the real photos happen.
+              </p>
+              <p className="cin-say cin-rise">
                 Families, seniors, engagements, couples — whatever you’re
-                celebrating. We keep it easy and relaxed; I’ll guide you when
-                you need it.
+                celebrating. An hour with your people, photos you’ll actually
+                frame.
               </p>
             </div>
             <div className="cin-spec cin-rise">
@@ -646,6 +668,10 @@ export default function CinemaHome() {
               <Link href="/quote" className="cin-btn cin-btn--light cin-btn--xl">Build my quote <Arrow /></Link>
               <a href={SMS_HREF} className="cin-btn cin-btn--ghost cin-btn--xl">Text {PHONE}</a>
             </div>
+            <p className="cin-say cin-rise">
+              No pressure, no surprises. You see the real number first, and
+              we’ll have a good time from there.
+            </p>
           </div>
           <div className="cin-quote-bg" aria-hidden="true">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -683,6 +709,7 @@ export default function CinemaHome() {
         <div className="cin-credits">
           <p className="cin-kick">Next: yours</p>
           <p className="cin-credits-big">Let’s tell yours.</p>
+          <p className="cin-credits-say">We’ll have a good time. That’s the part you can rely on.</p>
           <ul className="cin-enddoors">
             <li><a href="#date"><span>Weddings <small>from {money(wedFrom)}</small></span><b>Check my date <Arrow /></b></a></li>
             <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>from {money(bizFrom)}</small></span><b>Book a 15-min call <Arrow /></b></a></li>

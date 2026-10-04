@@ -1,5 +1,6 @@
-import Link from "next/link";
-import BrandMark from "../../components/BrandMark";
+import "../theme/misc.css";
+import SiteNav from "../../components/SiteNav";
+import SiteFooter from "../../components/SiteFooter";
 import IntakeForm from "../../components/IntakeForm";
 import { PHONE } from "../../lib/site";
 
@@ -16,19 +17,22 @@ export default async function IntakePage({ searchParams }) {
   const tel = PHONE.replace(/\D/g, "");
   return (
     <>
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links"><li><a href={`sms:+1${tel}`}>{PHONE}</a></li></ul>
-      </nav>
-      <main className="quote-wrap legal-wrap intake-wrap">
-        <div className="kick">Before we talk</div>
-        <h1>Tell me about it.</h1>
-        <p className="lead">Five minutes, a guess is fine on anything you don&apos;t know yet. I read every word before our call so we can skip the basics and get to the good part.</p>
-        <IntakeForm email={String(sp?.email || "")} name={String(sp?.name || "")} type={String(sp?.type || "")} />
+      <SiteNav cta={{ href: `sms:+1${tel}`, label: `Text ${PHONE}` }} />
+      <main className="cx-page cx-page--hero mx-page mx-intake">
+        <header className="cx-hero cx-hero--plain mx-intake-head">
+          <div className="cx-wrap cx-wrap--narrow cx-hero-body">
+            <p className="cx-kick">Before we talk</p>
+            <h1 className="cx-h1">Tell me about it.</h1>
+            <p className="cx-lede">Five minutes, a guess is fine on anything you don&apos;t know yet. I read every word before our call so we can skip the basics and get to the good part.</p>
+          </div>
+        </header>
+        <section className="cx-section cx-section--tight">
+          <div className="cx-wrap cx-wrap--narrow">
+            <IntakeForm email={String(sp?.email || "")} name={String(sp?.name || "")} type={String(sp?.type || "")} />
+          </div>
+        </section>
       </main>
+      <SiteFooter slim />
     </>
   );
 }

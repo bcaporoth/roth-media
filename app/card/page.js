@@ -1,4 +1,6 @@
 import Link from "next/link";
+import "../theme/misc.css";
+import Reveal from "../../components/Reveal";
 import BrandMark from "../../components/BrandMark";
 import CardLeadForm from "../../components/CardLeadForm";
 import CardLink from "../../components/CardLink";
@@ -17,6 +19,14 @@ const STEPS = [
   ["Shoot + delivery", "Sneak peek in 48 hours. Everything in your own private gallery."],
 ];
 
+function Arrow() {
+  return (
+    <svg className="mx-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export const metadata = {
   title: "Brandon Roth",
   description:
@@ -33,98 +43,117 @@ export default function CardPage() {
   const tel = PHONE.replace(/\D/g, "");
   const deal = autoDeal();
   return (
-    <main className="bcard">
-      <div className="bcard-inner">
-        <header className="bcard-head">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="bcard-avatar" src="/card-avatar.jpg" alt={OWNER_NAME} width="112" height="112" />
-          <span className="bcard-brand">
-            <span className="brand-chip"><BrandMark /></span>
-            Roth <em>Media</em>
-          </span>
-          <h1>{OWNER_NAME}</h1>
-          <p>Videography &amp; photography · Twin Tiers NY/PA</p>
+    <main className="cx-page cx-page--hero mx-page mx-card">
+      <Reveal />
+      <div className="mx-card-grid">
+        <header className="mx-card-id">
+          <figure className="mx-card-photo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/about-brandon.png" alt={OWNER_NAME} width="1024" height="682" />
+          </figure>
+          <div className="mx-card-shade" />
+          <span className="mx-card-brand"><BrandMark />Roth Media</span>
+          <h1 className="cx-display">{OWNER_NAME}</h1>
+          <p className="cx-kick">Videography &amp; photography · Twin Tiers NY/PA</p>
+
+          <div className="mx-card-actions">
+            <CardLink className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" href="/card/vcard" event="card_save_contact">
+              Save my contact
+            </CardLink>
+            <div className="mx-card-trio">
+              <CardLink className="cx-btn cx-btn--ghost" href={`tel:+1${tel}`} event="card_call">Call</CardLink>
+              <CardLink className="cx-btn cx-btn--ghost" href={`sms:+1${tel}`} event="card_text">Text</CardLink>
+              <CardLink className="cx-btn cx-btn--ghost" href={`mailto:${EMAIL}`} event="card_email">Email</CardLink>
+            </div>
+          </div>
         </header>
 
-        <CardLink className="bcard-primary" href="/card/vcard" event="card_save_contact">
-          Save my contact
-        </CardLink>
-
-        <div className="bcard-row">
-          <CardLink className="bcard-btn" href={`tel:+1${tel}`} event="card_call">Call</CardLink>
-          <CardLink className="bcard-btn" href={`sms:+1${tel}`} event="card_text">Text</CardLink>
-          <CardLink className="bcard-btn" href={`mailto:${EMAIL}`} event="card_email">Email</CardLink>
-        </div>
-
-        <div className="bcard-list">
-          <CardLink className="bcard-link" href="/quote" event="card_quote">
-            <strong>Get an instant quote</strong>
-            <span>Real prices in about a minute</span>
-          </CardLink>
-          <CardLink className="bcard-link" href={CALENDLY} event="book_call_click" external>
-            <strong>Book a 15-minute call</strong>
-            <span>Pick a time that works for you</span>
-          </CardLink>
-          {stripeConfigured && (
-            <CardLink className="bcard-link" href="/quote" event="card_book_online">
-              <strong>Book &amp; pay online</strong>
-              <span>Pick a package, lock your date — secure checkout</span>
-            </CardLink>
-          )}
-          <CardLink className="bcard-link" href="/" event="card_see_work">
-            <strong>See my work</strong>
-            <span>Weddings, brands, families</span>
-          </CardLink>
-          {REVIEW_URL && (
-            <CardLink className="bcard-link" href={REVIEW_URL} event="card_review" external>
-              <strong>★ Leave a review</strong>
-              <span>Worked with me? It helps a ton</span>
-            </CardLink>
-          )}
-        </div>
-
-        <section className="bcard-sec">
-          <h2>The menu</h2>
-          {deal && <p className="bcard-deal">{deal.label}: {deal.pct}% off every shoot through {deal.endsLabel}.</p>}
-          {CATEGORIES.map((c) => (
-            <div key={c.id} className="bcard-menu">
-              <h3>{MENU_LABEL[c.id] || c.title}</h3>
-              {PACKAGES[c.id].map((pkg) => (
-                <CardLink key={pkg.id} className="bcard-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
-                  <span className="bcard-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} /></b></span>
-                  <span>{pkg.scope}</span>
-                  <ul>{pkg.get.slice(0, 3).map((g) => <li key={g}>{g}</li>)}</ul>
-                  <em>{stripeConfigured ? "See everything + book online →" : "See everything + get a quote →"}</em>
+        <div className="mx-card-main">
+          <ul className="mx-doors">
+            <li>
+              <CardLink href="/quote" event="card_quote">
+                <strong>Get an instant quote</strong>
+                <span>Real prices in about a minute</span>
+                <Arrow />
+              </CardLink>
+            </li>
+            <li>
+              <CardLink href={CALENDLY} event="book_call_click" external>
+                <strong>Book a 15-minute call</strong>
+                <span>Pick a time that works for you</span>
+                <Arrow />
+              </CardLink>
+            </li>
+            {stripeConfigured && (
+              <li>
+                <CardLink href="/quote" event="card_book_online">
+                  <strong>Book &amp; pay online</strong>
+                  <span>Pick a package, lock your date — secure checkout</span>
+                  <Arrow />
                 </CardLink>
-              ))}
-            </div>
-          ))}
-        </section>
+              </li>
+            )}
+            <li>
+              <CardLink href="/" event="card_see_work">
+                <strong>See my work</strong>
+                <span>Weddings, brands, families</span>
+                <Arrow />
+              </CardLink>
+            </li>
+            {REVIEW_URL && (
+              <li>
+                <CardLink href={REVIEW_URL} event="card_review" external>
+                  <strong>★ Leave a review</strong>
+                  <span>Worked with me? It helps a ton</span>
+                  <Arrow />
+                </CardLink>
+              </li>
+            )}
+          </ul>
 
-        <section className="bcard-sec">
-          <h2>What to expect</h2>
-          <ol className="bcard-steps">
-            {STEPS.map(([t, d]) => (
-              <li key={t}><strong>{t}</strong><span>{d}</span></li>
+          <section className="mx-card-sec cx-reveal">
+            <h2 className="cx-h2">The menu</h2>
+            {deal && <p className="cx-offer"><strong>{deal.label}:</strong> {deal.pct}% off every shoot through {deal.endsLabel}.</p>}
+            {CATEGORIES.map((c) => (
+              <div key={c.id} className="mx-menu">
+                <h3 className="cx-kick">{MENU_LABEL[c.id] || c.title}</h3>
+                <div className="mx-menu-list">
+                  {PACKAGES[c.id].map((pkg) => (
+                    <CardLink key={pkg.id} className="mx-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
+                      <span className="mx-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} /></b></span>
+                      <span className="mx-pkg-scope">{pkg.scope}</span>
+                      <ul className="cx-list">{pkg.get.slice(0, 3).map((g) => <li key={g}>{g}</li>)}</ul>
+                      <em className="mx-pkg-go">{stripeConfigured ? "See everything + book online" : "See everything + get a quote"} <Arrow /></em>
+                    </CardLink>
+                  ))}
+                </div>
+              </div>
             ))}
-          </ol>
-        </section>
+          </section>
 
-        <section className="bcard-form">
-          <h2>Or I&apos;ll reach out to you</h2>
-          <CardLeadForm />
-        </section>
+          <section className="mx-card-sec cx-reveal">
+            <h2 className="cx-h2">What to expect</h2>
+            <ol className="cx-steps">
+              {STEPS.map(([t, d]) => (
+                <li key={t}><div><strong>{t}</strong><br /><span>{d}</span></div></li>
+              ))}
+            </ol>
+          </section>
 
-        <nav className="bcard-social" aria-label="Social links">
-          {SOCIAL.map((s) => (
-            <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer">
-              {s.label}
-            </a>
-          ))}
-        </nav>
-        <p className="bcard-foot">
-          <Link href="/">rothmediaco.com</Link>
-        </p>
+          <section className="mx-card-sec cx-reveal">
+            <h2 className="cx-h2">Or I&apos;ll reach out to you</h2>
+            <CardLeadForm />
+          </section>
+
+          <nav className="mx-card-social" aria-label="Social links">
+            {SOCIAL.map((s) => (
+              <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer">
+                {s.label}
+              </a>
+            ))}
+            <Link className="mx-card-home" href="/">rothmediaco.com</Link>
+          </nav>
+        </div>
       </div>
     </main>
   );

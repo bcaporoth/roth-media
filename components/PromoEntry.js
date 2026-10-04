@@ -40,6 +40,13 @@ export function PromoCountdown() {
   );
 }
 
+// "Enter" button for the top of /promo — only while entries are open.
+export function PromoEnterLink() {
+  const t = useCountdown(PROMO.closesAt);
+  if (!t || t.over) return null;
+  return <a href="#enter" className="cx-btn cx-btn--light cx-btn--lg bz-promo-jump">Put me in the pot</a>;
+}
+
 export default function PromoEntry() {
   const [status, setStatus] = useState("idle");
   const t = useCountdown(PROMO.closesAt);
@@ -85,12 +92,12 @@ export default function PromoEntry() {
 
   if (status === "sent") {
     return (
-      <div className="cform-success promo-success" role="status">
-        <p className="cform-success-title">You&apos;re in the pot.</p>
-        <p className="cform-success-body">
+      <div className="cx-success promo-success" role="status">
+        <p className="cx-h3">You&apos;re in the pot.</p>
+        <p>
           Winner drawn {PROMO.drawLabel} and announced on TikTok — I&apos;ll call or text if it&apos;s you. Want better odds for your town? Tag a business that needs this in the comments.
         </p>
-        <p className="cform-success-body">
+        <p>
           Don&apos;t want to wait on the draw? <a href={CALENDLY} target="_blank" rel="noopener noreferrer" onClick={() => track("book_call_click", { from: "promo" })}>Book a 15-minute call</a> and we&apos;ll talk about your business now.
         </p>
       </div>
@@ -98,27 +105,30 @@ export default function PromoEntry() {
   }
 
   return (
-    <form className="quote-form qflow-form promo-form" onSubmit={handleSubmit} id="enter">
+    <form className="cx-form cx-panel promo-form" onSubmit={handleSubmit} id="enter">
       <input type="text" name="_honey" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-      <div className="qf-grid">
-        <div className="qf-field wide"><label htmlFor="pe-business">Business name *</label><input id="pe-business" name="business" required autoComplete="organization" /></div>
-        <div className="qf-field"><label htmlFor="pe-name">Your name *</label><input id="pe-name" name="name" required autoComplete="name" /></div>
-        <div className="qf-field"><label htmlFor="pe-town">Town *</label><input id="pe-town" name="town" required placeholder="Waverly, Elmira, Sayre…" /></div>
-        <div className="qf-field"><label htmlFor="pe-phone">Phone *</label><input id="pe-phone" name="phone" type="tel" required autoComplete="tel" /></div>
-        <div className="qf-field"><label htmlFor="pe-email">Email *</label><input id="pe-email" name="email" type="email" required autoComplete="email" /></div>
-        <div className="qf-field"><label htmlFor="pe-about">What do you do?</label><input id="pe-about" name="about" placeholder="HVAC, bakery, gym, salon…" /></div>
-        <div className="qf-field"><label htmlFor="pe-handle">TikTok or Instagram handle</label><input id="pe-handle" name="handle" placeholder="@yourbusiness" /></div>
-        <div className="qf-field wide"><label htmlFor="pe-why">Why should it be you? (optional)</label><textarea id="pe-why" name="why" rows={3} placeholder="Two sentences is plenty." /></div>
+      <p className="cx-kick">Lock it in · 30 seconds</p>
+      <div className="cx-field"><label className="cx-label" htmlFor="pe-business">Business name *</label><input className="cx-input" id="pe-business" name="business" required autoComplete="organization" /></div>
+      <div className="cx-form-row">
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-name">Your name *</label><input className="cx-input" id="pe-name" name="name" required autoComplete="name" /></div>
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-town">Town *</label><input className="cx-input" id="pe-town" name="town" required placeholder="Waverly, Elmira, Sayre…" /></div>
       </div>
-      <label className="promo-check">
-        <input type="checkbox" name="commented" /> I commented my business name on the TikTok too
+      <div className="cx-form-row">
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-phone">Phone *</label><input className="cx-input" id="pe-phone" name="phone" type="tel" required autoComplete="tel" /></div>
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-email">Email *</label><input className="cx-input" id="pe-email" name="email" type="email" required autoComplete="email" /></div>
+      </div>
+      <div className="cx-form-row">
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-about">What do you do?</label><input className="cx-input" id="pe-about" name="about" placeholder="HVAC, bakery, gym, salon…" /></div>
+        <div className="cx-field"><label className="cx-label" htmlFor="pe-handle">TikTok or Instagram handle</label><input className="cx-input" id="pe-handle" name="handle" placeholder="@yourbusiness" /></div>
+      </div>
+      <div className="cx-field"><label className="cx-label" htmlFor="pe-why">Why should it be you? (optional)</label><textarea className="cx-textarea" id="pe-why" name="why" rows={3} placeholder="Two sentences is plenty." /></div>
+      <label className="cx-check promo-check">
+        <input type="checkbox" name="commented" /> <span>I commented my business name on the TikTok too</span>
       </label>
-      {status === "error" && <p className="cform-error">That didn&apos;t send. Try again, or text 845-549-4425 with your business name.</p>}
-      <div className="qnav-row">
-        <span className="qhelp">One entry per business. Rules below.</span>
-        <p className="consent">By entering you&apos;re okay with Roth Media texting or emailing you about the giveaway and a related offer. Reply STOP any time. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
-        <button type="submit" className="qprimary" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Put me in the pot"}</button>
-      </div>
+      {status === "error" && <p className="cx-error" role="alert">That didn&apos;t send. Try again, or text 845-549-4425 with your business name.</p>}
+      <button type="submit" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Put me in the pot"}</button>
+      <p className="cx-help">One entry per business. Rules below.</p>
+      <p className="cx-help bz-consent">By entering you&apos;re okay with Roth Media texting or emailing you about the giveaway and a related offer. Reply STOP any time. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
     </form>
   );
 }

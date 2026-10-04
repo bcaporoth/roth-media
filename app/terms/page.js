@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage kick="Terms" title="The short version of how we work." updated="October 1, 2026">
+    <LegalPage kick="Terms" title="The short version of how we work." updated="October 1, 2026" toc>
       <p>These terms cover everything Roth Media does — wedding photo and video, portrait sessions, Content Days and event coverage for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
 
       <h2>Quotes</h2>

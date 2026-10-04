@@ -1,10 +1,14 @@
 import Link from "next/link";
-import SocialLinks from "../../components/SocialLinks";
+import "../theme/business.css";
+import SiteNav from "../../components/SiteNav";
+import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
+import BizFilm from "../../components/BizFilm";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
-import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
 import DealPrice from "../../components/DealPrice";
+import { autoDeal, applyDeal } from "../../lib/deals";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
@@ -21,7 +25,24 @@ const pkg = (id) => PACKAGES.business.find((p) => p.id === id);
 const addon = (id) => ADDONS.business.find((a) => a.id === id);
 
 const PHONE = "845-549-4425";
-const PHONE_HREF = "tel:+18455494425";
+const SMS_HREF = "sms:+18455494425";
+const QUOTE = "/quote?for=business";
+const bizFrom = Math.min(...PACKAGES.business.map((p) => p.price));
+
+const IDEAS = [
+  { who: "A restaurant", what: "Friday night at full tilt — the kitchen firing, plates hitting the pass, regulars mid-laugh. Ends on the dish everyone orders." },
+  { who: "A gym", what: "The 6 AM crew — chalk, last reps, a PR bell, your coaches actually coaching. The energy people join for." },
+  { who: "A bookstore", what: "Shelves worth getting lost in — staff picks, page turns, the reading chair in the window. An afternoon people can feel." },
+  { who: "A construction company", what: "One job, start to finish — day-one dirt to the final walkthrough. Proof of work that wins the next bid." },
+];
+
+function Arrow() {
+  return (
+    <svg className="cx-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 const FAQS = [
   {
@@ -70,140 +91,202 @@ const FAQ_LD = {
 };
 
 export default function BusinessPage() {
+  const deal = autoDeal();
   return (
     <>
-      <DealPill href="/quote?for=business" />
+      <DealPill href={QUOTE} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li><Link href="/#work">Work</Link></li>
-          <li><Link href="/weddings">Weddings</Link></li>
-          <li><Link href="/#about">About</Link></li>
-          <li><Link href="/portal" className="nav-login">Client login</Link></li>
-          <li><a href={PHONE_HREF}>{PHONE}</a></li>
-        </ul>
-      </nav>
+      <SiteNav active="business" overHero cta={{ href: QUOTE, label: "Get a quote" }} />
 
-      <main className="quote-wrap svc-wrap">
-        <div className="kick">Branded content · Twin Tiers</div>
-        <h1>One Content Day. A month of posts.</h1>
-        <p className="lead">
-          A promo, reels, and photos shot at your business, for anything you
-          want to promote — for shops, gyms, restaurants, builders, and makers
-          in Sayre, Athens, Waverly, Elmira, and Corning.
-        </p>
-        <p className="svc-cta-row">
-          <Link href="/quote?for=business" className="qprimary svc-cta">Build my quote →</Link>
-          <a href={CALENDLY} className="svc-cta-secondary" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
-        </p>
+      <main className="cx-page cx-page--hero bz-page">
+        <Reveal />
 
-        <div className="svc-video-grid">
-          <figure className="svc-video">
-            <video controls playsInline preload="none" poster="/reels/nicole-golden-zumba-promo-poster.jpg" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} />
-            <figcaption>Nicole Golden — Zumba class promo</figcaption>
-          </figure>
-          <figure className="svc-video">
-            <video controls playsInline preload="none" src={videoUrl("/reels/bake-against-the-grain.mp4")} />
-            <figcaption>Bake Against the Grain — brand film</figcaption>
-          </figure>
-        </div>
-
-        <section className="svc-section">
-          <h2>Real prices, up front.</h2>
-          <div className={`qpkgs svc-pkgs ${PACKAGES.business.length === 1 ? "one" : PACKAGES.business.length === 2 ? "two" : ""}`}>
-            {PACKAGES.business.map((p) => (
-              <Link key={p.id} href="/quote?for=business" className={`qpkg ${p.popular ? "popular" : ""}`}>
-                {p.popular && <span className="qpkg-flag">Most booked</span>}
-                <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price"><DealPrice price={p.price} />{p.per || ""} <small>starting at</small></span>
-                <span className="qpkg-scope">{p.scope}</span>
-                <span className="qpkg-you">You get</span>
-                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-              </Link>
-            ))}
+        {/* ── Hero ── */}
+        <header className="cx-hero bz-hero">
+          <div className="cx-hero-media">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/photos/43-gym-between-the-reps.jpg" alt="A trainer laughing between sets at her gym, black and white" fetchPriority="high" />
           </div>
-          <p className="qhelp svc-note">
-            Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
-          </p>
-        </section>
-
-        <section className="svc-section">
-          <h2>What would your promo be?</h2>
-          <p className="svc-note">
-            Every business has one story worth 60 seconds. A few we&apos;d pitch:
-          </p>
-          <div className="svc-ideas">
-            <div className="svc-idea">
-              <strong>A restaurant</strong>
-              <p>Friday night at full tilt — the kitchen firing, plates hitting the pass, regulars mid-laugh. Ends on the dish everyone orders.</p>
-            </div>
-            <div className="svc-idea">
-              <strong>A gym</strong>
-              <p>The 6 AM crew — chalk, last reps, a PR bell, your coaches actually coaching. The energy people join for.</p>
-            </div>
-            <div className="svc-idea">
-              <strong>A bookstore</strong>
-              <p>Shelves worth getting lost in — staff picks, page turns, the reading chair in the window. An afternoon people can feel.</p>
-            </div>
-            <div className="svc-idea">
-              <strong>A construction company</strong>
-              <p>One job, start to finish — day-one dirt to the final walkthrough. Proof of work that wins the next bid.</p>
+          <div className="cx-hero-shade" aria-hidden="true" />
+          <div className="cx-wrap cx-hero-body">
+            <p className="cx-kick">Branded content · Twin Tiers</p>
+            <h1 className="cx-h1">One Content Day. <br />A month of posts.</h1>
+            <p className="cx-lede">
+              A promo, reels, and photos shot at your business, for anything you
+              want to promote — for shops, gyms, restaurants, builders, and makers
+              in Sayre, Athens, Waverly, Elmira, and Corning.
+            </p>
+            <p className="bz-from"><span className="cx-kick cx-kick--dim">Content Days from</span> <b className="cx-num">{money(bizFrom)}</b></p>
+            <div className="cx-cta-row">
+              <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Build my quote <Arrow /></Link>
+              <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>
             </div>
           </div>
-          <p className="svc-note">
-            Something else? Whatever you do, there&apos;s a promo in it — we find
-            it together on the planning call.
-          </p>
+        </header>
+
+        {/* ── The work ── */}
+        <section className="cx-section bz-work" id="work">
+          <div className="cx-wrap">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">The work · tap to play, sound on</p>
+              <h2 className="cx-h2">Your people, your work — not stock footage.</h2>
+            </div>
+            <div className="bz-bento">
+              <div className="bz-bento-wide cx-reveal">
+                <BizFilm
+                  src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")}
+                  poster="/reels/nicole-golden-zumba-promo-poster.jpg"
+                  title="Nicole Golden"
+                  sub="Zumba class promo"
+                />
+                <BizFilm
+                  src={videoUrl("/reels/womens-powerlifting-club.mp4")}
+                  poster="/reels/womens-powerlifting-club-poster.jpg"
+                  title="Women’s Powerlifting Club"
+                  sub="Gym promo"
+                />
+              </div>
+              <div className="bz-bento-tall cx-reveal">
+                <BizFilm
+                  vertical
+                  src={videoUrl("/reels/bake-against-the-grain.mp4")}
+                  poster="/reels/bake-against-the-grain-poster.jpg"
+                  title="Bake Against the Grain"
+                  sub="Brand film"
+                />
+              </div>
+              <div className="bz-say cx-reveal">
+                <p className="cx-kick">Shoot day is the fun part</p>
+                <h2 className="cx-h2 bz-say-h">Hate being on camera? Give me ten minutes.</h2>
+                <p className="bz-say-body">
+                  Most owners dread this part. Then we start talking, somebody
+                  cracks a joke, and you forget the camera is there. You get
+                  content that sounds like you, and we have a good time making
+                  it. Always.
+                </p>
+                <blockquote>
+                  “I probably walked into your store in my free time to see if I could shoot something for you, lol. I just love getting to know people — and helping everybody prosper.”
+                  <cite>— Brandon</cite>
+                </blockquote>
+                <a href={SMS_HREF} className="cx-link">Text Brandon <Arrow /></a>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section">
-          <h2>How it works</h2>
-          <ol className="svc-steps">
-            <li><strong>Build your quote online.</strong> Pick a day and add-ons — real starting price in two minutes.</li>
-            <li><strong>We plan the shoot.</strong> I confirm the number in writing and we map what your business needs on camera.</li>
-            <li><strong>Post everything.</strong> Delivered within two weeks — edited, licensed, and sized for your website, ads, and socials.</li>
-          </ol>
+        {/* ── Prices ── */}
+        <section className="cx-section cx-band bz-prices" id="pricing">
+          <div className="cx-wrap">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">The price list</p>
+              <h2 className="cx-h2">Real prices, up front.</h2>
+            </div>
+            <div className={`bz-pkgs ${PACKAGES.business.length === 1 ? "one" : PACKAGES.business.length === 2 ? "two" : ""}`}>
+              {PACKAGES.business.map((p, i) => (
+                <Link key={p.id} href={QUOTE} className={`cx-card bz-pkg cx-reveal ${p.popular ? "cx-card--accent popular" : ""}`} style={{ transitionDelay: `${i * 90}ms` }}>
+                  <span className="bz-pkg-top">
+                    <span className="bz-pkg-name">{p.name}</span>
+                    {p.popular && <span className="cx-flag">Most booked</span>}
+                  </span>
+                  <span className="bz-pkg-price"><DealPrice price={p.price} />{p.per || ""} <small>starting at</small></span>
+                  <span className="bz-pkg-scope">{p.scope}</span>
+                  <span className="cx-kick bz-pkg-you">You get</span>
+                  <ul className="cx-list">{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
+                  <span className="cx-link cx-link--caps bz-pkg-go">Build this quote <Arrow /></span>
+                </Link>
+              ))}
+            </div>
+            <div className="bz-price-notes cx-reveal">
+              <p className="cx-fine">
+                Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
+              </p>
+              {deal && (
+                <p className="cx-offer">
+                  <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —{" "}
+                  {PACKAGES.business.map((p) => `${p.name} ${money(applyDeal(p.price, deal))}`).join(", ")}. Applied to your quote automatically.
+                </p>
+              )}
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section">
-          <h2>Questions owners ask</h2>
-          {FAQS.map((f) => (
-            <details key={f.q} className="svc-faq">
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
+        {/* ── Ideas ── */}
+        <section className="cx-section bz-ideas-sec">
+          <div className="cx-wrap cx-split">
+            <figure className="cx-frame cx-frame--wide bz-ideas-photo cx-reveal">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/photos/41-gym-mid-set-laughter.jpg" alt="A lifter laughing mid-set at the squat rack, black and white" loading="lazy" />
+            </figure>
+            <div className="cx-reveal">
+              <div className="cx-title">
+                <p className="cx-kick">Your story</p>
+                <h2 className="cx-h2">What would your promo be?</h2>
+                <p className="cx-lede">
+                  Every business has one story worth 60 seconds. A few we&apos;d pitch:
+                </p>
+              </div>
+              <ul className="bz-ideas">
+                {IDEAS.map((i) => (
+                  <li key={i.who}><strong>{i.who}</strong><p>{i.what}</p></li>
+                ))}
+              </ul>
+              <p className="cx-fine bz-ideas-else">
+                Something else? Whatever you do, there&apos;s a promo in it — we find
+                it together on the planning call.
+              </p>
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section svc-final">
-          <h2>Your competitors are posting. Out-post them.</h2>
-          <p className="qhelp">Build the quote — no obligation, and I&apos;ll be in touch within 24 hours.</p>
-          <p className="svc-cta-row">
-            <Link href="/quote?for=business" className="qprimary svc-cta">Get my instant quote →</Link>
-            <a href={CALENDLY} className="svc-cta-secondary" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
-          </p>
+        {/* ── How it works + FAQ ── */}
+        <section className="cx-section cx-section--rule bz-how">
+          <div className="cx-wrap bz-two">
+            <div className="cx-reveal">
+              <div className="cx-title">
+                <p className="cx-kick">Three steps</p>
+                <h2 className="cx-h2">How it works</h2>
+              </div>
+              <ol className="cx-steps">
+                <li><span><strong>Build your quote online.</strong> Pick a day and add-ons — real starting price in two minutes.</span></li>
+                <li><span><strong>We plan the shoot.</strong> I confirm the number in writing and we map what your business needs on camera.</span></li>
+                <li><span><strong>Post everything.</strong> Delivered within two weeks — edited, licensed, and sized for your website, ads, and socials.</span></li>
+              </ol>
+            </div>
+            <div className="cx-reveal">
+              <div className="cx-title">
+                <p className="cx-kick">Before you ask</p>
+                <h2 className="cx-h2">Questions owners ask</h2>
+              </div>
+              <div className="cx-faq">
+                {FAQS.map((f) => (
+                  <details key={f.q}>
+                    <summary>{f.q}</summary>
+                    <p>{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Close ── */}
+        <section className="cx-section cx-band cx-band--black bz-final">
+          <div className="cx-wrap cx-reveal">
+            <p className="cx-kick">Your move</p>
+            <h2 className="cx-h1 cx-h1--long">Your competitors are posting. Out-post them.</h2>
+            <p className="cx-lede">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there. I&apos;ll be in touch within 24 hours.</p>
+            <div className="cx-cta-row">
+              <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Get my instant quote <Arrow /></Link>
+              <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>
+              <a href={SMS_HREF} className="cx-link">or text {PHONE} <Arrow /></a>
+            </div>
+          </div>
         </section>
       </main>
 
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand"><BrandMark />Roth <em>Media</em></div>
-          <span>Waverly, NY — serving the Twin Tiers</span>
-          <a href={PHONE_HREF}>{PHONE}</a>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          <SocialLinks />
-          <Link href="/portal">Client login</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

@@ -3,7 +3,7 @@
 import { track } from "../lib/track";
 import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, TRAVEL, money } from "../lib/packages";
 import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal } from "../lib/deals";
 
@@ -25,12 +25,34 @@ function fullGet(category, pkg) {
 
 const RETAINER_RATE = 0.3; // weddings pay this today; matches /terms and lib/payments.js
 
+// ── Cinema look (pass `cinema`; styles in app/theme/quote.css). Same state, same numbers, new markup. ──
+// A real photo for each door on the first screen (decorative: the button text names it).
+const DOOR_PHOTO = {
+  wedding: { src: "/photos/40-wedding-just-married-mid-laugh.jpg", pos: "50% 28%" },
+  business: { src: "/photos/43-gym-between-the-reps.jpg", pos: "62% 35%" },
+  family: { src: "/photos/07-senior-portrait-last-light.jpg", pos: "50% 22%" },
+};
+function Arrow({ back = false }) {
+  return (
+    <svg className={back ? "qt-arrow-back" : "cx-arrow"} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d={back ? "M20 12H5M11 6l-6 6 6 6" : "M4 12h15M13 6l6 6-6 6"} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function Check() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // "Wedding Videography" with a deal: the new price, the old one struck through.
 function Price({ list, deal, now = applyDeal(list, deal) }) {
   return <>{money(now)}{now !== list && <> <s>{money(list)}</s></>}</>;
 }
 
-export default function QuoteFlow({ initialCategory = "", checkout = false, code: initialCode = "", initialPkg = "", initialDate = "" }) {
+export default function QuoteFlow({ initialCategory = "", checkout = false, code: initialCode = "", initialPkg = "", initialDate = "", cinema = false }) {
   const formRef = useRef(null);
   const topRef = useRef(null);
   const valid = CATEGORIES.some((c) => c.id === initialCategory);
@@ -44,6 +66,8 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   const [sent, setSent] = useState(null);
   const [bookError, setBookError] = useState("");
   const [code, setCode] = useState(initialCode);
+  // Cinema view only: once the quote is sent, bring the confirmation into view (the form above it is gone).
+  useEffect(() => { if (cinema && status === "sent") topRef.current?.scrollIntoView({ block: "start" }); }, [cinema, status]);
 
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
@@ -144,6 +168,207 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
       setStatus("bookerror");
       setBookError(err.message);
     }
+  }
+
+  // ── Cinema view (the /quote page). Everything above is shared; only the markup differs. ──
+  if (cinema && status === "sent" && sent) {
+    return (
+      <div className="qt-sent" role="status" ref={topRef}>
+        <p className="cx-kick">Quote sent</p>
+        <h2 className="cx-h2">Got it — your quote is on its way.</h2>
+        <p className="cx-lede">
+          {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. Check your email — the details are already there.
+        </p>
+        <BookCall name={sent.who} email={sent.email} from="quote" />
+      </div>
+    );
+  }
+
+  if (cinema) {
+    return (
+      <div className="qt-flow" ref={topRef} data-step={step}>
+        <ol className="qt-steps" aria-label="Quote progress">
+          {STEPS.map((s, i) => (
+            <li key={s} className={i === step ? "is-active" : i < step ? "is-done" : ""} aria-current={i === step ? "step" : undefined}>
+              {i < step ? (
+                <button type="button" onClick={() => jump(i)}><b>0{i + 1}</b><span>{s}</span></button>
+              ) : (
+                <span className="qt-steps-item"><b>0{i + 1}</b><span>{s}</span></span>
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <form ref={formRef} className="qt-form" onSubmit={handleSubmit}>
+          <input type="text" name="_honey" className="cform-honey qt-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+
+          {step === 0 && (
+            <div className="qt-pane">
+              <h2 className="cx-h2 qt-q">What are we filming?</h2>
+              <div className="qt-doors">
+                {CATEGORIES.map((c) => (
+                  <button type="button" key={c.id} className={`qt-door${category === c.id ? " is-on" : ""}`} onClick={() => pickCategory(c.id)}>
+                    {DOOR_PHOTO[c.id] && (
+                      <span className="qt-door-media">
+                        <img src={DOOR_PHOTO[c.id].src} alt="" loading="lazy" style={{ objectPosition: DOOR_PHOTO[c.id].pos }} />
+                      </span>
+                    )}
+                    <span className="qt-door-body">
+                      <span className="qt-door-title">{c.title}</span>
+                      <span className="qt-door-desc">{c.desc}</span>
+                      <span className="qt-door-go">Start <Arrow /></span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="cx-fine qt-foot">Something else — headshots, a team photo? Pick the closest option and tell me in the notes — I&apos;ll quote it.</p>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="qt-pane">
+              <h2 className="cx-h2 qt-q">{packages.length === 1 ? "One package. Everything you need." : "Pick your package."}</h2>
+              <p className="cx-lede qt-help">{packages.length === 1 ? "One real price, everything included — then add extras only if you want them." : "Real starting prices. You see exactly what you get before you send anything."}</p>
+              <div className={`qt-pkgs qt-pkgs--${packages.length}`}>
+                {packages.map((p) => {
+                  const on = pkgId === p.id;
+                  return (
+                    <button type="button" key={p.id} className={`qt-pkg${on ? " is-on" : ""}${p.popular ? " is-popular" : ""}`} onClick={() => pickPackage(p.id)} aria-pressed={on}>
+                      {p.popular && <span className="cx-flag cx-flag--solid qt-pkg-flag">Most booked</span>}
+                      <span className="qt-pkg-top">
+                        <span className="qt-pkg-name">{p.name}</span>
+                        <span className="qt-radio" aria-hidden="true"><Check /></span>
+                      </span>
+                      <span className="qt-pkg-scope">{p.scope}</span>
+                      <span className="qt-pkg-price"><span className="cx-num"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code })} />{p.per || ""}</span> <small>starting at</small></span>
+                      <span className="qt-pkg-you">You get</span>
+                      <ul className="cx-list">{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
+                      <span className="qt-pkg-pick">{on ? <><Check /> Selected</> : "Choose this one"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {pkg && (
+                <div className="qt-addwrap">
+                  <h3 className="cx-h3 qt-sub">Want to add anything to {pkg.name}?</h3>
+                  <div className="qt-addons">
+                    {addonList.map((a) => (
+                      <label key={a.id} className={`qt-addon${addons[a.id] ? " is-on" : ""}`}>
+                        <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
+                        <span className="qt-box" aria-hidden="true"><Check /></span>
+                        <span className="qt-addon-name">{a.name}<small>{a.get}</small></span>
+                        <span className="qt-addon-price">{a.from ? "from " : ""}+{money(a.price)}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className={`qt-bar${pkg ? " is-live" : ""}`}>
+                <button type="button" className="cx-btn cx-btn--ghost qt-back" onClick={() => jump(0)} aria-label="Back"><Arrow back /><span>Back</span></button>
+                {pkg && (
+                  <>
+                    <p className="qt-total">
+                      <span className="qt-total-label">Starting at</span>
+                      <strong className="cx-num"><Price list={list} now={estimate} />{pkg.per || ""}</strong>
+                      {deal && <small className="qt-deal">{deal.label} · {deal.pct}% off</small>}
+                    </p>
+                    <button type="button" className="cx-btn cx-btn--light cx-btn--lg qt-continue" onClick={() => { markStarted(category); jump(2); }}>Continue <Arrow /></button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="qt-pane qt-final" hidden={step !== 2}>
+            {pkg && (
+              <aside className="qt-sum" aria-label="Your quote">
+                <p className="cx-kick">Your quote</p>
+                <p className="qt-sum-name">{pkg.name}{chosen.length ? ` + ${chosen.map((a) => a.name.replace(/^Add /, "").toLowerCase()).join(", ")}` : ""}</p>
+                <p className="qt-sum-price"><small>starting at</small> <span className="cx-num"><Price list={list} now={estimate} />{pkg.per || ""}</span></p>
+                <ul className="cx-list qt-sum-get">
+                  {fullGet(category, pkg).map((g) => <li key={g}>{g}</li>)}
+                  {chosen.map((a) => <li key={a.id}><strong>{a.name}:</strong> {a.get}</li>)}
+                </ul>
+                {buyable ? (
+                  <p className="qt-sum-today">
+                    <strong>{money(dueToday)} today</strong>
+                    {retainer ? " — the 30% retainer holds your date; the balance is due 14 days before." : " — paid in full, done."}
+                  </p>
+                ) : (
+                  <p className="qt-fine">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
+                )}
+                {deal && <p className="qt-fine"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
+                {monthly.map((a) => <p key={a.id} className="qt-fine">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
+                {category !== "business" || pkg.id === "event" ? <p className="qt-fine">{TRAVEL.line}</p> : null}
+                <p className="qt-fine">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
+              </aside>
+            )}
+
+            <div className="qt-fields">
+              <h2 className="cx-h2 qt-q">Where should I send it?</h2>
+              <div className="qt-grid">
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-first">First name *</label><input className="cx-input" id="qf-first" name="firstName" required={step === 2} autoComplete="given-name" /></div>
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-last">Last name *</label><input className="cx-input" id="qf-last" name="lastName" required={step === 2} autoComplete="family-name" /></div>
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-email">Email *</label><input className="cx-input" id="qf-email" name="email" type="email" required={step === 2} autoComplete="email" /></div>
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-phone">Phone *</label><input className="cx-input" id="qf-phone" name="phone" type="tel" required={step === 2} autoComplete="tel" /></div>
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-date">{DETAIL[category || "wedding"].date}</label><input className="cx-input" id="qf-date" name="date" type="text" defaultValue={initialDate} placeholder={category === "business" ? "Next month, a Saturday, ASAP…" : category === "family" ? "A weekend in October, golden hour if we can…" : "June 14, 2027 — or a month if you're still deciding"} /></div>
+                <div className="cx-field"><label className="cx-label" htmlFor="qf-where">{DETAIL[category || "wedding"].where}</label><input className="cx-input" id="qf-where" name="where" /></div>
+                {(pkg?.intake || []).map((f) => (
+                  <div className="cx-field qt-wide" key={`${pkg.id}-${f.id}`}>
+                    <label className="cx-label" htmlFor={`qf-i-${f.id}`}>{f.label}</label>
+                    {f.options ? (
+                      <select className="cx-select" id={`qf-i-${f.id}`} name={`intake_${f.id}`} defaultValue="">
+                        <option value="" disabled>Pick one</option>
+                        {f.options.map((o) => <option key={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input className="cx-input" id={`qf-i-${f.id}`} name={`intake_${f.id}`} placeholder={f.placeholder} />
+                    )}
+                  </div>
+                ))}
+                <div className="cx-field qt-wide"><label className="cx-label" htmlFor="qf-notes">Anything I should know?</label><textarea className="cx-textarea" id="qf-notes" name="notes" rows={3} placeholder="Must-have moments, a second location, photos only, a tight deadline…" /></div>
+              </div>
+
+              <div className="qt-extras">
+                <div className="qt-reach">
+                  <span className="cx-label" id="qf-reach-label">Best way to reach you</span>
+                  <div className="cx-pills" role="radiogroup" aria-label="Best way to reach you">
+                    {["Text me", "Call me", "Email me"].map((o) => (
+                      <button type="button" key={o} className={`cx-pill${contactPref === o ? " is-on" : ""}`} aria-pressed={contactPref === o} onClick={() => setContactPref(o)}>{o}</button>
+                    ))}
+                  </div>
+                </div>
+                {pkg && (
+                  <div className="cx-field qt-code">
+                    <label className="cx-label" htmlFor="qf-code">Promo code</label>
+                    <input className="cx-input" id="qf-code" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="characters" />
+                    {codeNote && <small className="cx-help">{codeNote}</small>}
+                  </div>
+                )}
+              </div>
+
+              {status === "error" && <p className="cx-error" role="alert">That didn&apos;t send. Try again, or text me at 845-549-4425.</p>}
+              {status === "bookerror" && <p className="cx-error" role="alert">{bookError || "Checkout didn't open."} You can still send the quote below, or text 845-549-4425.</p>}
+
+              <div className="qt-actions">
+                <div className="qt-buy">
+                  {buyable && <button type="button" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(dueToday)} today`}</button>}
+                  <p className="qt-promise">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there.</p>
+                  <button type="submit" className={`cx-btn cx-btn--block ${buyable ? "cx-btn--ghost cx-btn--lg" : "cx-btn--light cx-btn--xl"}`} disabled={status === "sending" || status === "booking"}>{status === "sending" ? "Sending…" : buyable ? "Just send me the quote" : "Send my quote"}</button>
+                </div>
+                <p className="qt-consent">
+                  {buyable ? <>Booking means you agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">terms</a>{retainer ? " (the retainer is non-refundable; one free reschedule with 30 days' notice)" : ""}. </> : null}
+                  By sending this you&apos;re okay with Roth Media texting or emailing you about your quote. No spam, no list — just me getting back to you. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                </p>
+                <button type="button" className="cx-btn cx-btn--ghost cx-btn--sm qt-back qt-back--final" onClick={() => jump(1)}><Arrow back /><span>Back</span></button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
   }
 
   if (status === "sent" && sent) {

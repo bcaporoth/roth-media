@@ -1,3 +1,4 @@
+import "../../theme/weddings.css";
 import { notFound } from "next/navigation";
 import PartnerLeadForm from "../../../components/PartnerLeadForm";
 import { PARTNERS } from "../../../lib/partners";
@@ -23,15 +24,19 @@ export default async function PartnerLeadPage({ params, searchParams }) {
   const bookingUrl = lead.bookingUrl || signed?.utm?.booking_url || "";
   const utm = Object.fromEntries(["utm_source", "utm_medium", "utm_campaign", "utm_content", "fbclid"].filter((k) => sp?.[k]).map((k) => [k, String(sp[k]).slice(0, 120)]));
   return (
-    <main className="golead">
-      <div className="golead-inner">
-        <div className="golead-brand">{lead.brand}</div>
-        <h1>{lead.headline}</h1>
-        <p className="golead-sub">{lead.sub}</p>
+    <main className={"cx-page cx-page--hero wd-page wd-go" + (lead.video ? "" : " wd-go--solo")}>
+      <div className="wd-go-grid">
         {lead.video && (
-          <video className="golead-video" src={videoUrl(lead.video)} poster={lead.poster} autoPlay muted loop playsInline />
+          <div className="wd-go-media">
+            <video src={videoUrl(lead.video)} poster={lead.poster} autoPlay muted loop playsInline />
+          </div>
         )}
-        <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} cta={lead.cta} bookingUrl={bookingUrl} />
+        <div className="wd-go-body">
+          <p className="cx-kick">{lead.brand}</p>
+          <h1 className="cx-h1 wd-go-h1">{lead.headline}</h1>
+          <p className="cx-lede">{lead.sub}</p>
+          <PartnerLeadForm slug={slug} brand={lead.brand} utm={utm} cta={lead.cta} bookingUrl={bookingUrl} />
+        </div>
       </div>
     </main>
   );

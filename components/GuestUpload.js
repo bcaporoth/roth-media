@@ -4,6 +4,7 @@
 // straight to R2 via presigned PUTs. No app, no account. Optional 60-second
 // video message recorded in the browser.
 
+import "../app/theme/share.css";
 import { useEffect, useRef, useState } from "react";
 
 const BATCH = 12;
@@ -223,53 +224,56 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
   const failed = queue.filter((it) => it.status === "failed").length;
   const pendingBytes = queue.filter((it) => it.status !== "done").reduce((n, it) => n + it.file.size, 0);
 
+  const hasPending = total > 0 && doneCount < total;
+
   if (!open) {
     return (
-      <div className="guest-closed">
-        <h2>Uploads have closed for {title}.</h2>
+      <div className="sh-closed">
+        <p className="cx-kick">Closed</p>
+        <h2 className="cx-h3">Uploads have closed for {title}.</h2>
         <p>Thanks for sharing your photos — the couple has everything now.</p>
       </div>
     );
   }
 
   return (
-    <div className="guest-up">
-      <div className="qf-field wide">
-        <label htmlFor="g-name">Your name</label>
-        <input id="g-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="So they know who to thank" autoComplete="name" maxLength={60} />
+    <div className="sh-up">
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="g-name">Your name</label>
+        <input id="g-name" className="cx-input sh-up-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="So they know who to thank" autoComplete="name" maxLength={60} />
       </div>
-      <label className="consent guest-consent">
+      <label className="cx-check sh-up-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>I took these (or have the okay to share them), and I&apos;m giving them to the couple and Roth Media to keep, share, and use in their photos and films. <a href="/terms" target="_blank" rel="noreferrer">Terms</a></span>
       </label>
 
-      <div className="guest-actions">
-        <button type="button" className="qprimary" disabled={!ready || busy} onClick={() => fileRef.current?.click()}>
+      <div className="sh-up-actions">
+        <button type="button" className={"cx-btn cx-btn--xl cx-btn--block " + (hasPending ? "cx-btn--ghost" : "cx-btn--light")} disabled={!ready || busy} onClick={() => fileRef.current?.click()}>
           + Add photos &amp; videos
         </button>
-        <button type="button" className="abtn abtn-ghost" disabled={!ready || busy || Boolean(rec)} onClick={startRecording}>
-          ● Record a 60-second message
+        <button type="button" className="cx-btn cx-btn--ghost cx-btn--lg cx-btn--block" disabled={!ready || busy || Boolean(rec)} onClick={startRecording}>
+          <span className="sh-rec-dot" aria-hidden="true" /> Record a 60-second message
         </button>
         <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
       </div>
-      {!ready && <p className="qhelp">Add your name and tick the box to unlock uploads.</p>}
+      {!ready && <p className="cx-help sh-up-help">Add your name and tick the box to unlock uploads.</p>}
 
       {rec && (
-        <div className="guest-rec">
+        <div className="sh-rec">
           {rec.stream ? (
             <>
-              <video ref={videoRef} autoPlay muted playsInline className="guest-rec-video" />
-              <div className="guest-rec-bar">
-                <span className="guest-rec-dot" /> {Math.max(0, MESSAGE_SECONDS - rec.seconds)}s left
-                <button type="button" className="abtn" onClick={() => rec.recorder?.state !== "inactive" && rec.recorder?.stop()}>Stop</button>
+              <video ref={videoRef} autoPlay muted playsInline className="sh-rec-video" />
+              <div className="sh-rec-bar">
+                <span className="sh-rec-left"><span className="sh-rec-dot is-live" aria-hidden="true" /> {Math.max(0, MESSAGE_SECONDS - rec.seconds)}s left</span>
+                <button type="button" className="cx-btn cx-btn--light" onClick={() => rec.recorder?.state !== "inactive" && rec.recorder?.stop()}>Stop</button>
               </div>
             </>
           ) : (
             <>
-              <video src={rec.preview} controls playsInline className="guest-rec-video" />
-              <div className="guest-rec-bar">
-                <button type="button" className="abtn" onClick={() => { addFiles([rec.file], true); URL.revokeObjectURL(rec.preview); setRec(null); }}>Use this one</button>
-                <button type="button" className="abtn abtn-ghost" onClick={() => { URL.revokeObjectURL(rec.preview); setRec(null); }}>Redo</button>
+              <video src={rec.preview} controls playsInline className="sh-rec-video" />
+              <div className="sh-rec-bar">
+                <button type="button" className="cx-btn cx-btn--light" onClick={() => { addFiles([rec.file], true); URL.revokeObjectURL(rec.preview); setRec(null); }}>Use this one</button>
+                <button type="button" className="cx-btn cx-btn--ghost" onClick={() => { URL.revokeObjectURL(rec.preview); setRec(null); }}>Redo</button>
               </div>
             </>
           )}
@@ -277,31 +281,34 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
       )}
 
       {total > 0 && (
-        <div className="guest-queue">
+        <div className="sh-queue">
+          <p className="cx-kick sh-queue-kick">Your uploads <span>{doneCount}/{total}</span></p>
           <ul>
             {queue.map((it) => (
-              <li key={it.id} className={`guest-item is-${it.status}`}>
-                <span className="guest-item-name">{it.message ? "Video message" : it.file.name}</span>
-                <span className="guest-item-meta">
+              <li key={it.id} className={`sh-item is-${it.status}`}>
+                <span className="sh-item-name">{it.message ? "Video message" : it.file.name}</span>
+                <span className="sh-item-meta">
                   {it.status === "uploading" ? `${it.pct}%` : it.status === "done" ? "Sent ✓" : it.status === "failed" ? `Failed — ${it.error}` : fmtBytes(it.file.size)}
                 </span>
-                {it.status === "uploading" && <span className="guest-item-bar" style={{ width: `${it.pct}%` }} />}
+                {it.status === "uploading" && <span className="sh-item-bar" style={{ width: `${it.pct}%` }} />}
               </li>
             ))}
           </ul>
           {doneCount < total && (
-            <button type="button" className="qprimary guest-send" disabled={!ready || busy} onClick={sendAll}>
-              {busy ? `Sending… ${doneCount}/${total}` : `Send ${total - doneCount} ${total - doneCount === 1 ? "file" : "files"} (${fmtBytes(pendingBytes)})`}
-            </button>
+            <div className="sh-send">
+              <button type="button" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={!ready || busy} onClick={sendAll}>
+                {busy ? `Sending… ${doneCount}/${total}` : `Send ${total - doneCount} ${total - doneCount === 1 ? "file" : "files"} (${fmtBytes(pendingBytes)})`}
+              </button>
+            </div>
           )}
-          {busy && <p className="qhelp">Keep this page open until it says done. Big videos take a minute on venue Wi-Fi.</p>}
+          {busy && <p className="cx-help">Keep this page open until it says done. Big videos take a minute on venue Wi-Fi.</p>}
           {!busy && doneCount === total && (
-            <p className="cform-success-title guest-thanks">All {sent} sent. Thank you, {name.trim().split(/\s+/)[0]}! Add more anytime{closesAt ? ` until ${closesAt}` : ""}.</p>
+            <p className="cx-success sh-thanks" role="status">All {sent} sent. Thank you, {name.trim().split(/\s+/)[0]}! Add more anytime{closesAt ? ` until ${closesAt}` : ""}.</p>
           )}
-          {!busy && failed > 0 && <p className="cform-error">{failed} didn&apos;t make it — tap Send again to retry.</p>}
+          {!busy && failed > 0 && <p className="cx-error" role="alert">{failed} didn&apos;t make it — tap Send again to retry.</p>}
         </div>
       )}
-      {error && <p className="cform-error">{error}</p>}
+      {error && <p className="cx-error" role="alert">{error}</p>}
     </div>
   );
 }

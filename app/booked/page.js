@@ -1,8 +1,8 @@
-import LegalPage from "../../components/LegalPage";
+import "../theme/quote.css";
+import BookedView from "../../components/BookedView";
 import { stripe, stripeConfigured } from "../../lib/stripe";
-import { recordBooking, priceQuote, bookingLabel } from "../../lib/booking";
+import { recordBooking, priceQuote } from "../../lib/booking";
 import { money } from "../../lib/packages";
-import { CALENDLY } from "../../lib/site";
 
 export const metadata = { title: "You're booked", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -21,27 +21,6 @@ export default async function BookedPage({ searchParams }) {
   const paidAmt = paid ? money((session.amount_total || 0) / 100) : "";
   const first = String(m.name || session?.customer_details?.name || "").split(/\s+/)[0];
 
-  if (!paid) {
-    return (
-      <LegalPage kick="Booking" title="We couldn't find that payment." updated="">
-        <p>If your card was charged, you&apos;re booked — Stripe&apos;s receipt is on its way and I&apos;ll be in touch within 24 hours. If it wasn&apos;t, head back to the <a href="/quote">quote</a> and try again, or text 845-549-4425 and I&apos;ll sort it by hand.</p>
-      </LegalPage>
-    );
-  }
-
-  return (
-    <LegalPage kick="Booked" title={m.mode === "balance" ? "You're all paid up." : first ? `You're booked, ${first}.` : "You're booked."} updated="">
-      <p><strong>{q ? bookingLabel(q) : m.package}</strong>{m.date ? ` · ${m.date}` : ""}{m.where ? ` · ${m.where}` : ""}</p>
-      {m.mode === "balance" ? (
-        <p>Balance received — <strong>{paidAmt}</strong>. You&apos;re paid in full. Thank you!</p>
-      ) : q?.mode === "retainer" ? (
-        <p>Your <strong>{paidAmt}</strong> retainer holds the date. The balance — {money(Math.max(0, q.total - (session.amount_total || 0) / 100))} — is due 14 days before, and I&apos;ll send a link for it. Retainers are non-refundable; one free reschedule with 30 days&apos; notice.</p>
-      ) : (
-        <p>Paid in full — <strong>{paidAmt}</strong>. Nothing else to do on your end.</p>
-      )}
-      <h2>What happens next</h2>
-      <p>1. Stripe emailed you a receipt, and a confirmation from me is on its way.<br />2. I reach out within 24 hours — usually much faster — to lock in the plan: timeline, must-have moments, where to park.<br />3. Sneak peeks land within 48 hours of the shoot; the full delivery follows on the schedule in the <a href="/terms">terms</a>.</p>
-      <p>Want to talk it through sooner? <a href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a 15-minute call</a> or text 845-549-4425.</p>
-    </LegalPage>
-  );
+  // The markup lives in components/BookedView.js (same copy, Cinema layout).
+  return <BookedView paid={paid} m={m} q={q} paidAmt={paidAmt} amountTotal={paid ? session.amount_total || 0 : 0} first={first} />;
 }

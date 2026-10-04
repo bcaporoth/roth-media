@@ -1,0 +1,290 @@
+/* ════════════════════════════════════════════════════════════════════
+   Roth Media · CINEMA — group "share"
+   The shared album (/g/[token]), its premiere gate, and the guest upload
+   pages (/guest/[slug], /gallery, /sign).
+   Markup: components/ShareViews.js, PremiereGate.js, GuestUpload.js,
+   GuestInvite.js. The album grid itself is components/PortalGallery.js
+   (.pt-gal, styled in portal.css) — this file only re-tints it for the
+   light album skin.
+   Every selector sits under .sh-page, .sh-skin or .sh-sign.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Album skin (lib/design.js) ──
+   skin-cinema (default): the site's dark tokens, untouched.
+   skin-light: an explicit paper palette for the album body (.sh-body). The hero
+   (text on the photo), the lightbox and the premiere gate stay dark in both. */
+.sh-skin.album-skin { background: var(--bg); min-height: 0; --pt-accent: var(--skin-accent, var(--gold)); }
+.sh-skin .sh-accent { color: var(--skin-accent, var(--gold)); }
+.sh-skin.skin-light .sh-body {
+  --bg: #f4efe6; --bg-2: #faf6ee; --bg-3: #ebe3d5;
+  --fg: #221f1a; --dim: #49433a; --faint: #645c51;
+  --line: #d6cab5; --line-strong: #a89a82; --field-line: #8f836f;
+  --gold: var(--skin-accent, #8c4c34);
+  --bone: #f4efe6; --bone-2: #ebe3d5; --paper: #faf6ee; --ink: #221f1a; --ink-soft: #645c51; --sand: #7d725f;
+  --surface: rgba(34, 31, 26, 0.04); --surface-2: rgba(34, 31, 26, 0.08);
+  background: var(--bg); color: var(--fg); color-scheme: light;
+}
+.sh-skin.skin-light .sh-body .cx-btn--light { background: var(--fg); color: #f6f1e8; }
+.sh-skin.skin-light .sh-body .cx-btn--light:hover { background: #000; color: #fff; }
+.sh-skin.skin-light .sh-body .cx-btn--ghost { border-color: rgba(34, 31, 26, 0.6); background: transparent; color: var(--fg); }
+.sh-skin.skin-light .sh-body .cx-btn--ghost:hover { border-color: var(--fg); background: rgba(34, 31, 26, 0.07); }
+/* the viewer on paper: toolbar buttons flip, anything sitting on a photo stays light-on-dark */
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-btn { background: #faf6ee; color: #221f1a; border-color: rgba(34, 31, 26, 0.6); }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-btn:hover:not(:disabled) { background: #ebe3d5; border-color: #221f1a; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-btn.primary { background: #221f1a; color: #f6f1e8; border-color: #221f1a; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-btn.primary:hover:not(:disabled) { background: #000; color: #fff; border-color: #000; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-btn:disabled { background: #ebe3d5; color: #645c51; border-color: #a89a82; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-tool-count { background: #faf6ee; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-item,
+.sh-skin.skin-light .sh-body .pt-gal .lightbox {
+  --fg: #f6f1e8; --dim: rgba(246, 241, 232, 0.8); --faint: rgba(246, 241, 232, 0.62); --bg-3: #1c1916; --gold: #dcbd7a; color-scheme: dark;
+}
+.sh-skin.skin-light .sh-body .pt-gal .pgal-item { background: #ebe3d5; }
+
+/* ── 2. Shared album: hero ── */
+.sh-page .sh-hero-layer { position: absolute; inset: 0; background: 50% 30% / cover no-repeat; }
+.sh-page .sh-title { font-size: clamp(2.3rem, 8.4vw, 6.2rem); overflow-wrap: anywhere; margin: 0; }
+.sh-page .sh-hero .cx-hero-body > .cx-kick { margin: 0; }
+.sh-page .sh-meta { margin: 0; color: var(--dim); font-size: 0.98rem; }
+.sh-page .sh-hero--bare { --shot: 4.2rem; padding-top: calc(var(--nav-h) + 2.6rem); border-bottom: 1px solid var(--line); }
+.sh-page .sh-ico { flex: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .sh-page .sh-hero-media { animation: cx-push 14s var(--ease) both; }
+}
+@media (min-width: 800px) {
+  .sh-page .sh-hero { min-height: 86vh; min-height: 86svh; }
+  .sh-page .sh-hero--bare { min-height: 0; padding-top: calc(var(--nav-h) + 5rem); }
+  .sh-page .sh-meta { font-size: 1.08rem; }
+}
+
+/* ── 3. Shared album: guest strip, grid, close ── */
+.sh-page .sh-body { position: relative; }
+.sh-page .sh-strip { border-block: 1px solid var(--line); background: var(--bg-2); }
+.sh-page .sh-guestcard { display: grid; gap: 1rem; padding-block: 1.4rem; }
+.sh-page .sh-guestcard-copy { display: grid; gap: 0.35rem; min-width: 0; }
+.sh-page .sh-guestcard-copy > * { margin: 0; }
+.sh-page .sh-guestcard-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.25rem; line-height: 1.25; letter-spacing: -0.01em; color: var(--fg); }
+.sh-page .sh-guestcard-sub { color: var(--dim); font-size: 0.94rem; line-height: 1.5; max-width: 36rem; }
+.sh-page .sh-guestcard-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.sh-page .sh-guestcard-actions > .cx-btn, .sh-page .sh-guestcard-actions > .guest-invite { flex: 1 1 auto; }
+@media (min-width: 800px) {
+  .sh-page .sh-guestcard { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2.4rem; padding-block: 1.9rem; }
+  .sh-page .sh-guestcard-title { font-size: 1.45rem; }
+  .sh-page .sh-guestcard-actions { justify-content: flex-end; }
+  .sh-page .sh-guestcard-actions > .cx-btn, .sh-page .sh-guestcard-actions > .guest-invite { flex: 0 0 auto; }
+}
+
+/* "Ask your guests for their photos" (components/GuestInvite.js) */
+.sh-page .guest-invite {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.4rem 0.95rem; margin: 0;
+  border: 1px solid var(--gold); border-radius: 2px; background: transparent; color: var(--gold); cursor: pointer; box-shadow: none;
+  font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; line-height: 1.2;
+  transition: background 0.25s, color 0.25s;
+}
+.sh-page .guest-invite:hover { background: var(--gold); color: #14110e; }
+.sh-skin.skin-light .sh-body .guest-invite:hover { color: #faf6ee; }
+.sh-page .guest-invite-link { flex-basis: 100%; margin: 0.3rem 0 0; color: var(--dim); font-size: 0.9rem; opacity: 1; }
+.sh-page .guest-invite-link a { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; word-break: break-all; }
+
+.sh-page .sh-grid { max-width: 1680px; margin-inline: auto; padding: 1rem 6px 4rem; }
+@media (min-width: 800px) {
+  .sh-page .sh-grid { padding: 1.6rem var(--gut) 7rem; }
+}
+
+.sh-page .sh-close { border-top: 1px solid var(--line); padding-block: 3.4rem 4rem; }
+.sh-page .sh-close-in { display: grid; gap: 1.4rem; }
+.sh-page .sh-close-copy { display: grid; gap: 0.8rem; }
+.sh-page .sh-close-copy > *, .sh-page .sh-close-act > * { margin: 0; }
+.sh-page .sh-close-act { display: grid; gap: 1.2rem; justify-items: start; }
+.sh-page .sh-close-act .cx-cta-row { width: 100%; }
+.sh-page .sh-review { color: var(--dim); font-size: 0.94rem; line-height: 1.5; padding-top: 1.1rem; border-top: 1px solid var(--line); width: 100%; }
+.sh-page .sh-review a { display: inline-flex; align-items: center; min-height: 44px; color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--gold); }
+@media (min-width: 800px) {
+  .sh-page .sh-close { padding-block: 6.5rem 7rem; }
+  .sh-page .sh-close-in { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 4.5rem; align-items: end; }
+}
+
+/* ── 4. Premiere gate (components/PremiereGate.js) ── */
+.sh-skin .sh-gate, .sh-skin .sh-gate *, .sh-skin .sh-gate *::before, .sh-skin .sh-gate *::after { box-sizing: border-box; }
+.sh-skin .sh-gate {
+  display: grid; gap: 0.9rem; align-content: start; width: 100%; max-width: 27rem; padding: 1.4rem 1.2rem 1.5rem;
+  background: rgba(11, 10, 9, 0.86); border: 1px solid var(--line-strong); border-radius: 2px; color: var(--fg);
+  font-family: var(--font-body), "Manrope", sans-serif; font-size: 1rem; line-height: 1.6; text-align: left;
+}
+.sh-skin .sh-gate > * { margin: 0; }
+.sh-skin .sh-gate--wait { min-height: 22rem; }
+.sh-skin .sh-gate-title { overflow-wrap: anywhere; }
+.sh-skin .sh-gate-sub { color: var(--dim); font-size: 0.98rem; line-height: 1.55; }
+.sh-skin .sh-gate-form { gap: 0.9rem; margin-top: 0.3rem; }
+.sh-skin .sh-gate-form > .cx-help { margin: 0; }
+.sh-skin .sh-gate-form > .cx-error { margin: 0; }
+.sh-skin .sh-gate-cta { text-transform: none; letter-spacing: 0.01em; font-size: 0.92rem; }
+.sh-skin .sh-count { display: flex; gap: 0.5rem; }
+.sh-skin .sh-count-cell { flex: 1 1 0; min-width: 0; display: grid; gap: 0.2rem; justify-items: center; padding: 0.9rem 0.3rem 0.75rem; border: 1px solid var(--line); border-radius: 2px; background: var(--bg-2); }
+.sh-skin .sh-count-num { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.9rem, 8vw, 2.7rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--fg); }
+.sh-skin .sh-count-label { font-size: 0.64rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.sh-skin .sh-gate-overlay {
+  position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 1rem; overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(5, 5, 4, 0.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.sh-skin .sh-gate-overlay .sh-gate { background: var(--bg-2); padding: 1.7rem 1.3rem 1.6rem; }
+@media (min-width: 800px) {
+  .sh-skin .sh-gate { padding: 1.8rem 1.7rem 1.9rem; }
+  .sh-skin .sh-gate-overlay .sh-gate { padding: 2.3rem 2.1rem 2.2rem; max-width: 30rem; }
+}
+
+/* the waiting room: title on the photo, the desk beside it */
+.sh-page .sh-wait-body { gap: 1.6rem; justify-items: stretch; }
+.sh-page .sh-wait-head { display: grid; gap: 0.8rem; min-width: 0; }
+.sh-page .sh-wait-head > * { margin: 0; }
+.sh-page.sh-wait .sh-hero--bare { border-bottom: 0; }
+@media (min-width: 900px) {
+  .sh-page .sh-wait-body { grid-template-columns: minmax(0, 1fr) minmax(0, 27rem); gap: 4rem; align-items: end; }
+  .sh-page .sh-wait-hero .cx-hero-shade {
+    background:
+      linear-gradient(rgba(11, 10, 9, 0.5), rgba(11, 10, 9, 0) 22%),
+      linear-gradient(90deg, rgba(11, 10, 9, 0.55), rgba(11, 10, 9, 0.15) 50%, rgba(11, 10, 9, 0.6)),
+      linear-gradient(rgba(11, 10, 9, 0) 38%, rgba(11, 10, 9, 0.82) 82%, var(--bg));
+  }
+}
+
+/* ── 5. Guest pages: brand bar + column ── */
+.sh-page.sh-guest { padding-top: 0; }
+.sh-page .sh-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: var(--nav-h); padding: 0 var(--gut); border-bottom: 1px solid var(--line); }
+.sh-page .sh-bar-brand { margin: 0; }
+.sh-page .sh-bar-label { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; color: var(--faint); white-space: nowrap; }
+.sh-page .sh-guest-col { width: 100%; max-width: 34rem; margin-inline: auto; padding: 1.8rem var(--gut) 2.5rem; display: grid; gap: 1.5rem; }
+.sh-page .sh-guest-head { display: grid; gap: 0.7rem; min-width: 0; }
+.sh-page .sh-guest-head > * { margin: 0; }
+.sh-page .sh-guest-title { font-size: clamp(2.1rem, 9vw, 4rem); overflow-wrap: anywhere; margin: 0; }
+.sh-page .sh-guest-foot { margin: 0; padding-top: 1.1rem; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.88rem; line-height: 1.5; }
+.sh-page .sh-guest-foot a { display: inline-flex; align-items: center; min-height: 44px; color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--faint); }
+@media (min-width: 900px) {
+  .sh-page .sh-guest-col { max-width: 1120px; grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); gap: 2rem 5rem; align-items: start; padding-top: 5.5rem; padding-bottom: 5rem; }
+  .sh-page .sh-guest-head { position: sticky; top: 3rem; gap: 1.1rem; }
+  .sh-page .sh-guest-panel { grid-column: 2; grid-row: 1 / span 2; padding: 1.9rem 1.8rem 2rem; border: 1px solid var(--line); background: var(--bg-2); border-radius: 2px; }
+  .sh-page .sh-guest-foot { grid-column: 1; align-self: end; }
+}
+
+/* ── 6. Guest upload (components/GuestUpload.js): big targets, one thumb ── */
+.sh-page .sh-up { display: grid; gap: 1rem; }
+.sh-page .sh-up > * { margin: 0; }
+.sh-page .sh-up-name { min-height: 54px; font-size: 1.06rem; }
+.sh-page .sh-up-consent { font-size: 0.92rem; padding: 0.3rem 0; }
+.sh-page .sh-up-consent a { color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.sh-page .sh-up-actions { display: grid; gap: 0.7rem; margin-top: 0.2rem; }
+.sh-page .sh-up-actions .cx-btn--xl { min-height: 64px; font-size: 1rem; }
+.sh-page .sh-up .cx-btn:disabled { opacity: 1; background: var(--bg-3); color: var(--faint); border-color: var(--line-strong); }
+.sh-page .sh-up-help { color: var(--dim); }
+.sh-page .sh-rec-dot { flex: none; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #e5533c; }
+.sh-page .cx-btn:disabled .sh-rec-dot { background: currentColor; opacity: 0.6; }
+@media (prefers-reduced-motion: no-preference) {
+  .sh-page .sh-rec-dot.is-live { animation: sh-blink 1.1s steps(2, jump-none) infinite; }
+}
+@keyframes sh-blink { from { opacity: 1; } to { opacity: 0.25; } }
+
+.sh-page .sh-rec { display: grid; gap: 0.7rem; padding: 0.7rem; border: 1px solid var(--line-strong); border-radius: 2px; background: #000; }
+.sh-page .sh-rec-video { display: block; width: 100%; max-height: 60svh; background: #000; border-radius: 0; }
+.sh-page .sh-rec-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.sh-page .sh-rec-bar > .cx-btn { flex: 1 1 auto; }
+.sh-page .sh-rec-left { display: inline-flex; align-items: center; gap: 0.5rem; margin-right: auto; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.1rem; font-variant-numeric: tabular-nums; color: var(--fg); }
+
+.sh-page .sh-queue { display: grid; gap: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.sh-page .sh-queue > * { margin: 0; }
+.sh-page .sh-queue-kick { display: flex; justify-content: space-between; gap: 1rem; }
+.sh-page .sh-queue-kick span { color: var(--fg); font-variant-numeric: tabular-nums; }
+.sh-page .sh-queue ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.sh-page .sh-item { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line); background: none; border-radius: 0; font-size: 0.94rem; }
+.sh-page .sh-item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); font-weight: 500; }
+.sh-page .sh-item-meta { flex: none; max-width: 60%; text-align: right; color: var(--dim); font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.sh-page .sh-item.is-done .sh-item-meta { color: var(--ok); font-weight: 700; }
+.sh-page .sh-item.is-failed .sh-item-meta { color: var(--err); }
+.sh-page .sh-item.is-uploading .sh-item-meta { color: var(--gold); font-weight: 700; }
+.sh-page .sh-item-bar { position: absolute; left: 0; bottom: -1px; height: 2px; background: var(--gold); transition: width 0.3s linear; }
+.sh-page .sh-send { position: sticky; bottom: 0; z-index: 5; margin-inline: calc(var(--gut) * -1); padding: 0.9rem var(--gut) calc(0.9rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(rgba(11, 10, 9, 0), var(--bg) 30%); }
+.sh-page .sh-send .cx-btn--xl { min-height: 64px; font-size: 1rem; }
+.sh-page .sh-thanks { font-weight: 600; }
+.sh-page .sh-closed { display: grid; gap: 0.7rem; padding: 1.4rem 1.2rem; border: 1px solid var(--line); border-left: 2px solid var(--gold); background: var(--bg-2); border-radius: 2px; color: var(--dim); }
+.sh-page .sh-closed > * { margin: 0; }
+@media (min-width: 900px) {
+  .sh-page .sh-send { margin-inline: 0; padding-inline: 0; background: linear-gradient(rgba(20, 18, 16, 0), var(--bg-2) 30%); }
+}
+
+/* ── 7. Guest gallery (the couple's private view) ── */
+.sh-page.sh-guestgal > .cx-wrap { padding-bottom: 3rem; }
+.sh-page .sh-gg-head { display: grid; gap: 0.8rem; justify-items: start; padding-block: 2rem 2.2rem; }
+.sh-page .sh-gg-head > * { margin: 0; }
+.sh-page .sh-gg-lede { max-width: 44rem; }
+.sh-page .sh-gg-sec { padding-bottom: 2.6rem; }
+.sh-page .sh-gg-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 0 0 1rem; padding-top: 1.1rem; border-top: 1px solid var(--line);
+  font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.4rem, 3.4vw, 2.3rem); line-height: 1.1; letter-spacing: -0.02em; color: var(--fg);
+}
+.sh-page .sh-gg-count { font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em; color: var(--gold); font-variant-numeric: tabular-nums; }
+.sh-page .sh-empty { margin: 0; padding: 1.1rem 1rem; border: 1px solid var(--line); border-left: 2px solid var(--gold); background: var(--bg-2); color: var(--dim); border-radius: 2px; }
+.sh-page .sh-msgs { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+.sh-page .sh-msg { margin: 0; display: grid; gap: 0.55rem; }
+.sh-page .sh-msg video { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: contain; background: #000; border: 1px solid var(--line); border-radius: 2px; }
+.sh-page .sh-msg figcaption { font-size: 0.92rem; color: var(--dim); line-height: 1.4; }
+.sh-page .sh-msg figcaption strong { color: var(--fg); font-weight: 700; }
+.sh-page .sh-msg figcaption a { display: inline-flex; align-items: center; min-height: 44px; color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gold); }
+.sh-page .sh-cells { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.sh-page .sh-cell { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: var(--bg-3); border-radius: 2px; color: var(--fg); text-decoration: none; }
+.sh-page .sh-cell img, .sh-page .sh-cell video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
+.sh-page .sh-cell-name {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 1.8rem 0.6rem 0.5rem; background: linear-gradient(rgba(11, 10, 9, 0), rgba(11, 10, 9, 0.85));
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sh-page .sh-cell:hover img, .sh-page .sh-cell:hover video { transform: scale(1.04); }
+}
+@media (min-width: 640px) {
+  .sh-page .sh-msgs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sh-page .sh-cells { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 800px) {
+  .sh-page .sh-gg-head { padding-block: 4.5rem 3.6rem; gap: 1.1rem; }
+  .sh-page .sh-gg-sec { padding-bottom: 4.5rem; }
+  .sh-page .sh-gg-h { padding-top: 1.4rem; margin-bottom: 1.3rem; }
+  .sh-page .sh-cells { gap: 12px; }
+}
+@media (min-width: 1000px) {
+  .sh-page .sh-msgs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sh-page .sh-cells { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* ── 8. Printable QR sign: a white card on the dark page; prints ink on white ── */
+.sh-sign.gsign {
+  min-height: 100vh; min-height: 100svh; display: grid; place-items: center; align-content: center; gap: 1.4rem; padding: 1.5rem 1rem 2rem;
+  background: var(--bg); color: var(--dim); font-family: var(--font-body), "Manrope", sans-serif; position: relative; z-index: 2;
+}
+.sh-sign .sh-sign-stage { max-width: 100%; overflow-x: auto; }
+.sh-sign .gsign-card { background: #fff; color: #191612; box-shadow: none; border-radius: 0; margin: 0; }
+.sh-sign .gsign-card * { color: #191612; }
+.sh-sign .gsign-kick { opacity: 1; color: #5a5348; font-weight: 700; }
+.sh-sign .gsign-credit { opacity: 1; color: #5a5348; }
+.sh-sign .gsign-how { opacity: 1; }
+.sh-sign .gsign-print { margin: 0; max-width: 30rem; text-align: center; font-size: 0.92rem; line-height: 1.5; opacity: 1; color: var(--dim); }
+.sh-sign .gsign-print a { display: inline-flex; align-items: center; min-height: 44px; color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--gold); }
+@media screen and (max-width: 430px) {
+  .sh-sign:not(.sh-sign--big) .gsign-card { zoom: 0.9; }
+}
+@media screen and (max-width: 860px) {
+  .sh-sign.sh-sign--big .gsign-card { zoom: 0.42; }
+}
+@media screen and (min-width: 861px) and (max-height: 1200px) {
+  .sh-sign.sh-sign--big .gsign-card { zoom: 0.72; }
+}
+@page sh-letter { size: 8.5in 11in; margin: 0; }
+@media print {
+  html:has(.sh-sign), body:has(.sh-sign) { background: #fff !important; }
+  .sh-sign.gsign { display: block; min-height: 0; padding: 0; background: #fff; color: #191612; }
+  .sh-sign .sh-sign-stage { overflow: visible; }
+  .sh-sign .gsign-card { zoom: 1; }
+  .sh-sign.sh-sign--big { page: sh-letter; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-page .sh-hero-media { animation: none; }
+  .sh-page .sh-cell img, .sh-page .sh-cell video { transition: none; }
+}

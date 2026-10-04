@@ -29,11 +29,11 @@ export default function CartPay({ cart, who, label }) {
   }
 
   return (
-    <form className="cart-pay" onSubmit={onSubmit}>
-      <label><span>Your name</span><input name="name" required defaultValue={who.name} autoComplete="name" /></label>
-      <label><span>Email for the receipt</span><input name="email" type="email" required defaultValue={who.email} autoComplete="email" /></label>
-      <button type="submit" className="qprimary" disabled={status === "going"}>{status === "going" ? "Opening checkout…" : label}</button>
-      {status === "error" && <p className="cform-error">{err} — text 845-549-4425 and I&apos;ll fix it.</p>}
+    <form className="qt-cartpay cx-form" onSubmit={onSubmit}>
+      <label className="cx-field"><span className="cx-label">Your name</span><input className="cx-input" name="name" required defaultValue={who.name} autoComplete="name" /></label>
+      <label className="cx-field"><span className="cx-label">Email for the receipt</span><input className="cx-input" name="email" type="email" required defaultValue={who.email} autoComplete="email" /></label>
+      <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>{status === "going" ? "Opening checkout…" : label}</button>
+      {status === "error" && <p className="cx-error" role="alert">{err} — text 845-549-4425 and I&apos;ll fix it.</p>}
     </form>
   );
 }

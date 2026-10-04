@@ -1,16 +1,24 @@
+import "../theme/weddings.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import BrandMark from "../../components/BrandMark";
-import SocialLinks from "../../components/SocialLinks";
+import SiteNav from "../../components/SiteNav";
+import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
+import FilmCard from "../../components/FilmCard";
+import WdPackageCard from "../../components/WdPackageCard";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import { PACKAGES, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
-import DealPrice from "../../components/DealPrice";
 import { CITIES, findCity } from "../../lib/cities";
 import { videoUrl } from "../../lib/media";
 
-const PHONE = "845-549-4425";
-const PHONE_HREF = "tel:+18455494425";
+function Arrow() {
+  return (
+    <svg className="cx-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 // Deal prices (lib/deals.js) are baked in at render — refresh hourly.
 export const revalidate = 3600;
@@ -69,103 +77,110 @@ export default async function CityPage({ params }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li><Link href="/#work">Work</Link></li>
-          <li><Link href="/weddings">Weddings</Link></li>
-          <li><Link href="/business">For business</Link></li>
-          <li><Link href="/portal" className="nav-login">Client login</Link></li>
-          <li><a href={PHONE_HREF}>{PHONE}</a></li>
-        </ul>
-      </nav>
+      <SiteNav overHero />
 
-      <main className="quote-wrap svc-wrap">
-        <div className="kick">{c.name}, {c.state} · {c.region}</div>
-        <h1>Videographer for {c.name} weddings and {c.name} businesses.</h1>
-        <p className="lead">{c.intro}</p>
-        <p className="svc-cta-row">
-          <Link href="/quote" className="qprimary svc-cta">Build my quote →</Link>
-          <a href={CALENDLY} className="svc-cta-secondary" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
-        </p>
+      <main className="cx-page cx-page--hero wd-page wd-city">
+        <Reveal />
 
-        <figure className="svc-video">
-          <video controls playsInline preload="none" poster="/matt-april-wedding-poster.jpg" src={videoUrl("/matt-april-wedding.mp4")} />
-          <figcaption>Matt &amp; April — wedding sneak peek, Twin Tiers</figcaption>
-        </figure>
-
-        <section className="svc-section">
-          <h2>Weddings in {c.name}</h2>
-          <div className="qpkgs two svc-pkgs">
-            {PACKAGES.wedding.map((p) => (
-              <Link key={p.id} href="/quote?for=wedding" className={`qpkg ${p.popular ? "popular" : ""}`}>
-                {p.popular && <span className="qpkg-flag">Most booked</span>}
-                <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price"><DealPrice price={p.price} /> <small>starting at</small></span>
-                <span className="qpkg-scope">{p.scope}</span>
-                <span className="qpkg-you">You get</span>
-                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-              </Link>
-            ))}
+        <header className="cx-hero wd-hero">
+          <div className="cx-hero-media">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/photos/24-wedding-a-world-of-their-own.jpg" alt="A wedding couple alone in a wide open field, in black and white" fetchPriority="high" style={{ objectPosition: "50% 62%" }} />
           </div>
-          <p className="qhelp svc-note">Photo coverage, a second shooter, an engagement session, and more are priced in the quote builder. <Link href="/weddings">See everything on the weddings page →</Link></p>
-        </section>
-
-        <section className="svc-section">
-          <h2>Brand video for {c.name} businesses</h2>
-          <p className="qhelp">{c.business}</p>
-          <div className="qpkgs three svc-pkgs">
-            {PACKAGES.business.map((p) => (
-              <Link key={p.id} href="/quote?for=business" className={`qpkg ${p.popular ? "popular" : ""}`}>
-                {p.popular && <span className="qpkg-flag">Most booked</span>}
-                <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price"><DealPrice price={p.price} />{p.per ? <small>{p.per}</small> : <small>starting at</small>}</span>
-                <span className="qpkg-scope">{p.scope}</span>
-                <span className="qpkg-you">You get</span>
-                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-              </Link>
-            ))}
+          <div className="cx-hero-shade" />
+          <div className="cx-wrap cx-hero-body">
+            <p className="cx-kick">{c.name}, {c.state} · {c.region}</p>
+            <h1 className="cx-h1 cx-h1--long">Videographer for {c.name} weddings and {c.name} businesses.</h1>
+            <p className="cx-lede">{c.intro}</p>
+            <div className="cx-cta-row">
+              <Link href="/quote" className="cx-btn cx-btn--light cx-btn--lg">Build my quote <Arrow /></Link>
+              <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">or book a 15-minute call</a>
+            </div>
           </div>
-          <p className="qhelp svc-note"><Link href="/business">See the full business page →</Link></p>
+        </header>
+
+        <section id="film" className="cx-band cx-band--black wd-film">
+          <div className="cx-wrap wd-film-wrap">
+            <div className="wd-film-head cx-reveal">
+              <p className="cx-kick">The film</p>
+              <p className="wd-film-cap">Matt &amp; April — wedding sneak peek, Twin Tiers</p>
+            </div>
+            <div className="cx-reveal">
+              <FilmCard
+                feature
+                preload="none"
+                src={videoUrl("/matt-april-wedding.mp4")}
+                poster="/matt-april-wedding-poster.jpg"
+                title="Matt & April"
+                sub="Wedding sneak peek, Twin Tiers"
+              />
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section">
-          <h2>Questions from {c.name}</h2>
-          {FAQS.map((f) => (
-            <details key={f.q} className="svc-faq">
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
+        <section id="weddings" className="cx-section">
+          <div className="cx-wrap">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">Weddings · the price list</p>
+              <h2 className="cx-h2">Weddings in {c.name}</h2>
+            </div>
+            <div className="cx-grid cx-grid--2 wd-pkgs cx-reveal">
+              {PACKAGES.wedding.map((p) => (
+                <WdPackageCard key={p.id} p={p} href="/quote?for=wedding" />
+              ))}
+            </div>
+            <p className="cx-fine wd-after cx-reveal">Photo coverage, a second shooter, an engagement session, and more are priced in the quote builder. <Link href="/weddings" className="wd-inline">See everything on the weddings page →</Link></p>
+          </div>
         </section>
 
-        <section className="svc-section svc-final">
-          <h2>Also filming in {c.nearby.join(", ")}.</h2>
-          <p className="qhelp">Based in Waverly, NY. Serving the Twin Tiers and the southern Finger Lakes — {CITIES.filter((x) => x.slug !== c.slug).map((x, i, arr) => (
-            <span key={x.slug}><Link href={`/${x.slug}`}>{x.name}</Link>{i < arr.length - 1 ? ", " : ""}</span>
-          ))}, Sayre, Athens, and Towanda.</p>
-          <p className="svc-cta-row">
-            <Link href="/quote" className="qprimary svc-cta">Get my instant quote →</Link>
-          </p>
+        <section id="business" className="cx-section cx-section--rule">
+          <div className="cx-wrap">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">Business · the price list</p>
+              <h2 className="cx-h2">Brand video for {c.name} businesses</h2>
+              <p className="cx-lede">{c.business}</p>
+            </div>
+            <div className="cx-grid cx-grid--3 wd-pkgs cx-reveal">
+              {PACKAGES.business.map((p) => (
+                <WdPackageCard key={p.id} p={p} href="/quote?for=business" />
+              ))}
+            </div>
+            <p className="cx-fine wd-after cx-reveal"><Link href="/business" className="wd-inline">See the full business page →</Link></p>
+          </div>
+        </section>
+
+        <section id="faq" className="cx-section cx-section--rule">
+          <div className="cx-wrap cx-split wd-split">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">Before you book</p>
+              <h2 className="cx-h2">Questions from {c.name}</h2>
+            </div>
+            <div className="cx-faq cx-reveal">
+              {FAQS.map((f) => (
+                <details key={f.q}>
+                  <summary>{f.q}</summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="cx-section cx-band wd-also">
+          <div className="cx-wrap cx-wrap--mid cx-stack cx-reveal">
+            <p className="cx-kick">On location</p>
+            <h2 className="cx-h2">Also filming in {c.nearby.join(", ")}.</h2>
+            <p className="cx-lede wd-also-lede">Based in Waverly, NY. Serving the Twin Tiers and the southern Finger Lakes — {CITIES.filter((x) => x.slug !== c.slug).map((x, i, arr) => (
+              <span key={x.slug}><Link href={`/${x.slug}`} className="wd-inline">{x.name}</Link>{i < arr.length - 1 ? ", " : ""}</span>
+            ))}, Sayre, Athens, and Towanda.</p>
+            <div className="cx-cta-row">
+              <Link href="/quote" className="cx-btn cx-btn--light cx-btn--xl">Get my instant quote <Arrow /></Link>
+            </div>
+          </div>
         </section>
       </main>
 
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand"><BrandMark />Roth <em>Media</em></div>
-          <span>Waverly, NY — serving the Twin Tiers</span>
-          <a href={PHONE_HREF}>{PHONE}</a>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          <SocialLinks />
-          <Link href="/portal">Client login</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

@@ -3,15 +3,18 @@
 // One video card for the Work section. Poster + custom play button until you
 // tap; then sound on and native controls. Hover on desktop = silent preview.
 // Only one card plays at a time.
+// Without JS the video keeps its native controls, so the film still plays.
 
 import { useEffect, useRef, useState } from "react";
 
 const EVT = "rm:film-play";
 
-export default function FilmCard({ src, poster, title, sub, label, vertical = false, feature = false }) {
+export default function FilmCard({ src, poster, title, sub, label, vertical = false, feature = false, preload = "metadata" }) {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [ready, setReady] = useState(false); // hydrated: swap native controls for the play button
+  useEffect(() => setReady(true), []);
 
   // Someone else started — stop this one.
   useEffect(() => {
@@ -70,12 +73,12 @@ export default function FilmCard({ src, poster, title, sub, label, vertical = fa
           src={src}
           poster={poster}
           playsInline
-          preload="metadata"
-          controls={playing}
+          preload={preload}
+          controls={playing || !ready}
           onEnded={stopped}
           onPause={() => { if (playing && ref.current?.ended) stopped(); }}
         />
-        {!playing && (
+        {ready && !playing && (
           <button type="button" className="fc-hit" onClick={play} aria-label={`Play ${title}`}>
             <span className="fc-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>

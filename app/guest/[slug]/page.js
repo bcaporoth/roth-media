@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import BrandMark from "../../../components/BrandMark";
-import GuestUpload from "../../../components/GuestUpload";
+import { GuestUploadView } from "../../../components/ShareViews";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured } from "../../../lib/r2";
 import { SLUG_RE, isOpen } from "../../../lib/guest";
@@ -35,17 +33,5 @@ export default async function GuestPage({ params }) {
   const { slug } = await params;
   const ev = await load(slug);
   if (!ev) notFound();
-  return (
-    <main className="guest-wrap">
-      <Link href="/" className="brand guest-brand">
-        <span className="brand-chip"><BrandMark /></span>
-        <span className="brand-text">Roth <em>Media</em></span>
-      </Link>
-      <div className="kick">Guest photos</div>
-      <h1>{ev.title}</h1>
-      <p className="lead">Got a great shot today? Send it straight to the couple — pick from your camera roll, no app, no account. Photos, videos, or a quick message for them.</p>
-      <GuestUpload slug={ev.slug} title={ev.title} open={isOpen(ev)} closesAt={fmt(ev.upload_open_until)} />
-      <p className="guest-foot">Filmed by <Link href="/">Roth Media</Link> · <Link href="/privacy">Privacy</Link></p>
-    </main>
-  );
+  return <GuestUploadView ev={ev} open={isOpen(ev)} closesAt={fmt(ev.upload_open_until)} />;
 }

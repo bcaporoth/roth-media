@@ -48,31 +48,31 @@ export default function CardLeadForm() {
   if (status === "sent") {
     return (
       <div role="status">
-        <p className="bcard-done">Got it — I usually reply the same day. Want to skip the wait?</p>
+        <div className="mx-done"><p className="mx-done-title">Got it — I usually reply the same day. Want to skip the wait?</p></div>
         <BookCall name={who.name} email={who.email} from="card" dark />
       </div>
     );
   }
 
   return (
-    <form className="bcard-fields" onSubmit={onSubmit}>
+    <form className="mx-form" onSubmit={onSubmit}>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="cform-honey" aria-hidden="true" />
-      <label>
-        <span>Your name</span>
-        <input name="name" required autoComplete="name" />
+      <label className="mx-field">
+        <span className="cx-label">Your name</span>
+        <input className="cx-input" name="name" required autoComplete="name" />
       </label>
-      <label>
-        <span>Phone or email</span>
-        <input name="contact" required autoComplete="tel" />
+      <label className="mx-field">
+        <span className="cx-label">Phone or email</span>
+        <input className="cx-input" name="contact" required autoComplete="tel" />
       </label>
       <fieldset>
-        <legend>What&apos;s it for?</legend>
-        <div className="bcard-chips">
+        <legend className="cx-label">What&apos;s it for?</legend>
+        <div className="cx-pills">
           {FOR.map((f) => (
             <button
               key={f}
               type="button"
-              className={"bcard-chip" + (what === f ? " is-on" : "")}
+              className={"cx-pill" + (what === f ? " is-on" : "")}
               aria-pressed={what === f}
               onClick={() => setWhat(what === f ? "" : f)}
             >
@@ -81,15 +81,15 @@ export default function CardLeadForm() {
           ))}
         </div>
       </fieldset>
-      <label>
-        <span>Anything else? (optional)</span>
-        <input name="note" />
+      <label className="mx-field">
+        <span className="cx-label">Anything else? <small>optional</small></span>
+        <input className="cx-input" name="note" />
       </label>
-      <button type="submit" className="bcard-primary" disabled={status === "sending"}>
+      <button type="submit" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block" disabled={status === "sending"}>
         {status === "sending" ? "Sending…" : "Have Brandon reach out"}
       </button>
       {status === "error" && (
-        <p className="bcard-err" role="alert">
+        <p className="cx-error" role="alert">
           That didn&apos;t send — tap Call or Text above instead.
         </p>
       )}

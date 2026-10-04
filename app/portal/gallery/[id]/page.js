@@ -1,15 +1,11 @@
-import Link from "next/link";
-import BrandMark from "../../../../components/BrandMark";
 import { redirect, notFound } from "next/navigation";
-import PortalGallery from "../../../../components/PortalGallery";
 import GalleryBeacon from "../../../../components/GalleryBeacon";
-import PortalNav from "../../../../components/PortalNav";
+import { PortalPremiere } from "../../../../components/PortalViews";
 import { designSkin } from "../../../../lib/design";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../../lib/r2";
 import { guestLinkForGallery } from "../../../../lib/guest";
-import GuestInvite from "../../../../components/GuestInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +107,14 @@ export default async function GalleryPage({ params }) {
       )
     : null;
 
+  // Small version of the cover under the full one: paints first, and stays
+  // if the web-size file is missing (film posters only exist as thumbs).
+  const coverThumbUrl = gallery.cover_filename
+    ? await signedUrl(
+        photoKey(gallery.id, "thumb", gallery.cover_filename)
+      ).catch(() => null)
+    : null;
+
   const zipUrl = gallery.zip_key
     ? await signedUrl(gallery.zip_key, {
         download: `${gallery.title.replace(/[^\w\s-]/g, "")}.zip`,
@@ -135,89 +139,20 @@ export default async function GalleryPage({ params }) {
   const guestLink = adminConfigured ? await guestLinkForGallery(supabaseAdmin(), gallery.id) : null;
 
   return (
-    <div className={skin.className} style={skin.style}>
-      {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
-      <PortalNav
-        email={user.email}
-        isAdmin={isAdmin}
-        extra={
-          zipUrl ? (
-            <li>
-              <a className="pnav-link" href={zipUrl}>Download all ↓</a>
-            </li>
-          ) : null
-        }
-      />
-
-      <header className="hero pgal-hero">
-        {coverUrl && (
-          <div
-            className="hero-bg"
-            style={{ backgroundImage: `url(${coverUrl})` }}
-          />
-        )}
-        <div className="hero-inner">
-          <div className="hero-eyebrow">
-            {gallery.event_date ? dateFmt(gallery.event_date) : "Your gallery"}
-          </div>
-          <h1>
-            {gallery.title.split(" ").slice(0, -1).join(" ")}{" "}
-            <em>{gallery.title.split(" ").slice(-1)}</em>
-          </h1>
-          <div className="hero-cta">
-            <a href="#grid" className="hero-cta-primary">
-              View gallery ↓
-            </a>
-            {zipUrl && (
-              <a href={zipUrl} className="hero-cta-secondary">
-                Download everything
-              </a>
-            )}
-          </div>
-          <p className="hero-trust">
-            {items.length} {items.length === 1 ? "item" : "items"} · yours to
-            keep, forever
-          </p>
-        </div>
-      </header>
-
-      {gallery.share_token && (
-        <p className="pgal-share">
-          Share this gallery with family &amp; friends — no login needed:{" "}
-          <a href={`/g/${gallery.share_token}`}>
-            rothmediaco.com/g/{gallery.share_token.slice(0, 8)}…
-          </a>
-        </p>
-      )}
-
-      {guestLink && (
-        <div className="guest-card">
-          <span className="guest-card-kick">From your guests</span>
-          <strong>{guestLink.count === 0 ? "Your guests' photos land here" : `${guestLink.count} ${guestLink.count === 1 ? "upload" : "uploads"} from the people who were there`}</strong>
-          <span className="guest-card-sub">{guestLink.open ? "Anyone with the link can add their phone photos, videos, and a message — no app." : "Uploads have closed, but everything they sent is here."}</span>
-          <div className="guest-card-actions">
-            <a className="guest-card-open" href={guestLink.href}>Open guest gallery →</a>
-            {guestLink.open && <GuestInvite slug={guestLink.slug} title={guestLink.title} />}
-          </div>
-        </div>
-      )}
-
-      <section id="grid" className="work pgal-work">
-        <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
-        <GalleryBeacon galleryId={gallery.id} via="portal" />
-      </section>
-
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand">
-            <BrandMark />
-            Roth <em>Media</em>
-          </div>
-          <a href="tel:+18455494425">845-549-4425</a>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
-    </div>
+    <PortalPremiere
+      skin={skin}
+      email={user.email}
+      isAdmin={isAdmin}
+      gallery={gallery}
+      eyebrow={gallery.event_date ? dateFmt(gallery.event_date) : "Your gallery"}
+      items={items}
+      coverUrl={coverUrl}
+      coverThumbUrl={coverThumbUrl}
+      zipUrl={zipUrl}
+      videoPoster={videoPoster}
+      guestLink={guestLink}
+    >
+      <GalleryBeacon galleryId={gallery.id} via="portal" />
+    </PortalPremiere>
   );
 }
-

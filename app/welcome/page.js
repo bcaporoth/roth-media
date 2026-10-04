@@ -20,6 +20,14 @@ const WHEN = {
   family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks", "A year of access in your client account, unlimited downloads"],
 };
 
+// One real photo behind the title, matched to what they booked.
+const PHOTO = {
+  wedding: { src: "/photos/25-wedding-the-veil-took-flight.jpg", alt: "A bride and groom in a field at sunset, her veil lifted by the wind" },
+  business: { src: "/photos/42-gym-coach-and-client.jpg", alt: "A coach and her client talking between sets in a gym, in black and white" },
+  family: { src: "/photos/07-senior-portrait-last-light.jpg", alt: "A senior portrait outdoors in the last light of the day" },
+  "": { src: "/photos/40-wedding-just-married-mid-laugh.jpg", alt: "A just-married couple walking hand in hand, mid-laugh, in black and white" },
+};
+
 export default async function WelcomePage({ searchParams }) {
   const sp = await searchParams;
   const want = sp?.for === "portraits" ? "family" : sp?.for;
@@ -29,14 +37,14 @@ export default async function WelcomePage({ searchParams }) {
   const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Photo galleries: within 4 weeks", "Wedding films: within 6 weeks"];
 
   return (
-    <LegalPage kick="Welcome" title="Here's what to expect working with me." updated="">
+    <LegalPage kick="Welcome" title="Here's what to expect working with me." updated="" photo={PHOTO[cat]}>
       <p>
         I&apos;m Brandon. I plan it, shoot it, and edit it myself — no handoffs, and every message you get comes from me.
         This page is the whole road from today to delivery.
       </p>
 
       <h2>The journey</h2>
-      <ol className="welcome-steps">
+      <ol>
         <li><strong>Hello.</strong> You reach out; you hear back from me the same day.</li>
         <li><strong>First call.</strong> Fifteen minutes. I ask about {cat === "business" ? "your business" : "your day"} and what a win looks like.</li>
         <li><strong>Your plan.</strong> A written plan and a firm price, the same day as the call.</li>

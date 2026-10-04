@@ -1,10 +1,13 @@
+import "../theme/weddings.css";
 import Link from "next/link";
-import SocialLinks from "../../components/SocialLinks";
 import { EMAIL, SAME_AS } from "../../lib/site";
-import BrandMark from "../../components/BrandMark";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
-import DealPrice from "../../components/DealPrice";
+import SiteNav from "../../components/SiteNav";
+import SiteFooter from "../../components/SiteFooter";
+import Reveal from "../../components/Reveal";
+import FilmCard from "../../components/FilmCard";
+import WdPackageCard from "../../components/WdPackageCard";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
@@ -20,8 +23,20 @@ export const revalidate = 3600;
 const [PHOTO, FILM] = PACKAGES.wedding;
 const addon = (id) => ADDONS.wedding.find((a) => a.id === id);
 
-const PHONE = "845-549-4425";
-const PHONE_HREF = "tel:+18455494425";
+function Arrow() {
+  return (
+    <svg className="cx-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Real frames from real weddings (public/photos).
+const FRAMES = [
+  { src: "/photos/38-wedding-walking-her-in.jpg", cap: "Walking her in", alt: "A father walking his veiled daughter down the aisle, in black and white", pos: "55% 30%" },
+  { src: "/photos/39-wedding-sealed.jpg", cap: "Sealed", alt: "The first kiss at an outdoor ceremony while the guests applaud", pos: "50% 36%" },
+  { src: "/photos/22-wedding-the-first-dance.jpg", cap: "The first dance", alt: "A couple's first dance under string lights in a barn, in black and white", pos: "50% 70%" },
+];
 
 const FAQS = [
   {
@@ -76,98 +91,168 @@ export default function WeddingsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
 
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li><Link href="/#work">Work</Link></li>
-          <li><Link href="/business">For business</Link></li>
-          <li><Link href="/#about">About</Link></li>
-          <li><Link href="/portal" className="nav-login">Client login</Link></li>
-          <li><a href={PHONE_HREF}>{PHONE}</a></li>
-        </ul>
-      </nav>
+      <SiteNav active="weddings" overHero cta={{ href: "/quote?for=wedding", label: "Build my quote" }} />
 
-      <main className="quote-wrap svc-wrap">
-        <div className="kick">Weddings &amp; engagements · Twin Tiers</div>
-        <h1>Your day, told the way it felt.</h1>
-        <p className="lead">
-          Full-day wedding photography, or a cinematic film with your real
-          vows and ceremony audio — for couples in Sayre, Athens, Waverly,
-          Elmira, Corning, and everywhere in between. Real prices, up front.
-        </p>
-        <p className="svc-cta-row">
-          <Link href="/quote?for=wedding" className="qprimary svc-cta">Build my quote →</Link>
-        </p>
+      <main className="cx-page cx-page--hero wd-page">
+        <Reveal />
 
-        <figure className="svc-video">
-          <video controls playsInline preload="none" poster="/matt-april-wedding-poster.jpg" src={videoUrl("/matt-april-wedding.mp4")} />
-          <figcaption>Matt &amp; April — wedding sneak peek</figcaption>
-        </figure>
-
-        <section className="svc-section">
-          <h2>Two packages. Real prices.</h2>
-          <div className="qpkgs two svc-pkgs">
-            {PACKAGES.wedding.map((p) => (
-              <Link key={p.id} href="/quote?for=wedding" className={`qpkg ${p.popular ? "popular" : ""}`}>
-                {p.popular && <span className="qpkg-flag">Most booked</span>}
-                <span className="qpkg-name">{p.name}</span>
-                <span className="qpkg-price"><DealPrice price={p.price} /> <small>starting at</small></span>
-                <span className="qpkg-scope">{p.scope}</span>
-                <span className="qpkg-you">You get</span>
-                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-              </Link>
-            ))}
+        <header className="cx-hero cx-hero--full wd-hero">
+          <div className="cx-hero-media">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/photos/25-wedding-the-veil-took-flight.jpg" alt="A bride's veil lifting in the wind as the couple hold each other in a field at dusk" fetchPriority="high" style={{ objectPosition: "60% 42%" }} />
           </div>
-          <p className="qhelp svc-note">
-            Add what fits: {ADDONS.wedding.filter((a) => !a.hidden).map((a) => `${a.name.replace(/^Add /, "").toLowerCase()} (+${money(a.price)})`).join(", ")}. Every add-on is priced in the quote builder — no phone call required.
-          </p>
-          <p className="qhelp svc-note">{TRAVEL.line}</p>
+          <div className="cx-hero-shade" />
+          <div className="cx-wrap cx-hero-body">
+            <p className="cx-kick">Weddings &amp; engagements · Twin Tiers</p>
+            <h1 className="cx-h1">Your day, told the way it felt.</h1>
+            <p className="cx-lede">
+              Full-day wedding photography, or a cinematic film with your real
+              vows and ceremony audio — for couples in Sayre, Athens, Waverly,
+              Elmira, Corning, and everywhere in between. Real prices, up front.
+            </p>
+            <div className="cx-cta-row">
+              <Link href="/quote?for=wedding" className="cx-btn cx-btn--light cx-btn--lg">Build my quote <Arrow /></Link>
+              <a href="#film" className="cx-btn cx-btn--ghost cx-btn--lg">Watch a wedding film</a>
+            </div>
+          </div>
+        </header>
+
+        <section id="film" className="cx-band cx-band--black wd-film">
+          <div className="cx-wrap wd-film-wrap">
+            <div className="wd-film-head cx-reveal">
+              <p className="cx-kick">The film</p>
+              <p className="wd-film-cap">Matt &amp; April — wedding sneak peek</p>
+            </div>
+            <div className="cx-reveal">
+              <FilmCard
+                feature
+                preload="none"
+                src={videoUrl("/matt-april-wedding.mp4")}
+                poster="/matt-april-wedding-poster.jpg"
+                title="Matt & April"
+                sub="Wedding sneak peek"
+              />
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section">
-          <h2>How it works</h2>
-          <ol className="svc-steps">
-            <li><strong>Build your quote online.</strong> Pick your package and add-ons — you see the real starting price in two minutes.</li>
-            <li><strong>I confirm it in writing.</strong> Exact number, locked date, no surprises.</li>
-            <li><strong>Your day, delivered.</strong> Filmed candid and unobtrusive, delivered online within six weeks — ready to share anywhere.</li>
-          </ol>
+        <section id="good-time" className="cx-section wd-easy">
+          <div className="cx-wrap cx-split">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">No horror stories</p>
+              <h2 className="cx-h2">You&rsquo;ll laugh a lot. And your wedding will be better with me there.</h2>
+            </div>
+            <div className="cx-stack cx-reveal">
+              <p className="cx-lede">
+                You&rsquo;ve heard the horror stories. The photographer who bossed
+                everybody around. The video guy nobody could find. That&rsquo;s not
+                how I work. I&rsquo;m easy to be around, I learn your people&rsquo;s
+                names, and I work with your DJ, your planner and your venue
+                &mdash; because every one of us is part of making this a great day
+                for you. You relax and have a good time. I&rsquo;ll be having one
+                too.
+              </p>
+              <ul className="cx-list wd-easy-list">
+                <li><span><strong>Easy to be around.</strong> No stiff posing, no barking orders. We&rsquo;ll be laughing before the ceremony starts.</span></li>
+                <li><span><strong>On your vendors&rsquo; team.</strong> I work with your DJ, planner and venue so the day runs smoother, not slower.</span></li>
+                <li><span><strong>Nothing to chase.</strong> Real price up front, confirmed in writing, and a sneak peek within 48 hours.</span></li>
+              </ul>
+            </div>
+          </div>
         </section>
 
-        <section className="svc-section">
-          <h2>Questions couples ask</h2>
-          {FAQS.map((f) => (
-            <details key={f.q} className="svc-faq">
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
+        <section id="packages" className="cx-section">
+          <div className="cx-wrap">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">Weddings · the price list</p>
+              <h2 className="cx-h2">Two packages. Real prices.</h2>
+            </div>
+            <div className="cx-grid cx-grid--2 wd-pkgs cx-reveal">
+              {PACKAGES.wedding.map((p) => (
+                <WdPackageCard key={p.id} p={p} href="/quote?for=wedding" />
+              ))}
+            </div>
+
+            <div className="wd-extras">
+              <div className="cx-reveal">
+                <p className="cx-kick wd-extras-kick">Add what fits</p>
+                <ul className="cx-rows">
+                  {ADDONS.wedding.filter((a) => !a.hidden).map((a) => (
+                    <li key={a.id} className="cx-row">
+                      <span className="cx-row-name">{a.name.replace(/^Add /, "")}</span>
+                      <span className="cx-row-price">+{money(a.price)}</span>
+                      <span className="cx-row-note">{a.get}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="cx-fine wd-extras-note">Every add-on is priced in the quote builder — no phone call required.</p>
+              </div>
+              <div className="cx-reveal">
+                <p className="cx-kick wd-extras-kick">Travel</p>
+                <p className="cx-fine wd-travel">{TRAVEL.line}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="wd-frames" aria-label="Wedding photographs">
+          {FRAMES.map((f) => (
+            <figure key={f.src} className="cx-frame wd-frame cx-reveal">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={f.src} alt={f.alt} loading="lazy" style={{ objectPosition: f.pos }} />
+              <figcaption>{f.cap}</figcaption>
+            </figure>
           ))}
         </section>
 
-        <section className="svc-section svc-final">
-          <h2>See your number before you talk to anyone.</h2>
-          <p className="qhelp">No obligation — build the quote, and if it feels right, I&apos;ll be in touch within 24 hours.</p>
-          <p className="svc-cta-row">
-            <Link href="/quote?for=wedding" className="qprimary svc-cta">Get my instant quote →</Link>
-          </p>
+        <section id="how" className="cx-section">
+          <div className="cx-wrap cx-split wd-split">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">From quote to delivery</p>
+              <h2 className="cx-h2">How it works</h2>
+            </div>
+            <ol className="cx-steps cx-reveal">
+              <li><span><strong>Build your quote online.</strong> Pick your package and add-ons — you see the real starting price in two minutes.</span></li>
+              <li><span><strong>I confirm it in writing.</strong> Exact number, locked date, no surprises.</span></li>
+              <li><span><strong>Your day, delivered.</strong> Filmed candid and unobtrusive, delivered online within six weeks — ready to share anywhere.</span></li>
+            </ol>
+          </div>
+        </section>
+
+        <section id="faq" className="cx-section cx-section--rule">
+          <div className="cx-wrap cx-split wd-split">
+            <div className="cx-title cx-reveal">
+              <p className="cx-kick">Before you book</p>
+              <h2 className="cx-h2">Questions couples ask</h2>
+            </div>
+            <div className="cx-faq cx-reveal">
+              {FAQS.map((f) => (
+                <details key={f.q}>
+                  <summary>{f.q}</summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="wd-close">
+          <div className="wd-close-media" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/photos/24-wedding-a-world-of-their-own.jpg" alt="" loading="lazy" />
+          </div>
+          <div className="cx-wrap wd-close-body cx-reveal">
+            <p className="cx-kick">Your quote</p>
+            <h2 className="cx-h1 cx-h1--long">See your number before you talk to anyone.</h2>
+            <p className="cx-lede">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there. If it feels right, I&apos;ll be in touch within 24 hours.</p>
+            <div className="cx-cta-row">
+              <Link href="/quote?for=wedding" className="cx-btn cx-btn--light cx-btn--xl">Get my instant quote <Arrow /></Link>
+            </div>
+          </div>
         </section>
       </main>
 
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand"><BrandMark />Roth <em>Media</em></div>
-          <span>Waverly, NY — serving the Twin Tiers</span>
-          <a href={PHONE_HREF}>{PHONE}</a>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          <SocialLinks />
-          <Link href="/portal">Client login</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

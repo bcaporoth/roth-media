@@ -1,7 +1,6 @@
-import Link from "next/link";
-import SocialLinks from "../../components/SocialLinks";
-import { EMAIL, SAME_AS } from "../../lib/site";
-import BrandMark from "../../components/BrandMark";
+import "../theme/quote.css";
+import SiteNav from "../../components/SiteNav";
+import SiteFooter from "../../components/SiteFooter";
 import { stripeConfigured } from "../../lib/stripe";
 import QuoteFlow from "../../components/QuoteFlow";
 
@@ -11,8 +10,13 @@ export const metadata = {
     "Answer a few questions and get matched to the right photography or videography package instantly — real prices, no obligation.",
 };
 
-const PHONE = "845-549-4425";
-const PHONE_HREF = "tel:+18455494425";
+// The photo behind the title follows what they came for.
+const HERO = {
+  wedding: { src: "/photos/25-wedding-the-veil-took-flight.jpg", alt: "A bride's veil lifting in the wind as the couple hold each other in a field at dusk", pos: "60% 26%" },
+  business: { src: "/photos/41-gym-mid-set-laughter.jpg", alt: "A lifter laughing mid-set at the squat rack, black and white", pos: "50% 40%" },
+  family: { src: "/photos/04-senior-portrait-golden-hour.jpg", alt: "A senior portrait — a young woman sitting on steel steps holding a volleyball, backlit by the evening sun", pos: "50% 24%" },
+  "": { src: "/photos/10-wedding-before-the-guests.jpg", alt: "A barn reception set before the guests arrive, strings of lights overhead, in black and white", pos: "50% 45%" },
+};
 
 export default async function QuotePage({ searchParams }) {
   const params = await searchParams;
@@ -22,58 +26,37 @@ export default async function QuotePage({ searchParams }) {
   const code = String(params?.code || "").trim().toUpperCase().slice(0, 30);
   const pkg = String(params?.pkg || "").replace(/[^a-z0-9-]/gi, "").slice(0, 30);
   const date = String(params?.date || "").replace(/[^\w ,.\/-]/g, "").trim().slice(0, 40);
+  const hero = HERO[category];
 
   return (
     <>
-      <nav className="rm-nav portal-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          <li>
-            <Link href="/#work">Work</Link>
-          </li>
-          <li>
-            <Link href="/weddings">Weddings</Link>
-          </li>
-          <li>
-            <Link href="/business">For business</Link>
-          </li>
-          <li>
-            <Link href="/portal" className="nav-login">Client login</Link>
-          </li>
-          <li>
-            <a href={PHONE_HREF}>{PHONE}</a>
-          </li>
-        </ul>
-      </nav>
+      <SiteNav active="quote" cta={null} overHero />
 
-      <main className="quote-wrap">
-        <div className="kick">Instant quote</div>
-        <h1>Build your quote in two minutes.</h1>
-        <p className="lead">
-          Pick what you need and I&apos;ll walk you to a tailored starting
-          price, step by step. Real prices, no obligation.
-        </p>
-        <QuoteFlow initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />
+      <main className="cx-page cx-page--hero qt-page">
+        <header className="cx-hero qt-hero">
+          <div className="cx-hero-media">
+            <img src={hero.src} alt={hero.alt} fetchPriority="high" style={{ objectPosition: hero.pos }} />
+          </div>
+          <div className="cx-hero-shade" />
+          <div className="cx-wrap cx-hero-body">
+            <p className="cx-kick">Instant quote</p>
+            <h1 className="cx-h1 cx-h1--long">Build your quote in two minutes.</h1>
+            <p className="cx-lede">
+              Pick what you need and I&apos;ll walk you to a tailored starting
+              price, step by step. Real prices, no obligation.
+            </p>
+            <p className="qt-rely">We&rsquo;ll have a good time. That&rsquo;s the part you can rely on.</p>
+          </div>
+        </header>
+
+        <section className="qt-stage">
+          <div className="cx-wrap">
+            <QuoteFlow cinema initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />
+          </div>
+        </section>
       </main>
 
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand">
-            <BrandMark />
-            Roth <em>Media</em>
-          </div>
-          <a href={PHONE_HREF}>{PHONE}</a>
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          <SocialLinks />
-          <Link href="/portal">Client login</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
+      <SiteFooter slim />
     </>
   );
 }

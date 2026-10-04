@@ -232,28 +232,29 @@ export default function PortalLogin() {
 
   if (mode === "landing") {
     return (
-      <div className="cform-success" role="status">
-        <p className="cform-success-title">Signing you in…</p>
-        <p className="cform-success-body">One second.</p>
+      <div className="pt-status" role="status">
+        <p className="pt-status-title">Signing you in…</p>
+        <p className="pt-status-body">One second.</p>
       </div>
     );
   }
 
   if (mode === "sent" || mode === "verifying") {
     return (
-      <div className="cform" role="status">
-        <p className="cform-success-title">Check your email.</p>
-        <p className="cform-success-body">
+      <div className="pt-desk" role="status">
+        <p className="pt-status-title">Check your email.</p>
+        <p className="pt-status-body">
           I sent a one-time email to <strong>{email}</strong>. Tap the button
           in it, or type the 6-digit code here. Either way you&apos;ll land on
           a page to choose your password — then it&apos;s email + password
           from there on out.
         </p>
-        <form onSubmit={handleVerify}>
-          <div>
-            <label htmlFor="pl-code">6-digit code</label>
+        <form className="cx-form pt-form" onSubmit={handleVerify}>
+          <div className="cx-field">
+            <label className="cx-label" htmlFor="pl-code">6-digit code</label>
             <input
               id="pl-code"
+              className="cx-input pt-code"
               ref={codeRef}
               type="text"
               inputMode="numeric"
@@ -264,17 +265,21 @@ export default function PortalLogin() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             />
           </div>
-          <button type="submit" disabled={mode === "verifying"}>
+          <button
+            type="submit"
+            className="cx-btn cx-btn--light cx-btn--lg cx-btn--block"
+            disabled={mode === "verifying"}
+          >
             {mode === "verifying" ? "One sec…" : "Continue"}
           </button>
           {error && (
-            <p className="cform-error" role="alert">
+            <p className="cx-error" role="alert">
               {error}
             </p>
           )}
           <button
             type="button"
-            className="cform-linklike"
+            className="pt-textbtn"
             onClick={() => {
               setMode("password");
               setCode("");
@@ -290,11 +295,12 @@ export default function PortalLogin() {
   }
 
   return (
-    <form className="cform" onSubmit={handlePasswordSignIn}>
-      <div>
-        <label htmlFor="pl-email">Email</label>
+    <form className="cx-form pt-form pt-desk" onSubmit={handlePasswordSignIn}>
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pl-email">Email</label>
         <input
           id="pl-email"
+          className="cx-input"
           type="email"
           placeholder="The email you used to book with me"
           value={email}
@@ -306,11 +312,12 @@ export default function PortalLogin() {
           required
         />
       </div>
-      <div>
-        <label htmlFor="pl-password">Password</label>
-        <div className="pl-pw-wrap">
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pl-password">Password</label>
+        <div className="pt-pw">
           <input
             id="pl-password"
+            className="cx-input"
             type={showPw ? "text" : "password"}
             placeholder="Your password"
             value={password}
@@ -320,7 +327,7 @@ export default function PortalLogin() {
           />
           <button
             type="button"
-            className="pl-pw-toggle"
+            className="pt-pw-toggle"
             onClick={() => setShowPw((s) => !s)}
             aria-label={showPw ? "Hide password" : "Show password"}
           >
@@ -328,12 +335,22 @@ export default function PortalLogin() {
           </button>
         </div>
       </div>
-      <button type="submit" disabled={mode === "sending" || busy}>
+      <button
+        type="submit"
+        className="cx-btn cx-btn--light cx-btn--lg cx-btn--block"
+        disabled={mode === "sending" || busy}
+      >
         {busy ? "Signing you in…" : "Sign in"}
       </button>
+      {error && (
+        <p className="cx-error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && !error && <p className="cx-help">{notice}</p>}
       <button
         type="button"
-        className="cform-linklike"
+        className="pt-setup"
         onClick={handleSendSetup}
         disabled={mode === "sending"}
       >
@@ -341,12 +358,6 @@ export default function PortalLogin() {
           ? "Sending…"
           : "First time here / forgot password? Set one up →"}
       </button>
-      {notice && !error && <p className="pgate-fine">{notice}</p>}
-      {error && (
-        <p className="cform-error" role="alert">
-          {error}
-        </p>
-      )}
     </form>
   );
 }

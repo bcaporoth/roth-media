@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage kick="Privacy" title="What we collect, and what we do with it." updated="September 30, 2026">
+    <LegalPage kick="Privacy" title="What we collect, and what we do with it." updated="September 30, 2026" toc>
       <h2>Who this covers</h2>
       <p>Roth Media is the video and photography business of Roth Ventures NY LLC, based in Waverly, New York. This policy covers rothmediaco.com, the client portal, shared galleries, and the emails and texts we send.</p>
 

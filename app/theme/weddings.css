@@ -1,0 +1,182 @@
+/* ════════════════════════════════════════════════════════════════════
+   Roth Media · CINEMA — "weddings" page group
+   /weddings · /weddings/open-dates · /[city] · /go/weddings · /go/[slug]
+   Everything is prefixed wd- or scoped under .wd-page (see .lab/THEME.md).
+   ════════════════════════════════════════════════════════════════════ */
+
+.wd-page .cx-h1 em { font-style: normal; color: var(--gold); }
+.wd-page .wd-inline { color: var(--fg); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--faint); display: inline-block; padding-block: 0.75rem; margin-block: -0.75rem; }
+.wd-page .wd-inline:hover { text-decoration-color: var(--fg); }
+
+/* ── Hero ── */
+.wd-page .wd-hero .cx-lede { color: var(--fg); max-width: 38rem; }
+.wd-page .wd-hero .cx-hero-body { max-width: var(--maxw); }
+.wd-page .wd-hero .cx-h1 { max-width: 15em; }
+
+/* ── The film ── */
+.wd-page .wd-film { padding-block: 2.2rem 2.6rem; }
+.wd-page .wd-film-wrap { display: grid; gap: 1rem; }
+.wd-page .wd-film-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3rem 1.5rem; }
+.wd-page .wd-film-cap { margin: 0; color: var(--dim); font-size: 0.92rem; }
+.wd-page .fc { margin: 0; }
+.wd-page .fc .fc-frame { border-radius: 2px; border: 1px solid var(--line); box-shadow: none; background: #000; }
+.wd-page .fc:hover .fc-frame { border-color: var(--line-strong); }
+.wd-page .fc .fc-hit { background: linear-gradient(rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.78)); }
+.wd-page .fc.is-previewing .fc-hit { background: linear-gradient(rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6)); }
+.wd-page .fc .fc-play { background: var(--fg); color: #14110e; box-shadow: none; width: 68px; height: 68px; }
+.wd-page .fc .fc-hit:hover .fc-play { background: #fff; transform: scale(1.08); }
+.wd-page .fc .fc-cap { left: 1rem; right: 1rem; bottom: 0.9rem; color: var(--fg); }
+.wd-page .fc .fc-cap strong { font-size: 1.35rem; letter-spacing: -0.02em; }
+.wd-page .fc .fc-sub { color: var(--fg); opacity: 0.88; font-size: 0.7rem; letter-spacing: 0.16em; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .wd-page .fc--feature .fc-play { animation: wd-ring 2.6s ease-out infinite; }
+}
+@keyframes wd-ring { from { box-shadow: 0 0 0 0 rgba(246, 241, 232, 0.5); } to { box-shadow: 0 0 0 22px rgba(246, 241, 232, 0); } }
+
+/* ── Package cards ── */
+.wd-pkgs { align-items: stretch; }
+.wd-pkg { position: relative; gap: 1rem; grid-template-rows: auto auto 1fr auto; height: 100%; }
+.wd-pkg-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.8rem 1.4rem; width: 100%; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.wd-pkg-id { display: grid; gap: 0.45rem; justify-items: start; min-width: 0; }
+.wd-pkg > .wd-pkg-head .cx-flag { position: absolute; top: 0; left: 1.1rem; transform: translateY(-50%); background: var(--gold); color: #14110e; border-color: var(--gold); }
+.wd-pkg-scope { color: var(--dim); font-size: 0.88rem; }
+.wd-pkg-price { display: grid; justify-items: start; gap: 0.1rem; }
+.wd-pkg-price .cx-num { font-size: clamp(1.9rem, 3.4vw, 2.5rem); line-height: 1; color: var(--fg); white-space: nowrap; }
+.wd-pkg-price .cx-num s { font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.95rem; font-weight: 500; letter-spacing: 0; color: var(--faint); margin-left: 0.15rem; }
+.wd-pkg-price small { font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.wd-pkg .cx-list { align-content: start; }
+.wd-pkg-go { margin-top: 0.2rem; }
+a.wd-pkg:hover .wd-pkg-go { background-image: linear-gradient(var(--fg), var(--fg)); }
+
+/* add-ons + travel */
+.wd-page .wd-extras { display: grid; gap: 2.2rem; margin-top: 2.6rem; }
+.wd-page .wd-extras-kick { margin-bottom: 0.8rem; }
+.wd-page .wd-extras-note { margin-top: 1rem; }
+.wd-page .wd-travel { max-width: 34rem; padding-top: 0.95rem; border-top: 1px solid var(--line); }
+.wd-page .wd-after { margin-top: 1.4rem; max-width: 46rem; }
+
+/* ── Photo frames: three real moments, edge to edge ── */
+.wd-page .wd-frames { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
+.wd-page .wd-frame { aspect-ratio: 4 / 5; }
+.wd-page .wd-frame:nth-child(2) { grid-column: 1 / -1; grid-row: 1; aspect-ratio: 3 / 2; }
+.wd-page .wd-frame img { transition: transform 1.4s var(--ease); }
+.wd-page .wd-frame:hover img { transform: scale(1.03); }
+
+/* ── Title left, content right ── */
+.wd-page .wd-split { align-items: start; }
+.wd-page .wd-split > .cx-title { margin-bottom: 0; }
+.wd-page .wd-get { font-size: 1.02rem; gap: 0; border-top: 1px solid var(--line); }
+.wd-page .wd-get > li { padding: 0.95rem 0 0.95rem 1.5rem; border-bottom: 1px solid var(--line); }
+.wd-page .wd-get > li::before { top: 1.7em; }
+.wd-page .wd-prose-cta { margin-top: 1.6rem; }
+.wd-page .cx-prose a.cx-btn { text-decoration: none; }
+
+/* ── Closing call over a photo ── */
+.wd-page .wd-close { position: relative; isolation: isolate; overflow: hidden; padding-block: 5rem; border-top: 1px solid var(--line); }
+.wd-page .wd-close-media { position: absolute; inset: 0; z-index: -1; }
+.wd-page .wd-close-media img { width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 50% 60%; display: block; }
+.wd-page .wd-close-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(11, 10, 9, 0.9), rgba(11, 10, 9, 0.62) 45%, rgba(11, 10, 9, 0.88)); }
+.wd-page .wd-close-body { display: grid; gap: 1rem; justify-items: start; }
+.wd-page .wd-close-body .cx-lede { color: var(--fg); }
+.wd-page .wd-close-body .cx-cta-row { margin-top: 0.6rem; width: 100%; }
+
+/* ── Open dates: the two offers ── */
+.wd-page .wd-offers { align-items: stretch; }
+.wd-page .wd-offer { gap: 1rem; align-content: start; grid-template-rows: auto auto; }
+.wd-page .wd-offer .cx-h2 { font-size: clamp(1.6rem, 3vw, 2.3rem); }
+.wd-page .wd-dates .cx-pill { min-height: 48px; padding: 0 1rem; }
+.wd-page .wd-offer-price { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.7rem; color: var(--dim); font-size: 0.94rem; padding-top: 1rem; border-top: 1px solid var(--line); width: 100%; }
+.wd-page .wd-offer-price strong { font-size: clamp(2rem, 4vw, 2.7rem); line-height: 1; color: var(--gold); }
+.wd-page .wd-offer-price s { color: var(--faint); }
+.wd-page .wd-offer-cta { margin-top: auto; }
+.wd-page.wd-open .wd-hero { --shot: min(70vw, 36svh); }
+
+/* ── City pages ── */
+.wd-page .wd-also-lede { max-width: 46rem; }
+
+/* ── Ad landing pages (/go/…): no site chrome, one film, one form ── */
+.wd-page.wd-go { display: block; }
+.wd-page .wd-go-grid { display: grid; min-height: 100svh; }
+.wd-page .wd-go-media { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.wd-page .wd-go-media video { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; }
+.wd-page .wd-go-media::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(rgba(11, 10, 9, 0) 60%, var(--bg)); }
+.wd-page .wd-go-body { display: grid; gap: 1.1rem; align-content: start; justify-items: start; padding: 0.4rem var(--gut) 3rem; width: 100%; max-width: 560px; margin-inline: auto; }
+.wd-page.wd-go--solo .wd-go-body { padding-top: 3rem; }
+.wd-page .wd-go-h1 { font-size: clamp(2.1rem, 8.4vw, 3.4rem); }
+.wd-page .wd-go-prices { width: 100%; }
+.wd-page .wd-go-prices .cx-row-price s { font-size: 0.82em; margin: 0 0 0 0.3rem; }
+.wd-page .wd-go-proof { margin: 0; color: var(--dim); font-size: 0.9rem; }
+
+/* the short lead form (AdLeadForm / PartnerLeadForm keep their class names) */
+.wd-page .golead-form { display: grid; gap: 1rem; width: 100%; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+.wd-page .golead-form label { display: grid; gap: 0.45rem; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.wd-page .golead-form input:not(.cform-honey) {
+  display: block; width: 100%; min-width: 0; min-height: 52px; padding: 0.7rem 0.85rem;
+  background: var(--bg-2); color: var(--fg); color-scheme: dark;
+  border: 1px solid var(--field-line); border-radius: 2px;
+  font-family: var(--font-body), "Manrope", sans-serif; font-size: 1rem; font-weight: 500; line-height: 1.4; letter-spacing: 0; text-transform: none;
+  transition: border-color 0.2s;
+}
+.wd-page .golead-form input::placeholder { color: var(--faint); opacity: 1; }
+.wd-page .golead-form input:hover { border-color: rgba(246, 241, 232, 0.6); }
+.wd-page .golead-form input:focus { outline: 2px solid var(--gold); outline-offset: 2px; border-color: var(--fg); }
+.wd-page .golead-form .qprimary {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 58px; padding: 0.9rem 1.4rem; margin-top: 0.2rem;
+  border: 1px solid var(--fg); border-radius: 2px; background: var(--fg); color: #14110e; cursor: pointer;
+  font-family: var(--font-body), "Manrope", sans-serif; font-weight: 700; font-size: 0.92rem; letter-spacing: 0.07em; text-transform: uppercase;
+  transition: background 0.25s;
+}
+.wd-page .golead-form .qprimary:hover:not(:disabled) { background: #fff; }
+.wd-page .golead-form .qprimary:disabled { opacity: 0.55; cursor: not-allowed; }
+.wd-page .golead-form .cform-error { margin: 0; font-size: 0.94rem; padding: 0.8rem 0.9rem; border: 1px solid var(--err); border-left-width: 2px; border-radius: 2px; background: var(--bg-2); color: var(--err); }
+.wd-page .golead-consent { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--faint); }
+.wd-page .golead-done { width: 100%; margin: 0; padding: 1.3rem 1.1rem; background: var(--bg-2); border: 1px solid var(--line); border-left: 2px solid var(--ok); border-radius: 2px; font-size: 1.05rem; font-weight: 600; color: var(--fg); }
+.wd-page .golead-done p { margin: 0 0 0.9rem; }
+.wd-page .golead-book { display: flex; align-items: center; justify-content: center; min-height: 54px; padding: 0.85rem 1.4rem; border-radius: 2px; background: var(--fg); color: #14110e; font-weight: 700; font-size: 0.88rem; letter-spacing: 0.07em; text-transform: uppercase; text-decoration: none; }
+.wd-page .golead-book:hover { background: #fff; }
+.wd-page .bookcall { margin-top: 1.2rem; text-align: left; }
+.wd-page .bookcall-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.15rem; color: var(--fg); }
+.wd-page .bookcall-sub { color: var(--dim); font-size: 0.9rem; font-weight: 400; }
+.wd-page .bookcall-sub a { color: var(--fg); display: inline-block; padding-block: 0.7rem; margin-block: -0.7rem; }
+.wd-page .bookcall-frame { border-radius: 2px; border-color: var(--line); }
+
+/* ════════ Tablet and up ════════ */
+@media (min-width: 640px) {
+  .wd-page .wd-frames { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr) minmax(0, 1fr); }
+  .wd-page .wd-frame, .wd-page .wd-frame:nth-child(2) { grid-column: auto; grid-row: auto; aspect-ratio: auto; height: clamp(300px, 46vw, 660px); }
+}
+@media (min-width: 800px) {
+  .wd-page .wd-film { padding-block: 3.4rem 4rem; }
+  .wd-page .fc--feature .fc-frame { aspect-ratio: 2.1 / 1; max-height: 82vh; }
+  .wd-page .fc--feature .fc-hit { place-items: end start; padding: 2.2rem; }
+  .wd-page .fc--feature .fc-play { width: 88px; height: 88px; }
+  .wd-page .fc--feature .fc-cap { left: calc(2.2rem + 88px + 1.3rem); bottom: 2.6rem; }
+  .wd-page .fc--feature .fc-cap strong { font-size: 2.4rem; }
+  .wd-page .fc .fc-sub { font-size: 0.78rem; }
+  .wd-pkg-price { justify-items: end; text-align: right; }
+  .wd-pkg > .wd-pkg-head .cx-flag { left: 1.6rem; }
+  .cx-grid--3 > .wd-pkg .wd-pkg-price { justify-items: start; text-align: left; }
+  .wd-page .wd-extras { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 4.5rem; margin-top: 3.6rem; }
+  .wd-page .wd-split { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
+  .wd-page .wd-close { padding-block: 9rem; }
+  .wd-page.wd-open .wd-hero { min-height: 70svh; }
+  /* city hero: keep the couple clear of the headline */
+  .wd-page.wd-city .cx-hero-media img { width: 122%; }
+  .wd-page.wd-city .wd-hero .cx-h1 { max-width: 11.5em; }
+}
+@media (min-width: 960px) {
+  .wd-page .wd-go-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .wd-page.wd-go--solo .wd-go-grid { grid-template-columns: minmax(0, 1fr); }
+  .wd-page .wd-go-media { aspect-ratio: auto; min-height: 100svh; height: 100%; border-right: 1px solid var(--line); }
+  .wd-page .wd-go-media video { position: sticky; top: 0; inset-inline: auto; height: 100svh; object-fit: contain; }
+  .wd-page .wd-go-media::after { content: none; }
+  .wd-page .wd-go-body { padding: 4rem 3rem 4rem; align-content: center; max-width: 600px; }
+  .wd-page .wd-go-h1 { font-size: clamp(2.6rem, 3.6vw, 3.6rem); }
+  .wd-page .golead-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wd-page .golead-form > :not(label), .wd-page .golead-form > label:nth-of-type(odd):last-of-type { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-page .wd-frame img { transition: none; }
+  .wd-page .wd-frame:hover img { transform: none; }
+}

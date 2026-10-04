@@ -1,16 +1,12 @@
-import Link from "next/link";
-import BrandMark from "../../../components/BrandMark";
 import { notFound } from "next/navigation";
 import { resolveShareToken } from "../../../lib/share-aliases";
-import PortalGallery from "../../../components/PortalGallery";
 import GalleryBeacon from "../../../components/GalleryBeacon";
-import PremiereGate from "../../../components/PremiereGate";
+import { SharedAlbum, SharedPremiereWait } from "../../../components/ShareViews";
 import { designSkin } from "../../../lib/design";
 import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../lib/r2";
 import { guestLinkForGallery } from "../../../lib/guest";
-import GuestInvite from "../../../components/GuestInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -84,54 +80,13 @@ export default async function SharedGalleryPage({ params }) {
         )
       : null;
     return (
-      <div className={skin.className} style={skin.style}>
-        {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
-        <nav className="rm-nav" aria-label="Main navigation">
-          <Link href="/" className="brand">
-            <span className="brand-chip"><BrandMark /></span>
-            <span className="brand-text">Roth <em>Media</em></span>
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/quote">Book your own shoot</Link>
-            </li>
-          </ul>
-        </nav>
-        <header className="hero pgal-hero pgate-hero">
-          {coverUrlEarly && (
-            <div
-              className="hero-bg"
-              style={{ backgroundImage: `url(${coverUrlEarly})` }}
-            />
-          )}
-          <div className="hero-inner">
-            <div className="hero-eyebrow">
-              {gallery.event_date ? dateFmt(gallery.event_date) : "A Roth Media premiere"}
-            </div>
-            <h1>
-              {gallery.title.split(" ").slice(0, -1).join(" ")}{" "}
-              <em>{gallery.title.split(" ").slice(-1)}</em>
-            </h1>
-            <PremiereGate
-              mode="inline"
-              galleryId={gallery.id}
-              token={token}
-              title={gallery.title}
-              revealAt={gallery.reveal_at}
-            />
-          </div>
-        </header>
-        <footer className="rm-footer">
-          <div className="foot-inner">
-            <div className="brand">
-              <BrandMark />
-              Roth <em>Media</em>
-            </div>
-            <a href="tel:+18455494425">845-549-4425</a>
-            <span>© {new Date().getFullYear()} Roth Media</span>
-          </div>
-        </footer>
-      </div>
+      <SharedPremiereWait
+        skin={skin}
+        gallery={gallery}
+        token={token}
+        eyebrow={gallery.event_date ? dateFmt(gallery.event_date) : "A Roth Media premiere"}
+        coverUrl={coverUrlEarly}
+      />
     );
   }
 
@@ -197,116 +152,20 @@ export default async function SharedGalleryPage({ params }) {
       : null;
 
   return (
-    <div className={skin.className} style={skin.style}>
-      {skin.fontHref && <link rel="stylesheet" href={skin.fontHref} />}
-      {premiereActive && (
-        <PremiereGate
-          mode="overlay"
-          galleryId={gallery.id}
-          token={token}
-          title={gallery.title}
-          revealAt={gallery.reveal_at}
-        />
-      )}
-      <nav className="rm-nav" aria-label="Main navigation">
-        <Link href="/" className="brand">
-          <span className="brand-chip"><BrandMark /></span>
-          <span className="brand-text">Roth <em>Media</em></span>
-        </Link>
-        <ul className="nav-links">
-          {zipUrl && (
-            <li>
-              <a href={zipUrl}>Download all ↓</a>
-            </li>
-          )}
-          <li>
-            <Link href="/quote">Book your own shoot</Link>
-          </li>
-        </ul>
-      </nav>
-
-      <header className="hero pgal-hero">
-        {coverUrl && (
-          <div
-            className="hero-bg"
-            style={{ backgroundImage: `url(${coverUrl})` }}
-          />
-        )}
-        <div className="hero-inner">
-          <div className="hero-eyebrow">
-            {gallery.event_date ? dateFmt(gallery.event_date) : "A Roth Media gallery"}
-          </div>
-          <h1>
-            {gallery.title.split(" ").slice(0, -1).join(" ")}{" "}
-            <em>{gallery.title.split(" ").slice(-1)}</em>
-          </h1>
-          <div className="hero-cta">
-            <a href="#grid" className="hero-cta-primary">
-              View gallery ↓
-            </a>
-            {zipUrl && (
-              <a href={zipUrl} className="hero-cta-secondary">
-                Download everything
-              </a>
-            )}
-          </div>
-          <p className="hero-trust">
-            {items.length} {items.length === 1 ? "item" : "items"} · filmed
-            &amp; photographed by Roth Media
-          </p>
-        </div>
-      </header>
-
-      {guestLink && (
-        <div className="guest-card">
-          <span className="guest-card-kick">From your guests</span>
-          <strong>{guestLink.count === 0 ? "Your guests' photos land here" : `${guestLink.count} ${guestLink.count === 1 ? "upload" : "uploads"} from the people who were there`}</strong>
-          <span className="guest-card-sub">{guestLink.open ? "Anyone with the link can add their phone photos, videos, and a message — no app." : "Uploads have closed, but everything they sent is here."}</span>
-          <div className="guest-card-actions">
-            <a className="guest-card-open" href={guestLink.href}>Open guest gallery →</a>
-            {guestLink.open && <GuestInvite slug={guestLink.slug} title={guestLink.title} />}
-          </div>
-        </div>
-      )}
-
-      <section id="grid" className="work pgal-work">
-        <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
-        <GalleryBeacon galleryId={gallery.id} via="share" />
-      </section>
-
-      <section className="contact" style={{ borderTop: "1px solid var(--line)" }}>
-        <div className="kick">Loved these?</div>
-        <h2>
-          Book your own <em>shoot.</em>
-        </h2>
-        <p className="lead">
-          Weddings, seniors, brands, events — get an instant quote in two
-          minutes.
-        </p>
-        <Link href="/quote" className="hero-cta-primary" style={{ marginTop: "1rem" }}>
-          Get my instant quote →
-        </Link>
-        {REVIEW_URL && (
-          <p className="lead" style={{ marginTop: "1.6rem" }}>
-            Had a great experience with us?{" "}
-            <a href={REVIEW_URL} target="_blank" rel="noopener noreferrer">
-              Leave a Google review ★
-            </a>
-          </p>
-        )}
-      </section>
-
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand">
-            <BrandMark />
-            Roth <em>Media</em>
-          </div>
-          <a href="tel:+18455494425">845-549-4425</a>
-          <Link href="/portal">Client login</Link>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
-    </div>
+    <SharedAlbum
+      skin={skin}
+      gallery={gallery}
+      token={token}
+      eyebrow={gallery.event_date ? dateFmt(gallery.event_date) : "A Roth Media gallery"}
+      items={items}
+      coverUrl={coverUrl}
+      zipUrl={zipUrl}
+      guestLink={guestLink}
+      videoPoster={videoPoster}
+      premiereActive={premiereActive}
+      reviewUrl={REVIEW_URL}
+    >
+      <GalleryBeacon galleryId={gallery.id} via="share" />
+    </SharedAlbum>
   );
 }

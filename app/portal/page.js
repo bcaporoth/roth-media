@@ -1,7 +1,6 @@
-import Link from "next/link";
-import BrandMark from "../../components/BrandMark";
 import PortalLogin from "../../components/PortalLogin";
 import PortalNav from "../../components/PortalNav";
+import { PortalLobby, PortalNotice, PortalHome } from "../../components/PortalViews";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
@@ -78,14 +77,22 @@ async function getClientData() {
     } catch {}
   }
 
+  // The first album is shown as a large poster, so it also gets the
+  // web-size cover (layered over the thumb, which stays the fallback).
   const hostedGalleries = await Promise.all(
-    [...(hosted || []), ...shared].map(async (g) => ({
+    [...(hosted || []), ...shared].map(async (g, i) => ({
       ...g,
       coverUrl: g.cover_filename
         ? await signedUrl(photoKey(g.id, "thumb", g.cover_filename)).catch(
             () => null
           )
         : null,
+      posterUrl:
+        i === 0 && g.cover_filename
+          ? await signedUrl(photoKey(g.id, "web", g.cover_filename)).catch(
+              () => null
+            )
+          : null,
     }))
   );
 
@@ -101,17 +108,16 @@ async function getClientData() {
 export default async function PortalPage() {
   if (!portalConfigured) {
     return (
-      <PortalShell>
-        <div className="kick">Client Portal</div>
-        <h2>
-          Almost <em>ready.</em>
-        </h2>
-        <p className="lead">
-          The client portal is being set up. In the meantime, call or text me
-          at <a href="tel:+18455494425">845-549-4425</a> for anything you
-          need.
-        </p>
-      </PortalShell>
+      <PortalLobby
+        title="Almost ready."
+        lede={
+          <>
+            The client portal is being set up. In the meantime, call or text me
+            at <a href="tel:+18455494425">845-549-4425</a> for anything you
+            need.
+          </>
+        }
+      />
     );
   }
 
@@ -120,24 +126,18 @@ export default async function PortalPage() {
 
   if (!user) {
     return (
-      <PortalShell>
-        <div className="kick">Client Portal</div>
-        <h2>
-          Welcome <em>back.</em>
-        </h2>
-        <p className="lead">
-          Sign in with your email and password to see your galleries,
-          downloads, and account. First time? One quick email sets you up.
-        </p>
+      <PortalLobby
+        title="Welcome back."
+        lede="Sign in with your email and password to see your galleries, downloads, and account. First time? One quick email sets you up."
+      >
         <PortalLogin />
-      </PortalShell>
+      </PortalLobby>
     );
   }
 
   if (!client) {
     return (
-      <PortalShell
-        signedIn
+      <PortalNotice
         nav={
           <PortalNav
             email={user.email}
@@ -145,18 +145,13 @@ export default async function PortalPage() {
             active="galleries"
           />
         }
+        title={<>Hi — I don&apos;t have your account set up yet.</>}
       >
-        <div className="kick">Client Portal</div>
-        <h2>
-          Hi — I don&apos;t have your account set up <em>yet.</em>
-        </h2>
-        <p className="lead">
-          You&apos;re signed in as {user.email}, but I haven&apos;t linked
-          that email to a client account. Text me at{" "}
-          <a href="tel:+18455494425">845-549-4425</a> and I&apos;ll fix it in
-          two minutes.
-        </p>
-      </PortalShell>
+        You&apos;re signed in as {user.email}, but I haven&apos;t linked that
+        email to a client account. Text me at{" "}
+        <a href="tel:+18455494425">845-549-4425</a> and I&apos;ll fix it in two
+        minutes.
+      </PortalNotice>
     );
   }
 
@@ -166,151 +161,17 @@ export default async function PortalPage() {
 
   const first = client.name.trim().split(/\s+/)[0] || "there";
   const firstName = first.charAt(0).toUpperCase() + first.slice(1);
-  const hasHosted = hostedGalleries && hostedGalleries.length > 0;
-  const hasLinks = galleries.length > 0;
-  const hasPayments = payments.length > 0;
 
   return (
-    <PortalShell
-      signedIn
+    <PortalHome
       nav={<PortalNav email={user.email} isAdmin={isAdmin} active="galleries" />}
-    >
-      <div className="kick">Client Portal</div>
-      <h2>
-        Hi, <em>{firstName}.</em>
-      </h2>
-      <p className="lead">
-        Your photos and films, ready when you are — view, share, and download
-        anytime.
-      </p>
-
-      {hasHosted && (
-        <div className="portal-hosted">
-          {hostedGalleries.map((g) => (
-            <Link
-              href={`/portal/gallery/${g.id}`}
-              className="portal-hosted-card"
-              key={g.id}
-            >
-              {g.coverUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={g.coverUrl} alt="" />
-              ) : (
-                <span className="portal-hosted-blank" aria-hidden="true" />
-              )}
-              <span className="portal-hosted-caption">
-                <strong>{g.title}</strong>
-                <span>
-                  {g.shared ? "Shared with you · " : ""}{g.media_count} items
-                  {g.event_date &&
-                    ` · ${new Date(g.event_date).toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                      timeZone: "UTC",
-                    })}`}
-                </span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {!hasHosted && !hasLinks && (
-        <p className="portal-empty portal-empty-solo">
-          Your first gallery is on its way — it&apos;ll appear right here the
-          moment it&apos;s ready.
-        </p>
-      )}
-
-      {(hasLinks || hasPayments) && (
-        <div className="portal-grid">
-          {hasLinks && (
-            <div className="portal-card">
-              <h3 className="portal-card-title">
-                {hasHosted ? "More links" : "Your galleries"}
-              </h3>
-              <ul className="portal-galleries">
-                {galleries.map((g) => (
-                  <li key={g.id}>
-                    <a href={g.url} target="_blank" rel="noopener noreferrer">
-                      {g.title} ↗
-                    </a>
-                    {g.note && <span className="portal-note">{g.note}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {hasPayments && (
-            <div className="portal-card">
-              <h3 className="portal-card-title">Payments</h3>
-              <ul className="portal-payments">
-                {payments.map((p) => (
-                  <li key={p.id}>
-                    <span>
-                      {dateFmt(p.paid_on)}
-                      {p.note && (
-                        <span className="portal-note"> — {p.note}</span>
-                      )}
-                    </span>
-                    <span className="portal-amount">
-                      {money(p.amount_cents)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="portal-total">
-                <span>Total with Roth Media</span>
-                <span className="portal-amount">{money(total)}</span>
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </PortalShell>
+      firstName={firstName}
+      hostedGalleries={hostedGalleries || []}
+      galleries={galleries}
+      payments={payments}
+      total={total}
+      money={money}
+      dateFmt={dateFmt}
+    />
   );
 }
-
-function PortalShell({ children, signedIn = false, nav = null }) {
-  return (
-    <>
-      {nav || (
-        <nav className="rm-nav portal-nav" aria-label="Main navigation">
-          <Link href="/" className="brand">
-            <span className="brand-chip"><BrandMark /></span>
-            <span className="brand-text">Roth <em>Media</em></span>
-          </Link>
-          <ul className="nav-links">
-            <li>
-              <Link href="/">← Back to site</Link>
-            </li>
-            {signedIn && (
-              <li>
-                <form action="/auth/signout" method="post">
-                  <button type="submit" className="portal-signout">
-                    Sign out
-                  </button>
-                </form>
-              </li>
-            )}
-          </ul>
-        </nav>
-      )}
-      <main className="portal">
-        <section className="contact portal-section">{children}</section>
-      </main>
-      <footer className="rm-footer">
-        <div className="foot-inner">
-          <div className="brand">
-            <BrandMark />
-            Roth <em>Media</em>
-          </div>
-          <a href="tel:+18455494425">845-549-4425</a>
-          <span>© {new Date().getFullYear()} Roth Media</span>
-        </div>
-      </footer>
-    </>
-  );
-}
-

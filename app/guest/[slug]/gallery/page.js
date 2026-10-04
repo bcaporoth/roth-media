@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import BrandMark from "../../../../components/BrandMark";
-import GuestInvite from "../../../../components/GuestInvite";
+import { GuestGalleryView } from "../../../../components/ShareViews";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, signedUrl } from "../../../../lib/r2";
 import { SLUG_RE } from "../../../../lib/guest";
@@ -35,58 +33,7 @@ export default async function GuestGalleryPage({ params, searchParams }) {
       downloadUrl: await signedUrl(r.key, { download: r.filename }).catch(() => null),
     }))
   );
-  const messages = items.filter((i) => i.kind === "message");
-  const media = items.filter((i) => i.kind !== "message");
-  const guests = new Set(items.map((i) => i.guest_name).filter(Boolean)).size;
   const stillOpen = new Date(ev.upload_open_until) > new Date();
 
-  return (
-    <main className="guest-wrap guest-gal">
-      <Link href="/" className="brand guest-brand">
-        <span className="brand-chip"><BrandMark /></span>
-        <span className="brand-text">Roth <em>Media</em></span>
-      </Link>
-      <div className="kick">From your guests</div>
-      <h1>{ev.title}</h1>
-      <p className="lead">
-        {items.length} {items.length === 1 ? "upload" : "uploads"} from {guests} {guests === 1 ? "guest" : "guests"}
-        {messages.length ? ` · ${messages.length} video ${messages.length === 1 ? "message" : "messages"}` : ""}
-        {stillOpen ? " · still coming in" : ""}. Tap anything to download the original.
-      </p>
-      {stillOpen && <GuestInvite slug={ev.slug} title={ev.title} className="guest-invite-top" />}
-
-      {messages.length > 0 && (
-        <section className="guest-sec">
-          <h2>Video messages</h2>
-          <div className="guest-msgs">
-            {messages.map((m) => (
-              <figure key={m.id} className="guest-msg">
-                <video src={m.viewUrl} controls playsInline preload="metadata" />
-                <figcaption>{m.guest_name || "A guest"} <span>· {when(m.created_at)} · <a href={m.downloadUrl}>Download</a></span></figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="guest-sec">
-        <h2>Photos &amp; videos</h2>
-        {media.length === 0 && <p className="portal-empty">Nothing yet — the QR signs are working on it.</p>}
-        <div className="guest-grid">
-          {media.map((m) => (
-            <a key={m.id} href={m.downloadUrl} className="guest-cell" title={`${m.guest_name || "A guest"} · ${when(m.created_at)}`}>
-              {m.kind === "video" ? (
-                <video src={m.viewUrl} muted playsInline preload="metadata" />
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={m.viewUrl} alt="" loading="lazy" />
-              )}
-              <span className="guest-cell-name">{m.guest_name || "A guest"}{m.kind === "video" ? " · ▶" : ""}</span>
-            </a>
-          ))}
-        </div>
-      </section>
-      <p className="guest-foot">Filmed by <Link href="/">Roth Media</Link>. Keep this link private — anyone with it can see everything here.</p>
-    </main>
-  );
+  return <GuestGalleryView ev={ev} items={items} stillOpen={stillOpen} when={when} />;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import "../app/theme/portal.css";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // Client-side gallery viewer: order-preserving masonry, lightbox with
@@ -305,13 +306,17 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
               src={tileSrc}
               alt={`${title} — ${item.kind} ${i + 1}`}
               loading={i < 6 ? "eager" : "lazy"}
+              width={item.kind !== "video" && item.w ? item.w : undefined}
+              height={item.kind !== "video" && item.h ? item.h : undefined}
             />
           ) : (
             <span className="pgal-video-tile" aria-hidden="true" />
           )}
           {item.kind === "video" && (
             <span className="pgal-play" aria-hidden="true">
-              ▶
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+              </svg>
             </span>
           )}
           {selectable && (
@@ -349,7 +354,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   };
 
   return (
-    <>
+    <div className={"pt-gal" + (selectMode ? " is-selecting" : "")}>
       {photoCount > 1 && (
         <div className="pgal-toolbar">
           {!selectMode ? (
@@ -457,6 +462,6 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           </button>
         </div>
       )}
-    </>
+    </div>
   );
 }

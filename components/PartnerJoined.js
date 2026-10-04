@@ -20,9 +20,9 @@ export default function PartnerJoined({ slug, k, id, joined }) {
   return (
     <span className="pj">
       {joined
-        ? <><span className="itag itag-booked">Joined</span><button type="button" className="pj-undo" onClick={() => set(false)} disabled={busy}>undo</button></>
-        : <button type="button" className="pj-btn" onClick={() => set(true)} disabled={busy}>{busy ? "Saving…" : "Mark joined"}</button>}
-      {err && <small className="cform-error">{err}</small>}
+        ? <><span className="mx-joined">Joined</span><button type="button" className="pj-undo" onClick={() => set(false)} disabled={busy}>undo</button></>
+        : <button type="button" className="pj-btn cx-btn cx-btn--ghost cx-btn--sm" onClick={() => set(true)} disabled={busy}>{busy ? "Saving…" : "Mark joined"}</button>}
+      {err && <small role="alert">{err}</small>}
     </span>
   );
 }

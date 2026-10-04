@@ -6,7 +6,7 @@ import { money } from "../lib/packages";
 export default function PartnerAgreement({ pct, months = 3 }) {
   const event = PARTNER_EXTRAS.find((e) => e.id === "event");
   return (
-    <div className="pa-text">
+    <div className="mx-pa-text">
       <p>This agreement is between <strong>Roth Ventures NY LLC</strong> (“Roth Ventures”) and the business named in the form above (“Client”). It starts the day Client signs.</p>
 
       <h4>1. Partner rate</h4>

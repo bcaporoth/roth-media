@@ -44,13 +44,13 @@ export default function PasswordForm({ setup = false }) {
 
   if (done) {
     return (
-      <div className="cform-success" role="status">
-        <p className="cform-success-title">Password saved ✓</p>
-        <p className="cform-success-body">
+      <div className="pt-status" role="status">
+        <p className="pt-status-title">Password saved ✓</p>
+        <p className="pt-status-body">
           From now on, just sign in with your email and this password — no
           more email links.
         </p>
-        <a href="/portal" className="hero-cta-primary" style={{ marginTop: "1rem", display: "inline-block" }}>
+        <a href="/portal" className="cx-btn cx-btn--light cx-btn--lg">
           Go to my portal →
         </a>
       </div>
@@ -58,12 +58,13 @@ export default function PasswordForm({ setup = false }) {
   }
 
   return (
-    <form className="cform" onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="pw-new">{setup ? "Choose a password" : "New password"}</label>
-        <div className="pl-pw-wrap">
+    <form className="cx-form pt-form" onSubmit={handleSubmit}>
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pw-new">{setup ? "Choose a password" : "New password"}</label>
+        <div className="pt-pw">
           <input
             id="pw-new"
+            className="cx-input"
             type={showPw ? "text" : "password"}
             placeholder="At least 8 characters"
             value={password}
@@ -74,7 +75,7 @@ export default function PasswordForm({ setup = false }) {
           />
           <button
             type="button"
-            className="pl-pw-toggle"
+            className="pt-pw-toggle"
             onClick={() => setShowPw((s) => !s)}
             aria-label={showPw ? "Hide password" : "Show password"}
           >
@@ -82,10 +83,11 @@ export default function PasswordForm({ setup = false }) {
           </button>
         </div>
       </div>
-      <div>
-        <label htmlFor="pw-confirm">Type it again</label>
+      <div className="cx-field">
+        <label className="cx-label" htmlFor="pw-confirm">Type it again</label>
         <input
           id="pw-confirm"
+          className="cx-input"
           type={showPw ? "text" : "password"}
           placeholder="Same password"
           value={confirm}
@@ -95,11 +97,15 @@ export default function PasswordForm({ setup = false }) {
           required
         />
       </div>
-      <button type="submit" disabled={busy}>
+      <button
+        type="submit"
+        className="cx-btn cx-btn--light cx-btn--lg cx-btn--block"
+        disabled={busy}
+      >
         {busy ? "Saving…" : "Save password"}
       </button>
       {error && (
-        <p className="cform-error" role="alert">
+        <p className="cx-error" role="alert">
           {error}
         </p>
       )}
