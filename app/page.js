@@ -676,8 +676,7 @@ export default function CinemaHome() {
               <a href={SMS_HREF} className="cin-btn cin-btn--ghost cin-btn--xl">Text {PHONE}</a>
             </div>
             <p className="cin-say cin-rise">
-              No pressure, no surprises. You see the real number first, and
-              we’ll have a good time from there.
+              No pressure, no surprises. You see the real number first.
             </p>
           </div>
           <div className="cin-quote-bg" aria-hidden="true">
