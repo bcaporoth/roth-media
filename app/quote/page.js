@@ -45,7 +45,7 @@ export default async function QuotePage({ searchParams }) {
               Pick what you need and I&apos;ll walk you to a tailored starting
               price, step by step. Real prices, no obligation.
             </p>
-            <p className="qt-rely">We&rsquo;ll have a good time. That&rsquo;s the part you can rely on.</p>
+            <p className="qt-rely">&ldquo;He made us so comfortable.&rdquo; &mdash; Kaitlyn, Google review</p>
           </div>
         </header>
 

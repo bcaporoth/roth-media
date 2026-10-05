@@ -274,7 +274,7 @@ export default function BusinessPage() {
           <div className="cx-wrap cx-reveal">
             <p className="cx-kick">Your move</p>
             <h2 className="cx-h1 cx-h1--long">Your competitors are posting. Out-post them.</h2>
-            <p className="cx-lede">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there. I&apos;ll be in touch within 24 hours.</p>
+            <p className="cx-lede">No pressure, no surprises. You see the real number first. I&apos;ll be in touch within 24 hours.</p>
             <div className="cx-cta-row">
               <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Get my instant quote <Arrow /></Link>
               <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>

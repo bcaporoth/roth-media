@@ -32,7 +32,7 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
         <div className="cx-credits">
           <p className="cx-kick">{kicker}</p>
           <p className="cx-credits-big">{headline}</p>
-          <p className="cx-credits-say">We’ll have a good time. That’s the part you can rely on.</p>
+          <p className="cx-credits-say">“He made us so comfortable.” — Kaitlyn, Google review</p>
           <ul className="cx-enddoors">
             <li><Link href="/#date"><span>Weddings <small>from {money(wedFrom)}</small></span><b>Check my date <Arrow /></b></Link></li>
             <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>from {money(bizFrom)}</small></span><b>Book a 15-min call <Arrow /></b></a></li>

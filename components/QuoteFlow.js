@@ -364,7 +364,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
               <div className="qt-actions">
                 <div className="qt-buy">
                   {buyable && <button type="button" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" onClick={bookNow} disabled={status === "booking" || status === "sending"}>{status === "booking" ? "Opening checkout…" : `Book it — ${money(dueToday)} today`}</button>}
-                  <p className="qt-promise">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there.</p>
+                  <p className="qt-promise">No pressure, no surprises. You see the real number first.</p>
                   <button type="submit" className={`cx-btn cx-btn--block ${buyable ? "cx-btn--ghost cx-btn--lg" : "cx-btn--light cx-btn--xl"}`} disabled={status === "sending" || status === "booking"}>{status === "sending" ? "Sending…" : buyable ? "Just send me the quote" : "Send my quote"}</button>
                 </div>
                 <p className="qt-consent">

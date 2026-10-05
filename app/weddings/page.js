@@ -244,7 +244,7 @@ export default function WeddingsPage() {
           <div className="cx-wrap wd-close-body cx-reveal">
             <p className="cx-kick">Your quote</p>
             <h2 className="cx-h1 cx-h1--long">See your number before you talk to anyone.</h2>
-            <p className="cx-lede">No pressure, no surprises. You see the real number first, and we&rsquo;ll have a good time from there. If it feels right, I&apos;ll be in touch within 24 hours.</p>
+            <p className="cx-lede">No pressure, no surprises. You see the real number first. If it feels right, I&apos;ll be in touch within 24 hours.</p>
             <div className="cx-cta-row">
               <Link href="/quote?for=wedding" className="cx-btn cx-btn--light cx-btn--xl">Get my instant quote <Arrow /></Link>
             </div>
