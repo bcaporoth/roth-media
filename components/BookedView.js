@@ -1,4 +1,5 @@
 import SiteNav from "./SiteNav";
+import PurchasePing from "./PurchasePing";
 import SiteFooter from "./SiteFooter";
 import { money } from "../lib/packages";
 import { bookingLabel } from "../lib/booking";
@@ -33,7 +34,7 @@ function Shell({ kick, title, children }) {
   );
 }
 
-export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amountTotal = 0, first = "", refCode = null }) {
+export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amountTotal = 0, first = "", refCode = null, sessionId = "" }) {
   if (!paid) {
     return (
       <Shell kick="Booking" title="We couldn't find that payment.">
@@ -53,6 +54,7 @@ export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amoun
   const photo = PHOTO[m.category];
   return (
     <Shell kick="Booked" title={m.mode === "balance" ? "You're all paid up." : first ? `You're booked, ${first}.` : "You're booked."}>
+      <PurchasePing sessionId={sessionId} value={amountTotal / 100} category={m.category} packageId={m.package} />
       <section className="cx-section cx-section--tight">
         <div className={`cx-wrap qt-booked-cols${photo ? "" : " qt-booked-cols--solo"}`}>
           <div className="qt-booked-main">

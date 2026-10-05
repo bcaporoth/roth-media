@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { submitLead } from "../lib/submit-lead";
+import { track } from "../lib/track";
 import { INTAKE, TYPES, typeOf } from "../lib/intake";
 import BookCall from "./BookCall";
 
@@ -34,6 +35,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", type:
         summary: `${TYPES.find((t) => t.id === type)?.label || "Intake"} intake · ${fields.length} answers`,
         fields: [["for", type], ...fields],
       });
+      track("intake_sent", { category: type });
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {

@@ -27,5 +27,5 @@ export default async function BookedPage({ searchParams }) {
   const refCode = paid && bookedEmail && adminConfigured ? await referralCodeFor(supabaseAdmin(), bookedEmail) : null;
 
   // The markup lives in components/BookedView.js (same copy, Cinema layout).
-  return <BookedView paid={paid} m={m} q={q} paidAmt={paidAmt} amountTotal={paid ? session.amount_total || 0 : 0} first={first} refCode={refCode} />;
+  return <BookedView paid={paid} m={m} q={q} paidAmt={paidAmt} amountTotal={paid ? session.amount_total || 0 : 0} first={first} refCode={refCode} sessionId={paid ? String(s) : ""} />;
 }

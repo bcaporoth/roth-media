@@ -1,6 +1,7 @@
 import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
 import SiteBeacon from "../components/SiteBeacon";
+import MetaPixel from "../components/MetaPixel";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -47,12 +48,18 @@ export const metadata = {
   },
 };
 
+// Meta domain verification — paste the code from Business Settings →
+// Brand Safety → Domains into the Vercel env as META_DOMAIN_VERIFICATION.
+const META_DOMAIN_VERIFICATION = process.env.META_DOMAIN_VERIFICATION || "";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
+      <head>{META_DOMAIN_VERIFICATION && <meta name="facebook-domain-verification" content={META_DOMAIN_VERIFICATION} />}</head>
       <body>
         {children}
         <SiteBeacon />
+        <MetaPixel />
         {/* Vercel Web Analytics — enable "Web Analytics" on the Vercel project once; no package needed. */}
         <script dangerouslySetInnerHTML={{ __html: "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};" }} />
         <script defer src="/_vercel/insights/script.js"></script>
