@@ -661,3 +661,12 @@
 @media (min-width: 800px) and (max-width: 1099.98px) {
   .rm-cinema .cin-roll { grid-template-columns: 1fr 1fr; }
 }
+
+/* On Google — three real reviews, verbatim. */
+.rm-cinema .cin-google { padding: 5rem var(--gut); max-width: 1320px; margin: 0 auto; display: grid; gap: 2rem; }
+.rm-cinema .cin-google-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.rm-cinema .cin-google-list li { padding: 1.5rem 1.4rem; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 2px; display: grid; gap: 0.9rem; align-content: start; }
+.rm-cinema .cin-google-list blockquote { margin: 0; font-size: 1.08rem; line-height: 1.55; }
+.rm-cinema .cin-google-list cite { font-style: normal; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.72; }
+.rm-cinema .cin-google-link { margin: 0; }
+.rm-cinema .cin-google-link a { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 0.15rem; }

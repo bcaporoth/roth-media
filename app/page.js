@@ -6,7 +6,7 @@ import "./home.css";
 import BrandMark from "../components/BrandMark";
 import CinemaMotion from "../components/home/CinemaMotion";
 import Player from "../components/home/Player";
-import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME } from "../lib/site";
+import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME, GOOGLE_PAGE_URL } from "../lib/site";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
 import { autoDeal, autoDealFor, autoBonus, applyDeal } from "../lib/deals";
@@ -657,6 +657,29 @@ export default function CinemaHome() {
         </section>
 
         {/* ── Chapter 05 · Your number ── (legacy /#pricing and /#quote both land here) */}
+        {/* ── On Google: their words, verbatim ── */}
+        <section className="cin-chapter cin-google" id="reviews" data-ch="On Google">
+          <div className="cin-google-head cin-rise">
+            <p className="cin-kick">On Google</p>
+            <h2 className="cin-h2">5.0 on Google.</h2>
+          </div>
+          <ul className="cin-google-list">
+            <li className="cin-rise">
+              <blockquote>“He does an excellent job at getting everyone comfortable so that the end result is authentic.”</blockquote>
+              <cite>Brady · a promo video for his business</cite>
+            </li>
+            <li className="cin-rise">
+              <blockquote>“My fiancé and I can both be awkward but he made us so comfortable to get the best shots. Our friend loved our photos so much she’s going to use him for hers!”</blockquote>
+              <cite>Kaitlyn · engagement photos</cite>
+            </li>
+            <li className="cin-rise">
+              <blockquote>“She was at ease and comfortable the whole time.”</blockquote>
+              <cite>Tina · her daughter’s senior photos</cite>
+            </li>
+          </ul>
+          <p className="cin-google-link cin-rise"><a href={GOOGLE_PAGE_URL} target="_blank" rel="noopener noreferrer">Read them on Google <Arrow /></a></p>
+        </section>
+
         <section className="cin-chapter cin-quote" id="quote" data-ch="Your number">
           <span id="pricing" className="cin-anchor" aria-hidden="true" />
           <div className="cin-quote-inner">
