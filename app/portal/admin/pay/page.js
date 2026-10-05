@@ -10,6 +10,7 @@ import Link from "next/link";
 import BalanceList from "../../../../components/BalanceList";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { BOOKING_COLS, splitBookings, usd } from "../../../../lib/money-view";
+import { listReferrals } from "../../../../lib/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ export default async function PayAdminPage() {
     else bookingRows = data || [];
   } catch { bookingsOk = false; }
   const { owing, settled, owedCents } = splitBookings(bookingRows);
+  const referrals = await listReferrals(db);
+  const shortDay = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   // Link each one to its client profile when they're on the roster.
   const profiles = {};
   const emails = [...new Set(bookingRows.map((b) => String(b.email || "").toLowerCase()).filter(Boolean))];
@@ -84,6 +87,32 @@ export default async function PayAdminPage() {
                 <BalanceList rows={settled.slice(0, 100)} profiles={profiles} />
               </div>
             </details>
+          )}
+        </section>
+
+        <section className="psection">
+          <h2>Give $100, get $100</h2>
+          <p className="inbox-hint">Every client gets a FRIEND code on their booked page and in your confirmation text. A friend books with it → $100 off for them, $100 for the referrer (off an open balance, or a THANKS credit for next time). Credits are codes too — they type them in the promo box.</p>
+          {!referrals.ready ? (
+            <p className="inbox-hint">Run <code>supabase/referrals.sql</code> once (it&apos;s in 00-all.sql too) and the codes switch on.</p>
+          ) : referrals.rows.length === 0 ? (
+            <p className="inbox-hint">No referrals yet.</p>
+          ) : (
+            <div className="ltable-wrap">
+              <table className="idet-fields stable">
+                <thead><tr><th>When</th><td>Referred by</td><td>Who booked</td><td>Their thank-you</td></tr></thead>
+                <tbody>
+                  {referrals.rows.map((r) => (
+                    <tr key={r.id}>
+                      <th scope="row">{shortDay(r.created_at)}</th>
+                      <td>{r.referrer_name || r.referrer_email}<br /><small>{r.code}</small></td>
+                      <td>{r.referred_name || r.referred_email}</td>
+                      <td>{r.reward === "balance" ? "$100 off their balance" : `$100 credit · ${r.reward_code}${r.used_at ? " · used" : ""}`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
 

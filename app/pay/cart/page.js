@@ -6,6 +6,10 @@ import { priceQuote, bookingLabel, openRetainer } from "../../../lib/booking";
 import { money } from "../../../lib/packages";
 import { stripeConfigured } from "../../../lib/stripe";
 import { codeDeal, upcomingCode, isFreebieCode } from "../../../lib/deals";
+import { PACKAGES } from "../../../lib/packages";
+import { supabaseAdmin, adminConfigured } from "../../../lib/supabase-admin";
+import { resolveCode } from "../../../lib/referrals";
+import { isFriendCode, referralEligible } from "../../../lib/referral-rules";
 import { EMAIL, PHONE } from "../../../lib/site";
 
 export const metadata = { title: "Your quote — review and pay", robots: { index: false } };
@@ -30,10 +34,13 @@ function Head({ kick, title }) {
 export default async function CartPage({ searchParams }) {
   const sp = await searchParams;
   const addons = String(sp?.a || "").split(",").filter(Boolean);
-  const code = String(sp?.code || "").trim().toUpperCase().slice(0, 30);
+  const code = String(sp?.code || sp?.ref || "").trim().toUpperCase().slice(0, 30);
   // pay=full: a wedding paid in full today instead of the 50% retainer (earns the paid-in-full bonus).
   const payFull = sp?.pay === "full";
-  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull });
+  // A friend code (give $100, get $100) is looked up here, with the email on the link.
+  const pkgHere = (PACKAGES[sp?.c] || []).find((p) => p.id === sp?.p) || null;
+  const credit = isFriendCode(code) && adminConfigured ? await resolveCode(supabaseAdmin(), code, { email: String(sp?.e || ""), pkg: pkgHere }) : null;
+  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull, credit });
   if (!q) {
     return (
       <>
@@ -61,12 +68,12 @@ export default async function CartPage({ searchParams }) {
   const paidAlready = owed ? owed.paid_cents / 100 : q.dueToday;
   const due = balance ? total - paidAlready : q.dueToday;
   const first = String(sp?.n || "").trim().split(/\s+/)[0];
-  const codeTried = code && !(q.free && q.free.code === code) && (!q.deal || q.deal.code !== code);
+  const codeTried = code && !(q.free && q.free.code === code) && !(q.credit && q.credit.code === code) && (!q.deal || q.deal.code !== code);
   const freeAddon = q.free ? q.chosen.find((a) => a.id === q.free.addon) : null;
   // Both ways to pay a wedding, so the choice is one tap.
   const keepQ = Object.entries({ c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t, code: sp?.code }).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
-  const holdQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: false });
-  const fullQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: true });
+  const holdQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: false, credit });
+  const fullQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: true, credit });
   const monthly = q.chosen.filter((a) => a.monthly);
   const keep = { c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t };
 
@@ -91,6 +98,9 @@ export default async function CartPage({ searchParams }) {
                   {!owed && q.deal && (
                     <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.dealDiscount)}</td></tr>
                   )}
+                  {!owed && q.credit && (
+                    <tr className="qt-cart-deal"><th scope="row">{q.credit.label}<small>Code {q.credit.code} · give $100, get $100</small></th><td>− {money(q.credit.amount)}</td></tr>
+                  )}
                   <tr className="qt-cart-total"><th scope="row">Total{owed?.promo_code ? <small>{owed.promo_code}</small> : null}</th><td>{money(total)}</td></tr>
                   {q.mode === "retainer" && (
                     <tr><th scope="row">{balance ? "Already paid" : "Balance, due 14 days before your date"}</th><td>{balance ? `− ${money(paidAlready)}` : money(q.total - q.dueToday)}</td></tr>
@@ -106,7 +116,7 @@ export default async function CartPage({ searchParams }) {
                   {Object.entries(keep).filter(([, v]) => v).map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
                   <label className="cx-field"><span className="cx-label">Promo code</span><input className="cx-input" name="code" defaultValue={code} autoCapitalize="characters" /></label>
                   <button type="submit" className="cx-btn cx-btn--ghost">Apply</button>
-                  {codeTried && <small className="cx-help">{isFreebieCode(code) && q.free ? `${freeAddon?.name || "That add-on"} is already included (${q.free.label.toLowerCase()}) — no code needed.` : isFreebieCode(code) ? `${code} doesn't cover ${q.pkg.name}.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
+                  {codeTried && <small className="cx-help">{isFriendCode(code) ? (referralEligible(q.pkg) ? "That friend code isn't active — or it's your own, and those don't work on your own booking." : "Friend codes work on weddings and business packages ($600 and up).") : isFreebieCode(code) && q.free ? `${freeAddon?.name || "That add-on"} is already included (${q.free.label.toLowerCase()}) — no code needed.` : isFreebieCode(code) ? `${code} doesn't cover ${q.pkg.name}.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
                 </form>
               )}
             </div>
@@ -122,7 +132,7 @@ export default async function CartPage({ searchParams }) {
               )}
               {stripeConfigured ? (
                 <CartPay
-                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : payFull ? "full" : "", code: q.deal?.code || q.free?.code || "" }}
+                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : payFull ? "full" : "", code: q.credit?.code || q.deal?.code || q.free?.code || "" }}
                   who={{ name: String(sp?.n || ""), email: String(sp?.e || ""), phone: String(sp?.t || "") }}
                   label={`Pay ${money(due)}`}
                 />

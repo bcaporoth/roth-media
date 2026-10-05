@@ -267,6 +267,11 @@
 .qt-cart-pay { display: grid; gap: 1rem; align-content: start; padding: 1.4rem 1.1rem 1.5rem; background: var(--bg-2); border: 1px solid rgba(220, 189, 122, 0.45); border-radius: 2px; }
 .qt-cart-pay > * { margin: 0; }
 .qt-cart-amount { font-size: clamp(2.6rem, 8vw, 3.4rem); line-height: 1; margin-top: -0.4rem !important; }
+/* Give $100, get $100 — the referral card on the booked page. */
+.qt-refer { margin-top: 2rem; padding: 1.4rem 1.2rem 1.5rem; border: 1px solid rgba(220, 189, 122, 0.45); border-radius: 2px; background: var(--bg-2); display: grid; gap: 0.8rem; }
+.qt-refer > * { margin: 0; }
+.qt-refer-code { font-size: clamp(1.6rem, 6vw, 2.4rem); letter-spacing: 0.08em; }
+.qt-refer .cx-btn--ghost { word-break: break-all; }
 /* Hold the date vs pay in full — two tap targets above the pay form. */
 .qt-payways { display: grid; gap: 0.5rem; }
 .qt-payway { display: grid; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 2px; color: inherit; text-decoration: none; font-size: 0.92rem; }

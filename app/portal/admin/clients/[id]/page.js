@@ -5,6 +5,7 @@ import StudioFooter from "../../../../../components/StudioFooter";
 import ClientProfile from "../../../../../components/ClientProfile";
 import { requireAdminPage } from "../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { ensureReferralCode, listReferrals } from "../../../../../lib/referrals";
 import { newLeadCount } from "../../../../../lib/studio-data";
 import { clientStage, clientType } from "../../../../../lib/intake";
 import { resendConfigured } from "../../../../../lib/resend";
@@ -21,7 +22,8 @@ export default async function ClientPage({ params }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const db = supabaseAdmin();
-  let { data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at").eq("id", id).maybeSingle();
+  let { data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at, referral_code").eq("id", id).maybeSingle();
+  if (error) ({ data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at").eq("id", id).maybeSingle());
   if (error) ({ data: client } = await db.from("clients").select("id, email, name, created_at").eq("id", id).maybeSingle());
   if (!client) notFound();
   const email = client.email.toLowerCase();
@@ -62,6 +64,11 @@ export default async function ClientPage({ params }) {
     bookingsReady,
     stage: clientStage({ subs: all, shoots: shoots || [], galleries }),
     type: clientType({ subs: all, shoots: shoots || [] }),
+    referral: await (async () => {
+      const code = await ensureReferralCode(db, client).catch(() => null);
+      const { ready, rows } = await listReferrals(db, { email });
+      return { ready, code, sent: rows.filter((r) => r.referrer_email === email), got: rows.find((r) => r.referred_email === email) || null };
+    })(),
   };
   const newCount = await newLeadCount();
   return (

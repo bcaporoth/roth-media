@@ -3,6 +3,7 @@ import SiteFooter from "./SiteFooter";
 import { money } from "../lib/packages";
 import { bookingLabel } from "../lib/booking";
 import { CALENDLY, EMAIL, PHONE } from "../lib/site";
+import { REFERRAL_AMOUNT, referralLink, referralText } from "../lib/referral-rules";
 
 // What /booked shows once app/booked/page.js has checked the Stripe session.
 // Pure display: every value is worked out by the page and passed in.
@@ -32,7 +33,7 @@ function Shell({ kick, title, children }) {
   );
 }
 
-export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amountTotal = 0, first = "" }) {
+export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amountTotal = 0, first = "", refCode = null }) {
   if (!paid) {
     return (
       <Shell kick="Booking" title="We couldn't find that payment.">
@@ -76,6 +77,18 @@ export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amoun
               </ol>
               <p className="cx-lede">Want to talk it through sooner? <a href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a 15-minute call</a> or text 845-549-4425.</p>
             </div>
+
+            {refCode && (
+              <div className="qt-refer">
+                <p className="cx-kick">Give ${REFERRAL_AMOUNT}, get ${REFERRAL_AMOUNT}</p>
+                <p className="cx-lede">Know someone planning a wedding, or a business that needs content? Send them your code. They get {money(REFERRAL_AMOUNT)} off, and you get {money(REFERRAL_AMOUNT)} — off your balance if you still have one, otherwise as a credit for your next shoot. As many friends as you like.</p>
+                <p className="qt-refer-code cx-num">{refCode}</p>
+                <p className="cx-cta-row">
+                  <a className="cx-btn cx-btn--light cx-btn--lg" href={`sms:?&body=${encodeURIComponent(referralText(refCode))}`}>Text it to a friend</a>
+                  <a className="cx-btn cx-btn--ghost cx-btn--lg" href={referralLink(refCode)}>{referralLink(refCode).replace(/^https:\/\//, "")}</a>
+                </p>
+              </div>
+            )}
           </div>
           {photo && (
             <figure className="cx-frame qt-booked-photo">

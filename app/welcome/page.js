@@ -52,6 +52,7 @@ export default async function WelcomePage({ searchParams }) {
         <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : ""}.</li>
         <li><strong>Shoot day.</strong> I arrive early and I direct. You just show up as yourself.</li>
         <li><strong>Delivery.</strong> A sneak peek first, then everything in your own private online gallery — save straight to your phone.</li>
+        <li><strong>Give $100, get $100.</strong> Once you&apos;ve booked you get a friend code. A friend books a wedding or a business package with it, they get $100 off, and you get $100 back.</li>
       </ol>
 
       <h2>When you&apos;ll get it</h2>

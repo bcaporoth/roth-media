@@ -34,6 +34,7 @@ export async function POST(request) {
     if (cq.mode === "retainer") fields.push(["pay link — balance (send 14 days before)", cartUrl({ ...base, pay: "balance", code: "" })]);
     if (cq.deal) fields.push(["deal", `${cq.deal.label} — ${cq.deal.pct}% off, ends ${cq.deal.endsLabel}${cq.deal.auto ? "" : ` (code ${cq.deal.code})`}`]);
     if (cq.free) fields.push(["included", `${cq.chosen.find((a) => a.id === cq.free.addon)?.name || "add-on"} — ${cq.free.label}${cq.free.code ? ` (code ${cq.free.code})` : ""}`]);
+    if (/^(FRIEND|THANKS)-/i.test(String(body.cart.code || ""))) fields.push(["friend code", `${String(body.cart.code).toUpperCase()} — $100 off if it checks out`]);
   }
 
   const sub = {

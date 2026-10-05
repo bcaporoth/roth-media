@@ -3,6 +3,8 @@ import BookedView from "../../components/BookedView";
 import { stripe, stripeConfigured } from "../../lib/stripe";
 import { recordBooking, priceQuote } from "../../lib/booking";
 import { money } from "../../lib/packages";
+import { supabaseAdmin, adminConfigured } from "../../lib/supabase-admin";
+import { referralCodeFor } from "../../lib/referrals";
 
 export const metadata = { title: "You're booked", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -20,7 +22,10 @@ export default async function BookedPage({ searchParams }) {
   const q = paid ? priceQuote({ category: m.category, packageId: m.package, addons: (m.addons || "").split(",").filter(Boolean) }) : null;
   const paidAmt = paid ? money((session.amount_total || 0) / 100) : "";
   const first = String(m.name || session?.customer_details?.name || "").split(/\s+/)[0];
+  // Give $100, get $100: their own code, made at booking.
+  const bookedEmail = paid ? String(session.customer_details?.email || session.customer_email || "").toLowerCase() : "";
+  const refCode = paid && bookedEmail && adminConfigured ? await referralCodeFor(supabaseAdmin(), bookedEmail) : null;
 
   // The markup lives in components/BookedView.js (same copy, Cinema layout).
-  return <BookedView paid={paid} m={m} q={q} paidAmt={paidAmt} amountTotal={paid ? session.amount_total || 0 : 0} first={first} />;
+  return <BookedView paid={paid} m={m} q={q} paidAmt={paidAmt} amountTotal={paid ? session.amount_total || 0 : 0} first={first} refCode={refCode} />;
 }

@@ -94,6 +94,15 @@ export default function ClientProfile({ initial, emailReady }) {
         {STAGES.map((s, i) => { const at = STAGES.findIndex((x) => x.key === d.stage); return <li key={s.key} className={i < at ? "is-past" : i === at ? "is-now" : ""}>{s.label}</li>; })}
       </ol>
 
+      {d.referral?.ready && (
+        <p className="gcard-meta cprof-referral">
+          <strong>Give $100, get $100:</strong> their friend code {d.referral.code ? <code>{d.referral.code}</code> : <em>arrives when they book</em>}
+          {d.referral.sent.length ? ` · referred ${d.referral.sent.length} ${d.referral.sent.length === 1 ? "person" : "people"}` : ""}
+          {d.referral.sent.filter((r) => r.reward === "credit" && !r.used_at).length ? ` · unused credit ${d.referral.sent.filter((r) => r.reward === "credit" && !r.used_at).map((r) => r.reward_code).join(", ")}` : ""}
+          {d.referral.got ? ` · referred by ${d.referral.got.referrer_name || d.referral.got.referrer_email}` : ""}
+        </p>
+      )}
+
       <section className="cprof-card">
         <div className="client-fields" key={`${c.name}-${c.email}-${c.phone}`}>
           <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && saveClient({ name: e.target.value })} /></label>

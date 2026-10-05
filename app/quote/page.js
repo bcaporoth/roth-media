@@ -23,7 +23,7 @@ export default async function QuotePage({ searchParams }) {
   // ?for=portraits (and the old ?for=family) → the portrait session.
   const want = params?.for === "portraits" ? "family" : params?.for;
   const category = ["wedding", "business", "family"].includes(want) ? want : "";
-  const code = String(params?.code || "").trim().toUpperCase().slice(0, 30);
+  const code = String(params?.code || params?.ref || "").trim().toUpperCase().slice(0, 30);
   const pkg = String(params?.pkg || "").replace(/[^a-z0-9-]/gi, "").slice(0, 30);
   const date = String(params?.date || "").replace(/[^\w ,.\/-]/g, "").trim().slice(0, 40);
   const hero = HERO[category];
