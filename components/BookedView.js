@@ -3,7 +3,7 @@ import SiteFooter from "./SiteFooter";
 import { money } from "../lib/packages";
 import { bookingLabel } from "../lib/booking";
 import { CALENDLY, EMAIL, PHONE } from "../lib/site";
-import { REFERRAL_AMOUNT, referralLink, referralText } from "../lib/referral-rules";
+import { REFERRAL_AMOUNT, referralLink, referralPitch } from "../lib/referral-rules";
 
 // What /booked shows once app/booked/page.js has checked the Stripe session.
 // Pure display: every value is worked out by the page and passed in.
@@ -78,17 +78,19 @@ export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amoun
               <p className="cx-lede">Want to talk it through sooner? <a href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a 15-minute call</a> or text 845-549-4425.</p>
             </div>
 
-            {refCode && (
+            {refCode && (() => { const pitch = referralPitch(m.category); const link = referralLink(refCode, m.category); return (
               <div className="qt-refer">
-                <p className="cx-kick">Give ${REFERRAL_AMOUNT}, get ${REFERRAL_AMOUNT}</p>
-                <p className="cx-lede">Know someone planning a wedding, or a business that needs content? Send them your code. They get {money(REFERRAL_AMOUNT)} off, and you get {money(REFERRAL_AMOUNT)} — off your balance if you still have one, otherwise as a credit for your next shoot. As many friends as you like.</p>
+                <p className="cx-kick">{pitch.kick}</p>
+                <h2 className="cx-h2 qt-q">{pitch.title}</h2>
+                <p className="cx-lede">{pitch.body}</p>
                 <p className="qt-refer-code cx-num">{refCode}</p>
                 <p className="cx-cta-row">
-                  <a className="cx-btn cx-btn--light cx-btn--lg" href={`sms:?&body=${encodeURIComponent(referralText(refCode))}`}>Text it to a friend</a>
-                  <a className="cx-btn cx-btn--ghost cx-btn--lg" href={referralLink(refCode)}>{referralLink(refCode).replace(/^https:\/\//, "")}</a>
+                  <a className="cx-btn cx-btn--light cx-btn--lg" href={`sms:?&body=${encodeURIComponent(pitch.text(refCode))}`}>{pitch.button}</a>
+                  <a className="cx-btn cx-btn--ghost cx-btn--lg" href={link}>{link.replace(/^https:\/\//, "")}</a>
                 </p>
+                <p className="cx-fine">Give {money(REFERRAL_AMOUNT)}, get {money(REFERRAL_AMOUNT)}. Works on weddings and business packages; the $100 lands once their booking is paid.</p>
               </div>
-            )}
+            ); })()}
           </div>
           {photo && (
             <figure className="cx-frame qt-booked-photo">
