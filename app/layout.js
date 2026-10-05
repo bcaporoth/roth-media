@@ -18,12 +18,18 @@ export const metadata = {
   metadataBase: new URL("https://rothmediaco.com"),
   title: {
     default:
-      "Roth Media — Videography & Photography | Waverly, Elmira & Corning NY",
+      "Roth Media — Photographer & Videographer | Waverly, Elmira, Corning & the Twin Tiers",
     template: "%s — Roth Media",
   },
   description:
-    "Cinematic videography and candid photography for the Twin Tiers — Waverly, Athens, Sayre, Elmira, and Corning. Weddings, brands, seniors, and events. Real prices, instant quotes.",
+    "Photographer and videographer based in Waverly, NY — wedding films and photography, brand video for local businesses, events, and portraits across the Twin Tiers: Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Real prices, instant quotes.",
   keywords: [
+    "photographer Elmira NY",
+    "wedding photographer Elmira NY",
+    "photographer Binghamton NY",
+    "videographer Binghamton NY",
+    "wedding photographer Corning NY",
+    "photographer Sayre PA",
     "videographer Elmira NY",
     "videographer Corning NY",
     "wedding videographer Twin Tiers",
@@ -33,9 +39,9 @@ export const metadata = {
     "photographer Waverly NY",
   ],
   openGraph: {
-    title: "Roth Media — Videography & Photography",
+    title: "Roth Media — Photographer & Videographer, Twin Tiers NY & PA",
     description:
-      "Cinematic video and candid photography for the Twin Tiers. Real prices, instant quotes.",
+      "Wedding films and photography, brand video for local businesses, events, and portraits — Waverly, Sayre, Athens, Elmira, Corning, Ithaca, and Binghamton. Real prices, instant quotes.",
     type: "website",
     images: ["/og-card.png"],
   },

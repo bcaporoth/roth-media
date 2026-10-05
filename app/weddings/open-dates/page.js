@@ -12,7 +12,7 @@ import { autoDeal, autoBonus, applyDeal } from "../../../lib/deals";
 export const metadata = {
   title: "Still need a wedding videographer this year? Open dates + 2027 early pricing",
   description:
-    "Last-minute wedding videography in the Twin Tiers — the 2026 dates still open, 25% off, booked online tonight. Or lock a 2027 date at this year's prices. Waverly, Elmira, Corning, Ithaca, Sayre.",
+    "Last-minute wedding photography and videography in the Twin Tiers — the 2026 dates still open, booked online tonight. Or lock a 2027 date at this year's prices. Waverly, Elmira, Corning, Ithaca, Sayre, Binghamton.",
   alternates: { canonical: "/weddings/open-dates" },
 };
 

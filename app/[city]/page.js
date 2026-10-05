@@ -11,6 +11,7 @@ import { PACKAGES, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
 import { CITIES, findCity } from "../../lib/cities";
 import { videoUrl } from "../../lib/media";
+import { businessLd, breadcrumbLd } from "../../lib/schema";
 
 function Arrow() {
   return (
@@ -32,8 +33,8 @@ export async function generateMetadata({ params }) {
   const c = findCity(city);
   if (!c) return {};
   return {
-    title: `Wedding Videographer & Brand Video in ${c.name}, ${c.state}`,
-    description: `Cinematic wedding films and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding photo from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
+    title: `Photographer & Videographer in ${c.name}, ${c.state}`,
+    description: `Wedding photography, cinematic wedding films, and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding photography from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
     alternates: { canonical: `/${c.slug}` },
   };
 }
@@ -46,26 +47,16 @@ export default async function CityPage({ params }) {
   const film = PACKAGES.wedding.find((p) => p.popular) || PACKAGES.wedding[0];
   const day = PACKAGES.business.find((p) => p.popular) || PACKAGES.business[0];
 
-  const JSON_LD = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: "Roth Media",
+  const JSON_LD = businessLd({
     url: `https://rothmediaco.com/${c.slug}`,
-    telephone: "+1-845-549-4425",
-    email: EMAIL,
-    sameAs: SAME_AS,
-    description: `Wedding videography and brand video for ${c.name}, ${c.state} and ${c.region}.`,
-    address: { "@type": "PostalAddress", addressLocality: "Waverly", addressRegion: "NY" },
+    description: `Photographer and videographer for ${c.name}, ${c.state} and ${c.region} — wedding photography and films, brand video for local businesses, events, and portraits. Based in Waverly, NY${c.home ? "" : `, ${c.drive} away`}.`,
     areaServed: [`${c.name} ${c.state}`, ...c.nearby.map((n) => `${n} ${c.state}`)],
-    makesOffer: [
-      { "@type": "Offer", name: `${film.name} — ${c.name} wedding videography`, price: film.price, priceCurrency: "USD" },
-      { "@type": "Offer", name: `${day.name} — ${c.name} brand video`, price: day.price, priceCurrency: "USD" },
-    ],
-  };
+  });
+  const CRUMBS_LD = breadcrumbLd([{ name: "Roth Media", path: "/" }, { name: `${c.name}, ${c.state}`, path: `/${c.slug}` }]);
 
   const FAQS = [
     { q: `Do you travel to ${c.name}?`, a: `${c.home ? `Yes — I'm based in ${c.name}, so there's no travel at all` : `Yes — ${c.name} is ${c.drive} from Waverly`} and travel's included anywhere within an hour of Corning, Waverly, Sayre, or Athens. I also film in ${c.nearby.slice(0, 3).join(", ")}.` },
-    { q: `How much does a wedding videographer cost in ${c.name}?`, a: `My prices are public. ${PACKAGES.wedding[0].name} starts at ${money(PACKAGES.wedding[0].price)}; ${film.name} — the full day — starts at ${money(film.price)}. You can build your exact quote online in two minutes.` },
+    { q: `How much does a wedding photographer or videographer cost in ${c.name}?`, a: `My prices are public. ${PACKAGES.wedding[0].name} starts at ${money(PACKAGES.wedding[0].price)}; ${film.name} — the full day — starts at ${money(film.price)}. You can build your exact quote online in two minutes.` },
     { q: `What does a Content Day cost for a ${c.name} business?`, a: `The ${day.name} is ${money(day.price)} — a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, delivered within two weeks and cleared for ads. Skip the promo? The Mini Content Day is ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}.` },
     { q: "When do we get everything?", a: "Wedding films are delivered online within six weeks, with a sneak peek within 48 hours. Business content lands within two weeks, edited and sized to post." },
   ];
@@ -76,6 +67,7 @@ export default async function CityPage({ params }) {
       <DealPill />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(CRUMBS_LD) }} />
 
       <SiteNav overHero />
 
@@ -90,7 +82,7 @@ export default async function CityPage({ params }) {
           <div className="cx-hero-shade" />
           <div className="cx-wrap cx-hero-body">
             <p className="cx-kick">{c.name}, {c.state} · {c.region}</p>
-            <h1 className="cx-h1 cx-h1--long">Videographer for {c.name} weddings and {c.name} businesses.</h1>
+            <h1 className="cx-h1 cx-h1--long">Photographer and videographer for {c.name} weddings and {c.name} businesses.</h1>
             <p className="cx-lede">{c.intro}</p>
             <div className="cx-cta-row">
               <Link href="/quote" className="cx-btn cx-btn--light cx-btn--lg">Build my quote <Arrow /></Link>

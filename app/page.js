@@ -11,38 +11,18 @@ import { PACKAGES, ADDONS, TRAVEL, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
 import { autoDeal, autoDealFor, autoBonus, applyDeal } from "../lib/deals";
 import { videoUrl } from "../lib/media";
+import { businessLd } from "../lib/schema";
+import { CITIES } from "../lib/cities";
 
 export const metadata = {
   alternates: { canonical: "/" },
 };
 
-const JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "ProfessionalService",
-  name: "Roth Media",
+const JSON_LD = businessLd({
   url: "https://rothmediaco.com",
-  telephone: "+1-845-549-4425",
-  email: EMAIL,
-  sameAs: SAME_AS,
   description:
-    "Cinematic videography and candid photography for the Twin Tiers — Waverly NY, Athens PA, Sayre PA, Elmira NY, and Corning NY.",
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Waverly",
-    addressRegion: "NY",
-  },
-  areaServed: [
-    "Waverly NY",
-    "Athens PA",
-    "Sayre PA",
-    "Elmira NY",
-    "Corning NY",
-  ],
-  founder: "Brandon Roth",
-  priceRange: "$$",
-  image: "https://rothmediaco.com/og-card.png",
-  geo: { "@type": "GeoCoordinates", latitude: 42.0106, longitude: -76.5272 },
-};
+    "Photographer and videographer in Waverly, NY — cinematic wedding films and candid photography for the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Brand video for local businesses, events, and portraits. Public prices.",
+});
 
 // The offer line reads the clock at render — refresh hourly.
 export const revalidate = 3600;
@@ -503,7 +483,7 @@ export default function CinemaHome() {
                   Most owners dread this part. Then we start talking, somebody
                   cracks a joke, and you forget the camera is there. You get
                   content that sounds like you, and we have a good time making
-                  it. Always.
+                  it.
                 </p>
                 <p className="cin-say">
                   One Content Day, a month of posts: a promo, reels and photos
@@ -546,10 +526,9 @@ export default function CinemaHome() {
             </div>
             <div className="cin-bento-say cin-rise">
               <blockquote>
-                “I probably walked into your store in my free time to see if
-                I could shoot something for you, lol. I just love getting to
-                know people — and helping everybody prosper.”
-                <cite>— Brandon</cite>
+                “He does an excellent job at getting everyone comfortable so
+                that the end result is authentic.”
+                <cite>— Brady, Google review · a promo video for his business</cite>
               </blockquote>
               <a href={SMS_HREF} className="cin-link">Text Brandon <Arrow /></a>
             </div>
@@ -746,7 +725,7 @@ export default function CinemaHome() {
           </ul>
           <dl className="cin-roll">
             <div><dt>Filmed &amp; photographed by</dt><dd>{OWNER_NAME}</dd></div>
-            <div><dt>On location</dt><dd>Waverly · Sayre · Athens · Elmira · Corning · Ithaca · Binghamton · Towanda</dd></div>
+            <div><dt>On location</dt><dd className="cin-roll-towns">{CITIES.map((c, i) => (<span key={c.slug}><Link href={`/${c.slug}`}>{c.name}</Link>{i < CITIES.length - 1 ? " · " : ""}</span>))}</dd></div>
             <div><dt>Call or text</dt><dd><a href={PHONE_HREF}>{PHONE}</a></dd></div>
             <div><dt>Write</dt><dd><a href={`mailto:${EMAIL}`}>{EMAIL}</a></dd></div>
           </dl>

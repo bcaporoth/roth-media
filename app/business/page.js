@@ -5,15 +5,16 @@ import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
 import BizFilm from "../../components/BizFilm";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
+import { AREA_SERVED, BUSINESS_ID, breadcrumbLd } from "../../lib/schema";
 import { PACKAGES, ADDONS, money } from "../../lib/packages";
 import DealPrice from "../../components/DealPrice";
 import { autoDealFor, applyDeal } from "../../lib/deals";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
-  title: "Brand Video & Content Days for Twin Tiers Businesses",
+  title: "Brand Video, Photos & Content Days for Twin Tiers Businesses",
   description:
-    "Content Days for local businesses — a promo, reels, and photos shot at your place. Sayre, Athens, Waverly, Elmira & Corning. From $600, real prices up front.",
+    "Videographer and photographer for local businesses — a promo, reels, and photos shot at your place in one Content Day. Sayre, Athens, Waverly, Elmira, Corning, Ithaca & Binghamton. From $600, real prices up front.",
   alternates: { canonical: "/business" },
 };
 
@@ -73,11 +74,15 @@ const FAQS = [
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Service",
-  serviceType: "Brand video and content production",
-  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
-  areaServed: ["Sayre PA", "Athens PA", "Waverly NY", "Elmira NY", "Corning NY"],
-  offers: PACKAGES.business.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD" })),
+  serviceType: "Brand video, business photography, and event coverage",
+  name: "Content Days for local businesses — Roth Media",
+  url: "https://rothmediaco.com/business",
+  provider: { "@id": BUSINESS_ID, "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
+  areaServed: AREA_SERVED,
+  audience: { "@type": "BusinessAudience", name: "Local businesses — shops, gyms, restaurants, builders, and makers" },
+  offers: PACKAGES.business.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD", availability: "https://schema.org/InStock" })),
 };
+const CRUMBS_LD = breadcrumbLd([{ name: "Roth Media", path: "/" }, { name: "Business", path: "/business" }]);
 
 const FAQ_LD = {
   "@context": "https://schema.org",
@@ -95,6 +100,7 @@ export default function BusinessPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(CRUMBS_LD) }} />
 
       <SiteNav active="business" overHero cta={{ href: QUOTE, label: "Get a quote" }} />
 
@@ -162,11 +168,11 @@ export default function BusinessPage() {
                   Most owners dread this part. Then we start talking, somebody
                   cracks a joke, and you forget the camera is there. You get
                   content that sounds like you, and we have a good time making
-                  it. Always.
+                  it.
                 </p>
                 <blockquote>
-                  “I probably walked into your store in my free time to see if I could shoot something for you, lol. I just love getting to know people — and helping everybody prosper.”
-                  <cite>— Brandon</cite>
+                  “He does an excellent job at getting everyone comfortable so that the end result is authentic.”
+                  <cite>— Brady, Google review · a promo video for his business</cite>
                 </blockquote>
                 <a href={SMS_HREF} className="cx-link">Text Brandon <Arrow /></a>
               </div>

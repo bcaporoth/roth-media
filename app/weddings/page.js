@@ -1,6 +1,7 @@
 import "../theme/weddings.css";
 import Link from "next/link";
 import { EMAIL, SAME_AS } from "../../lib/site";
+import { AREA_SERVED, BUSINESS_ID, breadcrumbLd } from "../../lib/schema";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
 import SiteNav from "../../components/SiteNav";
@@ -11,9 +12,9 @@ import WdPackageCard from "../../components/WdPackageCard";
 import { videoUrl } from "../../lib/media";
 
 export const metadata = {
-  title: "Wedding & Engagement Films — Sayre, Athens, Waverly & the Twin Tiers",
+  title: "Wedding Photographer & Videographer — Twin Tiers NY & PA",
   description:
-    `Wedding photography and cinematic wedding films — serving Sayre PA, Athens PA, Waverly NY, Elmira, and Corning. Real prices from ${money(PACKAGES.wedding[0].price)}. Instant quote, no obligation.`,
+    `Wedding photography and cinematic wedding films for the Twin Tiers — Sayre PA, Athens PA, Waverly NY, Elmira, Corning, Ithaca, and Binghamton. Real prices from ${money(PACKAGES.wedding[0].price)}. Instant quote, no obligation.`,
   alternates: { canonical: "/weddings" },
 };
 
@@ -45,7 +46,7 @@ const FAQS = [
   },
   {
     q: "Do you do engagement photos too?",
-    a: `Yes — stack an engagement session onto your wedding for ${money(addon("engagement").price)}, perfect for save-the-dates and your wedding website.`,
+    a: "Yes — an engagement session is free with any wedding. Stack it on and you've got photos for save-the-dates and your wedding website.",
   },
   {
     q: "When do we get everything?",
@@ -68,11 +69,14 @@ const FAQS = [
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Service",
-  serviceType: "Wedding videography",
-  provider: { "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
-  areaServed: ["Sayre PA", "Athens PA", "Waverly NY", "Elmira NY", "Corning NY"],
-  offers: PACKAGES.wedding.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD" })),
+  serviceType: "Wedding photography and wedding videography",
+  name: "Wedding photography & films — Roth Media",
+  url: "https://rothmediaco.com/weddings",
+  provider: { "@id": BUSINESS_ID, "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
+  areaServed: AREA_SERVED,
+  offers: PACKAGES.wedding.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD", availability: "https://schema.org/InStock" })),
 };
+const CRUMBS_LD = breadcrumbLd([{ name: "Roth Media", path: "/" }, { name: "Weddings", path: "/weddings" }]);
 
 const FAQ_LD = {
   "@context": "https://schema.org",
@@ -90,6 +94,7 @@ export default function WeddingsPage() {
       <DealPill href="/quote?for=wedding" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(CRUMBS_LD) }} />
 
       <SiteNav active="weddings" overHero cta={{ href: "/quote?for=wedding", label: "Build my quote" }} />
 

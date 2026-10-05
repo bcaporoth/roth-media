@@ -2,6 +2,7 @@ import Link from "next/link";
 import BrandMark from "./BrandMark";
 import { EMAIL, SOCIAL, CALENDLY, PHONE, OWNER_NAME, REVIEW_URL } from "../lib/site";
 import { PACKAGES, money } from "../lib/packages";
+import { CITIES } from "../lib/cities";
 
 // The Cinema site footer — the homepage's end credits, for every other page.
 //
@@ -40,7 +41,7 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
           </ul>
           <dl className="cx-roll">
             <div><dt>Filmed &amp; photographed by</dt><dd>{OWNER_NAME}</dd></div>
-            <div><dt>On location</dt><dd>Waverly · Sayre · Athens · Elmira · Corning · Ithaca · Binghamton · Towanda</dd></div>
+            <div><dt>On location</dt><dd className="cx-roll-towns">{CITIES.map((c, i) => (<span key={c.slug}><Link href={`/${c.slug}`}>{c.name}</Link>{i < CITIES.length - 1 ? " · " : ""}</span>))}</dd></div>
             <div><dt>Call or text</dt><dd><a href={PHONE_HREF}>{PHONE}</a></dd></div>
             <div><dt>Write</dt><dd><a href={`mailto:${EMAIL}`}>{EMAIL}</a></dd></div>
           </dl>
