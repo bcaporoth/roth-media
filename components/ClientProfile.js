@@ -41,6 +41,18 @@ export default function ClientProfile({ initial, emailReady }) {
   async function saveClient(patch) {
     try { await api("/api/admin/clients", { action: "update", id: c.id, ...patch }); setD({ ...d, client: { ...c, ...patch } }); say("Saved"); } catch (err) { fail(err); }
   }
+  // The Save button: everything that differs from what is on file, in one call.
+  function saveForm(e) {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const patch = {};
+    if (f.name !== c.name) patch.name = f.name;
+    if (f.email.trim() && f.email.trim().toLowerCase() !== c.email) patch.email = f.email.trim();
+    if (f.phone !== c.phone) patch.phone = f.phone;
+    if (f.notes !== c.notes) patch.notes = f.notes;
+    if (!Object.keys(patch).length) { say("Nothing to save"); return; }
+    saveClient(patch);
+  }
   const link = intakeUrl({ email: isNoEmail(c.email) ? "" : c.email, name: c.name, type });
   async function intakeSent(how) {
     try {
@@ -104,12 +116,15 @@ export default function ClientProfile({ initial, emailReady }) {
       )}
 
       <section className="cprof-card">
-        <div className="client-fields" key={`${c.name}-${c.email}-${c.phone}`}>
-          <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && saveClient({ name: e.target.value })} /></label>
-          <label>Email<input type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} onBlur={(e) => e.target.value.trim() && e.target.value !== c.email && saveClient({ email: e.target.value })} /></label>
-          <label>Phone<input defaultValue={c.phone} onBlur={(e) => e.target.value !== c.phone && saveClient({ phone: e.target.value })} /></label>
-        </div>
-        <label className="client-notes">Notes<textarea rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" onBlur={(e) => e.target.value !== c.notes && saveClient({ notes: e.target.value })} /></label>
+        <form className="client-edit" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
+          <div className="client-fields">
+            <label>Name<input name="name" defaultValue={c.name} /></label>
+            <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
+            <label>Phone<input name="phone" defaultValue={c.phone} /></label>
+          </div>
+          <label className="client-notes">Notes<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" /></label>
+          <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
+        </form>
         <div className="cprof-type">
           <span className="kick-sm" id="cprof-type-label">Questions to use</span>
           {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}

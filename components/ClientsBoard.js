@@ -85,6 +85,18 @@ export default function ClientsBoard({ initial, emailReady }) {
   async function save(c, patch) {
     try { await api({ action: "update", id: c.id, ...patch }); await refresh(); say("Saved"); } catch (err) { fail(err); }
   }
+  // The Save button: everything in the form that differs from what is on file, in one call.
+  function saveForm(c, e) {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const patch = {};
+    if (d.name !== undefined && d.name !== c.name) patch.name = d.name;
+    if (d.email !== undefined && d.email.trim() && d.email.trim().toLowerCase() !== c.email) patch.email = d.email.trim();
+    if (d.phone !== undefined && d.phone !== c.phone) patch.phone = d.phone;
+    if (d.notes !== undefined && d.notes !== c.notes) patch.notes = d.notes;
+    if (!Object.keys(patch).length) { say("Nothing to save"); return; }
+    save(c, patch);
+  }
   async function tempPassword(c) {
     if (!window.confirm(`Set a new temporary password for ${c.email}? Their old one stops working.`)) return;
     try { const r = await api({ action: "set-password", email: c.email }); window.prompt(`Temporary password for ${c.email} — copy it and text it to them:`, r.password); await refresh(); } catch (err) { fail(err); }
@@ -199,12 +211,18 @@ export default function ClientsBoard({ initial, emailReady }) {
 
               {isOpen && !c.lead && (
                 <div className="client-detail" key={`${c.id}-${c.name}-${c.email}-${c.phone}`}>
-                  <div className="client-fields">
-                    <label>Name<input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && save(c, { name: e.target.value })} /></label>
-                    <label>Email<input type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} onBlur={(e) => e.target.value.trim() && e.target.value !== c.email && save(c, { email: e.target.value })} /></label>
-                    <label>Phone<input defaultValue={c.phone} onBlur={(e) => e.target.value !== c.phone && save(c, { phone: e.target.value })} /></label>
+                  <div className="gcard-actions client-detail-top">
+                    <Link className="achip achip-primary" href={`/portal/admin/clients/${c.id}`}>Open full profile →</Link>
                   </div>
-                  <label className="client-notes">Notes<textarea rows={3} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" onBlur={(e) => e.target.value !== c.notes && save(c, { notes: e.target.value })} /></label>
+                  <form className="client-edit" onSubmit={(e) => saveForm(c, e)}>
+                    <div className="client-fields">
+                      <label>Name<input name="name" defaultValue={c.name} /></label>
+                      <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
+                      <label>Phone<input name="phone" defaultValue={c.phone} /></label>
+                    </div>
+                    <label className="client-notes">Notes<textarea name="notes" rows={3} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" /></label>
+                    <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
+                  </form>
 
                   <div className="kick-sm">Galleries</div>
                   {c.galleries.length === 0 && <p className="gcard-meta">None yet.</p>}

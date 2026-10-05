@@ -369,3 +369,7 @@ a.trow:hover strong { color: var(--clay); }
 /* In the dark look the page behind the shell (below a short screen's footer) is dark too. */
 body:has(.admin-shell.is-dark) { background: #191612; }
 /* == /dark page == */
+
+/* Client edit form (Clients list + profile): fields, notes, Save. */
+.client-edit { display: grid; gap: 0.7rem; }
+.client-detail-top { margin-bottom: 0.4rem; }
