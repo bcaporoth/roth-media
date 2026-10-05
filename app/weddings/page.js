@@ -145,7 +145,7 @@ export default function WeddingsPage() {
           <div className="cx-wrap cx-split">
             <div className="cx-title cx-reveal">
               <p className="cx-kick">How I work</p>
-              <h2 className="cx-h2">You&rsquo;ll laugh a lot. And your wedding will be better with me there.</h2>
+              <h2 className="cx-h2">Relaxed on the day, and on your vendors&rsquo; team.</h2>
             </div>
             <div className="cx-stack cx-reveal">
               <p className="cx-lede">
@@ -155,7 +155,7 @@ export default function WeddingsPage() {
                 too.
               </p>
               <ul className="cx-list wd-easy-list">
-                <li><span><strong>Easy to be around.</strong> No stiff posing, no barking orders. We&rsquo;ll be laughing before the ceremony starts.</span></li>
+                <li><span><strong>Easy to be around.</strong> No stiff posing, no barking orders.</span></li>
                 <li><span><strong>On your vendors&rsquo; team.</strong> I work with your DJ, planner and venue so the day runs smoother, not slower.</span></li>
                 <li><span><strong>Nothing to chase.</strong> Real price up front, confirmed in writing, and a sneak peek within 48 hours.</span></li>
               </ul>

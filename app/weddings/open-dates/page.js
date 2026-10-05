@@ -52,7 +52,7 @@ export default function OpenDatesPage() {
             <p className="cx-kick">Wedding films · Twin Tiers</p>
             <h1 className="cx-h1">Still need a videographer <em>this year?</em></h1>
             <p className="cx-lede">
-              Your photographer&apos;s booked. Your vows aren&apos;t going to film themselves. I have a handful of {year} dates left — and if you&apos;re planning for next year, you can lock 2027 at this year&apos;s prices before {c.endsLabel}.
+              Your photographer&apos;s booked. I have a handful of {year} dates left for video — and if you&apos;re planning for next year, you can lock 2027 at this year&apos;s prices before {c.endsLabel}.
             </p>
             <div className="cx-cta-row">
               <a href="#dates" className="cx-btn cx-btn--light cx-btn--lg">See the open dates</a>

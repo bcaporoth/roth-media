@@ -269,10 +269,9 @@ export default function CinemaHome() {
             <div className="cin-card-lead">
               <Slate n="01" name="Weddings" note="Film · Photography" />
               <h2 className="cin-card-title cin-card-title--long">
-                <span className="cin-mask"><span>You’ll laugh a lot.</span></span>
-                <span className="cin-mask"><span>And your wedding</span></span>
-                <span className="cin-mask"><span>will be better</span></span>
-                <span className="cin-mask"><span>with me there.</span></span>
+                <span className="cin-mask"><span>Your day,</span></span>
+                <span className="cin-mask"><span>told the way</span></span>
+                <span className="cin-mask"><span>it felt.</span></span>
               </h2>
               <p className="cin-lede cin-rise">
                 I don’t like putting anyone outside of what they normally feel
@@ -474,15 +473,14 @@ export default function CinemaHome() {
             <Slate n="03" name="Business" note="Content Days · Events" />
             <h2 className="cin-card-title">
               <span className="cin-mask"><span>Hate being on camera?</span></span>
-              <span className="cin-mask"><span>Give me ten minutes.</span></span>
+              <span className="cin-mask"><span>Most owners do.</span></span>
             </h2>
             <div className="cin-card-row cin-rise">
               <div>
                 <p className="cin-lede">
-                  Most owners dread this part. Then we start talking, somebody
-                  cracks a joke, and you forget the camera is there. You get
-                  content that sounds like you, and we have a good time making
-                  it.
+                  We start by talking, not filming. Nobody has to perform — you
+                  do what you’d normally do at work and I film it. You get
+                  content that sounds like you.
                 </p>
                 <p className="cin-say">
                   One Content Day, a month of posts: a promo, reels and photos
@@ -579,14 +577,13 @@ export default function CinemaHome() {
             <div className="cin-card-lead">
               <Slate n="04" name="Family & portraits" note={SESSIONS.join(" · ")} />
               <h2 className="cin-card-title cin-card-title--long">
-                <span className="cin-mask"><span>We’ll talk, we’ll laugh,</span></span>
-                <span className="cin-mask"><span>and somewhere in there</span></span>
-                <span className="cin-mask"><span>I’ll get the shot.</span></span>
+                <span className="cin-mask"><span>Less posing,</span></span>
+                <span className="cin-mask"><span>more flow.</span></span>
               </h2>
               <p className="cin-lede cin-rise">
-                You don’t have to be good at this. No awkward posing and no
-                “say cheese.” Just a good time with a camera nearby. That’s
-                how the real photos happen.
+                I used to pose everybody. Now it’s more of a flow — a couple of
+                things to do, and you stay in the moment. The portraits come
+                out a lot more natural.
               </p>
               <p className="cin-say cin-rise">
                 Families, seniors, engagements, couples — whatever you’re
@@ -702,8 +699,7 @@ export default function CinemaHome() {
             </p>
             <p className="cin-rise">
               I’ll guide you when you need it, but I don’t do stiff, rigid
-              posing. We keep it easy and relaxed, then capture what actually
-              feels like your story.
+              posing. We keep it easy and relaxed.
             </p>
             <p className="cin-rise">I’m local to the Valley, and I’d love to work with you.</p>
             <p className="cin-sig cin-rise">— {OWNER_NAME}</p>

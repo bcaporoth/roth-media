@@ -163,12 +163,11 @@ export default function BusinessPage() {
               </div>
               <div className="bz-say cx-reveal">
                 <p className="cx-kick">Shoot day is the fun part</p>
-                <h2 className="cx-h2 bz-say-h">Hate being on camera? Give me ten minutes.</h2>
+                <h2 className="cx-h2 bz-say-h">Hate being on camera? Most owners do.</h2>
                 <p className="bz-say-body">
-                  Most owners dread this part. Then we start talking, somebody
-                  cracks a joke, and you forget the camera is there. You get
-                  content that sounds like you, and we have a good time making
-                  it.
+                  We start by talking, not filming. Nobody has to perform &mdash; you
+                  do what you&rsquo;d normally do at work and I film it. You get
+                  content that sounds like you.
                 </p>
                 <blockquote>
                   “If I just give you two or three things to do, it keeps you in the moment.”
