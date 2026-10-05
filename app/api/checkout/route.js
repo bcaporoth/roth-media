@@ -16,7 +16,8 @@ export async function POST(request) {
   if (!stripeConfigured) return bad("Online booking isn't switched on yet — send the quote instead.", 503);
   const body = await request.json().catch(() => ({}));
   if (body.website) return bad("Bad request");
-  const q = priceQuote({ category: body.category, packageId: body.packageId, addons: body.addons, code: body.code });
+  const payFull = body.pay === "full";
+  const q = priceQuote({ category: body.category, packageId: body.packageId, addons: body.addons, code: body.code, payFull });
   if (!q) return bad("Pick a package first");
   const email = clip(body.email, 160).toLowerCase();
   const name = clip(body.name, 120);
@@ -32,7 +33,8 @@ export async function POST(request) {
   // Balance = what's left on their retainer booking (keeps the deal they booked with).
   const owed = balance ? await openRetainer(email) : null;
   const balanceCents = owed ? owed.total_cents - owed.paid_cents : cents(q.total - q.dueToday);
-  const dealNote = (q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "") + (q.free ? ` ${q.free.label} (code ${q.free.code}).` : "");
+  const freeAddon = q.free ? q.chosen.find((a) => a.id === q.free.addon) : null;
+  const dealNote = (q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "") + (q.free && freeAddon ? ` ${q.free.label}: ${freeAddon.name} included.` : "");
   const line_items = balance
     ? [{
         quantity: 1,
@@ -54,11 +56,11 @@ export async function POST(request) {
           },
         },
       }]
-    : q.deal
-    ? [{ quantity: 1, price_data: { currency: "usd", unit_amount: cents(q.total), product_data: { name: label, description: clip(`${q.pkg.scope}.${dealNote}`, 300) } } }]
+    : q.deal || q.free || q.payFull
+    ? [{ quantity: 1, price_data: { currency: "usd", unit_amount: cents(q.total), product_data: { name: q.payFull ? `Paid in full — ${label}` : label, description: clip(`${q.pkg.scope}.${dealNote}${q.payFull ? " Date locked, nothing more due." : ""}`, 300) } } }]
     : [
         { quantity: 1, price_data: { currency: "usd", unit_amount: cents(q.pkg.price), product_data: { name: q.pkg.name, description: q.pkg.scope } } },
-        ...q.chosen.filter((a) => !(q.free && a.id === q.free.addon)).map((a) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: cents(a.price), product_data: { name: a.name, description: clip(a.get, 200) } } })),
+        ...q.chosen.filter((a) => a.price > 0 && !(q.free && a.id === q.free.addon)).map((a) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: cents(a.price), product_data: { name: a.name, description: clip(a.get, 200) } } })),
       ];
 
   // A monthly add-on (the website plan): save the card now, the plan starts
@@ -72,7 +74,8 @@ export async function POST(request) {
     mode: balance ? "balance" : q.mode,
     total: String(q.total),
     discount: String(q.discount),
-    deal: [q.deal ? `${q.deal.label} (${q.deal.pct}% off)` : "", q.free ? `${q.free.label} (${q.free.code})` : ""].filter(Boolean).join(" + "),
+    deal: [q.deal ? `${q.deal.label} (${q.deal.pct}% off)` : "", q.free ? `${q.free.label}${q.free.code ? ` (${q.free.code})` : ""}` : ""].filter(Boolean).join(" + "),
+    pay_full: q.payFull ? "1" : "",
     code: clip(body.code, 30).toUpperCase(),
     booking: owed ? String(owed.id) : "",
     intake: clip(body.intake, 490),
@@ -95,8 +98,8 @@ export async function POST(request) {
       payment_intent_data: { description: `${label} — ${name}`, metadata, ...(monthly ? { setup_future_usage: "off_session" } : {}) },
       ...(monthly ? { customer_creation: "always" } : {}),
       success_url: `${site}/booked?s={CHECKOUT_SESSION_ID}`,
-      cancel_url: body.pay !== undefined ? `${site}/pay/cart?c=${q.cat.id}&p=${q.pkg.id}${q.chosen.length ? `&a=${q.chosen.map((a) => a.id).join(",")}` : ""}${balance ? "&pay=balance" : ""}${body.code ? `&code=${encodeURIComponent(clip(body.code, 30))}` : ""}` : `${site}/quote?for=${q.cat.id}&back=1`,
-      custom_text: { submit: { message: balance ? "This settles your booking in full. Thank you!" : q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : monthly ? `Your card is saved for the ${money(monthly)}/month website plan — first charge in 30 days. Cancel anytime at rothmediaco.com/billing.` : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
+      cancel_url: body.pay !== undefined ? `${site}/pay/cart?c=${q.cat.id}&p=${q.pkg.id}${q.chosen.length ? `&a=${q.chosen.map((a) => a.id).join(",")}` : ""}${balance ? "&pay=balance" : q.payFull ? "&pay=full" : ""}${body.code ? `&code=${encodeURIComponent(clip(body.code, 30))}` : ""}` : `${site}/quote?for=${q.cat.id}&back=1`,
+      custom_text: { submit: { message: balance ? "This settles your booking in full. Thank you!" : q.payFull ? "Paid in full — your date is locked and the guest library is included. I'll call within 24 hours to plan the day." : q.mode === "retainer" ? "Your retainer holds the date. Balance due 14 days before — I'll send a link." : monthly ? `Your card is saved for the ${money(monthly)}/month website plan — first charge in 30 days. Cancel anytime at rothmediaco.com/billing.` : "Paid in full — I'll reach out within 24 hours to plan the shoot." } },
     });
     return NextResponse.json({ url: session.url });
   } catch (err) {

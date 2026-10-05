@@ -180,7 +180,7 @@ export default function WeddingsPage() {
                   {ADDONS.wedding.filter((a) => !a.hidden).map((a) => (
                     <li key={a.id} className="cx-row">
                       <span className="cx-row-name">{a.name.replace(/^Add /, "")}</span>
-                      <span className="cx-row-price">+{money(a.price)}</span>
+                      <span className="cx-row-price">{a.price === 0 ? <>free{a.was ? <> <s>{money(a.was)}</s></> : null}</> : `+${money(a.price)}`}</span>
                       <span className="cx-row-note">{a.get}</span>
                     </li>
                   ))}

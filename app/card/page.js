@@ -7,7 +7,7 @@ import CardLink from "../../components/CardLink";
 import { CALENDLY, EMAIL, PHONE, OWNER_NAME, REVIEW_URL, SOCIAL } from "../../lib/site";
 import { CATEGORIES, PACKAGES } from "../../lib/packages";
 import { stripeConfigured } from "../../lib/stripe";
-import { autoDeal } from "../../lib/deals";
+import { autoDeal, autoBonus } from "../../lib/deals";
 import DealPrice from "../../components/DealPrice";
 
 const MENU_LABEL = { wedding: "Weddings", business: "Businesses & events", family: "Portraits" };
@@ -42,6 +42,7 @@ export const revalidate = 3600;
 export default function CardPage() {
   const tel = PHONE.replace(/\D/g, "");
   const deal = autoDeal();
+  const bonus = autoBonus();
   return (
     <main className="cx-page cx-page--hero mx-page mx-card">
       <Reveal />
@@ -113,7 +114,7 @@ export default function CardPage() {
 
           <section className="mx-card-sec cx-reveal">
             <h2 className="cx-h2">The menu</h2>
-            {deal && <p className="cx-offer"><strong>{deal.label}:</strong> {deal.pct}% off weddings and portraits through {deal.endsLabel}.</p>}
+            {deal ? <p className="cx-offer"><strong>{deal.label}:</strong> {deal.pct}% off through {deal.endsLabel}.</p> : bonus ? <p className="cx-offer"><strong>Weddings booked by {bonus.endsLabel}:</strong> the guest photo library is included, and the engagement session is always free with the wedding.</p> : null}
             {CATEGORIES.map((c) => (
               <div key={c.id} className="mx-menu">
                 <h3 className="cx-kick">{MENU_LABEL[c.id] || c.title}</h3>

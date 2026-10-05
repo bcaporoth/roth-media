@@ -7,7 +7,7 @@ import FilmCard from "../../../components/FilmCard";
 import { videoUrl } from "../../../lib/media";
 import { PACKAGES, money } from "../../../lib/packages";
 import { CAMPAIGN } from "../../../lib/campaign";
-import { autoDeal, applyDeal } from "../../../lib/deals";
+import { autoDeal, autoBonus, applyDeal } from "../../../lib/deals";
 
 export const metadata = {
   title: "Still need a wedding videographer this year? Open dates + 2027 early pricing",
@@ -28,6 +28,7 @@ export default function OpenDatesPage() {
   // No campaign codes: the cards show the site-wide deal while one runs
   // (lib/deals.js), otherwise the plain price. Same number the quote shows.
   const launch = autoDeal();
+  const bonus = autoBonus();
   const price = money(applyDeal(film.price, launch));
   const today = money(Math.round(applyDeal(film.price, launch) * 0.5));
   const href = "/quote?for=wedding&pkg=film";
@@ -71,6 +72,7 @@ export default function OpenDatesPage() {
                 </ul>
                 <p className="cx-fine">{launch ? `Any open ${year} date, ${launch.pct}% off Wedding Videography through ${launch.endsLabel} — no code needed. Tap your date to hold it.` : `Any open ${year} date. Book it online and the date's yours tonight — tap your date to hold it.`}</p>
                 <p className="wd-offer-price"><strong className="cx-num">{price}</strong> {launch ? <s>{money(film.price)}</s> : null} <span>· {today} holds it today</span></p>
+                {!launch && bonus && <p className="cx-offer">{bonus.label}: the guest photo library is included. Engagement session always free.</p>}
                 <Link className="cx-btn cx-btn--light cx-btn--lg cx-btn--block wd-offer-cta" href={href}>Grab a date{launch ? ` — ${launch.pct}% off through ${launch.endsLabel}` : ""}</Link>
               </section>
 

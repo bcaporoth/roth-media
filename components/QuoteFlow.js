@@ -5,7 +5,7 @@ import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, ADDONS, DETAIL, TRAVEL, money } from "../lib/packages";
-import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie } from "../lib/deals";
+import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie, isFreebieCode } from "../lib/deals";
 
 // ── Three screens. One way in, one way out. ─────────────────────────
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
@@ -72,18 +72,18 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
   const addonList = pkg ? ADDONS[category].filter((a) => !pkg.includes.includes(a.id) && !a.hidden) : [];
-  const chosen = addonList.filter((a) => addons[a.id]);
-  const list = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
   // Biggest live deal wins (lib/deals.js); checkout re-checks it on the server.
   const deal = pkg ? bestDeal({ category, packageId: pkg.id, code }) : null;
-  // A free-add-on code (GUEST) stacks with the deal; it kicks in once that add-on is ticked.
-  const freeCode = pkg ? freebie(code, { category, packageId: pkg.id }) : null;
+  // An included add-on (the launch bonus, or a code like GUEST) rides along whether or not it's ticked.
+  const freeCode = pkg ? freebie({ code, category, packageId: pkg.id }) : null;
   const freeAddon = freeCode ? addonList.find((a) => a.id === freeCode.addon) : null;
-  const free = freeCode && chosen.some((a) => a.id === freeCode.addon) ? freeCode : null;
+  const free = freeAddon ? freeCode : null;
+  const chosen = addonList.filter((a) => addons[a.id] || (free && a.id === free.addon));
+  const list = pkg ? pkg.price + chosen.reduce((s, a) => s + a.price, 0) : 0;
   const estimate = pkg ? dealTotal([pkg, ...chosen], deal, free) : 0;
   const dealBase = pkg ? [pkg, ...chosen].filter((i) => !i.noDeal && !(free && i.id === free.addon)).reduce((s, i) => s + i.price, 0) : 0;
   const typed = code.trim().toUpperCase();
-  const codeNote = !typed ? "" : freeCode ? (free ? `${freeCode.label}: ${freeAddon.name} is free${deal ? `, on top of the ${deal.label.toLowerCase()}` : ""}.` : freeAddon ? `Tick "${freeAddon.name}" below and it's free with this code.` : "That code doesn't cover this package.") : deal?.code === typed ? `${deal.pct}% off applied.` : upcomingCode(typed) ? `${typed} opens ${upcomingCode(typed).startsLabel} — right now you're getting ${deal ? `the ${deal.pct}% ${deal.label.toLowerCase()}` : "today's price"}.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
+  const codeNote = !typed ? "" : free && free.code === typed ? `${free.label}: ${freeAddon.name} is included.` : free && isFreebieCode(typed) ? `${freeAddon.name} is already included (${free.label.toLowerCase()}) — no code needed.` : isFreebieCode(typed) ? "That code doesn't cover this package." : deal?.code === typed ? `${deal.pct}% off applied.` : upcomingCode(typed) ? `${typed} opens ${upcomingCode(typed).startsLabel} — right now you're getting ${deal ? `the ${deal.pct}% ${deal.label.toLowerCase()}` : "today's price"}.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
   const monthly = chosen.filter((a) => a.monthly);
   const catTitle = CATEGORIES.find((c) => c.id === category)?.title || "";
   // Book-it-now: what they'd pay today. "from" add-ons (scoped on a call) can't be bought.
@@ -120,7 +120,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
       "what it's for": catTitle,
       package: `${pkg.name} — ${money(pkg.price)}${pkg.per || ""}`,
       "add-ons": chosen.length ? chosen.map((a) => `${a.name} (${money(a.price)})`).join("; ") : "none",
-      "starting price": money(estimate) + (pkg.per || "") + (deal ? ` (${deal.label}, ${deal.pct}% off ${money(list)})` : "") + (free ? ` (${freeAddon.name} free — code ${free.code})` : ""),
+      "starting price": money(estimate) + (pkg.per || "") + (deal ? ` (${deal.label}, ${deal.pct}% off ${money(list)})` : "") + (free ? ` (${freeAddon.name} included — ${free.label})` : ""),
       "they get": [...fullGet(category, pkg), ...chosen.map((a) => a.get)].join(" · "),
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
@@ -259,10 +259,10 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                   <div className="qt-addons">
                     {addonList.map((a) => (
                       <label key={a.id} className={`qt-addon${addons[a.id] ? " is-on" : ""}`}>
-                        <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
+                        <input type="checkbox" checked={!!addons[a.id] || Boolean(free && a.id === free.addon)} disabled={Boolean(free && a.id === free.addon)} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
                         <span className="qt-box" aria-hidden="true"><Check /></span>
                         <span className="qt-addon-name">{a.name}<small>{a.get}</small></span>
-                        <span className="qt-addon-price">{freeCode && a.id === freeCode.addon ? "free" : `${a.from ? "from " : ""}+${money(a.price)}`}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
+                        <span className="qt-addon-price">{free && a.id === free.addon ? <>included <s>{money(a.price)}</s></> : a.price === 0 ? <>free{a.was ? <> <s>{money(a.was)}</s></> : null}</> : `${a.from ? "from " : ""}+${money(a.price)}`}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
                       </label>
                     ))}
                   </div>
@@ -276,7 +276,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                     <p className="qt-total">
                       <span className="qt-total-label">Starting at</span>
                       <strong className="cx-num"><Price list={list} now={estimate} />{pkg.per || ""}</strong>
-                      {deal && <small className="qt-deal">{deal.label} · {deal.pct}% off</small>}
+                      {deal ? <small className="qt-deal">{deal.label} · {deal.pct}% off</small> : free ? <small className="qt-deal">{freeAddon.name} included</small> : null}
                     </p>
                     <button type="button" className="cx-btn cx-btn--light cx-btn--lg qt-continue" onClick={() => { markStarted(category); jump(2); }}>Continue <Arrow /></button>
                   </>
@@ -304,7 +304,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                   <p className="qt-fine">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
                 )}
                 {deal && <p className="qt-fine"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
-                {free && <p className="qt-fine"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is free with code {free.code}.</p>}
+                {free && <p className="qt-fine"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
                 {monthly.map((a) => <p key={a.id} className="qt-fine">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
                 {category !== "business" || pkg.id === "event" ? <p className="qt-fine">{TRAVEL.line}</p> : null}
                 <p className="qt-fine">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
@@ -440,9 +440,9 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                   {addonList.map((a) => (
                     <div key={a.id} className={`qaddon ${addons[a.id] ? "on" : ""}`}>
                       <label className="qaddon-main">
-                        <input type="checkbox" checked={!!addons[a.id]} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
+                        <input type="checkbox" checked={!!addons[a.id] || Boolean(free && a.id === free.addon)} disabled={Boolean(free && a.id === free.addon)} onChange={(e) => setAddons((s) => ({ ...s, [a.id]: e.target.checked }))} />
                         <span className="qaddon-name">{a.name}<small>{a.get}</small></span>
-                        <span className="qaddon-price">{freeCode && a.id === freeCode.addon ? "free" : `${a.from ? "from " : ""}+${money(a.price)}`}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
+                        <span className="qaddon-price">{free && a.id === free.addon ? <>included <s>{money(a.price)}</s></> : a.price === 0 ? <>free{a.was ? <> <s>{money(a.was)}</s></> : null}</> : `${a.from ? "from " : ""}+${money(a.price)}`}{a.monthly ? <small>then {money(a.monthly)}/mo</small> : null}</span>
                       </label>
                     </div>
                   ))}
@@ -450,7 +450,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 <div className="qnav-row">
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
-                    <span className="qflow-total">Starting at <strong><Price list={list} now={estimate} />{pkg.per || ""}</strong>{deal && <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small>}</span>
+                    <span className="qflow-total">Starting at <strong><Price list={list} now={estimate} />{pkg.per || ""}</strong>{deal ? <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small> : free ? <small className="qdeal-tag">{freeAddon.name} included</small> : null}</span>
                     <button type="button" className="qprimary" onClick={() => { markStarted(category); jump(2); }}>Continue</button>
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
               )}
               {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
-              {free && <p className="qmatch-fineprint"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is free with code {free.code}.</p>}
+              {free && <p className="qmatch-fineprint"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
               {monthly.map((a) => <p key={a.id} className="qmatch-fineprint">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
               {category !== "business" || pkg.id === "event" ? <p className="qmatch-fineprint">{TRAVEL.line}</p> : null}
               <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>

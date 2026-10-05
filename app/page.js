@@ -9,7 +9,7 @@ import Player from "../components/home/Player";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME } from "../lib/site";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
-import { autoDeal, autoDealFor, applyDeal } from "../lib/deals";
+import { autoDeal, autoDealFor, autoBonus, applyDeal } from "../lib/deals";
 import { videoUrl } from "../lib/media";
 
 export const metadata = {
@@ -181,6 +181,8 @@ function Skip({ label, links }) {
 export default function CinemaHome() {
   const deal = autoDeal();
   const bizDeal = autoDealFor("business", "day"); // null while the special skips business
+  const bonus = autoBonus(); // the deadline bonus for weddings (lib/deals.js FREEBIES)
+  const GUEST_ADDON = ADDONS.wedding.find((a) => a.id === "guest");
   const weddingAddons = ADDONS.wedding.filter((a) => !a.hidden);
   const weddings = [...PACKAGES.wedding].sort((a, b) => Number(!!b.popular) - Number(!!a.popular));
   const today = new Date().toISOString().slice(0, 10);
@@ -458,7 +460,7 @@ export default function CinemaHome() {
               <h3>Add what fits</h3>
               <ul className="cin-addons">
                 {weddingAddons.map((a) => (
-                  <li key={a.id}><span><strong>{a.name}</strong>{a.id === "guest" ? "QR card on every table, no app" : a.get}</span><b>+{money(a.price)}</b></li>
+                  <li key={a.id}><span><strong>{a.name}</strong>{a.id === "guest" ? "QR card on every table, no app" : a.get}</span><b>{a.price === 0 ? "free" : `+${money(a.price)}`}</b></li>
                 ))}
               </ul>
             </div>
@@ -467,12 +469,16 @@ export default function CinemaHome() {
               <p className="cin-fine">{TRAVEL.line}</p>
               <h3>Booking</h3>
               <p className="cin-fine">A 50% retainer holds your date. The balance is due 14 days before the wedding, and the price is confirmed in writing.</p>
-              {deal && (
+              {deal ? (
                 <p className="cin-offer">
                   <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —
                   film {money(applyDeal(W_FILM.price, deal))}, photography {money(applyDeal(W_PHOTO.price, deal))}. Applied to your quote automatically.
                 </p>
-              )}
+              ) : bonus ? (
+                <p className="cin-offer">
+                  <strong>{bonus.label}:</strong> the guest photo library ({money(GUEST_ADDON.price)}) is included. Pay in full at booking and it&apos;s included any time. The engagement session is always free with your wedding.
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="cin-cta-row cin-rise">

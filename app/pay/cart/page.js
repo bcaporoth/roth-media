@@ -3,9 +3,9 @@ import SiteNav from "../../../components/SiteNav";
 import SiteFooter from "../../../components/SiteFooter";
 import CartPay from "../../../components/CartPay";
 import { priceQuote, bookingLabel, openRetainer } from "../../../lib/booking";
-import { money, ADDONS } from "../../../lib/packages";
+import { money } from "../../../lib/packages";
 import { stripeConfigured } from "../../../lib/stripe";
-import { codeDeal, upcomingCode, freebie } from "../../../lib/deals";
+import { codeDeal, upcomingCode, isFreebieCode } from "../../../lib/deals";
 import { EMAIL, PHONE } from "../../../lib/site";
 
 export const metadata = { title: "Your quote — review and pay", robots: { index: false } };
@@ -31,7 +31,9 @@ export default async function CartPage({ searchParams }) {
   const sp = await searchParams;
   const addons = String(sp?.a || "").split(",").filter(Boolean);
   const code = String(sp?.code || "").trim().toUpperCase().slice(0, 30);
-  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code });
+  // pay=full: a wedding paid in full today instead of the 50% retainer (earns the paid-in-full bonus).
+  const payFull = sp?.pay === "full";
+  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull });
   if (!q) {
     return (
       <>
@@ -59,9 +61,12 @@ export default async function CartPage({ searchParams }) {
   const paidAlready = owed ? owed.paid_cents / 100 : q.dueToday;
   const due = balance ? total - paidAlready : q.dueToday;
   const first = String(sp?.n || "").trim().split(/\s+/)[0];
-  const codeTried = code && !q.free && (!q.deal || q.deal.code !== code);
-  // A free-add-on code typed on a cart that doesn't hold that add-on yet.
-  const freeFor = codeTried && freebie(code, { category: q.cat.id, packageId: q.pkg.id }) ? (ADDONS[q.cat.id] || []).find((x) => x.id === freebie(code, { category: q.cat.id, packageId: q.pkg.id }).addon)?.name || "" : "";
+  const codeTried = code && !(q.free && q.free.code === code) && (!q.deal || q.deal.code !== code);
+  const freeAddon = q.free ? q.chosen.find((a) => a.id === q.free.addon) : null;
+  // Both ways to pay a wedding, so the choice is one tap.
+  const keepQ = Object.entries({ c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t, code: sp?.code }).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
+  const holdQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: false });
+  const fullQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: true });
   const monthly = q.chosen.filter((a) => a.monthly);
   const keep = { c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t };
 
@@ -78,10 +83,10 @@ export default async function CartPage({ searchParams }) {
                 <tbody>
                   <tr><th scope="row">{q.pkg.name}<small>{q.pkg.scope}</small></th><td>{money(q.pkg.price)}</td></tr>
                   {q.chosen.map((a) => (
-                    <tr key={a.id}><th scope="row">{a.name}<small>{a.get}</small></th><td>{money(a.price)}</td></tr>
+                    <tr key={a.id}><th scope="row">{a.name}<small>{a.get}</small></th><td>{a.price === 0 ? <>Free{a.was ? <small> was {money(a.was)}</small> : null}</> : money(a.price)}</td></tr>
                   ))}
                   {!owed && q.free && (
-                    <tr className="qt-cart-deal"><th scope="row">{q.free.label}<small>Code {q.free.code}</small></th><td>− {money(q.freeValue)}</td></tr>
+                    <tr className="qt-cart-deal"><th scope="row">{q.free.label}<small>{q.free.code ? `Code ${q.free.code}` : `${freeAddon?.name || "Add-on"} included`}</small></th><td>− {money(q.freeValue)}</td></tr>
                   )}
                   {!owed && q.deal && (
                     <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.dealDiscount)}</td></tr>
@@ -90,7 +95,7 @@ export default async function CartPage({ searchParams }) {
                   {q.mode === "retainer" && (
                     <tr><th scope="row">{balance ? "Already paid" : "Balance, due 14 days before your date"}</th><td>{balance ? `− ${money(paidAlready)}` : money(q.total - q.dueToday)}</td></tr>
                   )}
-                  <tr className="qt-cart-due"><th scope="row">Due now{q.mode === "retainer" && !balance ? " — 50% retainer holds your date" : ""}</th><td>{money(due)}</td></tr>
+                  <tr className="qt-cart-due"><th scope="row">Due now{q.mode === "retainer" && !balance ? " — 50% retainer holds your date" : q.payFull ? " — paid in full, date locked" : ""}</th><td>{money(due)}</td></tr>
                 </tbody>
               </table>
               {monthly.map((a) => (
@@ -101,7 +106,7 @@ export default async function CartPage({ searchParams }) {
                   {Object.entries(keep).filter(([, v]) => v).map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
                   <label className="cx-field"><span className="cx-label">Promo code</span><input className="cx-input" name="code" defaultValue={code} autoCapitalize="characters" /></label>
                   <button type="submit" className="cx-btn cx-btn--ghost">Apply</button>
-                  {codeTried && <small className="cx-help">{freeFor ? `${code} makes "${freeFor}" free — add it to your quote and it drops off the total.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
+                  {codeTried && <small className="cx-help">{isFreebieCode(code) && q.free ? `${freeAddon?.name || "That add-on"} is already included (${q.free.label.toLowerCase()}) — no code needed.` : isFreebieCode(code) ? `${code} doesn't cover ${q.pkg.name}.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
                 </form>
               )}
             </div>
@@ -109,9 +114,15 @@ export default async function CartPage({ searchParams }) {
             <aside className="qt-cart-pay" aria-label="Pay">
               <p className="cx-kick">Due now</p>
               <p className="qt-cart-amount cx-num">{money(due)}</p>
+              {!balance && holdQ && fullQ && holdQ.mode === "retainer" && (
+                <div className="qt-payways" role="group" aria-label="How to pay">
+                  <a className={"qt-payway" + (!payFull ? " is-on" : "")} href={`/pay/cart?${keepQ}`}><strong>Hold the date</strong><span>{money(holdQ.dueToday)} today · {money(holdQ.total - holdQ.dueToday)} two weeks before</span></a>
+                  <a className={"qt-payway" + (payFull ? " is-on" : "")} href={`/pay/cart?${keepQ}&pay=full`}><strong>Pay in full</strong><span>{money(fullQ.total)} today · guest library included</span></a>
+                </div>
+              )}
               {stripeConfigured ? (
                 <CartPay
-                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : "", code: q.deal?.code || q.free?.code || "" }}
+                  cart={{ category: q.cat.id, packageId: q.pkg.id, addons: q.chosen.map((a) => a.id), pay: balance ? "balance" : payFull ? "full" : "", code: q.deal?.code || q.free?.code || "" }}
                   who={{ name: String(sp?.n || ""), email: String(sp?.e || ""), phone: String(sp?.t || "") }}
                   label={`Pay ${money(due)}`}
                 />
@@ -119,7 +130,7 @@ export default async function CartPage({ searchParams }) {
                 <p className="cx-note">Online payment isn&apos;t switched on yet — text me at 845-549-4425 and I&apos;ll sort it out.</p>
               )}
               <p className="cx-fine">
-                Secure checkout by Stripe. {balance ? "This settles your booking in full." : q.mode === "retainer" ? "The retainer is non-refundable; one free reschedule with 30 days' notice." : "Paid in full, nothing more to do."} Paying means you agree to the <a href="/terms">terms</a>.
+                Secure checkout by Stripe. {balance ? "This settles your booking in full." : q.mode === "retainer" ? "The retainer is non-refundable; one free reschedule with 30 days' notice." : q.payFull ? "Your date is locked and nothing more is due. One free reschedule with 30 days' notice." : "Paid in full, nothing more to do."} Paying means you agree to the <a href="/terms">terms</a>.
                 Want to change something in {bookingLabel(q)}? Text me first.
               </p>
             </aside>
