@@ -144,17 +144,14 @@ export default function WeddingsPage() {
         <section id="good-time" className="cx-section wd-easy">
           <div className="cx-wrap cx-split">
             <div className="cx-title cx-reveal">
-              <p className="cx-kick">No horror stories</p>
+              <p className="cx-kick">How I work</p>
               <h2 className="cx-h2">You&rsquo;ll laugh a lot. And your wedding will be better with me there.</h2>
             </div>
             <div className="cx-stack cx-reveal">
               <p className="cx-lede">
-                You&rsquo;ve heard the horror stories. The photographer who bossed
-                everybody around. The video guy nobody could find. That&rsquo;s not
-                how I work. I&rsquo;m easy to be around, I learn your people&rsquo;s
-                names, and I work with your DJ, your planner and your venue
-                &mdash; because every one of us is part of making this a great day
-                for you. You relax and have a good time. I&rsquo;ll be having one
+                I don&rsquo;t like putting anyone outside of what they normally feel
+                comfortable with. I work with your DJ, your planner and your
+                venue. You relax and have a good time. I&rsquo;ll be having one
                 too.
               </p>
               <ul className="cx-list wd-easy-list">

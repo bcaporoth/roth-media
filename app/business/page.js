@@ -171,8 +171,8 @@ export default function BusinessPage() {
                   it.
                 </p>
                 <blockquote>
-                  “He does an excellent job at getting everyone comfortable so that the end result is authentic.”
-                  <cite>— Brady, Google review · a promo video for his business</cite>
+                  “If I just give you two or three things to do, it keeps you in the moment.”
+                  <cite>— Brandon</cite>
                 </blockquote>
                 <a href={SMS_HREF} className="cx-link">Text Brandon <Arrow /></a>
               </div>

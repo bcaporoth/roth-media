@@ -275,10 +275,9 @@ export default function CinemaHome() {
                 <span className="cin-mask"><span>with me there.</span></span>
               </h2>
               <p className="cin-lede cin-rise">
-                You’ve heard the horror stories. The photographer who bossed
-                everybody around. The video guy nobody could find. That’s not
-                how I work. I’m easy to be around, I learn your people’s
-                names, and I work with your DJ, your planner and your venue.
+                I don’t like putting anyone outside of what they normally feel
+                comfortable with. I work with your DJ, your planner and your
+                venue.
               </p>
               <p className="cin-say cin-rise">
                 A cinematic wedding film with your real vows and ceremony
@@ -526,9 +525,9 @@ export default function CinemaHome() {
             </div>
             <div className="cin-bento-say cin-rise">
               <blockquote>
-                “He does an excellent job at getting everyone comfortable so
-                that the end result is authentic.”
-                <cite>— Brady, Google review · a promo video for his business</cite>
+                “If I just give you two or three things to do, it keeps you in
+                the moment.”
+                <cite>— Brandon</cite>
               </blockquote>
               <a href={SMS_HREF} className="cin-link">Text Brandon <Arrow /></a>
             </div>
