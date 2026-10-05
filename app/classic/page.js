@@ -248,14 +248,12 @@ export default function Home() {
             </p>
             <p>
               I&apos;ll guide you when you need it, but I don&apos;t do
-              stiff, rigid posing. We keep it easy and relaxed, then capture
-              what actually feels like your story.
+              stiff, rigid posing. We keep it easy and relaxed.
             </p>
             <p>
-              Run a business around here? I probably walked into your store
-              in my free time to see if I could shoot something for you, lol.
-              I just love the random acts of getting to know people and
-              connecting with them — and helping everybody prosper.
+              Run a business around here? A Content Day is a promo, reels,
+              and photos shot at your place — your people and your work, not
+              stock footage.
             </p>
             <p>I&apos;m local to the Valley, and I&apos;d love to work with you.</p>
             <div className="sig">— Brandon Roth</div>

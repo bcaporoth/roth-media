@@ -804,8 +804,8 @@ export default function CloserHome() {
             </p>
             <div className="clo-offer clo-rise">
               <p className="clo-offer-k">If you run a business around here</p>
-              <p className="clo-offer-t">“I probably walked into your store in my free time to see if I could shoot something for you, lol. I just love the random acts of getting to know people and connecting with them — and helping everybody prosper.”</p>
-              <a href={smsWith("Hi Brandon — come by the shop. Here’s where we are:")} className="clo-link">Haven’t made it to yours yet? Tell me where <Arrow /></a>
+              <p className="clo-offer-t">A Content Day is a promo, reels, and photos shot at your place — your people and your work, not stock footage.</p>
+              <a href={smsWith("Hi Brandon — here’s where we are:")} className="clo-link">Tell me where you are <Arrow /></a>
             </div>
             <p className="clo-sig clo-rise">— {OWNER_NAME}, local to the Valley</p>
           </div>

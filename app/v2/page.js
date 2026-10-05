@@ -180,11 +180,11 @@ export default function HomeV2() {
           <div>
             <p className="v2-kick v2-rise">For local businesses</p>
             <h2 className="v2-h2 v2-rise">
-              I’ll buy your product, shoot it, and send you the photos.
+              A promo, reels, and photos — shot at your place in one day.
             </h2>
           </div>
           <div className="v2-offer-side v2-rise">
-            <p>No pitch, no strings. If you love them, we talk.</p>
+            <p>Your people and your work, not stock footage. Delivered within two weeks.</p>
             <Link href="/business" className="v2-pill v2-pill--dark v2-pill--lg">See how it works →</Link>
           </div>
         </section>
@@ -223,8 +223,7 @@ export default function HomeV2() {
             </p>
             <p className="v2-rise">
               I’ll guide you when you need it, but I don’t do stiff, rigid
-              posing. We keep it easy and relaxed, then capture what actually
-              feels like your story.
+              posing. We keep it easy and relaxed.
             </p>
             <p className="v2-rise">I’m local to the Valley, and I’d love to work with you.</p>
             <p className="v2-sig v2-rise">— Brandon Roth</p>
