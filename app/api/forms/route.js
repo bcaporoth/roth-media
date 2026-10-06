@@ -5,6 +5,7 @@ import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../.
 import { clip, visitorId } from "../../../lib/visitor";
 import { priceQuote } from "../../../lib/booking";
 import { cartUrl } from "../../../lib/cart";
+import { TYPE_LABEL } from "../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export async function POST(request) {
     utm: body.utm && typeof body.utm === "object" ? body.utm : {},
   };
   // Intakes remember what they're for (wedding/family/business) → Studio → Clients.
-  if (sub.kind === "intake" && ["wedding", "family", "business"].includes(body.type)) sub.utm = { ...sub.utm, type: body.type };
+  if (sub.kind === "intake" && TYPE_LABEL[body.type]) sub.utm = { ...sub.utm, type: body.type };
   if (!sub.name && !sub.email && !sub.phone)
     return NextResponse.json({ error: "Add a name, email, or phone." }, { status: 422 });
 
