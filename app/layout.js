@@ -55,7 +55,7 @@ const META_DOMAIN_VERIFICATION = process.env.META_DOMAIN_VERIFICATION || "";
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
-      <head>{META_DOMAIN_VERIFICATION && <meta name="facebook-domain-verification" content={META_DOMAIN_VERIFICATION} />}</head>
+      <head>{META_DOMAIN_VERIFICATION ? <meta name="facebook-domain-verification" content={META_DOMAIN_VERIFICATION} /> : null}</head>
       <body>
         {children}
         <SiteBeacon />

@@ -7,7 +7,7 @@ import BrandMark from "../components/BrandMark";
 import CinemaMotion from "../components/home/CinemaMotion";
 import Player from "../components/home/Player";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME, GOOGLE_PAGE_URL } from "../lib/site";
-import { PACKAGES, ADDONS, TRAVEL, money } from "../lib/packages";
+import { PACKAGES, ADDONS, TRAVEL, listedAddons, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
 import { autoDeal, autoDealFor, autoBonus, applyDeal } from "../lib/deals";
 import { videoUrl } from "../lib/media";
@@ -546,7 +546,7 @@ export default function CinemaHome() {
                 ))}
               </ul>
               <p className="cin-fine">
-                Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} +${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""}`).join(" · ")}.
+                Add what fits: {listedAddons("business").map((a) => `${a.name.toLowerCase()} +${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""}`).join(" · ")}.
                 The price is confirmed in writing before we shoot.
               </p>
               {bizDeal && (

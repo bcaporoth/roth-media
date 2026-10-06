@@ -9,7 +9,7 @@ import CloserMotion from "../../../components/lab/closer/CloserMotion";
 import CloserFilm from "../../../components/lab/closer/CloserFilm";
 import CloserPrice from "../../../components/lab/closer/CloserPrice";
 import { EMAIL, SOCIAL, CALENDLY, PHONE, OWNER_NAME } from "../../../lib/site";
-import { PACKAGES, ADDONS, TRAVEL, money } from "../../../lib/packages";
+import { PACKAGES, ADDONS, TRAVEL, listedAddons, money } from "../../../lib/packages";
 import { CAMPAIGN } from "../../../lib/campaign";
 import { autoDeal } from "../../../lib/deals";
 import { videoUrl } from "../../../lib/media";
@@ -210,7 +210,8 @@ const FAQS = {
   ],
   business: [
     ["What does a Content Day cost, and what do I get?", `A Full Content Day is ${money(biz("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(biz("mini").price)}: 8 reels and 10–20 photos.`],
-    ["How fast do I get my content?", "Everything is delivered within two weeks, edited and sized to post. One round of revisions is included."],
+    ["How fast do I get my content?", `Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) is ${money(bAddon("rush").price)}; an extra revision round is ${money(bAddon("revision").price)}.`],
+    ["Can I get more content from the same shoot?", `Yes — a second promo video is ${money(bAddon("promo2").price)}, 8 more reels ${money(bAddon("reels").price)}, 20 more photos ${money(bAddon("photos").price)}, team headshots ${money(bAddon("headshots").price)}, and an extra hour or a second location ${money(bAddon("hour").price)}. Adding a promo to a Mini Content Day is ${money(bAddon("promo").price)}.`],
     ["Do you cover events?", `Yes — Event Coverage is ${money(biz("event").price)}: up to 3 hours of coverage, a 45–90 second highlight short, and a gallery of 50+ edited photos.`],
     ["Can you run ads with the videos?", `Yes — Facebook ads + lead generation is a ${money(bAddon("ads").price)} add-on: ads built from your videos, aimed at local customers, with leads sent straight to you.`],
     ["Can I use the videos in paid ads?", "Yes. All music is licensed through Epidemic Sound and your finished videos are cleared for your website, socials, and online advertising."],
@@ -751,7 +752,7 @@ export default function CloserHome() {
             <CloserPrice aud="wedding" quoteFor="wedding" packages={[FILM, PHOTO]} addons={ADDONS.wedding.filter((a) => !a.hidden)} deal={dealProp} cta="Continue with this quote" fine="A 50% retainer holds your date; the balance is due 14 days before." />
           </div>
           <div data-for="business">
-            <CloserPrice aud="business" quoteFor="business" packages={PACKAGES.business} addons={ADDONS.business} deal={dealProp} cta="Continue with this quote" fine="Paid once. Delivered within two weeks, one round of revisions included." />
+            <CloserPrice aud="business" quoteFor="business" packages={PACKAGES.business} addons={listedAddons("business")} deal={dealProp} cta="Continue with this quote" fine="Paid once. Delivered within two weeks, one round of revisions included." />
           </div>
           <div data-for="family">
             <CloserPrice aud="family" quoteFor="portraits" packages={PACKAGES.family} addons={ADDONS.family} deal={dealProp} cta="Hold a date with this quote" fine="One hour, one location. Sneak peeks within 48 hours." />

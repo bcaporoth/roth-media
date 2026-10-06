@@ -6,7 +6,7 @@ import Reveal from "../../components/Reveal";
 import BizFilm from "../../components/BizFilm";
 import { EMAIL, SAME_AS, CALENDLY } from "../../lib/site";
 import { AREA_SERVED, BUSINESS_ID, breadcrumbLd } from "../../lib/schema";
-import { PACKAGES, ADDONS, money } from "../../lib/packages";
+import { PACKAGES, ADDONS, listedAddons, money } from "../../lib/packages";
 import DealPrice from "../../components/DealPrice";
 import { autoDealFor, applyDeal } from "../../lib/deals";
 import { videoUrl } from "../../lib/media";
@@ -51,7 +51,11 @@ const FAQS = [
   },
   {
     q: "How fast do I get my content?",
-    a: "Everything is delivered within two weeks, edited and sized to post. One round of revisions is included.",
+    a: `Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) is ${money(addon("rush").price)}; an extra revision round is ${money(addon("revision").price)}.`,
+  },
+  {
+    q: "Can I get more content from the same shoot?",
+    a: `Yes — the camera's already up, so it's edit time, not a second trip. A second promo video is ${money(addon("promo2").price)}, 8 more reels ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}. Adding a promo to a Mini Content Day is ${money(addon("promo").price)}.`,
   },
   {
     q: "Do you cover events?",
@@ -203,7 +207,7 @@ export default function BusinessPage() {
             </div>
             <div className="bz-price-notes cx-reveal">
               <p className="cx-fine">
-                Add what fits: {ADDONS.business.map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
+                Add what fits: {listedAddons("business").map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
               </p>
               {deal && (
                 <p className="cx-offer">

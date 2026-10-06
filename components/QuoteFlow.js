@@ -4,7 +4,7 @@ import { track } from "../lib/track";
 import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
 import { useEffect, useRef, useState } from "react";
-import { CATEGORIES, PACKAGES, ADDONS, DETAIL, TRAVEL, money } from "../lib/packages";
+import { CATEGORIES, PACKAGES, DETAIL, TRAVEL, addonsFor, money } from "../lib/packages";
 import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie, isFreebieCode } from "../lib/deals";
 import { REFERRAL_AMOUNT, isFriendCode, referralEligible } from "../lib/referral-rules";
 
@@ -72,7 +72,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
 
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
-  const addonList = pkg ? ADDONS[category].filter((a) => !pkg.includes.includes(a.id) && !a.hidden) : [];
+  const addonList = pkg ? addonsFor(category, pkg).filter((a) => !a.hidden) : [];
   // Biggest live deal wins (lib/deals.js); checkout re-checks it on the server.
   const deal = pkg ? bestDeal({ category, packageId: pkg.id, code }) : null;
   // An included add-on (the launch bonus, or a code like GUEST) rides along whether or not it's ticked.

@@ -30,7 +30,7 @@ export function GET() {
     `- Full Content Day for businesses — ${money(biz("day").price)}: one shoot day at your business; a 45–90 second promo, 8 vertical reels, 15–30 edited photos. Delivered within two weeks, cleared for ads.`,
     `- Mini Content Day — ${money(biz("mini").price)}: 8 vertical reels and 10–20 edited photos, no promo.`,
     `- Event coverage — ${money(biz("event").price)}: up to 3 hours, a 45–90 second highlight short and 50+ edited photos.`,
-    `- Business add-ons: all raw footage ${money(bAdd("raw").price)}; Facebook ads + lead generation ${money(bAdd("ads").price)}; a website built from your content ${money(bAdd("website").price)} then ${money(bAdd("website").monthly)}/month.`,
+    `- Business add-ons, from the same shoot day: a second promo video ${money(bAdd("promo2").price)} (adding a promo to a Mini Content Day is ${money(bAdd("promo").price)}); 8 more reels ${money(bAdd("reels").price)}; 20 more photos ${money(bAdd("photos").price)}; team headshots ${money(bAdd("headshots").price)}; an extra hour or a second location ${money(bAdd("hour").price)}; all raw footage ${money(bAdd("raw").price)}; rush delivery in one week ${money(bAdd("rush").price)}; an extra revision round ${money(bAdd("revision").price)}; Facebook ads + lead generation ${money(bAdd("ads").price)}; a website built from your content ${money(bAdd("website").price)} then ${money(bAdd("website").monthly)}/month.`,
     `- Portrait session (engagement, senior, family, couples) — ${money(portrait.price)}: one hour, one location, 30+ edited photos, sneak peeks within 48 hours.`,
     "",
     "## Where we work",
