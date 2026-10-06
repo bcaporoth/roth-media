@@ -180,11 +180,11 @@ export default function HomeV2() {
           <div>
             <p className="v2-kick v2-rise">For local businesses</p>
             <h2 className="v2-h2 v2-rise">
-              I’ll buy your product, shoot it, and send you the photos.
+              Mostly word of mouth.
             </h2>
           </div>
           <div className="v2-offer-side v2-rise">
-            <p>No pitch, no strings. If you love them, we talk.</p>
+            <p>And sometimes I just walk into a place I like and shoot something. If you want that to be yours, text me where you are.</p>
             <Link href="/business" className="v2-pill v2-pill--dark v2-pill--lg">See how it works →</Link>
           </div>
         </section>

@@ -701,7 +701,7 @@ export default function CinemaHome() {
               I’ll guide you when you need it, but I don’t do stiff, rigid
               posing. We keep it easy and relaxed.
             </p>
-            <p className="cin-rise">I’m local to the Valley, and I’d love to work with you.</p>
+            <p className="cin-rise">Most of my work comes by word of mouth. I’m local to the Valley, and I’d love to work with you.</p>
             <p className="cin-sig cin-rise">— {OWNER_NAME}</p>
           </div>
         </section>
