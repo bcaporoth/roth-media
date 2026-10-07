@@ -176,7 +176,8 @@ export async function POST(request) {
       const hasLogin = logins.has(p.email);
       const mail = readyEmail({ name: p.name, email: p.email, gallery: g, hasLogin, note });
       try {
-        await sendEmail({ to: p.email, subject: mail.subject, text: mail.text, html: mail.html });
+        // Brandon gets a copy of every one, so his inbox shows what each client saw.
+        await sendEmail({ to: p.email, cc: [ADMIN_EMAIL], subject: mail.subject, text: mail.text, html: mail.html });
         results.push({ to: p.email, name: p.name, hasLogin, sent: true });
       } catch (err) {
         results.push({ to: p.email, name: p.name, hasLogin, sent: false, error: err.message });
