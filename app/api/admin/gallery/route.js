@@ -445,7 +445,7 @@ export async function POST(request) {
     const jpgName = (f) => f.replace(/\.[^.]+$/, "") + ".jpg";
     const [{ data: gallery }, { data: media }] = await Promise.all([
       db.from("galleries").select("id, cover_filename").eq("id", galleryId).maybeSingle(),
-      db.from("media").select("filename, kind, position").eq("gallery_id", galleryId)
+      db.from("media").select("filename, kind, position, section").eq("gallery_id", galleryId)
         .order("position", { ascending: true }),
     ]);
     if (!gallery) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
@@ -453,6 +453,7 @@ export async function POST(request) {
       (media || []).map(async (m) => ({
         filename: m.filename,
         kind: m.kind,
+        album: m.section || null,
         coverName: jpgName(m.filename),
         thumbUrl: await signedUrl(photoKey(galleryId, "thumb", jpgName(m.filename))).catch(() => null),
       }))
@@ -470,6 +471,73 @@ export async function POST(request) {
       .eq("id", galleryId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true, cover: safe });
+  }
+
+  // ── Albums ("sections" on media): name, rename, reorder ──
+  // An album is just media.section; order is media.position (the client
+  // gallery groups by first appearance). "" / null = no album.
+  const albumName = (v) => {
+    const s = String(v ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+    return s || null;
+  };
+
+  // Put these files in an album (or in none).
+  if (body.action === "album-assign") {
+    const { galleryId } = body;
+    const filenames = Array.isArray(body.filenames) ? body.filenames.map(String).slice(0, 1000) : [];
+    if (!isUuid(galleryId) || filenames.length === 0)
+      return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const album = albumName(body.album);
+    const { error, count } = await db
+      .from("media")
+      .update({ section: album }, { count: "exact" })
+      .eq("gallery_id", galleryId)
+      .in("filename", filenames);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, album, moved: count ?? filenames.length });
+  }
+
+  // Rename an album (from "" = name the files that have none).
+  if (body.action === "album-rename") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const from = albumName(body.from);
+    const to = albumName(body.to);
+    if (from === to) return NextResponse.json({ ok: true, album: to, renamed: 0 });
+    let q = db.from("media").update({ section: to }, { count: "exact" }).eq("gallery_id", galleryId);
+    q = from === null ? q.is("section", null) : q.eq("section", from);
+    const { error, count } = await q;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, album: to, renamed: count ?? 0 });
+  }
+
+  // Reorder albums: order = album names first to last ("" for no album).
+  // Files keep their order inside each album; positions are renumbered.
+  if (body.action === "album-order") {
+    const { galleryId } = body;
+    const order = Array.isArray(body.order) ? body.order.map((v) => albumName(v) || "") : [];
+    if (!isUuid(galleryId) || order.length === 0 || order.length > 200)
+      return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data: rows, error: readError } = await db
+      .from("media")
+      .select("id, position, section")
+      .eq("gallery_id", galleryId)
+      .order("position", { ascending: true });
+    if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
+    const rank = (r) => {
+      const i = order.indexOf(r.section || "");
+      return i === -1 ? order.length : i; // albums not named in the order go last, in place
+    };
+    const sorted = (rows || []).map((r, i) => ({ ...r, i })).sort((a, b) => rank(a) - rank(b) || a.i - b.i);
+    const changes = sorted.map((r, position) => ({ id: r.id, position })).filter((u, i) => sorted[i].position !== u.position);
+    for (let i = 0; i < changes.length; i += 50) {
+      const results = await Promise.all(
+        changes.slice(i, i + 50).map((u) => db.from("media").update({ position: u.position }).eq("id", u.id))
+      );
+      const failed = results.find((r) => r.error);
+      if (failed) return NextResponse.json({ error: failed.error.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, moved: changes.length });
   }
 
   if (body.action === "set-design") {

@@ -271,6 +271,27 @@ a.trow:hover strong { color: var(--clay); }
 .gfiles-bar .achip { min-height: 44px; display: inline-flex; align-items: center; }
 .gfiles-bar .cover-picker-hint { margin: 0; }
 
+/* Albums tab */
+.galb { display: grid; gap: 0.7rem; }
+.galb-hint, .galb-sub { margin: 0; }
+.galb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.galb-row { display: flex; flex-wrap: wrap; gap: 0.4rem 0.7rem; align-items: center; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+.galb-row.is-on { border-color: var(--clay); }
+.galb-name { flex: 1 1 10rem; min-width: 0; display: flex; gap: 0.6rem; align-items: baseline; padding: 0.2rem 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; min-height: 32px; }
+.galb-name strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.galb-name em { font-style: normal; font-size: 0.78rem; color: var(--ink-soft); white-space: nowrap; }
+.galb-actions { display: flex; gap: 0.3rem; margin-left: auto; }
+.galb-actions .achip, .galb-rename .achip, .galb-bar .achip { min-height: 40px; display: inline-flex; align-items: center; }
+.galb-rename { flex: 1; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; min-width: 0; }
+.galb-rename input, .galb-bar input, .galb-bar select { flex: 1 1 9rem; min-width: 0; min-height: 40px; padding: 0.3rem 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; }
+.galb-tag { font-style: italic; }
+.galb-moving { font-size: 0.86rem; }
+.galb-sub .rm-linkbtn { font: inherit; }
+@media (max-width: 480px) {
+  .galb-actions { margin-left: 0; width: 100%; }
+  .galb-actions .achip { flex: 1; justify-content: center; }
+}
+
 /* Delete tab */
 .gdelete { display: grid; gap: 0.8rem; }
 .gdelete-warn { margin: 0; padding: 0.75rem 0.9rem; border: 1px solid #b3402e; border-radius: 12px; font-size: 0.86rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
