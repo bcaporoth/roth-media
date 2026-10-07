@@ -58,7 +58,11 @@ export default function PortalLogin() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [autoSetup, setAutoSetup] = useState(false);
+  // Where to go after signing in (?next=/portal/gallery/…). Portal paths only.
+  const [nextPath, setNextPath] = useState("");
   const codeRef = useRef(null);
+  const safeNext = (v) => (/^\/portal(\/[\w-]+)*\/?$/.test(String(v || "")) ? String(v) : "");
+  const afterSetup = (next) => `/portal/account?setup=1${next ? `&next=${encodeURIComponent(next)}` : ""}`;
 
   // Consume an emailed sign-in link landing here (works on any device),
   // then continue to the portal — or to password setup if that's what
@@ -114,15 +118,17 @@ export default function PortalLogin() {
       return;
     }
 
-    // Access-invite email: /portal?email=…&setup=1 prefills the address and
-    // goes straight to the one-time-code step (once — the URL is cleaned so
-    // a refresh doesn't resend).
+    // Access-invite / "it's ready" email: /portal?email=…&setup=1 prefills the
+    // address and goes straight to the one-time-code step (once — the URL is
+    // cleaned so a refresh doesn't resend). ?next= is where to land after.
+    const wanted = safeNext(params.get("next"));
+    if (wanted) setNextPath(wanted);
     const invited = params.get("email");
     if (invited) {
       setEmail(cleanEmail(invited));
       if (params.get("setup") === "1") setAutoSetup(true);
-      window.history.replaceState(null, "", "/portal");
     }
+    if (invited || wanted) window.history.replaceState(null, "", "/portal");
   }, []);
 
   useEffect(() => {
@@ -149,7 +155,7 @@ export default function PortalLogin() {
         password,
       });
       if (err) throw err;
-      window.location.assign("/portal");
+      window.location.assign(nextPath || "/portal");
     } catch {
       const known = await emailIsKnown(addr);
       setBusy(false);
@@ -182,7 +188,7 @@ export default function PortalLogin() {
         );
         return;
       }
-      window.localStorage.setItem(NEXT_KEY, "/portal/account?setup=1");
+      window.localStorage.setItem(NEXT_KEY, afterSetup(nextPath));
       const supabase = createSenderClient();
       const { error: err } = await supabase.auth.signInWithOtp({
         email: addr,
@@ -221,7 +227,7 @@ export default function PortalLogin() {
       });
       if (err) throw err;
       window.localStorage.removeItem(NEXT_KEY);
-      window.location.assign("/portal/account?setup=1");
+      window.location.assign(afterSetup(nextPath));
     } catch {
       setMode("sent");
       setError(

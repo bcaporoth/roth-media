@@ -1,4 +1,5 @@
 import PortalLogin from "../../components/PortalLogin";
+import { redirect } from "next/navigation";
 import PortalNav from "../../components/PortalNav";
 import { PortalLobby, PortalNotice, PortalHome } from "../../components/PortalViews";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
@@ -105,7 +106,12 @@ async function getClientData() {
   };
 }
 
-export default async function PortalPage() {
+// Only portal paths may be a destination (the "it's ready" email and the
+// gallery page's sign-in bounce use this).
+const safeNext = (v) => (/^\/portal(\/[\w-]+)*\/?$/.test(String(v || "")) ? String(v) : "");
+
+export default async function PortalPage({ searchParams }) {
+  const next = safeNext((await searchParams)?.next);
   if (!portalConfigured) {
     return (
       <PortalLobby
@@ -123,6 +129,8 @@ export default async function PortalPage() {
 
   const { user, client, galleries, payments, hostedGalleries } =
     await getClientData();
+
+  if (user && next) redirect(next);
 
   if (!user) {
     return (

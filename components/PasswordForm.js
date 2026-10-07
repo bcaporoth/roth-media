@@ -6,7 +6,9 @@ import { createSupabaseBrowser } from "../lib/supabase-browser";
 // Set or change the account password. Used on /portal/account for both
 // first-time setup (after the one-time email) and later changes.
 
-export default function PasswordForm({ setup = false }) {
+// next: a portal path to open once the password is saved (the album the
+// "it's ready" email pointed at).
+export default function PasswordForm({ setup = false, next = "" }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -50,8 +52,8 @@ export default function PasswordForm({ setup = false }) {
           From now on, just sign in with your email and this password — no
           more email links.
         </p>
-        <a href="/portal" className="cx-btn cx-btn--light cx-btn--lg">
-          Go to my portal →
+        <a href={next || "/portal"} className="cx-btn cx-btn--light cx-btn--lg">
+          {next.includes("/gallery/") ? "Open my album →" : "Go to my portal →"}
         </a>
       </div>
     );

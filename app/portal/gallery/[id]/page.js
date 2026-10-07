@@ -49,7 +49,7 @@ export default async function GalleryPage({ params }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/portal");
+  if (!user) redirect(`/portal?next=${encodeURIComponent(`/portal/gallery/${id}`)}`);
 
   // Clients stay behind RLS (their own galleries only); the studio admin
   // can open any gallery via the service client.

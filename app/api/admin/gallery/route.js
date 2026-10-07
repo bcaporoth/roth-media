@@ -17,7 +17,9 @@ import { R2_BUCKET, r2Configured, photoKey, signedUrl, getDims, putDims } from "
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
-import { setOwner, sendAccessInvite } from "../../../../lib/album-access";
+import { setOwner, sendAccessInvite, cleanEmail, EMAIL_RE } from "../../../../lib/album-access";
+import { readyEmail } from "../../../../lib/ready-email";
+import { isNoEmail } from "../../../../lib/no-email";
 import {
   isUuid,
   galleryPrefix,
@@ -141,6 +143,52 @@ export async function POST(request) {
       members = (data || []).map((m) => ({ id: m.client_id, name: m.clients?.name || "", email: m.clients?.email || "" }));
     } catch {}
     return NextResponse.json({ gallery: { id: g.id, title: g.title, event_date: g.event_date, ownerName: g.clients?.name || "", ownerEmail: g.clients?.email || "" }, members });
+  }
+
+  // "It's ready": email the owner and everyone with access. Each person's
+  // button lands on the gallery — through sign-in if they have a login,
+  // through one-time-code setup if they don't. Records ready_sent_at
+  // (supabase/ready.sql); without that column the send still goes out.
+  if (body.action === "send-ready") {
+    const { galleryId } = body;
+    const note = String(body.note || "").trim().slice(0, 600);
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    if (!resendConfigured) return NextResponse.json({ error: "Email isn't set up on this server (RESEND_API_KEY)." }, { status: 500 });
+    const { data: g } = await db.from("galleries").select("id, title, share_token, client_id, clients!client_id(name, email)").eq("id", galleryId).maybeSingle();
+    if (!g) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    const people = [{ name: g.clients?.name || "", email: cleanEmail(g.clients?.email) }];
+    try {
+      const { data } = await db.from("gallery_members").select("client_id, clients(name, email)").eq("gallery_id", galleryId);
+      for (const m of data || []) people.push({ name: m.clients?.name || "", email: cleanEmail(m.clients?.email) });
+    } catch {}
+    const seen = new Set();
+    const recipients = people.filter((p) => EMAIL_RE.test(p.email) && !isNoEmail(p.email) && p.email !== ADMIN_EMAIL && !seen.has(p.email) && seen.add(p.email));
+    if (!recipients.length) return NextResponse.json({ error: "Nobody on this gallery has an email yet — add one under Edit first." }, { status: 422 });
+    // Who already has a portal login (Supabase auth pages; a roster this size fits in a page or two).
+    const logins = new Set();
+    for (let page = 1; page <= 20; page++) {
+      const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
+      for (const u of data?.users || []) logins.add((u.email || "").toLowerCase());
+      if ((data?.users || []).length < 200) break;
+    }
+    const results = [];
+    for (const p of recipients) {
+      const hasLogin = logins.has(p.email);
+      const mail = readyEmail({ name: p.name, email: p.email, gallery: g, hasLogin, note });
+      try {
+        await sendEmail({ to: p.email, subject: mail.subject, text: mail.text, html: mail.html });
+        results.push({ to: p.email, name: p.name, hasLogin, sent: true });
+      } catch (err) {
+        results.push({ to: p.email, name: p.name, hasLogin, sent: false, error: err.message });
+      }
+    }
+    const sentAt = new Date().toISOString();
+    let recorded = false;
+    if (results.some((r) => r.sent)) {
+      const { error } = await db.from("galleries").update({ ready_sent_at: sentAt }).eq("id", galleryId);
+      recorded = !error;
+    }
+    return NextResponse.json({ ok: true, sentAt, recorded, results });
   }
 
   // Edit title / date / owner. A new owner email is added to the roster.

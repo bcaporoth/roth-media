@@ -14,6 +14,7 @@ import PremierePanel from "./PremierePanel";
 import ReviewButton from "./ReviewButton";
 import TypedConfirm from "./TypedConfirm";
 import { isNoEmail } from "../lib/no-email";
+import { readyEmail } from "../lib/ready-email";
 
 async function api(payload) {
   const res = await fetch("/api/admin/gallery", {
@@ -34,6 +35,7 @@ const TABS = [
   { key: "add", label: "+ Add files" },
   { key: "albums", label: "Albums" },
   { key: "files", label: "Files" },
+  { key: "ready", label: "It's ready ✉" },
   { key: "delete", label: "Delete", danger: true },
 ];
 
@@ -431,6 +433,99 @@ function GalleryAlbums({ gallery, onChanged }) {
   );
 }
 
+// "It's ready": one button that emails the owner (and everyone added to the
+// gallery) a link that lands on the album — through sign-in for people with
+// a login, through one-time-code setup for people without one.
+const when = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");
+function GalleryReady({ gallery, onChanged }) {
+  const [data, setData] = useState(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [msg, setMsg] = useState("");
+  const [sentAt, setSentAt] = useState(gallery.readySentAt || null);
+
+  useEffect(() => {
+    api({ action: "detail", galleryId: gallery.id })
+      .then(setData)
+      .catch((e) => setMsg(e.message));
+  }, [gallery.id]);
+
+  if (!data) return <p className="cover-picker-hint">{msg || "Loading…"}</p>;
+
+  const seen = new Set();
+  const people = [{ name: data.gallery.ownerName, email: data.gallery.ownerEmail }, ...data.members]
+    .map((p) => ({ name: p.name || "", email: String(p.email || "").trim().toLowerCase() }))
+    .filter((p) => p.email && !isNoEmail(p.email) && !seen.has(p.email) && seen.add(p.email));
+  const first = people[0];
+  const preview = first
+    ? readyEmail({ name: first.name, email: first.email, gallery: { id: gallery.id, title: gallery.title, share_token: gallery.share_token }, hasLogin: true, note })
+    : null;
+
+  async function send() {
+    setBusy(true);
+    setMsg("");
+    setResult(null);
+    try {
+      const r = await api({ action: "send-ready", galleryId: gallery.id, note });
+      setResult(r);
+      if (r.results.some((x) => x.sent)) setSentAt(r.sentAt);
+      if (!r.recorded) setMsg("Sent — but the sent time isn't being saved yet: run supabase/ready.sql once in the Supabase SQL editor.");
+      onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="gready">
+      {people.length === 0 ? (
+        <p className="cover-picker-hint">Nobody on this gallery has an email yet — add one under Edit first.</p>
+      ) : (
+        <>
+          <p className="cover-picker-hint">
+            Emails {people.length === 1 ? "the owner" : `${people.length} people`} a button that opens this album. Someone with a login signs in and lands on it; someone brand new sets up their login first (one code, one password), then lands on it. The share link rides along too.
+          </p>
+          <ul className="gready-to">
+            {people.map((p) => (
+              <li key={p.email}><strong>{p.name || p.email}</strong>{p.name ? <em> · {p.email}</em> : null}</li>
+            ))}
+          </ul>
+          <label className="gready-note">
+            <span>Add a line, in your words (optional)</span>
+            <textarea rows={2} maxLength={600} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Goes right under “Your album is ready.”" />
+          </label>
+          {preview && (
+            <details className="gready-preview">
+              <summary>Preview the email</summary>
+              <p className="gready-subject"><strong>Subject:</strong> {preview.subject}</p>
+              <pre>{preview.text}</pre>
+            </details>
+          )}
+          <div className="gfiles-bar gready-bar">
+            <button type="button" className="abtn" disabled={busy} onClick={send}>
+              {busy ? "Sending…" : sentAt ? `Send again to ${people.length}` : `Send to ${people.length} ${people.length === 1 ? "person" : "people"}`}
+            </button>
+            {sentAt && <span className="cover-picker-hint">Last sent {when(sentAt)}</span>}
+          </div>
+          {result && (
+            <ul className="gready-results" role="status">
+              {result.results.map((r) => (
+                <li key={r.to} className={r.sent ? "" : "is-failed"}>
+                  {r.sent ? "✓" : "✕"} {r.name || r.to}{r.name ? ` (${r.to})` : ""} — {r.sent ? (r.hasLogin ? "has a login, lands on the album" : "no login yet, sets one up first") : r.error}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+      {msg && <p className="cover-picker-hint gfiles-msg" role="status">{msg}</p>}
+    </div>
+  );
+}
+
 function GalleryDelete({ gallery, onDeleted }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -556,6 +651,7 @@ export default function GalleryManage({ gallery, open, onChanged }) {
         )}
         {pane("albums", <GalleryAlbums key={ver} gallery={g} onChanged={onChanged} />)}
         {pane("files", <GalleryFiles key={ver} gallery={g} onChanged={onChanged} />)}
+        {pane("ready", <GalleryReady gallery={g} onChanged={onChanged} />)}
         {pane("delete", <GalleryDelete gallery={g} onDeleted={onChanged} />)}
       </div>
     </div>

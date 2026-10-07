@@ -32,8 +32,9 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false });
 
   // Studio extras — both tolerate studio.sql not being run yet.
-  const [{ data: reviews }, { data: acts }, newCount] = await Promise.all([
+  const [{ data: reviews }, { data: readies }, { data: acts }, newCount] = await Promise.all([
     db.from("galleries").select("id, review_requested_at"),
+    db.from("galleries").select("id, ready_sent_at"),
     db
       .from("gallery_activity")
       .select("gallery_id, action, created_at")
@@ -42,6 +43,7 @@ export default async function AdminPage() {
     newLeadCount(),
   ]);
   const reviewedAt = new Map((reviews || []).map((r) => [r.id, r.review_requested_at]));
+  const readyAt = new Map((readies || []).map((r) => [r.id, r.ready_sent_at]));
   const activity = new Map();
   for (const a of acts || []) {
     const cur = activity.get(a.gallery_id) || { views: 0, saves: 0, last: a.created_at };
@@ -64,6 +66,7 @@ export default async function AdminPage() {
       clientName: g.clients?.name || "",
       clientEmail: g.clients?.email || "",
       reviewRequestedAt: reviewedAt.get(g.id) || null,
+      readySentAt: readyAt.get(g.id) || null,
       activity: activity.get(g.id) || null,
       coverUrl:
         r2Configured && g.cover_filename

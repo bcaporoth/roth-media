@@ -24,6 +24,7 @@ export default async function AccountPage({ searchParams }) {
 
   const params = await searchParams;
   const setup = params?.setup === "1";
+  const next = /^\/portal(\/[\w-]+)*\/?$/.test(String(params?.next || "")) ? String(params.next) : "";
 
   return (
     <PortalAccount
@@ -37,7 +38,7 @@ export default async function AccountPage({ searchParams }) {
       email={user.email}
       setup={setup}
     >
-      <PasswordForm setup={setup} />
+      <PasswordForm setup={setup} next={next} />
     </PortalAccount>
   );
 }

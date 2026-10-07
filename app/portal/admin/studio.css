@@ -292,6 +292,21 @@ a.trow:hover strong { color: var(--clay); }
   .galb-actions .achip { flex: 1; justify-content: center; }
 }
 
+/* It's ready tab */
+.gready { display: grid; gap: 0.75rem; }
+.gready-to { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.gready-to em { font-style: normal; color: var(--ink-soft); font-size: 0.82rem; }
+.gready-note { display: grid; gap: 0.3rem; font-size: 0.8rem; color: var(--ink-soft); }
+.gready-note textarea { width: 100%; box-sizing: border-box; padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: 0.92rem; resize: vertical; }
+.gready-preview { border: 1px solid var(--line); border-radius: 12px; padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+.gready-preview summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.gready-subject { margin: 0.4rem 0; }
+.gready-preview pre { margin: 0.4rem 0 0.3rem; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.5; color: var(--ink); }
+.gready-bar .abtn { min-height: 44px; }
+.gready-results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.85rem; }
+.gready-results .is-failed { color: #b3402e; }
+.admin-shell.is-dark .gready-results .is-failed { color: #ec8a78; }
+
 /* Delete tab */
 .gdelete { display: grid; gap: 0.8rem; }
 .gdelete-warn { margin: 0; padding: 0.75rem 0.9rem; border: 1px solid #b3402e; border-radius: 12px; font-size: 0.86rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
