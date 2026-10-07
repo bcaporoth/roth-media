@@ -373,6 +373,14 @@
   font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.4rem, 3.4vw, 2.3rem); line-height: 1.1; letter-spacing: -0.02em; color: var(--fg);
 }
 .pt-gal .pgal-section-count { font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em; color: var(--pt-accent, var(--gold)); font-variant-numeric: tabular-nums; }
+/* per-album save: sits with the count on the heading's right; drops under the title on narrow phones */
+.pt-gal .pgal-section-side { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; justify-content: flex-end; }
+.pt-gal .pgal-section-save { min-height: 36px; padding: 0 0.8rem; font-size: 0.66rem; letter-spacing: 0.1em; white-space: nowrap; }
+.pt-gal .pgal-section-save[aria-busy="true"] { cursor: progress; }
+@media (max-width: 480px) {
+  .pt-gal .pgal-section-title { flex-wrap: wrap; row-gap: 0.5rem; }
+  .pt-gal .pgal-section-side { flex-basis: 100%; justify-content: space-between; }
+}
 
 /* masonry */
 .pt-gal .gallery.pgal-grid { display: flex; align-items: flex-start; gap: var(--pt-gap); }

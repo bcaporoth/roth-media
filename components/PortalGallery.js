@@ -85,7 +85,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   // (2200px) keeps a 20-photo save around 30 MB — the share sheet chokes on
   // gigabytes of originals, and full res stays a tap away per photo or via
   // the album zip.
-  const fetchSelected = async (chosen) => {
+  const fetchSelected = async (chosen, onProgress = setBulk) => {
     const files = new Array(chosen.length);
     let done = 0;
     let idx = 0;
@@ -100,7 +100,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           type: blob.type || "image/jpeg",
         });
         done += 1;
-        setBulk({ done, total: chosen.length, phase: "fetch" });
+        onProgress({ done, total: chosen.length, phase: "fetch" });
       }
     };
     await Promise.all(
@@ -172,6 +172,76 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     }
     setBulk(null);
     exitSelect();
+  };
+
+  // "Save this album": every photo in one album, no selecting. Phones get
+  // the share sheet with web-size JPEGs (same as Select); desktop downloads
+  // the originals one after another. Videos are left out, like Select.
+  const [albumBusy, setAlbumBusy] = useState(null); // { key, done, total, phase }
+  const [albumPending, setAlbumPending] = useState(null); // album key whose files await one more tap
+  const albumPendingRef = useRef(null); // { key, files }
+
+  const saveAlbum = async (group) => {
+    if (albumBusy || bulk) return;
+    const key = group.key || "";
+    const held = albumPendingRef.current;
+    if (held && held.key === key) {
+      albumPendingRef.current = null;
+      setAlbumPending(null);
+      try {
+        await navigator.share({ files: held.files });
+      } catch {
+        /* sheet closed — nothing to undo */
+      }
+      return;
+    }
+    const chosen = group.entries.map(([it]) => it).filter((it) => it.kind !== "video");
+    if (!chosen.length) return;
+    const progress = (p) => setAlbumBusy({ key, ...p });
+
+    if (touchShare) {
+      let files = null;
+      try {
+        progress({ done: 0, total: chosen.length, phase: "fetch" });
+        files = await fetchSelected(chosen, progress);
+        setAlbumBusy(null);
+        if (!navigator.canShare({ files })) throw new Error("no file share");
+        await navigator.share({ files });
+        return;
+      } catch (err) {
+        setAlbumBusy(null);
+        if (err?.name === "AbortError") return;
+        if (err?.name === "NotAllowedError" && files) {
+          albumPendingRef.current = { key, files };
+          setAlbumPending(key);
+          return;
+        }
+      }
+    }
+
+    progress({ done: 0, total: chosen.length, phase: "download" });
+    for (let i = 0; i < chosen.length; i++) {
+      const a = document.createElement("a");
+      a.href = chosen[i].downloadUrl;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      progress({ done: i + 1, total: chosen.length, phase: "download" });
+      await new Promise((r) => setTimeout(r, 450));
+    }
+    setAlbumBusy(null);
+  };
+
+  const albumSaveLabel = (group) => {
+    const key = group.key || "";
+    const photos = group.entries.filter(([it]) => it.kind !== "video").length;
+    if (albumBusy && albumBusy.key === key)
+      return albumBusy.phase === "fetch"
+        ? `Preparing ${albumBusy.done}/${albumBusy.total}…`
+        : `Downloading ${albumBusy.done}/${albumBusy.total}…`;
+    if (albumPending === key) return `Tap to save ${photos}`;
+    return touchShare ? `Save all ${photos} to Photos` : `Download all ${photos}`;
   };
 
   useEffect(() => {
@@ -450,8 +520,22 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           {group.title && (
             <h2 className="pgal-section-title">
               {group.title}
-              <span className="pgal-section-count">
-                {group.entries.length}
+              <span className="pgal-section-side">
+                <span className="pgal-section-count">
+                  {group.entries.length}
+                </span>
+                {!selectMode && group.entries.some(([it]) => it.kind !== "video") && (
+                  <button
+                    type="button"
+                    className="pgal-tool-btn pgal-section-save"
+                    onClick={() => saveAlbum(group)}
+                    disabled={!!bulk || (!!albumBusy && albumBusy.key !== (group.key || ""))}
+                    aria-busy={!!albumBusy && albumBusy.key === (group.key || "")}
+                    aria-label={`${albumSaveLabel(group)} from ${group.title}`}
+                  >
+                    {albumSaveLabel(group)}
+                  </button>
+                )}
               </span>
             </h2>
           )}
