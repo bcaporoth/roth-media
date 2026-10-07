@@ -3871,6 +3871,11 @@ body:has(.lightbox) nav.rm-nav {
 /* ── GUIDED QUOTE FLOW ──
    One entrance (Photo / Video / Both), one exit (the quote request).
    Reuses .qsvc, .qtoggle, .qmatch, .quote-form input styling. */
+/* "Sara sent you $100 off" — the friend-link banner on /quote (both looks) */
+.qt-friend { display: grid; gap: 0.2rem; margin: 0 0 1.4rem; padding: 0.9rem 1.1rem; border: 1px solid var(--gold, #cbb06a); border-radius: 12px; background: rgba(203, 176, 106, 0.12); }
+.qt-friend strong { font-size: 1.05rem; line-height: 1.3; }
+.qt-friend span { font-size: 0.9rem; opacity: 0.85; line-height: 1.4; }
+.qt-code-toggle { justify-self: start; align-self: end; font-size: 0.82rem; }
 .qflow {
   position: relative;
   max-width: 900px;

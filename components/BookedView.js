@@ -85,11 +85,11 @@ export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amoun
                 <p className="cx-kick">{pitch.kick}</p>
                 <h2 className="cx-h2 qt-q">{pitch.title}</h2>
                 <p className="cx-lede">{pitch.body}</p>
-                <p className="qt-refer-code cx-num">{refCode}</p>
                 <p className="cx-cta-row">
                   <a className="cx-btn cx-btn--light cx-btn--lg" href={`sms:?&body=${encodeURIComponent(pitch.text(refCode))}`}>{pitch.button}</a>
                   <a className="cx-btn cx-btn--ghost cx-btn--lg" href={link}>{link.replace(/^https:\/\//, "")}</a>
                 </p>
+                <p className="cx-fine">Your link does it all — when they open it, the {money(REFERRAL_AMOUNT)} is already on. If they'd rather type something, your code is <span className="cx-num">{refCode}</span>.</p>
                 <p className="cx-fine">Give {money(REFERRAL_AMOUNT)}, get {money(REFERRAL_AMOUNT)}. Works on weddings and business packages; the $100 lands once their booking is paid.</p>
               </div>
             ); })()}

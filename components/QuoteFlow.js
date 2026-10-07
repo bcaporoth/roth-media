@@ -6,7 +6,7 @@ import BookCall from "./BookCall";
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, DETAIL, TRAVEL, addonsFor, money } from "../lib/packages";
 import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie, isFreebieCode } from "../lib/deals";
-import { REFERRAL_AMOUNT, isFriendCode, referralEligible } from "../lib/referral-rules";
+import { REFERRAL_AMOUNT, isFriendCode, isReferralCode, referralEligible } from "../lib/referral-rules";
 
 // ── Three screens. One way in, one way out. ─────────────────────────
 // 1. What's it for  →  2. Pick a package (+ a couple of add-ons)  →
@@ -67,6 +67,11 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   const [sent, setSent] = useState(null);
   const [bookError, setBookError] = useState("");
   const [code, setCode] = useState(initialCode);
+  // Came in on a friend's link (?ref=FRIEND-SARA-7K2P): the $100 is already
+  // on, so say so up top in plain words and keep the code box out of the way.
+  const viaFriend = isReferralCode(initialCode);
+  const friendName = viaFriend ? (() => { const s = initialCode.trim().toUpperCase().split("-")[1] || ""; return s.charAt(0) + s.slice(1).toLowerCase(); })() : "";
+  const [showCode, setShowCode] = useState(!viaFriend);
   // Cinema view only: once the quote is sent, bring the confirmation into view (the form above it is gone).
   useEffect(() => { if (cinema && status === "sent") topRef.current?.scrollIntoView({ block: "start" }); }, [cinema, status]);
 
@@ -185,6 +190,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
         <h2 className="cx-h2">Got it — your quote is on its way.</h2>
         <p className="cx-lede">
           {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
+          {friend > 0 && viaFriend ? ` ${friendName}'s ${friend} off is on it.` : ""}
         </p>
         <BookCall name={sent.who} email={sent.email} from="quote" />
       </div>
@@ -194,6 +200,12 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   if (cinema) {
     return (
       <div className="qt-flow" ref={topRef} data-step={step}>
+        {viaFriend && code.trim().toUpperCase() === initialCode.trim().toUpperCase() && (
+          <div className="qt-friend" role="status">
+            <strong>{friendName} sent you {money(REFERRAL_AMOUNT)} off.</strong>
+            <span>{pkg && !referralEligible(pkg) ? "It works on weddings and business packages, not portraits." : "It's already on your quote. Nothing to type."}</span>
+          </div>
+        )}
         <ol className="qt-steps" aria-label="Quote progress">
           {STEPS.map((s, i) => (
             <li key={s} className={i === step ? "is-active" : i < step ? "is-done" : ""} aria-current={i === step ? "step" : undefined}>
@@ -308,7 +320,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 )}
                 {deal && <p className="qt-fine"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
                 {free && <p className="qt-fine"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
-                {friend > 0 && <p className="qt-fine"><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</p>}
+                {friend > 0 && <p className="qt-fine">{viaFriend && typed === initialCode.trim().toUpperCase() ? <><strong>{friendName}&apos;s {money(friend)} is off this price.</strong> {friendName} gets {money(friend)} too.</> : <><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</>}</p>}
                 {monthly.map((a) => <p key={a.id} className="qt-fine">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
                 {category !== "business" || pkg.id === "event" ? <p className="qt-fine">{TRAVEL.line}</p> : null}
                 <p className="qt-fine">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
@@ -349,12 +361,15 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                     ))}
                   </div>
                 </div>
-                {pkg && (
+                {pkg && showCode && (
                   <div className="cx-field qt-code">
                     <label className="cx-label" htmlFor="qf-code">Promo code</label>
                     <input className="cx-input" id="qf-code" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="characters" />
                     {codeNote && <small className="cx-help">{codeNote}</small>}
                   </div>
+                )}
+                {pkg && !showCode && (
+                  <button type="button" className="rm-linkbtn qt-code-toggle" onClick={() => setShowCode(true)}>Have a different code?</button>
                 )}
               </div>
 
@@ -386,6 +401,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
         <p className="cform-success-title">Got it — your quote is on its way.</p>
         <p className="cform-success-body">
           {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
+          {friend > 0 && viaFriend ? ` ${friendName}'s ${friend} off is on it.` : ""}
         </p>
         <BookCall name={sent.who} email={sent.email} from="quote" />
       </div>
@@ -394,6 +410,12 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
 
   return (
     <div className="qflow" ref={topRef}>
+      {viaFriend && code.trim().toUpperCase() === initialCode.trim().toUpperCase() && (
+        <div className="qt-friend" role="status">
+          <strong>{friendName} sent you {money(REFERRAL_AMOUNT)} off.</strong>
+          <span>{pkg && !referralEligible(pkg) ? "It works on weddings and business packages, not portraits." : "It's already on your quote. Nothing to type."}</span>
+        </div>
+      )}
       <ol className="qsteps qflow-steps three" aria-label="Quote progress">
         {STEPS.map((s, i) => (
           <li key={s} className={i === step ? "active" : i < step ? "done" : ""}>
@@ -487,7 +509,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
               )}
               {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
               {free && <p className="qmatch-fineprint"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
-              {friend > 0 && <p className="qmatch-fineprint"><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</p>}
+              {friend > 0 && <p className="qmatch-fineprint">{viaFriend && typed === initialCode.trim().toUpperCase() ? <><strong>{friendName}&apos;s {money(friend)} is off this price.</strong> {friendName} gets {money(friend)} too.</> : <><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</>}</p>}
               {monthly.map((a) => <p key={a.id} className="qmatch-fineprint">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
               {category !== "business" || pkg.id === "event" ? <p className="qmatch-fineprint">{TRAVEL.line}</p> : null}
               <p className="qmatch-fineprint">All music is professionally licensed through Epidemic Sound. Your finished videos are fully cleared to post anywhere — socials, website, online ads. The license covers songs as they appear in your delivered videos, not the tracks on their own.</p>
@@ -516,7 +538,10 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
             ))}
             <div className="qf-field wide"><label htmlFor="qf-notes">Anything I should know?</label><textarea id="qf-notes" name="notes" rows={3} placeholder="Must-have moments, a second location, photos only, a tight deadline…" /></div>
           </div>
-          {pkg && (
+          {pkg && !showCode && (
+            <button type="button" className="rm-linkbtn qt-code-toggle" onClick={() => setShowCode(true)}>Have a different code?</button>
+          )}
+          {pkg && showCode && (
             <div className="qf-field qcode">
               <label htmlFor="qf-code">Promo code</label>
               <input id="qf-code" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="characters" />
