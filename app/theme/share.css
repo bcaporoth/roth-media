@@ -39,7 +39,7 @@
 .sh-skin.skin-light .sh-body .pt-gal .lightbox {
   --fg: #f6f1e8; --dim: rgba(246, 241, 232, 0.8); --faint: rgba(246, 241, 232, 0.62); --bg-3: #1c1916; --gold: #dcbd7a; color-scheme: dark;
 }
-.sh-skin.skin-light .sh-body .pt-gal .pgal-item { background: #ebe3d5; }
+.sh-skin.skin-light .sh-body .pt-gal .pgal-item, .sh-skin.skin-light .sh-body .pt-gal .pgal-album { background: #ebe3d5; }
 
 /* ── 2. Shared album: hero ── */
 .sh-page .sh-hero-layer { position: absolute; inset: 0; background: 50% 30% / cover no-repeat; }

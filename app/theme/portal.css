@@ -328,6 +328,44 @@
   font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-variant-numeric: tabular-nums;
 }
 
+/* album tiles: a strip at the top when the gallery has more than one album.
+   Phones: one row that scrolls and snaps. Desktop: a wrapped row of fixed-width
+   tiles, so two albums don't balloon into two half-screen posters. */
+.pt-gal .pgal-albums { margin: 0 0 1.8rem; }
+.pt-gal .pgal-albums-kick {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin: 0 2px 0.75rem;
+  font-family: var(--font-body), "Manrope", sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pt-accent, var(--gold));
+}
+.pt-gal .pgal-albums-kick em { font-style: normal; font-weight: 500; letter-spacing: 0.04em; text-transform: none; color: var(--faint); }
+.pt-gal .pgal-albums-row {
+  display: flex; gap: var(--pt-gap); margin: 0 -2px; padding: 0 2px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.pt-gal .pgal-albums-row::-webkit-scrollbar { display: none; }
+.pt-gal .pgal-album {
+  position: relative; flex: 0 0 min(64vw, 300px); scroll-snap-align: start; display: block; overflow: hidden;
+  border-radius: 2px; background: var(--bg-3); color: var(--fg); text-decoration: none;
+}
+.pt-gal .pgal-album-shot { display: block; aspect-ratio: 4 / 5; overflow: hidden; }
+.pt-gal .pgal-album-shot img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
+.pt-gal .pgal-album-blank { display: block; width: 100%; height: 100%; background: var(--bg-3); }
+.pt-gal .pgal-album-body {
+  position: absolute; inset: auto 0 0 0; display: grid; gap: 0.25rem; padding: 2.6rem 0.9rem 0.9rem;
+  background: linear-gradient(to top, rgba(11, 10, 9, 0.86), rgba(11, 10, 9, 0.4) 50%, rgba(11, 10, 9, 0));
+}
+.pt-gal .pgal-album-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 1.1; letter-spacing: -0.02em; color: #f6f1e8; overflow-wrap: anywhere; }
+.pt-gal .pgal-album-meta { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pt-accent, var(--gold)); font-variant-numeric: tabular-nums; }
+.pt-gal .pgal-section { scroll-margin-top: calc(var(--pt-gal-top, var(--nav-h)) + 1.2rem); }
+@media (hover: hover) {
+  .pt-gal .pgal-album:hover .pgal-album-shot img { transform: scale(1.04); }
+}
+@media (min-width: 800px) {
+  .pt-gal .pgal-albums { margin-bottom: 2.6rem; }
+  .pt-gal .pgal-albums-kick { margin: 0 0 0.9rem; }
+  .pt-gal .pgal-albums-row { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; }
+  .pt-gal .pgal-album { flex: 0 0 clamp(190px, 22%, 280px); }
+}
+
 /* chapters ("parts of the day") */
 .pt-gal .pgal-section + .pgal-section { margin-top: 2.6rem; }
 .pt-gal .pgal-section-title {
@@ -433,6 +471,6 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
   .pt-gal .lightbox .next { right: 0.8rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pt-gal .gallery.pgal-grid .pgal-item img, .pt-page .pt-feature-shot img, .pt-page .pt-feature-hd, .pt-page .pt-poster-shot img { transition: none; transform: none !important; }
+  .pt-gal .gallery.pgal-grid .pgal-item img, .pt-gal .pgal-album-shot img, .pt-page .pt-feature-shot img, .pt-page .pt-feature-hd, .pt-page .pt-poster-shot img { transition: none; transform: none !important; }
   .pt-page .pt-lobby-photo img, .pt-page .pt-prem-media { animation: none; }
 }

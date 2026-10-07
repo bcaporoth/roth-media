@@ -255,6 +255,41 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     g.entries.push([item, i]);
   });
 
+  // Album tiles: when the gallery has more than one album, a strip at the
+  // top shows each one (its first photo as the cover, title, count) and
+  // jumps to that part of the page. A heading-less group among named
+  // albums gets a "More" tile so nothing is unreachable.
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "album";
+  const albumId = (g) => `album-${g.key ? slug(g.key) : "more"}`;
+  const namedCount = groups.filter((g) => g.title).length;
+  const albums =
+    namedCount >= 2 || (namedCount === 1 && groups.length > 1)
+      ? groups.map((g) => {
+          const photos = g.entries.filter(([it]) => it.kind !== "video").length;
+          const films = g.entries.length - photos;
+          const coverItem =
+            g.entries.find(([it]) => it.kind !== "video" && it.thumbUrl)?.[0] ||
+            g.entries.find(([it]) => it.thumbUrl)?.[0] ||
+            null;
+          const cover = coverItem
+            ? coverItem.kind === "video" ? videoPoster || coverItem.thumbUrl : coverItem.thumbUrl
+            : null;
+          const meta = [
+            photos ? `${photos} photo${photos === 1 ? "" : "s"}` : "",
+            films ? `${films} film${films === 1 ? "" : "s"}` : "",
+          ].filter(Boolean).join(" · ");
+          return { id: albumId(g), title: g.title || "More", meta, cover };
+        })
+      : [];
+  const jumpTo = (e, id) => {
+    const el = document.getElementById(id);
+    if (!el) return; // let the hash link do its thing
+    e.preventDefault();
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+    window.history.replaceState(null, "", `#${id}`);
+  };
+
   // Deal a group's items into columns without disturbing their order.
   // Each item goes to the currently-shortest column, weighted by its
   // aspect ratio — round-robin ignored heights, so 500 photos in, one
@@ -355,6 +390,32 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
 
   return (
     <div className={"pt-gal" + (selectMode ? " is-selecting" : "")}>
+      {albums.length > 0 && (
+        <nav className="pgal-albums" aria-label="Albums in this gallery">
+          <p className="pgal-albums-kick">
+            <span>{albums.length} albums</span>
+            <em>Tap one to jump to it</em>
+          </p>
+          <div className="pgal-albums-row">
+            {albums.map((a) => (
+              <a key={a.id} href={`#${a.id}`} className="pgal-album" onClick={(e) => jumpTo(e, a.id)}>
+                <span className="pgal-album-shot">
+                  {a.cover ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={a.cover} alt="" loading="eager" decoding="async" />
+                  ) : (
+                    <span className="pgal-album-blank" aria-hidden="true" />
+                  )}
+                </span>
+                <span className="pgal-album-body">
+                  <span className="pgal-album-title">{a.title}</span>
+                  <span className="pgal-album-meta">{a.meta}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
       {photoCount > 1 && (
         <div className="pgal-toolbar">
           {!selectMode ? (
@@ -385,7 +446,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
         </div>
       )}
       {groups.map((group) => (
-        <section className="pgal-section" key={group.key || "·"}>
+        <section className="pgal-section" key={group.key || "·"} id={albums.length ? albumId(group) : undefined}>
           {group.title && (
             <h2 className="pgal-section-title">
               {group.title}
