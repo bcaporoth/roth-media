@@ -19,6 +19,13 @@ export default function PortalNav({ email, isAdmin = false, active = "", extra =
             Galleries
           </Link>
         </li>
+        {!isAdmin && (
+          <li>
+            <Link className={cls("brief")} href="/portal/brief" title="Your shoot brief — the questions I plan the day from">
+              Your brief
+            </Link>
+          </li>
+        )}
         {isAdmin && (
           <li>
             <Link className={cls("admin")} href="/portal/admin/inbox">

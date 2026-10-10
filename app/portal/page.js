@@ -5,6 +5,7 @@ import { PortalLobby, PortalNotice, PortalHome } from "../../components/PortalVi
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
+import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,15 @@ export default async function PortalPage({ searchParams }) {
 
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
 
+  // Their brief (latest intake row) — shown as a card so they can keep it current.
+  let brief = null;
+  if (adminConfigured && !isAdmin) {
+    try {
+      const { data } = await supabaseAdmin().from("submissions").select("id").eq("kind", "intake").eq("email", user.email.toLowerCase()).limit(1);
+      brief = data && data.length ? { id: data[0].id } : false;
+    } catch { brief = null; }
+  }
+
   const first = client.name.trim().split(/\s+/)[0] || "there";
   const firstName = first.charAt(0).toUpperCase() + first.slice(1);
 
@@ -180,6 +190,7 @@ export default async function PortalPage({ searchParams }) {
       total={total}
       money={money}
       dateFmt={dateFmt}
+      brief={brief}
     />
   );
 }

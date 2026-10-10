@@ -108,6 +108,7 @@ export function PortalHome({
   total = 0,
   money,
   dateFmt,
+  brief = null, // null = not shown; false = none yet; object = saved
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -195,6 +196,18 @@ export function PortalHome({
             moment it&apos;s ready.
           </p>
         </div>
+      )}
+
+      {brief !== null && (
+        <section className="cx-wrap pt-brief-card cx-reveal" aria-label="Your shoot brief">
+          <p className="cx-kick">Your shoot brief</p>
+          <p className="pt-note">
+            {brief
+              ? "The questions I plan your day from — locations, the one shot you can't miss, outfits. Change anything, any time."
+              : "Five minutes on the questions I plan your day from. Fill it in once; come back and change it any time."}
+          </p>
+          <Link href="/portal/brief" className="cx-btn cx-btn--light">{brief ? "Open my brief" : "Fill in my brief"} <Arrow /></Link>
+        </section>
       )}
 
       {(hasLinks || hasPayments) && (

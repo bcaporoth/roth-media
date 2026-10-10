@@ -482,3 +482,8 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
   .pt-gal .gallery.pgal-grid .pgal-item img, .pt-gal .pgal-album-shot img, .pt-page .pt-feature-shot img, .pt-page .pt-feature-hd, .pt-page .pt-poster-shot img { transition: none; transform: none !important; }
   .pt-page .pt-lobby-photo img, .pt-page .pt-prem-media { animation: none; }
 }
+
+/* Shoot brief card on the portal home + the brief page */
+.pt-page .pt-brief-card { margin: 0 0 4rem; max-width: 40rem; padding: 1.2rem 1.1rem; display: grid; gap: 0.7rem; justify-items: start; border: 1px solid var(--line); border-left: 2px solid var(--gold); border-radius: 2px; background: var(--bg-2); }
+.pt-page .pt-brief-card .pt-note { font-size: 1rem; line-height: 1.55; }
+.pt-brief .pt-head { padding-bottom: 1rem; }

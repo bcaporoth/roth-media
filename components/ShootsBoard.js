@@ -25,6 +25,7 @@ import { timing, fmt12 } from "../lib/sun";
 import { mapsUrl, HOME } from "../lib/geo";
 import { GROUPS, GROUP_LABEL, groupOf } from "../lib/shoot-guides";
 import { isNoEmail } from "../lib/no-email";
+import { briefToShoot } from "../lib/intake";
 import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
 import StudioCalendar, { gcalUrl } from "./StudioCalendar";
 
@@ -358,7 +359,8 @@ function DeliveryButtons({ s, d, clock }) {
 // One client's shoots, planned right on their profile: the same rows and
 // the same prep lists as the Shoots tab, filtered to their email.
 const PLAN_LABEL = { wedding: "Plan the wedding day", business: "Plan a Content Day", family: "Plan a session" };
-export function ClientShoots({ client, type = "wedding" }) {
+export function ClientShoots({ client, type = "wedding", brief = null }) {
+  const pulled = useMemo(() => briefToShoot(brief), [brief]);
   const sh = useShoots();
   const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, clock } = sh;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -375,8 +377,8 @@ export function ClientShoots({ client, type = "wedding" }) {
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
       {!data && !error && <p className="gcard-meta">Loading…</p>}
-      {data && showNew && <NewShoot key={type} compact prefill={{ client_name: client.name, client_email: client.email, client_phone: client.phone, kind: type }} leads={data.leads.filter((l) => (l.email || "").toLowerCase() === email)} guides={data.guides} busy={busy} onCreate={create} />}
-      {data && mine.length === 0 && !showNew && <p className="gcard-meta">Nothing planned yet. Start one and the flow of the day, shot list, poses and gear from your playbook come with it — all editable for this client.</p>}
+      {data && showNew && <NewShoot key={type} compact prefill={{ client_name: client.name, client_email: client.email, client_phone: client.phone, kind: type, address: pulled.address, notes: pulled.notes, brief_shots: pulled.shots }} leads={data.leads.filter((l) => (l.email || "").toLowerCase() === email)} guides={data.guides} busy={busy} onCreate={create} />}
+      {data && mine.length === 0 && !showNew && <p className="gcard-meta">Nothing planned yet. Start one and the flow of the day, shot list, poses and gear from your playbook come with it{brief ? ", with their brief pulled in — the one shot they can't miss leads the shot list" : ""}. All editable for this client.</p>}
       {data && mine.length > 0 && (
         <ul className="shoot-list">
           {sorted.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
@@ -389,7 +391,8 @@ export function ClientShoots({ client, type = "wedding" }) {
 function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = false }) {
   const [lead, setLead] = useState("");
   const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
-  const [f, setF] = useState({ title: prefill?.client_name ? `${prefill.client_name} — ` : "", client_name: prefill?.client_name || "", client_email: prefill?.client_email || "", client_phone: prefill?.client_phone || "", date: "", start_time: "", time_note: "", address: "", notes: "" });
+  const [f, setF] = useState({ title: prefill?.client_name ? `${prefill.client_name} — ` : "", client_name: prefill?.client_name || "", client_email: prefill?.client_email || "", client_phone: prefill?.client_phone || "", date: "", start_time: "", time_note: "", address: prefill?.address || "", notes: prefill?.notes || "" });
+  const briefShots = prefill?.brief_shots || [];
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
 
   function pickLead(id) {
@@ -402,7 +405,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
   }
 
   return (
-    <form className="shoot-new" onSubmit={(e) => { e.preventDefault(); onCreate({ ...f, kind, submission_id: lead || null }); }}>
+    <form className="shoot-new" onSubmit={(e) => { e.preventDefault(); onCreate({ ...f, kind, submission_id: lead || null, brief_shots: briefShots }); }}>
       {(!compact || leads.length > 0) && (
         <label className="wide">Start from {compact ? "their inquiry" : "a lead"} (optional)
           <select value={lead} onChange={(e) => pickLead(e.target.value)}>
@@ -421,7 +424,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
       {!compact && <label>Phone<input value={f.client_phone} onChange={set("client_phone")} /></label>}
       {!compact && <label>Email<input type="email" value={f.client_email} onChange={set("client_email")} /></label>}
       <label className="wide">Notes<textarea rows={2} value={f.notes} onChange={set("notes")} /></label>
-      <p className="gcard-meta wide">Your playbook lists for {guides[kind]?.label} — flow, shots, poses, gear — get copied in; distance and sunset are worked out from the address.</p>
+      <p className="gcard-meta wide">Your playbook lists for {guides[kind]?.label} — flow, shots, poses, gear — get copied in; distance and sunset are worked out from the address.{briefShots.length ? ` From their brief, at the top of the shot list: ${briefShots.length} shot${briefShots.length === 1 ? "" : "s"}.` : ""}</p>
       <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : "Add shoot"}</button>
     </form>
   );

@@ -104,6 +104,14 @@ export async function POST(request) {
         row.checklist = checklistFromPlaybook(lists, row.kind || "other");
         if (!row.checklist.length) row.checklist = seedChecklist(row.kind || "other");
       }
+      // Shots pulled from the client's brief (non-negotiable, must-haves) lead the shot list.
+      const fromBrief = (Array.isArray(body.brief_shots) ? body.brief_shots : []).slice(0, 20).map((t) => clip(t, 240)).filter(Boolean);
+      if (fromBrief.length) {
+        const have = new Set(row.checklist.map((c) => c.text));
+        const extra = fromBrief.filter((t) => !have.has(t)).map((text) => ({ text, done: false, group: "shots" }));
+        const i = row.checklist.findIndex((c) => c.group === "shots");
+        row.checklist = i < 0 ? [...row.checklist, ...extra] : [...row.checklist.slice(0, i), ...extra, ...row.checklist.slice(i)];
+      }
       if (row.address) Object.assign(row, await locate(row.address));
       const { data, error } = await db.from("shoots").insert(row).select("*").single();
       if (error) return bad(error.message, 500);

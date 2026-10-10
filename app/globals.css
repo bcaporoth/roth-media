@@ -5829,6 +5829,14 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .callsheet-q span { font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
 .callsheet-q textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; resize: vertical; }
 .is-dark .callsheet-q textarea, .is-dark .callsheet-meta input { border-color: rgba(255, 255, 255, 0.22); }
+/* Brief rows: question / their answer / your note. Blanks they should have filled are flagged. */
+.callsheet-q--brief { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "q q" "theirs note"; gap: 0.35rem 0.8rem; padding: 0.45rem 0; border-top: 1px solid var(--field-line); }
+.callsheet-q--brief > span:first-child { grid-area: q; }
+.callsheet-q--brief .callsheet-theirs { grid-area: theirs; font-weight: 400; font-size: 0.92rem; line-height: 1.45; white-space: pre-wrap; opacity: 0.85; }
+.callsheet-q--brief textarea { grid-area: note; min-height: 2.4rem; }
+.callsheet-q--brief.is-gap .callsheet-theirs { color: #d9822b; font-style: italic; opacity: 1; }
+@media (max-width: 640px) { .callsheet-q--brief { grid-template-columns: 1fr; grid-template-areas: "q" "theirs" "note"; } }
+
 @media (max-width: 720px) {
   .client-quick { display: flex; }                       /* phones: just the Profile chip */
   .client-quick > :not(.achip-primary) { display: none; }

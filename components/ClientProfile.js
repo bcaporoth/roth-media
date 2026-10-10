@@ -9,7 +9,7 @@ import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
 import BalanceList from "./BalanceList";
 import { usd } from "../lib/money-view";
-import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf } from "../lib/intake";
+import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latestBrief, INTAKE } from "../lib/intake";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -30,6 +30,7 @@ export default function ClientProfile({ initial, emailReady }) {
   const [pasting, setPasting] = useState(false);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
+  const brief = latestBrief(d.intakes); // one record: their latest intake. The call sheet and shoots read it.
   const bookings = d.bookings || [];
   const owedCents = bookings.reduce((n, b) => n + b.owedCents, 0);
   const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 3000); };
@@ -64,11 +65,9 @@ export default function ClientProfile({ initial, emailReady }) {
     } catch (err) { fail(err); }
   }
   async function newCall() {
-    // Anything they already answered on /intake lands in the sheet, so the call starts from there.
-    const answers = {};
-    for (const it of [...d.intakes].reverse()) for (const [q, a] of it.fields || []) if (q !== "for" && a) answers[q] = String(a);
+    // Nothing is copied: the sheet shows their brief beside each question and stores only your notes.
     try {
-      const r = await api("/api/admin/clients", { action: "call-save", email: c.email, name: c.name, phone: c.phone, type, answers, checks: {}, callDate: today() });
+      const r = await api("/api/admin/clients", { action: "call-save", email: c.email, name: c.name, phone: c.phone, type, answers: {}, checks: {}, callDate: today() });
       setD({ ...d, calls: [r.item, ...d.calls], stage: ["new", "intake_sent", "intake"].includes(d.stage) ? "call" : d.stage });
       setOpenCall(r.item.id);
     } catch (err) { fail(err); }
@@ -149,7 +148,7 @@ export default function ClientProfile({ initial, emailReady }) {
           </section>
 
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Before the call</h2>
+            <div className="cprof-cardhead"><h2>Their brief</h2>
               <div className="gcard-actions">
                 <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
                 {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
@@ -157,9 +156,10 @@ export default function ClientProfile({ initial, emailReady }) {
               </div>
             </div>
             {d.intakes.length === 0 && (
-              <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "Optional: send the questionnaire and their answers land here (and prefill the call sheet)."}</p>
+              <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "One record for everything they tell you. Send the link, or they fill it in from their portal (Your brief). The call sheet and the day plan read from it."}</p>
             )}
-            {d.intakes.map((it) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} questionnaire · ${fmt(it.created_at)}`} />)}
+            {brief && <p className="gcard-meta">Current as of {fmt(brief.updated_at)}. They can edit it any time from their portal — the call sheet and the day plan always show this version.</p>}
+            {d.intakes.map((it, i) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} brief · ${fmt(it.updated_at || it.created_at)}${i > 0 ? " (older)" : ""}`} closed={i > 0} />)}
           </section>
         </div>
 
@@ -168,13 +168,13 @@ export default function ClientProfile({ initial, emailReady }) {
             <div className="cprof-cardhead"><h2>Orientation call</h2>
               <button type="button" className="abtn" onClick={newCall}>+ New call sheet</button>
             </div>
-            {d.calls.length === 0 && <p className="gcard-meta">Start a sheet when you&apos;re on the call. Their inquiry stays on the left; the sheet saves as you type.</p>}
+            {d.calls.length === 0 && <p className="gcard-meta">Start a sheet when you&apos;re on the call. Their brief shows beside each question; you type only what&apos;s new. Blanks are flagged so you ask.</p>}
             {d.calls.map((call) => (
-              <CallSheet key={call.id} call={call} client={c} open={openCall === call.id} onToggle={() => setOpenCall(openCall === call.id ? null : call.id)} onDelete={() => deleteCall(call)} onError={fail} />
+              <CallSheet key={call.id} call={call} client={c} brief={brief} open={openCall === call.id} onToggle={() => setOpenCall(openCall === call.id ? null : call.id)} onDelete={() => deleteCall(call)} onError={fail} />
             ))}
           </section>
 
-          <ClientShoots client={c} type={type} />
+          <ClientShoots client={c} type={type} brief={brief} />
 
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Galleries</h2></div>
@@ -223,9 +223,11 @@ function Answers({ item, title, closed = false }) {
 }
 
 // One call sheet: prompts + checks + notes, saved whole on every change (debounced).
-function CallSheet({ call, client, open, onToggle, onDelete, onError }) {
+function CallSheet({ call, client, brief, open, onToggle, onDelete, onError }) {
   const type = typeOf(call.utm?.type);
   const def = CALL[type];
+  const theirs = brief && brief.type === type ? brief.answers : (brief?.answers || {});
+  const required = new Set(INTAKE[type].filter((q) => !q.opt).map((q) => q.q));
   const [answers, setAnswers] = useState(Object.fromEntries((call.fields || []).map(([q, a]) => [q, a])));
   const [checks, setChecks] = useState(call.utm?.checks || {});
   const [notes, setNotes] = useState(call.notes || "");
@@ -270,10 +272,19 @@ function CallSheet({ call, client, open, onToggle, onDelete, onError }) {
           </div>
           {def.sections.map((sec) => (
             <div key={sec.title} className="callsheet-sec">
-              <div className="kick-sm">{sec.title}</div>
-              {sec.prompts.map((q) => (
-                <label key={q} className="callsheet-q"><span>{q}</span><textarea rows={2} value={answers[q] || ""} onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })} /></label>
-              ))}
+              <div className="kick-sm">{sec.title}{sec.brief ? <span className="gcard-meta"> · their brief on the left, your notes on the right</span> : null}</div>
+              {sec.brief && !brief && <p className="gcard-meta">No brief yet — ask each one on the call, or send them the link.</p>}
+              {sec.prompts.map((q) => {
+                const a = sec.brief ? theirs[q] : undefined;
+                const gap = sec.brief && !a && required.has(q);
+                return (
+                  <label key={q} className={"callsheet-q" + (sec.brief ? " callsheet-q--brief" : "") + (gap ? " is-gap" : "")}>
+                    <span>{q}</span>
+                    {sec.brief && <span className="callsheet-theirs">{a ? a : gap ? "Not captured — ask" : "—"}</span>}
+                    <textarea rows={sec.brief ? 1 : 2} placeholder={sec.brief ? "What came up on the call" : ""} value={answers[q] || ""} onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })} />
+                  </label>
+                );
+              })}
             </div>
           ))}
           <label className="callsheet-q"><span>Anything else</span><textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
