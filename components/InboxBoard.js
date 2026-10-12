@@ -155,7 +155,7 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
     setNotes(open.notes || "");
     setNoteState("");
     setJourney(null);
-    setScript(open.intel.status === "booked" || open.kind === "booking" ? "welcome" : open.intel.lead && open.status === "new" ? "first" : "blank");
+    setScript(open.intel.status === "booked" || open.kind === "booking" || open.kind === "intake" ? "welcome" : open.intel.lead && open.status === "new" ? "first" : "blank");
     if (!open.read_at) {
       const now = new Date().toISOString();
       setItems((list) => list.map((it) => (it.id === open.id ? { ...it, read_at: now } : it)));

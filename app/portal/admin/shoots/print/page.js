@@ -3,6 +3,7 @@ import ShootPrepSheet from "../../../../../components/ShootPrepSheet";
 import { requireAdminPage } from "../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
 import { GUIDES } from "../../../../../lib/shoot-guides";
+import { signItemPhotos } from "../../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Prep sheet — Studio", robots: { index: false } };
@@ -19,6 +20,7 @@ export default async function ShootPrintPage({ searchParams }) {
   if (id) {
     const { data } = await supabaseAdmin().from("shoots").select("*").eq("id", id).maybeSingle();
     shoot = data || null;
+    if (shoot) shoot = { ...shoot, checklist: await signItemPhotos(shoot.checklist) };
   }
   return (
     <div className="sprint-page">

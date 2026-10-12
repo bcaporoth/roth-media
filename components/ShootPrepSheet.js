@@ -72,7 +72,7 @@ function List({ title, items, timed = false, wide = false }) {
     <section className={"sprint-list" + (timed ? " is-timed" : "") + (wide ? " is-wide" : "")}>
       <h2>{title}</h2>
       <ul>
-        {items.map((c, i) => <li key={i} className={c.done ? "is-done" : ""}><span className="sprint-box" aria-hidden="true">{c.done ? "✓" : ""}</span>{timed && <span className="sprint-time">{c.time ? fmt12(c.time) : "—"}</span>}{c.text}</li>)}
+        {items.map((c, i) => <li key={i} className={c.done ? "is-done" : ""}><span className="sprint-box" aria-hidden="true">{c.done ? "✓" : ""}</span>{timed && <span className="sprint-time">{c.time ? fmt12(c.time) : "—"}</span>}<span className="sprint-text">{c.text}</span>{c.img_url && <img className="sprint-thumb" src={c.img_url} alt="" />}</li>)}
         {items.length === 0 && <li className="is-empty">—</li>}
       </ul>
     </section>

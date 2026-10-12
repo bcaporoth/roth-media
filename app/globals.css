@@ -5875,6 +5875,8 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 @media (max-width: 520px) { .prep-x { width: 2rem; height: 2rem; opacity: 0.8; } }
 
 /* ── Shoot prep sheet (print / save as PDF) ── */
+.sprint-thumb { flex: none; width: 0.9in; height: 0.9in; object-fit: cover; border-radius: 4px; margin-left: auto; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.sprint-text { flex: 1; min-width: 0; }
 .sprint-page { min-height: 100vh; background: #e9e3d8; padding: 1.25rem 1rem 3rem; color: #191612; position: relative; z-index: 2; }
 .sprint-bar { max-width: 8.5in; margin: 0 auto 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: center; font-size: 0.86rem; color: #6b6358; }
 .sprint-bar a { color: inherit; text-decoration: none; padding: 0.25rem 0.6rem; border: 1px solid rgba(0, 0, 0, 0.15); border-radius: 999px; }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { loadPlaybook } from "../../../../lib/playbook";
-import { GROUPS, PLAYBOOK_KINDS } from "../../../../lib/shoot-guides";
+import { GROUPS, PLAYBOOK_KINDS, defaultPlaybook } from "../../../../lib/shoot-guides";
 import { r2Configured, putPlaybookPhoto, signItemPhotos, PLAYBOOK_IMG_RE } from "../../../../lib/r2";
 import sharp from "sharp";
 
@@ -64,6 +64,21 @@ export async function POST(request) {
       const key = await storePhoto(body.data);
       const [it] = await signItemPhotos([{ img: key }]);
       return NextResponse.json({ img: key, img_url: it.img_url || "" });
+    }
+    if (body.action === "seed") {
+      // Starter lists for one type (e.g. a type added after the table was
+      // first seeded). Skips titles that already exist.
+      const kind = PLAYBOOK_KINDS.includes(body.kind) ? body.kind : "";
+      if (!kind || kind === "any") return bad("Pick a shoot type");
+      const { data: have, error: e1 } = await db.from("playbook").select("title, sort");
+      if (e1) return missing(e1);
+      const titles = new Set((have || []).map((r) => r.title));
+      let sort = Math.max(0, ...(have || []).map((r) => r.sort || 0));
+      const rows = defaultPlaybook().filter((r) => r.kind === kind && !titles.has(r.title)).map((r) => ({ ...r, sort: ++sort }));
+      if (!rows.length) return NextResponse.json({ lists: [] });
+      const { data, error } = await db.from("playbook").insert(rows).select("*");
+      if (error) return missing(error);
+      return NextResponse.json({ lists: await Promise.all((data || []).map(withPhotos)) });
     }
     if (body.action === "create") {
       const row = clean(body);

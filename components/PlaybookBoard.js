@@ -90,6 +90,9 @@ export default function PlaybookBoard() {
   async function duplicate(l) {
     try { const r = await api({ action: "duplicate", id: l.id }); setLists((ls) => [...ls, r.list]); say("Copied — rename it and make it yours"); } catch (e) { fail(e); }
   }
+  async function seed(k) {
+    try { const r = await api({ action: "seed", kind: k }); setLists((ls) => [...ls, ...r.lists]); say(r.lists.length ? `${r.lists.length} starter lists added` : "Nothing new to add"); } catch (e) { fail(e); }
+  }
   async function remove(l) {
     if (!window.confirm(`Delete “${l.title}”? Shoots that already used it keep their own copy.`)) return;
     try { await api({ action: "delete", id: l.id }); setLists((ls) => ls.filter((x) => x.id !== l.id)); } catch (e) { fail(e); }
@@ -132,7 +135,11 @@ export default function PlaybookBoard() {
         </form>
       )}
 
-      {shown.length === 0 && !adding && <p className="portal-empty">No {SECTION_LABEL[section].toLowerCase()} for that type yet. Hit “+ New list”.</p>}
+      {!missing && kind !== "all" && !lists.some((l) => l.kind === kind) && (
+        <p className="portal-empty">No {KIND_LABEL[kind]} lists yet. <button type="button" className="achip" onClick={() => seed(kind)}>Add the {KIND_LABEL[kind]} starter lists</button> — gear, shots, flow and poses to make your own.</p>
+      )}
+      {shown.length === 0 && !adding && lists.some((l) => l.kind === kind) && <p className="portal-empty">No {SECTION_LABEL[section].toLowerCase()} for that type yet. Hit “+ New list”.</p>}
+      {shown.length === 0 && !adding && kind === "all" && <p className="portal-empty">Nothing here yet. Hit “+ New list”.</p>}
       <div className="pbook-grid">
         {shown.map((l) => <ListCard key={l.id} l={l} readOnly={missing} photos={photos} onPatch={patch} onDuplicate={duplicate} onRemove={remove} onFail={fail} />)}
       </div>

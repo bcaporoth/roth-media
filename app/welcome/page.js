@@ -10,11 +10,13 @@ export const metadata = {
 // The Welcome Packet. Brandon sends this link himself once someone books
 // (?for=wedding|business|portraits tailors the lists; family still works).
 const NEED = {
+  engagement: ["Two outfits — one dressy, one you (I'll help you pick)", "A spot that means something, or I'll suggest three", "The ring, cleaned", "Anything you want in the frame — the dog, a sign, a blanket"],
   wedding: ["Your day-of timeline, as soon as you have one", "Your vendor list — planner, photographer or videographer, DJ", "The family shot list and the three moments you can't miss", "One point of contact for the day who isn't you two"],
   business: ["Your logo and brand colors", "What you want to promote — an offer, a dish, a service", "Any must-have shots, and anyone who'd rather not be on camera", "One point of contact for shoot day"],
   family: ["Who's in the photos (and the kids' ages, if any)", "A couple of location ideas, or I'll suggest some", "What you're wearing, roughly — I'll help you coordinate", "Any must-have groupings"],
 };
 const WHEN = {
+  engagement: ["Sneak peeks: within 48 hours", "Full gallery: within 2 weeks", "Save-the-date frames flagged in the gallery"],
   wedding: ["Sneak peek: within 48 hours", "Photo gallery: within 4 weeks", "Wedding film: within 6 weeks"],
   business: ["Sneak peek: within 48 hours", "Finished content: within 2 weeks", "One round of revisions included"],
   family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks", "A year of access in your client account, unlimited downloads"],
@@ -23,6 +25,7 @@ const WHEN = {
 // One real photo behind the title, matched to what they booked.
 const PHOTO = {
   wedding: { src: "/photos/25-wedding-the-veil-took-flight.jpg", alt: "A bride and groom in a field at sunset, her veil lifted by the wind" },
+  engagement: { src: "/photos/24-wedding-a-world-of-their-own.jpg", alt: "A couple close together in golden light, in a world of their own" },
   business: { src: "/photos/42-gym-coach-and-client.jpg", alt: "A coach and her client talking between sets in a gym, in black and white" },
   family: { src: "/photos/07-senior-portrait-last-light.jpg", alt: "A senior portrait outdoors in the last light of the day" },
   "": { src: "/photos/40-wedding-just-married-mid-laugh.jpg", alt: "A just-married couple walking hand in hand, mid-laugh, in black and white" },
@@ -31,7 +34,7 @@ const PHOTO = {
 export default async function WelcomePage({ searchParams }) {
   const sp = await searchParams;
   const want = sp?.for === "portraits" ? "family" : sp?.for;
-  const cat = ["wedding", "business", "family"].includes(want) ? want : "";
+  const cat = ["wedding", "engagement", "business", "family"].includes(want) ? want : "";
   const tel = PHONE.replace(/\D/g, "");
   const need = cat ? NEED[cat] : ["The short questionnaire, back within 3 days", "Any must-have shots or moments", "One point of contact for shoot day"];
   const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Photo galleries: within 4 weeks", "Wedding films: within 6 weeks"];
@@ -49,10 +52,10 @@ export default async function WelcomePage({ searchParams }) {
         <li><strong>First call.</strong> Fifteen minutes. I ask about {cat === "business" ? "your business" : "your day"} and what a win looks like.</li>
         <li><strong>Your plan.</strong> A written plan and a firm price, the same day as the call.</li>
         <li><strong>Booked.</strong> {cat === "wedding" || !cat ? "Weddings hold the date with a 50% retainer; the balance is due 14 days before." : "Booking locks your date."} I send a short questionnaire so I show up knowing your story.</li>
-        <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : ""}.</li>
+        <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : cat === "engagement" ? ", the spot and the start time (about two hours before sunset)" : ""}.</li>
         <li><strong>Shoot day.</strong> I arrive early and I direct. You just show up as yourself.</li>
         <li><strong>Delivery.</strong> A sneak peek first, then everything in your own private online gallery — save straight to your phone.</li>
-        <li><strong>{cat === "business" ? "Know another owner?" : "Know another bride?"}</strong> Once you&apos;ve booked you get a code to send {cat === "business" ? "them" : "her"}. {cat === "business" ? "They get" : "She gets"} $100 off, and you get $100 back. Every one you send, same deal.</li>
+        <li><strong>{cat === "business" ? "Know another owner?" : cat === "engagement" ? "Know another couple?" : "Know another bride?"}</strong> Once you&apos;ve booked you get a code to send {cat === "business" || cat === "engagement" ? "them" : "her"}. {cat === "business" || cat === "engagement" ? "They get" : "She gets"} $100 off, and you get $100 back. Every one you send, same deal.</li>
       </ol>
 
       <h2>When you&apos;ll get it</h2>
