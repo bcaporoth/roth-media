@@ -7,6 +7,7 @@ import BrandMark from "../components/BrandMark";
 import CinemaMotion from "../components/home/CinemaMotion";
 import Player from "../components/home/Player";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME, GOOGLE_PAGE_URL } from "../lib/site";
+import { REVIEWS, GOOGLE_RATING } from "../lib/reviews";
 import { PACKAGES, ADDONS, TRAVEL, listedAddons, money } from "../lib/packages";
 import { CAMPAIGN } from "../lib/campaign";
 import { autoDeal, autoDealFor, autoBonus, applyDeal } from "../lib/deals";
@@ -88,11 +89,9 @@ const PROMISES = [
   { k: "Licensed", v: "All music licensed through Epidemic Sound; your films are cleared for socials, your website and ads." },
 ];
 
-// Real reviews and venue names go here when Brandon has them. Until then
-// these stay empty and the page shows nothing in their place — never a
-// placeholder, never an invented quote.
-// { quote: "", who: "", what: "" }
-const REVIEWS = [];
+// Venue names go here when Brandon has them. Until then this stays empty
+// and the page shows nothing in its place — never a placeholder. (Reviews
+// live in lib/reviews.js and render in the "On Google" chapter below.)
 const VENUES = [];
 
 const FILM_FACTS = [
@@ -392,16 +391,6 @@ export default function CinemaHome() {
               ))}
             </ul>
 
-            {REVIEWS.length > 0 && (
-              <div className="cin-voices">
-                {REVIEWS.map((q) => (
-                  <blockquote key={q.who} className="cin-rise">
-                    <p>“{q.quote}”</p>
-                    <footer><strong>{q.who}</strong><span>{q.what}</span></footer>
-                  </blockquote>
-                ))}
-              </div>
-            )}
             {VENUES.length > 0 && (
               <p className="cin-venues cin-rise"><span>Filmed at</span> {VENUES.join(" · ")}</p>
             )}
@@ -636,21 +625,15 @@ export default function CinemaHome() {
         <section className="cin-chapter cin-google" id="reviews" data-ch="On Google">
           <div className="cin-google-head cin-rise">
             <p className="cin-kick">On Google</p>
-            <h2 className="cin-h2">5.0 on Google.</h2>
+            <h2 className="cin-h2">{GOOGLE_RATING} on Google.</h2>
           </div>
           <ul className="cin-google-list">
-            <li className="cin-rise">
-              <blockquote>“He does an excellent job at getting everyone comfortable so that the end result is authentic.”</blockquote>
-              <cite>Brady · a promo video for his business</cite>
-            </li>
-            <li className="cin-rise">
-              <blockquote>“My fiancé and I can both be awkward but he made us so comfortable to get the best shots. Our friend loved our photos so much she’s going to use him for hers!”</blockquote>
-              <cite>Kaitlyn · engagement photos</cite>
-            </li>
-            <li className="cin-rise">
-              <blockquote>“She was at ease and comfortable the whole time.”</blockquote>
-              <cite>Tina · her daughter’s senior photos</cite>
-            </li>
+            {REVIEWS.map((r) => (
+              <li key={r.id} className="cin-rise">
+                <blockquote>“{r.quote}”</blockquote>
+                <cite>{r.name} · {r.who}</cite>
+              </li>
+            ))}
           </ul>
           <p className="cin-google-link cin-rise"><a href={GOOGLE_PAGE_URL} target="_blank" rel="noopener noreferrer">Read them on Google <Arrow /></a></p>
         </section>

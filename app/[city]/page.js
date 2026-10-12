@@ -2,6 +2,7 @@ import "../theme/weddings.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteNav from "../../components/SiteNav";
+import GoogleReviews from "../../components/GoogleReviews";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
 import FilmCard from "../../components/FilmCard";
@@ -140,6 +141,8 @@ export default async function CityPage({ params }) {
             <p className="cx-fine wd-after cx-reveal"><Link href="/business" className="wd-inline">See the full business page →</Link></p>
           </div>
         </section>
+
+        <GoogleReviews kind="wedding" />
 
         <section id="faq" className="cx-section cx-section--rule">
           <div className="cx-wrap cx-split wd-split">

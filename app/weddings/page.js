@@ -5,6 +5,7 @@ import { AREA_SERVED, BUSINESS_ID, breadcrumbLd } from "../../lib/schema";
 import { PACKAGES, ADDONS, TRAVEL, money } from "../../lib/packages";
 import DealPill from "../../components/DealPill";
 import SiteNav from "../../components/SiteNav";
+import GoogleReviews from "../../components/GoogleReviews";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
 import FilmCard from "../../components/FilmCard";
@@ -220,6 +221,8 @@ export default function WeddingsPage() {
             </ol>
           </div>
         </section>
+
+        <GoogleReviews kind="wedding" />
 
         <section id="faq" className="cx-section cx-section--rule">
           <div className="cx-wrap cx-split wd-split">

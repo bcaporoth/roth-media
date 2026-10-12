@@ -1,6 +1,7 @@
 import Link from "next/link";
 import "../theme/business.css";
 import SiteNav from "../../components/SiteNav";
+import GoogleReviews from "../../components/GoogleReviews";
 import SiteFooter from "../../components/SiteFooter";
 import Reveal from "../../components/Reveal";
 import BizFilm from "../../components/BizFilm";
@@ -218,6 +219,8 @@ export default function BusinessPage() {
             </div>
           </div>
         </section>
+
+        <GoogleReviews kind="business" />
 
         {/* ── Ideas ── */}
         <section className="cx-section bz-ideas-sec">

@@ -401,3 +401,10 @@ body:has(.cx-page .promo-pill, .cx-page ~ .promo-pill, .promo-pill ~ .cx-page) .
   body:has(.cx-page) .promo-pill { left: auto; right: var(--gut); bottom: 1.2rem; min-height: 0; padding: 0.7rem 1.1rem; border-radius: 2px; font-size: 0.8rem; }
   body:has(.cx-page .promo-pill, .cx-page ~ .promo-pill, .promo-pill ~ .cx-page) .cx-footer { padding-bottom: 4.2rem; }
 }
+
+/* ── On Google — reviews block (components/GoogleReviews.js) ── */
+.cx-reviews .cx-wrap { display: grid; gap: 1.6rem; }
+.cx-reviews-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.cx-reviews-list blockquote { margin: 0; font-size: 1.06rem; line-height: 1.55; color: var(--fg); }
+.cx-reviews-list cite { font-style: normal; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.cx-stars { color: var(--gold); letter-spacing: 0.12em; font-size: 0.9rem; }
