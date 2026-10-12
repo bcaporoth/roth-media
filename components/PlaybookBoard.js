@@ -5,7 +5,7 @@
 // saves as you go. Lists marked "auto" are copied onto new shoots of that
 // type; any list can also be pulled into a shoot from its prep section.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SECTION_LABEL } from "../lib/shoot-guides";
 
 const SECTIONS = ["gear", "shots", "flow", "poses"];
@@ -19,6 +19,39 @@ const BLURB = {
 };
 const ADD_HINT = { gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
 
+// Shrink a picked photo in the browser (longest side 1200px, JPEG) so the
+// upload is a few hundred KB at most, whatever the phone shot it at.
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Couldn't read that photo")); };
+    img.src = url;
+  });
+}
+
+// One line that grows with what's in it — a long prompt reads in full on a
+// phone instead of being clipped by a single-line box. Enter saves.
+function GrowText({ value, readOnly, label, onSave }) {
+  const ref = useRef(null);
+  const fit = (el) => { if (!el) return; el.style.height = "0px"; el.style.height = el.scrollHeight + "px"; };
+  useEffect(() => { fit(ref.current); }, [value]);
+  return (
+    <textarea ref={ref} className="pbook-text" rows={1} defaultValue={value} readOnly={readOnly} aria-label={label}
+      onInput={(e) => fit(e.target)}
+      onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== value) onSave(v); else { e.target.value = value; fit(e.target); } }}
+      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.target.blur(); } }} />
+  );
+}
+
 async function api(payload) {
   const res = await fetch("/api/admin/playbook", { method: payload ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: payload ? JSON.stringify(payload) : undefined });
   const json = await res.json().catch(() => ({}));
@@ -29,6 +62,7 @@ async function api(payload) {
 export default function PlaybookBoard() {
   const [lists, setLists] = useState(null);
   const [missing, setMissing] = useState(false);
+  const [photos, setPhotos] = useState(false);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [section, setSection] = useState("gear");
@@ -36,7 +70,7 @@ export default function PlaybookBoard() {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    api().then((r) => { setLists(r.lists); setMissing(Boolean(r.missing)); }).catch((e) => setError(e.message));
+    api().then((r) => { setLists(r.lists); setMissing(Boolean(r.missing)); setPhotos(Boolean(r.photos)); }).catch((e) => setError(e.message));
     const q = new URLSearchParams(window.location.search).get("s");
     if (SECTIONS.includes(q)) setSection(q);
   }, []);
@@ -100,15 +134,18 @@ export default function PlaybookBoard() {
 
       {shown.length === 0 && !adding && <p className="portal-empty">No {SECTION_LABEL[section].toLowerCase()} for that type yet. Hit “+ New list”.</p>}
       <div className="pbook-grid">
-        {shown.map((l) => <ListCard key={l.id} l={l} readOnly={missing} onPatch={patch} onDuplicate={duplicate} onRemove={remove} />)}
+        {shown.map((l) => <ListCard key={l.id} l={l} readOnly={missing} photos={photos} onPatch={patch} onDuplicate={duplicate} onRemove={remove} onFail={fail} />)}
       </div>
     </div>
   );
 }
 
-function ListCard({ l, readOnly, onPatch, onDuplicate, onRemove }) {
+function ListCard({ l, readOnly, photos, onPatch, onDuplicate, onRemove, onFail }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState("");
+  const [busy, setBusy] = useState(-1); // index of the row whose photo is uploading
+  const fileRef = useRef(null);
+  const pickFor = useRef(-1);
   const items = l.items || [];
   const isFlow = l.section === "flow";
   const saveItems = (next, msg) => onPatch(l.id, { items: next }, msg);
@@ -129,6 +166,20 @@ function ListCard({ l, readOnly, onPatch, onDuplicate, onRemove }) {
   }
   const edit = (i, fields) => saveItems(items.map((it, k) => (k === i ? { ...it, ...fields } : it)));
 
+  function pickPhoto(i) { pickFor.current = i; fileRef.current?.click(); }
+  async function photoPicked(e) {
+    const file = e.target.files?.[0]; e.target.value = "";
+    const i = pickFor.current; pickFor.current = -1;
+    if (!file || i < 0) return;
+    setBusy(i);
+    try {
+      const r = await api({ action: "photo", data: await shrink(file) });
+      saveItems(items.map((it, k) => (k === i ? { ...it, img: r.img, img_url: r.img_url } : it)), "Photo added");
+    } catch (err) { onFail(err); }
+    setBusy(-1);
+  }
+  const dropPhoto = (i) => saveItems(items.map((it, k) => { if (k !== i) return it; const { img, img_url, ...rest } = it; return rest; }), "Photo removed");
+
   return (
     <article className="pbook-card">
       <header className="pbook-card-head">
@@ -142,11 +193,16 @@ function ListCard({ l, readOnly, onPatch, onDuplicate, onRemove }) {
 
       <ol className={"pbook-items" + (isFlow ? " is-flow" : "")}>
         {items.map((it, i) => (
-          <li key={`${i}-${it.text}-${it.time || ""}`}>
+          <li key={`${i}-${it.text}-${it.time || ""}`} className={it.img_url ? "has-img" : ""}>
             {isFlow ? <input type="time" className="pbook-time" defaultValue={it.time || ""} disabled={readOnly} aria-label="Time" onBlur={(e) => e.target.value !== (it.time || "") && edit(i, { time: e.target.value })} /> : <span className="pbook-n">{i + 1}</span>}
-            <input className="pbook-text" defaultValue={it.text} readOnly={readOnly} aria-label={`Item ${i + 1}`} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== it.text) edit(i, { text: v }); else e.target.value = it.text; }} onKeyDown={(e) => e.key === "Enter" && e.target.blur()} />
+            <GrowText value={it.text} readOnly={readOnly} label={`Item ${i + 1}`} onSave={(v) => edit(i, { text: v })} />
+            {it.img_url && (
+              <a className="pbook-thumb" href={it.img_url} target="_blank" rel="noreferrer" title="Open reference photo"><img src={it.img_url} alt="" loading="lazy" /></a>
+            )}
             {!readOnly && (
               <span className="pbook-row-actions">
+                {photos && (it.img ? <button type="button" className="prep-x" aria-label="Remove photo" title="Remove photo" onClick={() => dropPhoto(i)}>🖼︎</button>
+                  : <button type="button" className="prep-x" aria-label="Attach a reference photo" title="Attach a reference photo" disabled={busy === i} onClick={() => pickPhoto(i)}>{busy === i ? "…" : "📷"}</button>)}
                 <button type="button" className="prep-x" aria-label="Move up" title="Move up" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
                 <button type="button" className="prep-x" aria-label="Move down" title="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)}>↓</button>
                 <button type="button" className="prep-x" aria-label={`Remove ${it.text}`} title="Remove" onClick={() => saveItems(items.filter((_, k) => k !== i), "Removed")}>×</button>
@@ -157,6 +213,7 @@ function ListCard({ l, readOnly, onPatch, onDuplicate, onRemove }) {
         {items.length === 0 && <li className="prep-empty">Empty — add the first one below.</li>}
       </ol>
 
+      {!readOnly && photos && <input ref={fileRef} type="file" accept="image/*" hidden onChange={photoPicked} />}
       {!readOnly && (
         <form className="prep-add" onSubmit={add}>
           {isFlow && <input type="time" className="pbook-time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Time (optional)" />}

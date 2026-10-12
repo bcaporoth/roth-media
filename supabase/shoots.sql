@@ -4,7 +4,7 @@ create table if not exists public.shoots (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   title text not null,
-  kind text not null default 'other' check (kind in ('wedding', 'family', 'business', 'event', 'other')),
+  kind text not null default 'other' check (kind in ('wedding', 'engagement', 'family', 'business', 'event', 'other')),
   status text not null default 'planned' check (status in ('planned', 'confirmed', 'done', 'cancelled')),
   client_name text not null default '',
   client_email text not null default '',

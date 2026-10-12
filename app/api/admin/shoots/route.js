@@ -5,6 +5,7 @@ import { geocode, drive } from "../../../../lib/geo";
 import { GUIDES, GEAR_BASE, seedChecklist, GROUPS, checklistFromPlaybook } from "../../../../lib/shoot-guides";
 import { loadPlaybook } from "../../../../lib/playbook";
 import { computeDues, dueFromDate } from "../../../../lib/delivery";
+import { PLAYBOOK_IMG_RE, signItemPhotos } from "../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,8 @@ function clean(body, existing = {}) {
     out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 300).map((c) => {
       const group = GROUPS.includes(c.group) ? c.group : "shots";
       const time = group === "flow" && /^\d{2}:\d{2}$/.test(String(c.time || "")) ? c.time : "";
-      return { text: clip(c.text, 240), done: Boolean(c.done), group, ...(time ? { time } : {}) };
+      const img = PLAYBOOK_IMG_RE.test(String(c.img || "")) ? c.img : "";
+      return { text: clip(c.text, 600), done: Boolean(c.done), group, ...(time ? { time } : {}), ...(img ? { img } : {}) };
     }).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
@@ -80,13 +82,15 @@ export async function GET() {
     const probe = await db.from("shoots").select("final_delivered_at").limit(1);
     deliveryReady = !probe.error;
   }
+  // Reference photos on checklist / playbook items go out with signed links.
+  const withPhotos = async (rows, field) => Promise.all((rows || []).map(async (r) => ({ ...r, [field]: await signItemPhotos(r[field]) })));
   return NextResponse.json({
-    shoots: shoots || [],
+    shoots: await withPhotos(shoots, "checklist"),
     delivery: { ready: deliveryReady },
     leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
     galleries: galleries || [],
     guides: { ...GUIDES, __base: GEAR_BASE },
-    playbook: playbook.lists,
+    playbook: await withPhotos(playbook.lists, "items"),
   });
 }
 
@@ -115,7 +119,7 @@ export async function POST(request) {
       if (row.address) Object.assign(row, await locate(row.address));
       const { data, error } = await db.from("shoots").insert(row).select("*").single();
       if (error) return bad(error.message, 500);
-      return NextResponse.json({ shoot: data });
+      return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }
 
     if (body.action === "update") {
@@ -159,7 +163,7 @@ export async function POST(request) {
         ({ data, error } = await db.from("shoots").update(row).eq("id", id).select("*").single());
       }
       if (error) return bad(error.message, 500);
-      return NextResponse.json({ shoot: data });
+      return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }
 
     // One tap: "Sneak peek sent" / "Delivered" (and undo).
@@ -181,7 +185,7 @@ export async function POST(request) {
       }
       const { data, error } = await db.from("shoots").update(row).eq("id", id).select("*").single();
       if (error) return missingColumn(error) ? NextResponse.json({ error: NEEDS_SQL, needsMigration: true }, { status: 409 }) : bad(error.message, 500);
-      return NextResponse.json({ shoot: data });
+      return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }
 
     // Clear a backlog of old shoots that went out long ago: stamps "delivered"
@@ -203,7 +207,7 @@ export async function POST(request) {
       if (!loc.lat) return bad("Couldn't find that address — try adding the town and state");
       const { data, error } = await db.from("shoots").update({ ...loc, updated_at: new Date().toISOString() }).eq("id", id).select("*").single();
       if (error) return bad(error.message, 500);
-      return NextResponse.json({ shoot: data });
+      return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }
 
     if (body.action === "delete") {

@@ -112,7 +112,12 @@ async function getClientData() {
 const safeNext = (v) => (/^\/portal(\/[\w-]+)*\/?$/.test(String(v || "")) ? String(v) : "");
 
 export default async function PortalPage({ searchParams }) {
-  const next = safeNext((await searchParams)?.next);
+  const sp = await searchParams;
+  const next = safeNext(sp?.next);
+  // Brandon's portal is the Studio: signing in lands there, not on the
+  // client gallery home. ?galleries=1 (the nav's Galleries link) still
+  // opens this page so he can see what a client sees.
+  const wantGalleries = sp?.galleries === "1";
   if (!portalConfigured) {
     return (
       <PortalLobby
@@ -132,6 +137,7 @@ export default async function PortalPage({ searchParams }) {
     await getClientData();
 
   if (user && next) redirect(next);
+  if (user && !wantGalleries && adminConfigured && user.email?.toLowerCase() === ADMIN_EMAIL) redirect("/portal/admin");
 
   if (!user) {
     return (

@@ -3,6 +3,8 @@ import { isAdminRequest } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { loadPlaybook } from "../../../../lib/playbook";
 import { GROUPS, PLAYBOOK_KINDS } from "../../../../lib/shoot-guides";
+import { r2Configured, putPlaybookPhoto, signItemPhotos, PLAYBOOK_IMG_RE } from "../../../../lib/r2";
+import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
@@ -22,15 +24,33 @@ function clean(body) {
   if (body.items !== undefined)
     out.items = (Array.isArray(body.items) ? body.items : []).slice(0, 150).map((it) => {
       const time = /^\d{2}:\d{2}$/.test(String(it?.time || "")) ? it.time : "";
-      return { text: clip(it?.text, 240), ...(time ? { time } : {}) };
+      const img = PLAYBOOK_IMG_RE.test(String(it?.img || "")) ? it.img : "";
+      return { text: clip(it?.text, 600), ...(time ? { time } : {}), ...(img ? { img } : {}) };
     }).filter((it) => it.text);
   return out;
+}
+
+// Items go out with a signed viewing link for any attached photo.
+async function withPhotos(list) {
+  return list ? { ...list, items: await signItemPhotos(list.items) } : list;
+}
+
+// Reference photo from the browser: a data URL (already shrunk client-side),
+// squeezed to a 900px webp and parked in R2. Returns the key to save on the item.
+async function storePhoto(dataUrl) {
+  if (!r2Configured) throw new Error("Photo storage isn't set up (R2)");
+  const m = /^data:image\/(?:jpeg|png|webp|heic|heif);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ""));
+  if (!m) throw new Error("That doesn't look like a photo");
+  const raw = Buffer.from(m[1], "base64");
+  if (raw.length > 6 * 1024 * 1024) throw new Error("Photo too big — try a smaller one");
+  const buf = await sharp(raw).rotate().resize({ width: 900, height: 900, fit: "inside", withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
+  return putPlaybookPhoto(buf);
 }
 
 export async function GET() {
   if (!(await isAdminRequest())) return deny();
   const { lists, missing } = await loadPlaybook(supabaseAdmin());
-  return NextResponse.json({ lists, missing });
+  return NextResponse.json({ lists: await Promise.all(lists.map(withPhotos)), missing, photos: r2Configured });
 }
 
 export async function POST(request) {
@@ -40,6 +60,11 @@ export async function POST(request) {
   const missing = (error) => bad(/playbook/i.test(error.message) && /does not exist|schema cache/i.test(error.message) ? "Run supabase/playbook.sql first" : error.message, 500);
 
   try {
+    if (body.action === "photo") {
+      const key = await storePhoto(body.data);
+      const [it] = await signItemPhotos([{ img: key }]);
+      return NextResponse.json({ img: key, img_url: it.img_url || "" });
+    }
     if (body.action === "create") {
       const row = clean(body);
       if (!row.title || !row.section) return bad("A list needs a name and a section");
@@ -47,14 +72,14 @@ export async function POST(request) {
       row.sort = (last?.[0]?.sort ?? 0) + 1;
       const { data, error } = await db.from("playbook").insert(row).select("*").single();
       if (error) return missing(error);
-      return NextResponse.json({ list: data });
+      return NextResponse.json({ list: await withPhotos(data) });
     }
     if (body.action === "update") {
       if (!isId(body.id)) return bad("Bad request");
       const row = { ...clean(body), updated_at: new Date().toISOString() };
       const { data, error } = await db.from("playbook").update(row).eq("id", body.id).select("*").single();
       if (error) return missing(error);
-      return NextResponse.json({ list: data });
+      return NextResponse.json({ list: await withPhotos(data) });
     }
     if (body.action === "duplicate") {
       if (!isId(body.id)) return bad("Bad request");
@@ -63,7 +88,7 @@ export async function POST(request) {
       if (!src) return bad("That list is gone", 404);
       const { data, error } = await db.from("playbook").insert({ section: src.section, kind: src.kind, title: `${src.title} (copy)`.slice(0, 120), notes: src.notes, items: src.items, auto: false, sort: (src.sort || 0) + 1 }).select("*").single();
       if (error) return missing(error);
-      return NextResponse.json({ list: data });
+      return NextResponse.json({ list: await withPhotos(data) });
     }
     if (body.action === "delete") {
       if (!isId(body.id)) return bad("Bad request");

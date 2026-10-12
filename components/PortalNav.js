@@ -9,13 +9,13 @@ export default function PortalNav({ email, isAdmin = false, active = "", extra =
   const cls = (key) => (active === key ? "pnav-link is-active" : "pnav-link");
   return (
     <nav className="rm-nav portal-nav portal-appbar" aria-label="Portal navigation">
-      <Link href="/portal" className="brand">
+      <Link href={isAdmin ? "/portal/admin" : "/portal"} className="brand">
         <span className="brand-chip"><BrandMark /></span>
         <span className="brand-text">Roth <em>Media</em></span>
       </Link>
       <ul className="nav-links">
         <li>
-          <Link className={cls("galleries")} href="/portal">
+          <Link className={cls("galleries")} href={isAdmin ? "/portal?galleries=1" : "/portal"}>
             Galleries
           </Link>
         </li>

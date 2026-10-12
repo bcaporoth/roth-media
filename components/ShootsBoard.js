@@ -399,7 +399,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
     setLead(id);
     const l = leads.find((x) => x.id === id);
     if (!l) return;
-    const k = /wedding|engage/i.test(l.summary) ? "wedding" : /family/i.test(l.summary) ? "family" : /business|content/i.test(l.summary) ? "business" : "other";
+    const k = /engage/i.test(l.summary) ? "engagement" : /wedding/i.test(l.summary) ? "wedding" : /family/i.test(l.summary) ? "family" : /business|content/i.test(l.summary) ? "business" : "other";
     setKind(k);
     setF((s) => ({ ...s, title: `${l.name || l.email} — ${l.summary.split(" · ")[1] || l.summary}`.slice(0, 120), client_name: l.name || "", client_email: l.email || "", client_phone: l.phone || "", address: l.address || "", notes: l.when ? `They said: ${l.when}` : "" }));
   }
@@ -459,7 +459,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
   // Pull a playbook list into this shoot: adds what isn't already there.
   function loadList(list) {
     const have = new Set(items.filter((c) => c.group === list.section).map((c) => c.text));
-    const fresh = (list.items || []).filter((it) => it.text && !have.has(it.text)).map((it) => ({ text: it.text, done: false, group: list.section, ...(it.time ? { time: it.time } : {}) }));
+    const fresh = (list.items || []).filter((it) => it.text && !have.has(it.text)).map((it) => ({ text: it.text, done: false, group: list.section, ...(it.time ? { time: it.time } : {}), ...(it.img ? { img: it.img, img_url: it.img_url } : {}) }));
     if (!fresh.length) return say("Already all here");
     commit((cur) => [...cur, ...fresh]);
     say(`Added ${fresh.length} from “${list.title}”`);
@@ -623,6 +623,7 @@ function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove,
           <li key={`${c.text}-${i}`} className={c.done ? "is-done" : ""}>
             {isFlow && <input type="time" className="pbook-time" key={c.time || "none"} defaultValue={c.time || ""} aria-label={`Time for ${c.text}`} onBlur={(e) => e.target.value !== (c.time || "") && onTime(c, e.target.value)} />}
             <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span>{c.text}</span></label>
+            {c.img_url && <a className="pbook-thumb" href={c.img_url} target="_blank" rel="noreferrer" title="Open reference photo"><img src={c.img_url} alt="" loading="lazy" /></a>}
             <button type="button" className="prep-x" aria-label={`Remove ${c.text}`} title="Remove" onClick={() => onRemove(c)}>×</button>
           </li>
         ))}

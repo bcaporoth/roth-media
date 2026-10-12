@@ -5929,12 +5929,15 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .pbook-auto { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 0.5rem; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.88rem !important; }
 .pbook-auto input { width: auto !important; }
 .pbook-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
-.pbook-items li { display: flex; align-items: center; gap: 0.4rem; }
-.pbook-n { flex: none; width: 1.4rem; font-size: 0.75rem; color: var(--ink-soft); text-align: right; }
-.pbook-text { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.3rem 0.45rem; }
+.pbook-items li { display: flex; align-items: flex-start; gap: 0.4rem; }
+.pbook-n { flex: none; width: 1.4rem; font-size: 0.75rem; color: var(--ink-soft); text-align: right; padding-top: 0.45rem; }
+.pbook-text { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; line-height: 1.4; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.3rem 0.45rem; resize: none; overflow: hidden; display: block; overflow-wrap: anywhere; }
+.pbook-thumb { flex: none; width: 3rem; height: 3rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
+.pbook-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shoot-check .pbook-thumb { margin-left: auto; }
 .pbook-text:hover, .pbook-text:focus { border-color: rgba(0, 0, 0, 0.18); outline: none; }
 .pbook-time { flex: none; width: 6.6rem; font: inherit; font-size: 0.82rem; color: inherit; background: transparent; border: 1px solid var(--field-line); border-radius: 8px; padding: 0.25rem 0.35rem; }
-.pbook-row-actions { display: flex; flex: none; opacity: 0.35; }
+.pbook-row-actions { display: flex; flex: none; opacity: 0.35; padding-top: 0.15rem; }
 .pbook-items li:hover .pbook-row-actions, .pbook-items li:focus-within .pbook-row-actions { opacity: 1; }
 .pbook-row-actions .prep-x[disabled] { opacity: 0.2; cursor: default; }
 .pbook-notes { font-size: 0.88rem; }
@@ -5946,6 +5949,19 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .cprof-shoots .shoot-far { text-align: left; }
 .cprof-shoots .shoot-facts { grid-template-columns: 1fr 1fr; }
 .cprof-shoots .shoot-cols, .cprof-shoots .shoot-new { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .pbook-tabs { grid-template-columns: repeat(2, 1fr); }
+  .pbook-grid { grid-template-columns: 1fr; }
+  .pbook-items { gap: 0.35rem; }
+  .pbook-items li { flex-wrap: wrap; padding-bottom: 0.35rem; border-bottom: 1px solid var(--line); }
+  .pbook-items li:last-child { border-bottom: 0; }
+  .pbook-text { font-size: 1rem; flex-basis: calc(100% - 1.8rem); }
+  .pbook-items li.has-img .pbook-text { flex-basis: calc(100% - 5.2rem); }
+  .pbook-thumb { width: 3.4rem; height: 3.4rem; }
+  .pbook-row-actions { opacity: 0.8; margin-left: auto; padding-top: 0; }
+  .pbook-row-actions .prep-x { width: 2.2rem; height: 2.2rem; }
+  .prep-list .shoot-check label span { font-size: 1rem; }
+}
 .admin-shell.is-dark .pbook-tab, .admin-shell.is-dark .pbook-card { background: rgba(255, 255, 255, 0.03); }
 .admin-shell.is-dark .pbook-title:hover, .admin-shell.is-dark .pbook-title:focus, .admin-shell.is-dark .pbook-text:hover, .admin-shell.is-dark .pbook-text:focus, .admin-shell.is-dark .pbook-time { border-color: rgba(255, 255, 255, 0.25); }
 .admin-shell.is-dark .pbook-time { color-scheme: dark; }
