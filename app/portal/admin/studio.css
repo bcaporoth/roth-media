@@ -409,3 +409,7 @@ body:has(.admin-shell.is-dark) { background: #191612; }
 /* Client edit form (Clients list + profile): fields, notes, Save. */
 .client-edit { display: grid; gap: 0.7rem; }
 .client-detail-top { margin-bottom: 0.4rem; }
+
+/* Client profile → Brand palette card */
+.cprof-brand { display: flex; gap: 0.75rem; align-items: center; min-width: 0; }
+.cprof-brand-logo { flex: none; width: 56px; height: 56px; object-fit: contain; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }

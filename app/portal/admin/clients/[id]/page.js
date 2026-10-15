@@ -10,6 +10,8 @@ import { newLeadCount } from "../../../../../lib/studio-data";
 import { clientStage, clientType } from "../../../../../lib/intake";
 import { resendConfigured } from "../../../../../lib/resend";
 import { BOOKING_COLS, bookingView } from "../../../../../lib/money-view";
+import { loadBrand } from "../../../../../lib/brand-server";
+import { completeness } from "../../../../../lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +52,14 @@ export default async function ClientPage({ params }) {
     shared = (m || []).map((x) => x.galleries).filter(Boolean).map((g) => ({ ...g, shared: true }));
   } catch {}
   const galleries = [...(owned || []), ...shared];
+  // Brand palette summary (supabase/brand.sql; ready:false until it has run).
+  const b = await loadBrand(db, client.id, { admin: true }).catch(() => ({ ready: false }));
+  const brand = !b.ready ? { ready: false } : !b.palette ? { ready: true, palette: null } : {
+    ready: true,
+    palette: { invited_at: b.palette.invited_at, updated_at: b.palette.updated_at, updated_by: b.palette.updated_by, created_at: b.palette.created_at },
+    progress: (({ essentials, deep, pct }) => ({ done: essentials.done, of: essentials.of, deep: deep.pct, pct }))(completeness(b.palette.data, b.assets)),
+    logo: b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || "") && a.label === "Main logo")?.url || b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || ""))?.url || "",
+  };
   const all = subs || [];
   const data = {
     client: { ...client, phone: client.phone || "", notes: client.notes || "" },
@@ -62,6 +72,7 @@ export default async function ClientPage({ params }) {
     payments: payments || [],
     bookings,
     bookingsReady,
+    brand,
     stage: clientStage({ subs: all, shoots: shoots || [], galleries }),
     type: clientType({ subs: all, shoots: shoots || [] }),
     referral: await (async () => {

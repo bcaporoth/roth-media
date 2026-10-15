@@ -161,6 +161,8 @@ export default function ClientProfile({ initial, emailReady }) {
             {brief && <p className="gcard-meta">Current as of {fmt(brief.updated_at)}. They can edit it any time from their portal — the call sheet and the day plan always show this version.</p>}
             {d.intakes.map((it, i) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} brief · ${fmt(it.updated_at || it.created_at)}${i > 0 ? " (older)" : ""}`} closed={i > 0} />)}
           </section>
+
+          <BrandCard client={c} initial={d.brand} emailReady={emailReady} say={say} fail={fail} copy={copy} />
         </div>
 
         <div className="cprof-col">
@@ -292,5 +294,69 @@ function CallSheet({ call, client, brief, open, onToggle, onDelete, onError }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Brand palette (docs/BRAND-PALETTE-SPEC.md): where they are, the invite,
+// and the way into the full palette + the printable brand sheet.
+function BrandCard({ client: c, initial, emailReady, say, fail, copy }) {
+  const [b, setB] = useState(initial || { ready: false });
+  const [busy, setBusy] = useState(false);
+  const base = `/portal/admin/clients/${c.id}/brand`;
+  const noEmail = isNoEmail(c.email);
+  async function ensure() {
+    const r = await api("/api/admin/brand", { action: "ensure", clientId: c.id });
+    if (!b.palette) setB({ ...b, palette: { created_at: new Date().toISOString() }, progress: b.progress || null });
+    return r;
+  }
+  async function send() {
+    if (!window.confirm(`Email ${c.email} a button that opens their brand palette? You get a copy.`)) return;
+    setBusy(true);
+    try { const r = await api("/api/admin/brand", { action: "invite", clientId: c.id }); setB((x) => ({ ...x, palette: { ...(x.palette || {}), invited_at: r.invited_at } })); say("Brand palette sent"); } catch (err) { fail(err); }
+    setBusy(false);
+  }
+  async function link(how) {
+    setBusy(true);
+    try {
+      const r = await ensure();
+      const first = c.name.split(" ")[0] || "";
+      if (how === "copy") await copy(r.link, "Brand palette link");
+      if (how === "sms") window.location.href = `sms:${c.phone.replace(/[^\d+]/g, "")}&body=${encodeURIComponent(`Hi ${first} — here's your brand palette: logo, colors, look and goals. The essentials take about ten minutes and it saves as you go: ${r.link}`)}`;
+      if (how === "open") window.location.href = base;
+    } catch (err) { fail(err); }
+    setBusy(false);
+  }
+  const p = b.progress;
+  return (
+    <section className="cprof-card">
+      <div className="cprof-cardhead"><h2>Brand palette</h2>
+        {b.palette && (
+          <div className="gcard-actions">
+            <a className="achip" href={base}>Open palette</a>
+            <a className="achip" href={`${base}/sheet`} target="_blank" rel="noreferrer">Brand sheet ↗</a>
+          </div>
+        )}
+      </div>
+      {!b.ready && <p className="sm-sqlhint">Brand palettes aren&apos;t set up yet — run <code>supabase/brand.sql</code> once (it&apos;s also in <code>00-all.sql</code>) and this card switches on.</p>}
+      {b.ready && !b.palette && <p className="gcard-meta">Logo, colors, vibe, customers, goals and content — one record per business. Open one and send it; their business brief fills in what it already answers.</p>}
+      {b.ready && b.palette && (
+        <div className="cprof-brand">
+          {b.logo && <img src={b.logo} alt="" className="cprof-brand-logo" />}
+          <p className="gcard-meta">
+            {p ? <><strong>Essentials {p.done}/{p.of}</strong> · deep dive {p.deep}%</> : "Opened — nothing filled in yet"}
+            {b.palette.updated_at && b.palette.updated_by ? ` · updated ${fmt(b.palette.updated_at)} by ${b.palette.updated_by === "client" ? "them" : "you"}` : ""}
+            {b.palette.invited_at ? ` · sent ${fmt(b.palette.invited_at)}` : " · not sent yet"}
+          </p>
+        </div>
+      )}
+      {b.ready && (
+        <div className="gcard-actions">
+          {!b.palette && <button type="button" className="achip" disabled={busy} onClick={() => link("open")}>Open a palette</button>}
+          <button type="button" className="abtn" disabled={busy || noEmail || !emailReady} title={noEmail ? "No email on file — copy the link and text it" : !emailReady ? "Email isn't set up on this server" : ""} onClick={send}>{b.palette?.invited_at ? "Send again" : "Send brand palette"}</button>
+          <button type="button" className="achip" disabled={busy} onClick={() => link("copy")}>Copy link</button>
+          {c.phone && <button type="button" className="achip" disabled={busy} onClick={() => link("sms")}>Text it</button>}
+        </div>
+      )}
+    </section>
   );
 }
