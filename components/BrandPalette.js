@@ -354,7 +354,8 @@ function Sliders({ f, value, onChange }) {
           <div key={k} className={"bp-slider" + (v ? "" : " is-unset")}>
             <div className="bp-slider-ends"><span>{l}</span><em>{v ? ["", `Very ${l.toLowerCase()}`, l, "Right in between", r, `Very ${r.toLowerCase()}`][v] : "Not set"}</em><span>{r}</span></div>
             <input type="range" min={1} max={5} step={1} value={v || 3} aria-label={`${l} to ${r}`} onChange={(e) => setV(e.target.value)} onClick={(e) => { if (!v) setV(e.currentTarget.value); }} />
-            {v ? <button type="button" className="bp-clear" onClick={() => { const n = { ...value }; delete n[k]; onChange(n); }}>Clear</button> : null}
+            {/* Always rendered (hidden when unset) so setting one slider never shifts the rest. */}
+            <button type="button" className="bp-clear" style={v ? undefined : { visibility: "hidden" }} tabIndex={v ? 0 : -1} aria-hidden={!v} onClick={() => { const n = { ...value }; delete n[k]; onChange(n); }}>Clear</button>
           </div>
         );
       })}

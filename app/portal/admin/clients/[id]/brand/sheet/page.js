@@ -130,7 +130,7 @@ export default async function BrandSheetPage({ params }) {
           </section>
         </div>
 
-        <section className="bsheet-voice">
+        {[v("voice", "cta"), v("voice", "person"), v("voice", "emoji"), v("voice", "hashtags"), v("voice", "words_avoid"), v("voice", "never_claim"), v("voice", "claims_ok"), (v("business", "diet") || []).length].some(Boolean) && <section className="bsheet-voice">
           <h2>Words</h2>
           <Line label="Call to action" value={v("voice", "cta")} />
           <Line label="Speak as" value={[v("voice", "person"), v("voice", "emoji") ? `emoji: ${v("voice", "emoji")} ${v("voice", "emoji_which") || ""}` : ""].filter(Boolean).join(" · ")} />
@@ -139,7 +139,7 @@ export default async function BrandSheetPage({ params }) {
           <Line label="Never claim" value={v("voice", "never_claim")} warn />
           <Line label="Allowed claims" value={v("voice", "claims_ok")} />
           <Line label="Dietary" value={v("business", "diet")} />
-        </section>
+        </section>}
 
         {(talk.length > 0 || notes.length > 0) && (
           <section className="bsheet-foot">

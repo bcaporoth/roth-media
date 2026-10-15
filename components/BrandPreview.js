@@ -65,23 +65,28 @@ export default function BrandPreview({ data, assets }) {
   const shortLink = b.link.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
   return (
     <div className="bpv">
+      <div className="bpv-item">
       <figure className="bpv-post" style={{ background: b.bg, color: b.text }}>
         <div className="bpv-post-top">
           {b.logo ? <img src={b.logo.url} alt="" className="bpv-logo" /> : <span className="bpv-logo bpv-logo--empty" style={{ borderColor: b.primary }}>Logo</span>}
         </div>
         <p className="bpv-name" style={{ fontFamily: b.head, color: b.primary === b.bg ? b.text : b.primary }}>{name}</p>
         <p className="bpv-line" style={{ fontFamily: b.body }}>{b.oneliner || "Your one-line bio shows here."}</p>
-        {b.words.length > 0 && <p className="bpv-words" style={{ fontFamily: b.body }}>{b.words.map((w) => <span key={w} style={{ borderColor: b.accent }}>{w}</span>)}</p>}
+        {b.words.length > 0 && <p className="bpv-words" style={{ fontFamily: b.body }}>{b.words.slice(0, 3).map((w) => <span key={w} style={{ borderColor: b.accent }}>{w}</span>)}</p>}
         <span className="bpv-bar" style={{ background: b.accent }} />
-        <figcaption>Instagram post</figcaption>
       </figure>
+      <p className="bpv-cap">Instagram post</p>
+      </div>
       <div className="bpv-tall">
+        <div className="bpv-item">
         <figure className="bpv-end" style={{ background: b.primary, color: inkOn(b.primary) }}>
           {b.onPrimaryLogo ? <img src={b.onPrimaryLogo.url} alt="" className="bpv-logo bpv-logo--c" /> : null}
           <p className="bpv-name bpv-name--sm" style={{ fontFamily: b.head }}>{name}</p>
           <p className="bpv-cta" style={{ fontFamily: b.body, background: b.accent === b.primary ? inkOn(b.primary) : b.accent, color: inkOn(b.accent === b.primary ? inkOn(b.primary) : b.accent) }}>{b.cta || shortLink || "Your link"}</p>
-          <figcaption>Reel end card</figcaption>
         </figure>
+        <p className="bpv-cap">Reel end card</p>
+        </div>
+        <div className="bpv-item">
         <figure className="bpv-story" style={{ background: `linear-gradient(170deg, ${b.accent}, ${b.bg} 70%)`, color: b.text }}>
           <div className="bpv-story-head">
             {b.icon ? <img src={b.icon.url} alt="" className="bpv-avatar" /> : <span className="bpv-avatar" style={{ background: b.primary }} />}
@@ -89,8 +94,9 @@ export default function BrandPreview({ data, assets }) {
           </div>
           <p className="bpv-name bpv-name--sm" style={{ fontFamily: b.head }}>{b.oneliner ? b.oneliner.split(/[.—–]/)[0] : name}</p>
           <span className="bpv-sticker" style={{ fontFamily: b.body }}>🔗 {shortLink || "your link"}</span>
-          <figcaption>Story</figcaption>
         </figure>
+        <p className="bpv-cap">Story</p>
+        </div>
       </div>
     </div>
   );

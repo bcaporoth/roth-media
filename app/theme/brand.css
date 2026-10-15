@@ -100,13 +100,14 @@ textarea.bp-input { resize: vertical; }
 
 /* colors */
 .bp-colors { display: grid; gap: 0.7rem; }
-.bp-color { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0.7rem; align-items: start; }
-.bp-color-pick { position: relative; width: 52px; height: 52px; border-radius: 6px; border: 1px solid var(--line); overflow: hidden; cursor: pointer; }
+.bp-color { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0.5rem; align-items: start; }
+.bp-color-pick { position: relative; width: 44px; height: 48px; border-radius: 6px; border: 1px solid var(--line); overflow: hidden; cursor: pointer; }
 .bp-color-pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .bp-color-fields { display: grid; gap: 0.2rem; min-width: 0; }
-.bp-color-line { display: flex; gap: 0.4rem; align-items: center; min-width: 0; }
-.bp-hex { flex: 1 1 5rem; font-family: ui-monospace, Menlo, monospace; text-transform: lowercase; }
-.bp-color-line .bp-select { flex: 0 1 8rem; min-width: 0; }
+.bp-color-line { display: grid; grid-template-columns: 5.7rem minmax(0, 1fr) 36px; gap: 0.35rem; align-items: center; min-width: 0; }
+.bp-hex { padding-inline: 0.45rem; font-family: ui-monospace, Menlo, monospace; text-transform: lowercase; }
+.bp-color-line .bp-select { width: 100%; min-width: 0; padding-inline: 0.45rem 0.2rem; }
+.bp-color-line .bp-x { width: 36px; height: 36px; }
 .bp-color-codes { font-size: 0.74rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .bp-x { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink-soft); font-size: 1.2rem; line-height: 1; cursor: pointer; }
 .bp-fromlogo { display: grid; gap: 0.4rem; }
@@ -154,12 +155,13 @@ textarea.bp-input { resize: vertical; }
 /* ── The live preview ── */
 .bpv { display: grid; gap: 0.6rem; min-width: 0; }
 .bpv figure { position: relative; margin: 0; overflow: hidden; border-radius: 6px; border: 1px solid var(--line); display: grid; align-content: center; min-width: 0; }
-.bpv figcaption { position: absolute; left: 8px; bottom: 6px; font: 600 0.6rem/1 var(--font-body), sans-serif; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; }
+.bpv-item { display: grid; gap: 0.3rem; min-width: 0; }
+.bpv-cap { margin: 0; font: 600 0.62rem/1.2 var(--font-body), sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
 .bpv-post { aspect-ratio: 1; padding: 9% 9% 14%; gap: 0.5rem; align-content: start !important; }
-.bpv-post-top { height: 28%; display: flex; align-items: flex-start; }
-.bpv-logo { max-height: 100%; max-width: 60%; object-fit: contain; }
+.bpv-post-top { display: flex; align-items: flex-start; }
+.bpv-logo { height: clamp(44px, 14vw, 72px); width: auto; max-width: 60%; object-fit: contain; object-position: left center; }
 .bpv-logo--empty { display: grid; place-items: center; width: 64px; height: 64px; border: 1.5px dashed; border-radius: 50%; font: 600 0.7rem var(--font-body), sans-serif; opacity: 0.6; }
-.bpv-name { margin: 0; font-size: clamp(1.4rem, 7vw, 2rem); line-height: 1.05; font-weight: 700; overflow-wrap: anywhere; }
+.bpv-name { margin: 0; font-size: clamp(1.2rem, 6vw, 1.75rem); line-height: 1.05; font-weight: 700; overflow-wrap: anywhere; }
 .bpv-name--sm { font-size: clamp(1rem, 4.4vw, 1.25rem); text-align: center; }
 .bpv-line { margin: 0; font-size: 0.92rem; line-height: 1.35; opacity: 0.85; }
 .bpv-words { margin: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
@@ -167,7 +169,7 @@ textarea.bp-input { resize: vertical; }
 .bpv-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; }
 .bpv-tall { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .bpv-end, .bpv-story { aspect-ratio: 9 / 16; padding: 12% 10%; gap: 0.7rem; justify-items: center; }
-.bpv-logo--c { max-width: 70%; max-height: 22%; }
+.bpv-logo--c { height: clamp(36px, 11vw, 56px); max-width: 80%; object-position: center; }
 .bpv-cta { margin: 0; padding: 0.35rem 0.7rem; border-radius: 99px; font-size: 0.72rem; font-weight: 700; text-align: center; overflow-wrap: anywhere; }
 .bpv-story { align-content: space-between !important; }
 .bpv-story-head { justify-self: start; display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 600; min-width: 0; }
