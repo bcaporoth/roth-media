@@ -6,6 +6,7 @@ import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
+import { ESSENTIALS } from "../../lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -183,6 +184,16 @@ export default async function PortalPage({ searchParams }) {
     } catch { brief = null; }
   }
 
+  // Their brand palette, once Brandon has opened one (business clients).
+  // Quietly absent until supabase/brand.sql has run.
+  let brand = null;
+  if (adminConfigured && !isAdmin) {
+    try {
+      const { data } = await supabaseAdmin().from("brand_palettes").select("section_status").eq("client_id", client.id).maybeSingle();
+      if (data) brand = { done: data.section_status?._essentials || 0, of: data.section_status?._essentials_of || ESSENTIALS.length };
+    } catch { brand = null; }
+  }
+
   const first = client.name.trim().split(/\s+/)[0] || "there";
   const firstName = first.charAt(0).toUpperCase() + first.slice(1);
 
@@ -197,6 +208,7 @@ export default async function PortalPage({ searchParams }) {
       money={money}
       dateFmt={dateFmt}
       brief={brief}
+      brand={brand}
     />
   );
 }

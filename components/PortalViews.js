@@ -109,6 +109,7 @@ export function PortalHome({
   money,
   dateFmt,
   brief = null, // null = not shown; false = none yet; object = saved
+  brand = null, // null = not shown; { done, of } = their brand palette's Essentials
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -196,6 +197,18 @@ export function PortalHome({
             moment it&apos;s ready.
           </p>
         </div>
+      )}
+
+      {brand && (
+        <section className="cx-wrap pt-brief-card cx-reveal" aria-label="Your brand palette">
+          <p className="cx-kick">Your brand palette · Essentials {brand.done}/{brand.of}</p>
+          <p className="pt-note">
+            {brand.done >= brand.of
+              ? "Logo, colors, look, customers and goals — what I plan your content from. Change anything, any time."
+              : "Logo, colors, look, customers and goals. The essentials take about ten minutes, and it saves as you go."}
+          </p>
+          <Link href="/portal/brand" className="cx-btn cx-btn--light">{brand.done ? "Open my brand palette" : "Start my brand palette"} <Arrow /></Link>
+        </section>
       )}
 
       {brief !== null && (
