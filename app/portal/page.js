@@ -1,12 +1,15 @@
 import PortalLogin from "../../components/PortalLogin";
 import { redirect } from "next/navigation";
 import PortalNav from "../../components/PortalNav";
-import { PortalLobby, PortalNotice, PortalHome } from "../../components/PortalViews";
+import { PortalLobby, PortalNotice, PortalHome, PortalBusinessHome } from "../../components/PortalViews";
 import { createSupabaseServer, portalConfigured } from "../../lib/supabase";
 import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
-import { ESSENTIALS } from "../../lib/brand";
+import { ESSENTIALS, completeness } from "../../lib/brand";
+import { loadBrand } from "../../lib/brand-server";
+import { normHex } from "../../lib/brand-color";
+import { latestBrief } from "../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +45,14 @@ async function getClientData() {
 
   if (!client) return { user, client: null };
 
+  // A brand palette makes them a business client: they get the business
+  // home. Quietly absent until supabase/brand.sql has run.
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  const brandLoad =
+    adminConfigured && !isAdmin
+      ? loadBrand(supabaseAdmin(), client.id).catch(() => null)
+      : Promise.resolve(null);
+
   const [{ data: galleries }, { data: payments }, { data: hosted }] =
     await Promise.all([
       supabase
@@ -57,7 +68,7 @@ async function getClientData() {
       r2Configured
         ? supabase
             .from("galleries")
-            .select("id, title, event_date, cover_filename, media_count")
+            .select("id, title, event_date, cover_filename, media_count, created_at")
             .eq("client_id", client.id)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
@@ -72,7 +83,7 @@ async function getClientData() {
       if (ids.length) {
         const { data: extra } = await supabase
           .from("galleries")
-          .select("id, title, event_date, cover_filename, media_count")
+          .select("id, title, event_date, cover_filename, media_count, created_at")
           .in("id", ids)
           .order("created_at", { ascending: false });
         shared = (extra || []).map((g) => ({ ...g, shared: true }));
@@ -80,10 +91,17 @@ async function getClientData() {
     } catch {}
   }
 
+  const b = await brandLoad;
+  const palette = b?.ready && b.palette ? { ...b.palette, assets: b.assets || [] } : null;
+
   // The first album is shown as a large poster, so it also gets the
   // web-size cover (layered over the thumb, which stays the fallback).
+  // Business clients see everything strictly newest first, shared albums
+  // included; wedding clients keep their own albums ahead of shared ones.
+  const all = [...(hosted || []), ...shared];
+  if (palette) all.sort((x, y) => String(y.created_at || "").localeCompare(String(x.created_at || "")));
   const hostedGalleries = await Promise.all(
-    [...(hosted || []), ...shared].map(async (g, i) => ({
+    all.map(async (g, i) => ({
       ...g,
       coverUrl: g.cover_filename
         ? await signedUrl(photoKey(g.id, "thumb", g.cover_filename)).catch(
@@ -105,6 +123,24 @@ async function getClientData() {
     galleries: galleries || [],
     payments: payments || [],
     hostedGalleries,
+    palette,
+  };
+}
+
+// What the business home's brand card shows: Essentials progress, the next
+// one to fill in, and their confirmed logo / colors / vibe words (never the
+// colors Brandon only suggested).
+function brandSummary(palette) {
+  const data = palette.data || {};
+  const c = completeness(data, palette.assets);
+  const logo = palette.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || "") && a.url);
+  return {
+    done: c.essentials.done,
+    of: c.essentials.of || ESSENTIALS.length,
+    next: c.essentials.missing.slice(0, 1).map((m) => m.label),
+    colors: (Array.isArray(data.visual?.colors) ? data.visual.colors : []).filter((x) => normHex(x?.hex)).slice(0, 6),
+    logo: logo ? logo.url : null,
+    words: Array.isArray(data.vibe?.words) ? data.vibe.words.slice(0, 5) : [],
   };
 }
 
@@ -134,7 +170,7 @@ export default async function PortalPage({ searchParams }) {
     );
   }
 
-  const { user, client, galleries, payments, hostedGalleries } =
+  const { user, client, galleries, payments, hostedGalleries, palette } =
     await getClientData();
 
   if (user && next) redirect(next);
@@ -179,19 +215,29 @@ export default async function PortalPage({ searchParams }) {
   let brief = null;
   if (adminConfigured && !isAdmin) {
     try {
-      const { data } = await supabaseAdmin().from("submissions").select("id").eq("kind", "intake").eq("email", user.email.toLowerCase()).limit(1);
-      brief = data && data.length ? { id: data[0].id } : false;
+      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").eq("kind", "intake").eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(3);
+      const b = latestBrief(data || []);
+      brief = b ? { id: b.id, when: new Date(b.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) } : false;
     } catch { brief = null; }
   }
 
-  // Their brand palette, once Brandon has opened one (business clients).
-  // Quietly absent until supabase/brand.sql has run.
-  let brand = null;
-  if (adminConfigured && !isAdmin) {
-    try {
-      const { data } = await supabaseAdmin().from("brand_palettes").select("section_status").eq("client_id", client.id).maybeSingle();
-      if (data) brand = { done: data.section_status?._essentials || 0, of: data.section_status?._essentials_of || ESSENTIALS.length };
-    } catch { brand = null; }
+  // Business client (Brandon has opened a brand palette for them): their
+  // content and their brand on one page.
+  if (palette) {
+    return (
+      <PortalBusinessHome
+        nav={<PortalNav email={user.email} active="galleries" brand />}
+        name={palette.data?.business?.name || client.name}
+        hostedGalleries={hostedGalleries || []}
+        galleries={galleries}
+        payments={payments}
+        total={total}
+        money={money}
+        dateFmt={dateFmt}
+        brand={brandSummary(palette)}
+        brief={brief || false}
+      />
+    );
   }
 
   const first = client.name.trim().split(/\s+/)[0] || "there";
@@ -208,7 +254,6 @@ export default async function PortalPage({ searchParams }) {
       money={money}
       dateFmt={dateFmt}
       brief={brief}
-      brand={brand}
     />
   );
 }

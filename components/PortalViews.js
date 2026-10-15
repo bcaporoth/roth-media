@@ -98,6 +98,126 @@ function galleryMeta(g) {
   );
 }
 
+// ── The shelf: newest album as the big poster, the rest underneath. ──
+function GalleryShelf({ hostedGalleries, label = "Your galleries" }) {
+  const [feature, ...rest] = hostedGalleries;
+  return (
+    <section className="cx-wrap pt-shelf" aria-label={label}>
+      <Link href={`/portal/gallery/${feature.id}`} className="pt-feature">
+        <span className="pt-feature-shot">
+          {feature.coverUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={feature.coverUrl} alt="" />
+              {feature.posterUrl && (
+                <span
+                  className="pt-feature-hd"
+                  style={{ backgroundImage: `url(${feature.posterUrl})` }}
+                  aria-hidden="true"
+                />
+              )}
+            </>
+          ) : (
+            <span className="pt-poster-blank" aria-hidden="true" />
+          )}
+        </span>
+        <span className="pt-feature-body">
+          <span className="cx-kick">
+            {feature.shared ? "Shared with you" : "Your gallery"}
+          </span>
+          <strong className="cx-h2 pt-feature-title">{feature.title}</strong>
+          <span className="pt-feature-meta">{galleryMeta(feature)}</span>
+          <span className="cx-btn cx-btn--light cx-btn--lg pt-feature-cta">
+            Open gallery <Arrow />
+          </span>
+        </span>
+      </Link>
+
+      {rest.length > 0 && (
+        <div className="pt-posters">
+          {rest.map((g) => (
+            <Link
+              href={`/portal/gallery/${g.id}`}
+              className="pt-poster cx-reveal"
+              key={g.id}
+            >
+              <span className="pt-poster-shot">
+                {g.coverUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={g.coverUrl} alt="" loading="lazy" />
+                ) : (
+                  <span className="pt-poster-blank" aria-hidden="true" />
+                )}
+              </span>
+              <span className="pt-poster-caption">
+                <strong>{g.title}</strong>
+                <span>{galleryMeta(g)}</span>
+              </span>
+              <span className="pt-poster-go" aria-hidden="true">
+                Open <Arrow />
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── Gallery links (outside albums) + payments. ──
+function Ledger({ galleries, payments, total, money, dateFmt, hasHosted }) {
+  const hasLinks = galleries.length > 0;
+  const hasPayments = payments.length > 0;
+  if (!hasLinks && !hasPayments) return null;
+  return (
+    <section
+      className={
+        "cx-wrap pt-ledger" + (hasLinks && hasPayments ? " pt-ledger--two" : "")
+      }
+    >
+      {hasLinks && (
+        <div className="pt-ledger-col cx-reveal">
+          <h2 className="cx-kick pt-ledger-title">
+            {hasHosted ? "More links" : "Your galleries"}
+          </h2>
+          <ul className="cx-rows pt-links">
+            {galleries.map((g) => (
+              <li key={g.id} className="cx-row">
+                <a href={g.url} target="_blank" rel="noopener noreferrer">
+                  <span className="cx-row-name">{g.title}</span>
+                  <span className="pt-links-go" aria-hidden="true">Open ↗</span>
+                </a>
+                {g.note && <span className="pt-note">{g.note}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasPayments && (
+        <div className="pt-ledger-col cx-reveal">
+          <h2 className="cx-kick pt-ledger-title">Payments</h2>
+          <ul className="cx-rows pt-payments">
+            {payments.map((p) => (
+              <li key={p.id} className="cx-row">
+                <span className="pt-pay-what">
+                  {dateFmt(p.paid_on)}
+                  {p.note && <span className="pt-note"> — {p.note}</span>}
+                </span>
+                <span className="cx-row-price">{money(p.amount_cents)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="pt-total">
+            <span>Total with Roth Media</span>
+            <span className="cx-num">{money(total)}</span>
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ── Client home: galleries as posters, then links + payments. ──
 export function PortalHome({
   nav,
@@ -109,12 +229,9 @@ export function PortalHome({
   money,
   dateFmt,
   brief = null, // null = not shown; false = none yet; object = saved
-  brand = null, // null = not shown; { done, of } = their brand palette's Essentials
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
-  const hasPayments = payments.length > 0;
-  const [feature, ...rest] = hostedGalleries;
 
   return (
     <PortalFrame nav={nav} className="pt-home">
@@ -128,67 +245,7 @@ export function PortalHome({
         </p>
       </header>
 
-      {hasHosted && (
-        <section className="cx-wrap pt-shelf" aria-label="Your galleries">
-          <Link href={`/portal/gallery/${feature.id}`} className="pt-feature">
-            <span className="pt-feature-shot">
-              {feature.coverUrl ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={feature.coverUrl} alt="" />
-                  {feature.posterUrl && (
-                    <span
-                      className="pt-feature-hd"
-                      style={{ backgroundImage: `url(${feature.posterUrl})` }}
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
-              ) : (
-                <span className="pt-poster-blank" aria-hidden="true" />
-              )}
-            </span>
-            <span className="pt-feature-body">
-              <span className="cx-kick">
-                {feature.shared ? "Shared with you" : "Your gallery"}
-              </span>
-              <strong className="cx-h2 pt-feature-title">{feature.title}</strong>
-              <span className="pt-feature-meta">{galleryMeta(feature)}</span>
-              <span className="cx-btn cx-btn--light cx-btn--lg pt-feature-cta">
-                Open gallery <Arrow />
-              </span>
-            </span>
-          </Link>
-
-          {rest.length > 0 && (
-            <div className="pt-posters">
-              {rest.map((g) => (
-                <Link
-                  href={`/portal/gallery/${g.id}`}
-                  className="pt-poster cx-reveal"
-                  key={g.id}
-                >
-                  <span className="pt-poster-shot">
-                    {g.coverUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={g.coverUrl} alt="" loading="lazy" />
-                    ) : (
-                      <span className="pt-poster-blank" aria-hidden="true" />
-                    )}
-                  </span>
-                  <span className="pt-poster-caption">
-                    <strong>{g.title}</strong>
-                    <span>{galleryMeta(g)}</span>
-                  </span>
-                  <span className="pt-poster-go" aria-hidden="true">
-                    Open <Arrow />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} />}
 
       {!hasHosted && !hasLinks && (
         <div className="cx-wrap">
@@ -197,18 +254,6 @@ export function PortalHome({
             moment it&apos;s ready.
           </p>
         </div>
-      )}
-
-      {brand && (
-        <section className="cx-wrap pt-brief-card cx-reveal" aria-label="Your brand palette">
-          <p className="cx-kick">Your brand palette · Essentials {brand.done}/{brand.of}</p>
-          <p className="pt-note">
-            {brand.done >= brand.of
-              ? "Logo, colors, look, customers and goals — what I plan your content from. Change anything, any time."
-              : "Logo, colors, look, customers and goals. The essentials take about ten minutes, and it saves as you go."}
-          </p>
-          <Link href="/portal/brand" className="cx-btn cx-btn--light">{brand.done ? "Open my brand palette" : "Start my brand palette"} <Arrow /></Link>
-        </section>
       )}
 
       {brief !== null && (
@@ -223,53 +268,134 @@ export function PortalHome({
         </section>
       )}
 
-      {(hasLinks || hasPayments) && (
-        <section
-          className={
-            "cx-wrap pt-ledger" + (hasLinks && hasPayments ? " pt-ledger--two" : "")
-          }
-        >
-          {hasLinks && (
-            <div className="pt-ledger-col cx-reveal">
-              <h2 className="cx-kick pt-ledger-title">
-                {hasHosted ? "More links" : "Your galleries"}
-              </h2>
-              <ul className="cx-rows pt-links">
-                {galleries.map((g) => (
-                  <li key={g.id} className="cx-row">
-                    <a href={g.url} target="_blank" rel="noopener noreferrer">
-                      <span className="cx-row-name">{g.title}</span>
-                      <span className="pt-links-go" aria-hidden="true">Open ↗</span>
-                    </a>
-                    {g.note && <span className="pt-note">{g.note}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      <Ledger galleries={galleries} payments={payments} total={total} money={money} dateFmt={dateFmt} hasHosted={hasHosted} />
+    </PortalFrame>
+  );
+}
 
-          {hasPayments && (
-            <div className="pt-ledger-col cx-reveal">
-              <h2 className="cx-kick pt-ledger-title">Payments</h2>
-              <ul className="cx-rows pt-payments">
-                {payments.map((p) => (
-                  <li key={p.id} className="cx-row">
-                    <span className="pt-pay-what">
-                      {dateFmt(p.paid_on)}
-                      {p.note && <span className="pt-note"> — {p.note}</span>}
-                    </span>
-                    <span className="cx-row-price">{money(p.amount_cents)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="pt-total">
-                <span>Total with Roth Media</span>
-                <span className="cx-num">{money(total)}</span>
-              </p>
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+// ── Business home: their content and their brand on one page. ──
+// For clients with a brand palette (business clients). Two cards — the
+// brand palette and the shoot brief — sit above the content while either
+// still needs filling in, and drop below it once both are done, so the
+// page always leads with what they most need right now.
+//   brand: { done, of, next: [first missing label], colors: [{hex, role, name}],
+//            logo: url|null, words: [string] }
+//   brief: false (none yet) | { when: "October 3" }
+export function PortalBusinessHome({
+  nav,
+  name,
+  hostedGalleries = [],
+  galleries = [],
+  payments = [],
+  total = 0,
+  money,
+  dateFmt,
+  brand,
+  brief = false,
+}) {
+  const hasHosted = hostedGalleries.length > 0;
+  const hasLinks = galleries.length > 0;
+  const albums = hostedGalleries.length + galleries.length;
+  const items = hostedGalleries.reduce((n, g) => n + (g.media_count || 0), 0);
+  const essentialsDone = brand.done >= brand.of;
+  const todo = !essentialsDone || !brief;
+
+  const cards = (
+    <section className={"cx-wrap pt-biz-cards" + (todo ? " is-todo" : "")} aria-labelledby="pt-biz-cards-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-biz-cards-h" className="cx-kick">{todo ? "Start here" : "Your brand and brief"}</h2>
+        {todo && <p className="pt-note">Two short forms I plan your shoots from. Both save as you go, and you can skip anything.</p>}
+      </div>
+      <div className="pt-biz-grid">
+        <article className="pt-biz-card">
+          <h3 className="pt-biz-title">Your brand</h3>
+          <p className="pt-biz-what">Your logo, colors, customers and goals. I plan every shoot, edit and caption from it.</p>
+          {(brand.logo || brand.colors.length > 0) && (
+            <div className="pt-biz-look">
+              {brand.logo && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={brand.logo} alt="Your logo" className="pt-biz-logo" />
+              )}
+              {brand.colors.map((c, i) => (
+                <span key={i} className="pt-biz-swatch" style={{ background: c.hex }} title={`${c.name || c.role} ${c.hex}`} aria-hidden="true" />
+              ))}
             </div>
           )}
-        </section>
-      )}
+          {brand.words.length > 0 && <p className="pt-biz-words">{brand.words.join(" · ")}</p>}
+          <div className="pt-biz-meter">
+            <span>Essentials: <strong>{brand.done} of {brand.of}</strong> filled in</span>
+            <span className="pt-biz-bar" role="progressbar" aria-label="Essentials filled in" aria-valuemin={0} aria-valuemax={brand.of} aria-valuenow={brand.done}>
+              <span style={{ width: `${brand.of ? Math.round((brand.done / brand.of) * 100) : 0}%` }} />
+            </span>
+          </div>
+          <p className="pt-biz-stat">
+            {essentialsDone
+              ? "The essentials are done. Add more or change anything, any time."
+              : <>{brand.of - brand.done} left. Next up: &ldquo;{brand.next[0]}&rdquo;</>}
+          </p>
+          <Link href="/portal/brand" className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn">
+            {brand.done === 0 ? "Start my brand" : essentialsDone ? "Open my brand" : "Finish my brand"} <Arrow />
+          </Link>
+        </article>
+
+        <article className="pt-biz-card">
+          <h3 className="pt-biz-title">Your shoot brief</h3>
+          <p className="pt-biz-what">What the next shoot is for, where we&apos;re filming, who&apos;s on camera, and the shots you can&apos;t miss.</p>
+          <p className="pt-biz-stat">
+            {brief ? `Last saved ${brief.when}. Change it any time before the shoot.` : "Not filled in yet. It takes about five minutes."}
+          </p>
+          <Link href="/portal/brief" className={"cx-btn cx-btn--lg pt-biz-btn " + (brief ? "cx-btn--ghost" : "cx-btn--light")}>
+            {brief ? "Update my brief" : "Fill in my brief"} <Arrow />
+          </Link>
+        </article>
+      </div>
+    </section>
+  );
+
+  return (
+    <PortalFrame nav={nav} className="pt-home pt-biz">
+      <Reveal />
+      <header className="cx-wrap pt-head">
+        <p className="cx-kick">Your business portal</p>
+        <h1 className="cx-h1 cx-h1--long">{name}</h1>
+        <p className="cx-lede">
+          Your photos and videos, your brand, and your next shoot, in one
+          place.
+        </p>
+      </header>
+
+      {todo && cards}
+
+      <section id="content" className="pt-biz-content" aria-labelledby="pt-biz-content-h">
+        <div className="cx-wrap pt-biz-sechead">
+          <h2 id="pt-biz-content-h" className="cx-kick">Your content</h2>
+          <p className="pt-note">
+            {albums
+              ? `${plural(albums, "gallery", "galleries")}${items ? ` · ${plural(items, "photo or video", "photos and videos")}` : ""}. Newest first. Open one to watch it, save to your phone, or download the full files.`
+              : "Photos and videos from your shoots land here."}
+          </p>
+        </div>
+        {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} label="Your content" />}
+        {!hasHosted && !hasLinks && (
+          <div className="cx-wrap">
+            <p className="pt-empty">
+              Your first gallery is on its way — it&apos;ll appear right here the
+              moment it&apos;s ready.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {!todo && cards}
+
+      <Ledger galleries={galleries} payments={payments} total={total} money={money} dateFmt={dateFmt} hasHosted={hasHosted} />
+
+      <p className="cx-wrap pt-biz-help">
+        Need something changed, or can&apos;t find a file? Text me at{" "}
+        <a href="tel:+18455494425">845-549-4425</a>.
+      </p>
     </PortalFrame>
   );
 }

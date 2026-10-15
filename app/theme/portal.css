@@ -505,3 +505,36 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
 .pt-page .pt-brief-card { margin: 0 0 4rem; max-width: 40rem; padding: 1.2rem 1.1rem; display: grid; gap: 0.7rem; justify-items: start; border: 1px solid var(--line); border-left: 2px solid var(--gold); border-radius: 2px; background: var(--bg-2); }
 .pt-page .pt-brief-card .pt-note { font-size: 1rem; line-height: 1.55; }
 .pt-brief .pt-head { padding-bottom: 1rem; }
+
+/* ── Business home (PortalBusinessHome): content + brand + brief ── */
+.pt-biz .pt-biz-sechead { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+.pt-biz .pt-biz-sechead > * { margin: 0; }
+.pt-biz .pt-biz-sechead .pt-note { font-size: 0.98rem; line-height: 1.55; color: var(--dim); max-width: 44rem; }
+.pt-biz .pt-biz-cards { padding-bottom: 3rem; }
+.pt-biz .pt-biz-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.pt-biz .pt-biz-card {
+  display: grid; gap: 0.75rem; align-content: start; justify-items: start; min-width: 0;
+  padding: 1.25rem 1.15rem 1.3rem; border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: 2px; background: var(--bg-2);
+}
+.pt-biz .pt-biz-card > * { margin: 0; }
+.pt-biz .pt-biz-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.45rem; line-height: 1.15; letter-spacing: -0.015em; color: var(--fg); }
+.pt-biz .pt-biz-what { color: var(--dim); font-size: 1rem; line-height: 1.55; }
+.pt-biz .pt-biz-stat { color: var(--fg); font-size: 0.95rem; line-height: 1.5; }
+.pt-biz .pt-biz-look { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.pt-biz .pt-biz-logo { display: block; height: 44px; width: auto; max-width: 120px; object-fit: contain; padding: 4px 8px; border-radius: 2px; background: #f6f1e8; }
+.pt-biz .pt-biz-swatch { display: block; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(246, 241, 232, 0.28); }
+.pt-biz .pt-biz-words { color: var(--gold); font-size: 0.86rem; font-weight: 600; letter-spacing: 0.04em; }
+.pt-biz .pt-biz-meter { display: grid; gap: 0.4rem; width: 100%; font-size: 0.92rem; color: var(--dim); }
+.pt-biz .pt-biz-meter strong { color: var(--fg); }
+.pt-biz .pt-biz-bar { display: block; height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
+.pt-biz .pt-biz-bar > span { display: block; height: 100%; background: var(--gold); border-radius: 3px; }
+.pt-biz .pt-biz-btn { width: 100%; justify-content: center; margin-top: 0.2rem; }
+.pt-biz .pt-biz-content { padding-bottom: 1rem; }
+.pt-biz .pt-biz-content .pt-shelf { padding-bottom: 3rem; }
+.pt-biz .pt-biz-help { margin: 0 auto; padding-bottom: 4rem; color: var(--faint); font-size: 0.95rem; }
+.pt-biz .pt-biz-help a { color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--gold); }
+@media (min-width: 760px) {
+  .pt-biz .pt-biz-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; }
+  .pt-biz .pt-biz-card { padding: 1.6rem 1.6rem 1.7rem; }
+  .pt-biz .pt-biz-btn { width: auto; }
+}
