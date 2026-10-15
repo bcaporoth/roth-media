@@ -6,6 +6,7 @@ import IntakeForm from "../../../components/IntakeForm";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 import { latestBrief } from "../../../lib/intake";
+import { emailHasBrand } from "../../../lib/brand-server";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,15 @@ export default async function BriefPage() {
 
   let brief = null;
   let client = null;
+  let hasBrand = false;
   if (adminConfigured) {
     const db = supabaseAdmin();
-    const [{ data: subs }, { data: c }] = await Promise.all([
+    const [{ data: subs }, { data: c }, b] = await Promise.all([
       db.from("submissions").select("id, created_at, updated_at, kind, fields, utm, name, phone").eq("kind", "intake").eq("email", email).order("created_at", { ascending: false }).limit(3),
       db.from("clients").select("name, phone").eq("email", email).maybeSingle(),
+      email === ADMIN_EMAIL ? false : emailHasBrand(db, email),
     ]);
+    hasBrand = b;
     brief = latestBrief(subs || []);
     client = c;
     if (brief) {
@@ -40,7 +44,7 @@ export default async function BriefPage() {
       brief.phone = src?.phone || "";
     }
   }
-  const nav = <PortalNav email={user.email} isAdmin={email === ADMIN_EMAIL} active="brief" />;
+  const nav = <PortalNav email={user.email} isAdmin={email === ADMIN_EMAIL} active="brief" brand={hasBrand} />;
   const when = brief?.updated_at ? new Date(brief.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) : "";
 
   return (

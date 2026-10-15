@@ -24,7 +24,7 @@ export default async function BrandPage() {
   if (!user) redirect("/portal?next=/portal/brand");
   const email = user.email.toLowerCase();
   const isAdmin = email === ADMIN_EMAIL;
-  const nav = <PortalNav email={user.email} isAdmin={isAdmin} active="brand" />;
+  let nav = <PortalNav email={user.email} isAdmin={isAdmin} active="brand" />;
   const notice = (title, body) => <PortalNotice nav={nav} kicker="Your brand palette" title={title}>{body}</PortalNotice>;
 
   if (!adminConfigured) return notice("Almost ready.", "Text me at 845-549-4425 and I'll send it over.");
@@ -35,6 +35,7 @@ export default async function BrandPage() {
   const b = await loadBrand(db, client.id);
   if (!b.ready || !b.palette) return notice("Not open yet.", <>Your brand palette opens once I send it to you. Text me at <a href="tel:+18455494425">845-549-4425</a> if you were expecting it.</>);
 
+  nav = <PortalNav email={user.email} isAdmin={isAdmin} active="brand" brand />;
   const name = b.palette.data?.business?.name || client.name;
   return (
     <PortalFrame nav={nav} className="pt-brand mx-page">

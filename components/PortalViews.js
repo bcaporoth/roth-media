@@ -309,6 +309,7 @@ export function PortalPremiere({
   zipUrl = null,
   videoPoster = null,
   guestLink = null,
+  hasBrand = false,
   children = null,
 }) {
   const words = gallery.title.split(" ");
@@ -320,6 +321,7 @@ export function PortalPremiere({
         <PortalNav
           email={email}
           isAdmin={isAdmin}
+          brand={hasBrand}
           extra={
             zipUrl ? (
               <li className="pt-nav-extra">

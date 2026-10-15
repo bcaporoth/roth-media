@@ -4,37 +4,49 @@ import BrandMark from "./BrandMark";
 // The signed-in app bar — identical on every portal screen so the site
 // behaves like an application: primary nav on the left, identity +
 // Sign out always visible top-right, active page highlighted.
+// On a phone (app/theme/portal.css) the tabs drop to a second row under
+// the logo + Account + Sign out, so nothing overlaps at 375px.
+// brand: the client has a brand palette — the home becomes their business
+// home ("Home") and "Your brand" joins the tabs.
 
-export default function PortalNav({ email, isAdmin = false, active = "", extra = null }) {
+export default function PortalNav({ email, isAdmin = false, active = "", extra = null, brand = false }) {
   const cls = (key) => (active === key ? "pnav-link is-active" : "pnav-link");
+  const biz = brand && !isAdmin;
   return (
     <nav className="rm-nav portal-nav portal-appbar" aria-label="Portal navigation">
       <Link href={isAdmin ? "/portal/admin" : "/portal"} className="brand">
         <span className="brand-chip"><BrandMark /></span>
         <span className="brand-text">Roth <em>Media</em></span>
       </Link>
-      <ul className="nav-links">
-        <li>
-          <Link className={cls("galleries")} href={isAdmin ? "/portal?galleries=1" : "/portal"}>
-            Galleries
+      <ul className="nav-links" role="list">
+        <li className="pnav-tab">
+          <Link className={cls("galleries")} href={isAdmin ? "/portal?galleries=1" : "/portal"} aria-current={active === "galleries" ? "page" : undefined}>
+            {biz ? "Home" : "Galleries"}
           </Link>
         </li>
+        {biz && (
+          <li className="pnav-tab">
+            <Link className={cls("brand")} href="/portal/brand" title="Your logo, colors, customers and goals" aria-current={active === "brand" ? "page" : undefined}>
+              Your brand
+            </Link>
+          </li>
+        )}
         {!isAdmin && (
-          <li>
-            <Link className={cls("brief")} href="/portal/brief" title="Your shoot brief — the questions I plan the day from">
+          <li className="pnav-tab">
+            <Link className={cls("brief")} href="/portal/brief" title="Your shoot brief — the questions I plan the day from" aria-current={active === "brief" ? "page" : undefined}>
               Your brief
             </Link>
           </li>
         )}
         {isAdmin && (
-          <li>
+          <li className="pnav-tab">
             <Link className={cls("admin")} href="/portal/admin/inbox">
               Studio
             </Link>
           </li>
         )}
         {extra}
-        <li>
+        <li className="pnav-me">
           <Link
             className={"pnav-user" + (active === "account" ? " is-active" : "")}
             href="/portal/account"
@@ -44,7 +56,7 @@ export default function PortalNav({ email, isAdmin = false, active = "", extra =
             <span className="pnav-user-short">Account</span>
           </Link>
         </li>
-        <li>
+        <li className="pnav-me">
           <form action="/auth/signout" method="post">
             <button type="submit" className="portal-signout">
               Sign out

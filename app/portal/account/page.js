@@ -3,7 +3,8 @@ import PortalNav from "../../../components/PortalNav";
 import { PortalAccount } from "../../../components/PortalViews";
 import { redirect } from "next/navigation";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
-import { ADMIN_EMAIL } from "../../../lib/supabase-admin";
+import { ADMIN_EMAIL, adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
+import { emailHasBrand } from "../../../lib/brand-server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +26,17 @@ export default async function AccountPage({ searchParams }) {
   const params = await searchParams;
   const setup = params?.setup === "1";
   const next = /^\/portal(\/[\w-]+)*\/?$/.test(String(params?.next || "")) ? String(params.next) : "";
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  const hasBrand = !isAdmin && adminConfigured ? await emailHasBrand(supabaseAdmin(), user.email) : false;
 
   return (
     <PortalAccount
       nav={
         <PortalNav
           email={user.email}
-          isAdmin={user.email?.toLowerCase() === ADMIN_EMAIL}
+          isAdmin={isAdmin}
           active="account"
+          brand={hasBrand}
         />
       }
       email={user.email}

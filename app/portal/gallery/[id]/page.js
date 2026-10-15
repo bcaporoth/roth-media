@@ -6,6 +6,7 @@ import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/sup
 import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase";
 import { r2Configured, signedUrl, photoKey, getDims } from "../../../../lib/r2";
 import { guestLinkForGallery } from "../../../../lib/guest";
+import { emailHasBrand } from "../../../../lib/brand-server";
 
 export const dynamic = "force-dynamic";
 
@@ -136,7 +137,9 @@ export default async function GalleryPage({ params }) {
   const skin = designSkin(gallery.design);
 
   // guest_events is service-role only — clients read it through the admin client.
-  const guestLink = adminConfigured ? await guestLinkForGallery(supabaseAdmin(), gallery.id) : null;
+  const [guestLink, hasBrand] = adminConfigured
+    ? await Promise.all([guestLinkForGallery(supabaseAdmin(), gallery.id), isAdmin ? false : emailHasBrand(supabaseAdmin(), user.email)])
+    : [null, false];
 
   return (
     <PortalPremiere
@@ -151,6 +154,7 @@ export default async function GalleryPage({ params }) {
       zipUrl={zipUrl}
       videoPoster={videoPoster}
       guestLink={guestLink}
+      hasBrand={hasBrand}
     >
       <GalleryBeacon galleryId={gallery.id} via="portal" />
     </PortalPremiere>
