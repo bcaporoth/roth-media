@@ -12,7 +12,7 @@
 --   supabase/clients.sql, supabase/clients-optout.sql, supabase/guest.sql,
 --   supabase/guest-link.sql, supabase/gallery-members.sql, supabase/shoots.sql,
 --   supabase/bookings.sql, supabase/playbook.sql, supabase/studio-2.sql,
---   supabase/referrals.sql
+--   supabase/referrals.sql, supabase/brand.sql
 -- On a database where some of those already ran, the parts already there
 -- are skipped. On a brand-new database it sets up everything.
 --
@@ -374,3 +374,38 @@ create table if not exists public.referrals (
 create index if not exists referrals_referrer_idx on public.referrals(referrer_email, created_at desc);
 create unique index if not exists referrals_reward_code_idx on public.referrals(reward_code) where reward_code is not null;
 alter table public.referrals enable row level security; -- service role only
+
+-- ───────────────────────────────────────────────────────────────────────
+-- 13. Brand Palette (brand.sql) — one palette per business client + their
+-- uploaded logos / mood board. Server only: RLS on, no policies.
+create table if not exists public.brand_palettes (
+  client_id uuid primary key references public.clients(id) on delete cascade,
+  slug text unique,                                  -- for the phase-2 report link
+  data jsonb not null default '{}'::jsonb,           -- { business:{}, visual:{}, vibe:{}, voice:{}, audience:{}, offer:{}, goals:{}, content:{}, logistics:{}, _talk:{}, _suggest:{} }
+  brandon_notes jsonb not null default '{}'::jsonb,  -- { <section>: "note" } — Studio only
+  section_status jsonb not null default '{}'::jsonb, -- { <section>: { filled, of, at, by } }
+  invited_at timestamptz,                            -- last "Send brand palette"
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  updated_by text not null default ''                -- 'client' | 'brandon'
+);
+alter table public.brand_palettes add column if not exists invited_at timestamptz;
+alter table public.brand_palettes add column if not exists created_at timestamptz not null default now();
+alter table public.brand_palettes enable row level security; -- server only
+
+create table if not exists public.brand_assets (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.clients(id) on delete cascade,
+  kind text not null check (kind in ('logo','font','moodboard','guide','reference','other')),
+  label text not null default '',                    -- 'Primary logo', 'Icon', 'Dark version'
+  r2_key text not null,                              -- brands/<client_id>/<id>-<filename>
+  filename text not null default '',
+  mime text not null default '',
+  bytes bigint,
+  width int, height int,
+  created_at timestamptz not null default now()
+);
+alter table public.brand_assets add column if not exists filename text not null default '';
+alter table public.brand_assets add column if not exists bytes bigint;
+create index if not exists brand_assets_client_idx on public.brand_assets(client_id, created_at);
+alter table public.brand_assets enable row level security; -- server only
