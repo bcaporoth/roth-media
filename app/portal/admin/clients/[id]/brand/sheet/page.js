@@ -119,7 +119,10 @@ export default async function BrandSheetPage({ params }) {
           <section>
             <h2>Must-have shots</h2>
             {mustHave.length ? <ul>{mustHave.map((t, i) => <li key={i}>{t}</li>)}</ul> : <p className="bsheet-empty">None listed yet.</p>}
-            <Line label="On camera" value={v("content", "on_camera")} />
+            <Line label="Shows up as" value={v("content", "show_up")} />
+            <Line label="Camera comfort" value={v("content", "comfort")?.["Camera-shy|Loves the camera"] ? `${v("content", "comfort")?.["Camera-shy|Loves the camera"]}/5 (1 camera-shy · 5 loves it)` : ""} />
+            <Line label="Voice-overs" value={v("content", "voiceover")} />
+            <Line label="Others on camera" value={v("content", "on_camera")} />
             <Line label="Places to shoot" value={v("content", "locations")} />
             <Line label="Shoot days" value={v("logistics", "shoot_times")} />
             <Line label="Access" value={v("logistics", "access")} />
