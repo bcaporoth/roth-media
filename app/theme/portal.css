@@ -538,3 +538,37 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
   .pt-biz .pt-biz-card { padding: 1.6rem 1.6rem 1.7rem; }
   .pt-biz .pt-biz-btn { width: auto; }
 }
+
+/* Content plan on the business home (PlanSection in components/PortalViews.js). */
+.pt-biz .pt-plan { padding-bottom: 3rem; }
+.pt-biz .pt-plan-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; }
+.pt-biz .pt-plan-price { display: inline-block; padding: 0.25rem 0.65rem; border: 1px solid var(--gold); border-radius: 2px; color: var(--gold); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.pt-biz .pt-plan-intro { color: var(--fg); font-size: 1.05rem; line-height: 1.55; max-width: 44rem; }
+.pt-biz .pt-plan-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.pt-biz .pt-plan-item { display: grid; gap: 0.6rem; align-content: start; min-width: 0; padding: 1.15rem 1.1rem 1.2rem; background: var(--bg-2); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: 2px; }
+.pt-biz .pt-plan-item > * { margin: 0; }
+.pt-biz .pt-plan-item.is-delivered { border-top-color: #6fae84; }
+.pt-biz .pt-plan-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+.pt-biz .pt-plan-kind { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.pt-biz .pt-plan-status { font-size: 0.8rem; font-weight: 600; color: var(--dim); }
+.pt-biz .is-delivered .pt-plan-status { color: #8fcaa2; }
+.pt-biz .pt-plan-title { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.25rem; line-height: 1.2; letter-spacing: -0.01em; color: var(--fg); }
+.pt-biz .pt-plan-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.pt-biz .pt-plan-steps i { display: block; height: 4px; border-radius: 2px; background: var(--bg-3); }
+.pt-biz .pt-plan-steps i.is-on { background: var(--gold); }
+.pt-biz .is-delivered .pt-plan-steps i.is-on { background: #6fae84; }
+.pt-biz .pt-plan-idea { color: var(--dim); font-size: 0.98rem; line-height: 1.55; }
+.pt-biz .pt-plan-meta { color: var(--faint); font-size: 0.88rem; }
+.pt-biz .pt-plan-more { border-top: 1px solid var(--line); padding-top: 0.55rem; font-size: 0.95rem; line-height: 1.5; color: var(--dim); }
+.pt-biz .pt-plan-more summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--fg); font-weight: 600; }
+.pt-biz .pt-plan-more summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.pt-biz .pt-plan-more p { margin: 0.4rem 0; }
+.pt-biz .pt-plan-more strong { color: var(--fg); }
+.pt-biz .pt-plan-more ul, .pt-biz .pt-plan-needs ul { margin: 0.4rem 0; padding-left: 1.15rem; display: grid; gap: 0.3rem; }
+.pt-biz .pt-plan-needs { margin-top: 1.4rem; display: grid; gap: 0.4rem; color: var(--dim); line-height: 1.5; }
+.pt-biz .pt-plan-change { margin-top: 1rem; }
+.pt-biz .pt-plan-change a { color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--gold); }
+@media (min-width: 760px) {
+  .pt-biz .pt-plan-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; }
+  .pt-biz .pt-plan-item { padding: 1.4rem 1.5rem 1.5rem; }
+}

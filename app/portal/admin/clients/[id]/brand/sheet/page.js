@@ -59,7 +59,7 @@ export default async function BrandSheetPage({ params }) {
     const f = s && fieldsFor(s, d).find((x) => x.id === fid);
     return f ? f.label : null;
   }).filter(Boolean);
-  const notes = Object.entries(b.palette.brandon_notes || {}).filter(([, t]) => String(t || "").trim());
+  const notes = Object.entries(b.palette.brandon_notes || {}).filter(([k, t]) => !k.startsWith("_") && typeof t === "string" && t.trim()); // _plan = content plan
   const Line = ({ label, value, warn }) => (value ? <div className={"bsheet-line" + (warn ? " is-warn" : "")}><span>{label}</span><p>{Array.isArray(value) ? value.join(" · ") : value}</p></div> : null);
   const scale = (val) => <span className="bsheet-scale" aria-label={`${val} of 5`}>{[1, 2, 3, 4, 5].map((n) => <i key={n} className={n === val ? "is-on" : ""} />)}</span>;
 

@@ -5828,6 +5828,24 @@ html, body { overflow-x: clip; overscroll-behavior-x: none; }
 .callsheet-q { display: grid; gap: 0.3rem; }
 .callsheet-q span { font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
 .callsheet-q textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; resize: vertical; }
+
+/* Content plan editor (components/ContentPlanEditor.js). */
+.cplan { display: grid; gap: 1rem; }
+.gcard-meta.is-wrap { white-space: normal; line-height: 1.45; }
+.cplan-status { margin: 0; line-height: 1.5; }
+.cplan-flash { margin: 0; color: #2e7d4f; font-weight: 600; }
+.cplan-error { margin: 0; color: #c0392b; font-weight: 600; }
+.cplan-counts input[type="number"] { width: 5rem; }
+.cplan-counts .cplan-free { display: flex; align-items: center; gap: 0.4rem; text-transform: none; letter-spacing: 0; font-size: 0.9rem; }
+.cplan .callsheet-meta select { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
+.cplan-grow { flex: 1 1 14rem; }
+.cplan-grow input { width: 100%; }
+.cplan-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.cplan-item { display: grid; gap: 0.6rem; padding: 0.85rem; border: 1px solid var(--line); border-radius: 12px; }
+.cplan-itemhead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cplan-itemhead select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
+.cplan-itemtools { display: flex; gap: 0.35rem; margin-left: auto; }
+.cplan-publish { position: sticky; bottom: 0; padding: 0.7rem 0; background: var(--bone); z-index: 2; }
 .is-dark .callsheet-q textarea, .is-dark .callsheet-meta input { border-color: rgba(255, 255, 255, 0.22); }
 /* Brief rows: question / their answer / your note. Blanks they should have filled are flagged. */
 .callsheet-q--brief { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "q q" "theirs note"; gap: 0.35rem 0.8rem; padding: 0.45rem 0; border-top: 1px solid var(--field-line); }

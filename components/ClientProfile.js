@@ -163,6 +163,7 @@ export default function ClientProfile({ initial, emailReady }) {
           </section>
 
           <BrandCard client={c} initial={d.brand} emailReady={emailReady} say={say} fail={fail} copy={copy} />
+          <PlanCard client={c} brand={d.brand} />
         </div>
 
         <div className="cprof-col">
@@ -357,6 +358,25 @@ function BrandCard({ client: c, initial, emailReady, say, fail, copy }) {
           {c.phone && <button type="button" className="achip" disabled={busy} onClick={() => link("sms")}>Text it</button>}
         </div>
       )}
+    </section>
+  );
+}
+
+// Content plan (components/ContentPlanEditor.js): the reels and promos
+// you'll make for a business, drafted with Claude, published to their portal.
+function PlanCard({ client: c, brand }) {
+  const p = brand?.plan;
+  if (!brand?.ready) return null;
+  return (
+    <section className="cprof-card">
+      <div className="cprof-cardhead"><h2>Content plan</h2>
+        <div className="gcard-actions"><a className="achip" href={`/portal/admin/clients/${c.id}/plan`}>{p?.items ? "Open plan" : "Start a plan"}</a></div>
+      </div>
+      <p className="gcard-meta is-wrap">
+        {!p?.items
+          ? "Reels, promos and photo sets for this business. Claude drafts it from their brand palette and brief; you edit and publish it to their portal."
+          : <><strong>{p.items} item{p.items === 1 ? "" : "s"}</strong>{p.published ? ` · on their portal since ${fmt(p.published_at)}` : " · draft, not on their portal yet"}</>}
+      </p>
     </section>
   );
 }

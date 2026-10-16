@@ -8,6 +8,7 @@ import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
 import { ESSENTIALS, completeness } from "../../lib/brand";
 import { loadBrand } from "../../lib/brand-server";
+import { loadPublishedPlan } from "../../lib/content-plan-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief } from "../../lib/intake";
 
@@ -224,6 +225,7 @@ export default async function PortalPage({ searchParams }) {
   // Business client (Brandon has opened a brand palette for them): their
   // content and their brand on one page.
   if (palette) {
+    const plan = adminConfigured ? await loadPublishedPlan(supabaseAdmin(), client.id) : null;
     return (
       <PortalBusinessHome
         nav={<PortalNav email={user.email} active="galleries" brand />}
@@ -236,6 +238,7 @@ export default async function PortalPage({ searchParams }) {
         dateFmt={dateFmt}
         brand={brandSummary(palette)}
         brief={brief || false}
+        plan={plan}
       />
     );
   }

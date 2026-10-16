@@ -58,6 +58,12 @@ export default async function ClientPage({ params }) {
     ready: true,
     palette: { invited_at: b.palette.invited_at, updated_at: b.palette.updated_at, updated_by: b.palette.updated_by, created_at: b.palette.created_at },
     progress: (({ essentials, deep, pct }) => ({ done: essentials.done, of: essentials.of, deep: deep.pct, pct }))(completeness(b.palette.data, b.assets)),
+    plan: (({ draft, published, published_at, generated_at }) => ({
+      items: draft?.items?.length || 0,
+      published: Boolean(published?.items?.length),
+      published_at: published_at || null,
+      generated_at: generated_at || null,
+    }))(b.palette.brandon_notes?._plan || {}),
     logo: b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || "") && a.label === "Main logo")?.url || b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || ""))?.url || "",
   };
   const all = subs || [];

@@ -6,6 +6,7 @@ import Reveal from "./Reveal";
 import PortalNav from "./PortalNav";
 import PortalGallery from "./PortalGallery";
 import GuestInvite from "./GuestInvite";
+import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
 
 // The client side of the portal, in the Cinema design: the lobby (signed
 // out), the client home, the account page and the gallery "premiere".
@@ -294,6 +295,7 @@ export function PortalBusinessHome({
   dateFmt,
   brand,
   brief = false,
+  plan = null,
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -366,6 +368,8 @@ export function PortalBusinessHome({
         </p>
       </header>
 
+      {plan && <PlanSection plan={plan} />}
+
       {todo && cards}
 
       <section id="content" className="pt-biz-content" aria-labelledby="pt-biz-content-h">
@@ -397,6 +401,62 @@ export function PortalBusinessHome({
         <a href="tel:+18455494425">845-549-4425</a>.
       </p>
     </PortalFrame>
+  );
+}
+
+// The content plan Brandon published from Studio (lib/content-plan.js):
+// each piece, what gets filmed, and where it is right now.
+function PlanSection({ plan }) {
+  const done = plan.items.filter((it) => it.status === "delivered").length;
+  // "Reel 1", "Reel 2", "Promo video": numbered within a kind when there's more than one.
+  const per = plan.items.reduce((m, it) => ({ ...m, [it.kind]: (m[it.kind] || 0) + 1 }), {});
+  const seen = {};
+  const label = (it) => (per[it.kind] > 1 ? `${KIND_LABEL[it.kind]} ${(seen[it.kind] = (seen[it.kind] || 0) + 1)}` : KIND_LABEL[it.kind]);
+  return (
+    <section id="plan" className="cx-wrap pt-plan" aria-labelledby="pt-plan-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-plan-h" className="cx-kick">Your content plan</h2>
+        <div className="pt-plan-top">
+          {plan.price && <span className="pt-plan-price">{plan.price}</span>}
+          <span className="pt-note">{plural(plan.items.length, "piece", "pieces")} · {done} delivered</span>
+        </div>
+        {plan.intro && <p className="pt-plan-intro">{plan.intro}</p>}
+      </div>
+      <ol className="pt-plan-list">
+        {plan.items.map((it) => {
+          const step = STATUSES.findIndex((s) => s.id === it.status);
+          return (
+            <li key={it.id} className={`pt-plan-item is-${it.status}`}>
+              <div className="pt-plan-head">
+                <span className="pt-plan-kind">{label(it)}</span>
+                <span className="pt-plan-status">{STATUS_LABEL[it.status]}</span>
+              </div>
+              <h3 className="pt-plan-title">{it.title || KIND_LABEL[it.kind]}</h3>
+              <span className="pt-plan-steps" role="img" aria-label={`Step ${step + 1} of ${STATUSES.length}: ${STATUS_LABEL[it.status]}`}>
+                {STATUSES.map((s, j) => <i key={s.id} className={j <= step ? "is-on" : ""} />)}
+              </span>
+              {it.idea && <p className="pt-plan-idea">{it.idea}</p>}
+              {(it.length || it.when) && <p className="pt-plan-meta">{[it.length, it.when].filter(Boolean).join(" · ")}</p>}
+              {(it.hook || it.shots.length > 0 || it.on_camera) && (
+                <details className="pt-plan-more">
+                  <summary>What we&apos;ll film</summary>
+                  {it.hook && <p><strong>First two seconds:</strong> {it.hook}</p>}
+                  {it.shots.length > 0 && <ul>{it.shots.map((sh, k) => <li key={k}>{sh}</li>)}</ul>}
+                  {it.on_camera && <p><strong>On camera:</strong> {it.on_camera}</p>}
+                </details>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {plan.needs.length > 0 && (
+        <div className="pt-plan-needs">
+          <h3 className="pt-plan-title">What I need from you</h3>
+          <ul>{plan.needs.map((n, i) => <li key={i}>{n}</li>)}</ul>
+        </div>
+      )}
+      <p className="pt-note pt-plan-change">Want something changed? Text me at <a href="tel:+18455494425">845-549-4425</a>.</p>
+    </section>
   );
 }
 
