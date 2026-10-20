@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
+import { unreadForBrandon } from "../../../../lib/notes-server";
 import { LEAD_ALERT_TO } from "../../../../lib/studio-emails";
 import { wrapHtml } from "../../../../lib/client-email";
 import { buildLeadBoard } from "../../../../lib/lead-intel";
@@ -67,10 +68,14 @@ export async function GET(request) {
   const etDay = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long" });
   const weekNo = Math.floor(Date.now() / (7 * 86400000));
   const gbpNudge = etDay === "Monday" ? [`GOOGLE POST THIS WEEK (2 min, helps you rank in the map results):\n${POST_IDEAS[weekNo % POST_IDEAS.length]}\nPost it: search "my business" on Google → Posts → Add post. Add a Book button to rothmediaco.com/quote.`] : [];
-  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
+  // Client notes Brandon hasn't answered — top of the email, they're the quickest wins.
+  const notes = (await unreadForBrandon(db).catch(() => [])) || [];
+  const noteLines = notes.map((n) => `${n.name}${n.count > 1 ? ` (${n.count} notes)` : ""}: "${String(n.latest).slice(0, 160)}"\nReply: https://rothmediaco.com/portal/admin/clients/${n.id}#notes`);
+  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
   const body = [
+    ...(notes.length ? [`CLIENT NOTES WAITING ON YOU (${notes.length}):`, ...noteLines] : []),
     ...gbpNudge,
     ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),
@@ -82,7 +87,8 @@ export async function GET(request) {
   const baseSubject = bal.due.length
     ? `${bal.due.length} wedding balance${bal.due.length > 1 ? "s" : ""} to send${open.length ? ` · ${open.length} open lead${open.length > 1 ? "s" : ""}` : ""}`
     : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : reviews.length ? "Partner review coming up" : gbpNudge.length ? "This week's Google post" : (bal.unclear.length || !owed.length) ? "A wedding balance needs a date check" : "";
-  const subject = [baseSubject, owedTag].filter(Boolean).join(" · ");
+  const notesTag = notes.length ? `${notes.length} client note${notes.length > 1 ? "s" : ""} waiting` : "";
+  const subject = [notesTag, baseSubject, owedTag].filter(Boolean).join(" · ");
 
   let sent = false;
   if (!dry && resendConfigured) {
