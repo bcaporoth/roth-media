@@ -5769,8 +5769,25 @@ select.achip { appearance: auto; }
 .golead-prices s { color: var(--ink-soft); font-weight: 400; font-size: 0.8em; margin-left: 0.25rem; }
 .golead-proof { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
 
-/* Phones: the page itself never slides sideways (carousels still swipe inside). */
-html, body { overflow-x: clip; overscroll-behavior-x: none; }
+/* Phones: the page itself never slides sideways (carousels still swipe inside),
+   and never pinch-zooms (the viewport meta in app/layout.js says the same).
+   touch-action pan-y stops the sideways drag at the source; the few strips
+   that scroll sideways on purpose get pan-x back below. */
+html, body { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; max-width: 100vw; }
+body { touch-action: pan-y; }
+.gallery.gal-strip, .stabs, .ltable-wrap, .cx-table-wrap, [class*="carousel"], [class*="-strip"] { touch-action: pan-x pan-y; }
+img, video, svg, iframe, canvas, table { max-width: 100%; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Studio: words always get their room. Long names, emails and filenames wrap
+   instead of being cut off with "…", chips wrap onto two lines rather than
+   overflowing, and no grid/flex child can force the page wider than the phone. */
+.admin-shell { overflow-wrap: anywhere; }
+.admin-shell :is(div, section, article, li, p, h1, h2, h3, h4, dl, dt, dd, form, ul, ol) { min-width: 0; }
+.admin-shell :is(.achip, .abtn, .ifilter, .itag, .dchip) { white-space: normal; line-height: 1.3; text-align: center; }
+.admin-shell :is(.gcard-meta, .trow-top strong, .trow-sub, .owed-title strong, .galb-name strong, .galb-name em, .gmod-main strong, .gcounts b, .irow-top strong, .irow-sum, .astat strong.astat-small, .pnav-user-email, .guest-item-name, .gph-title em, .gph-count, .tcard-more, .ix-clash a, .tshoot-times dd) { white-space: normal; overflow: visible; text-overflow: clip; max-width: none; }
+.admin-shell .gfiles-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+.admin-shell .cprof-stages li { white-space: normal; text-align: center; }
 
 /* Gallery card editors (Edit album, Set cover, Design, Premiere): when one is
    open it takes the card's full width and never runs past the card's edge;

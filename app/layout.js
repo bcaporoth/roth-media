@@ -15,6 +15,17 @@ const manrope = Manrope({
   variable: "--font-body",
 });
 
+// Phones: the page is laid out for the screen, never pinch-zoomed (zooming
+// made the Studio look choppy and let the page pan sideways). Everything
+// that needs to be bigger is bigger in the CSS instead.
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export const metadata = {
   metadataBase: new URL("https://rothmediaco.com"),
   title: {
