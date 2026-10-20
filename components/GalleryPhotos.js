@@ -38,6 +38,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [broken, setBroken] = useState(() => new Set());
+  const [quick, setQuick] = useState(null); // filename awaiting its one-tap Delete / Keep answer
 
   async function load() {
     try {
@@ -148,13 +149,24 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     if (!name) return;
     moveTo(name);
   }
-  async function remove() {
-    const files = [...picked];
+  // Removes the given files (a tile's 🗑), or the selected ones (the bar's typed confirm).
+  async function remove(list) {
+    const files = Array.isArray(list) ? list : [...picked];
+    if (files.length === 0) return;
     setBusy(true);
     setMsg("");
     try {
       const j = await api({ action: "remove-media", galleryId: gallery.id, filenames: files, confirm: "remove" });
-      clear();
+      if (Array.isArray(list)) {
+        setPicked((p) => {
+          const next = new Set(p);
+          for (const f of files) next.delete(f);
+          return next;
+        });
+      } else {
+        clear();
+      }
+      setQuick(null);
       await load();
       setMsg(
         `Removed ${plural(j.removed, "photo")} ✓ — ${j.remaining} left in the gallery.` +
@@ -250,6 +262,30 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                         </span>
                         <span className="gfiles-name">{it.filename}</span>
                       </button>
+                      {quick === it.filename ? (
+                        <span className="gfiles-quick" role="group" aria-label={`Delete ${it.filename}?`}>
+                          <button type="button" className="achip achip-danger" disabled={busy} onClick={() => remove([it.filename])}>
+                            {busy ? "…" : "Delete"}
+                          </button>
+                          <button type="button" className="achip" disabled={busy} onClick={() => setQuick(null)}>
+                            Keep
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="gfiles-trash"
+                          aria-label={`Delete ${it.filename}`}
+                          title="Delete this photo"
+                          disabled={busy}
+                          onClick={() => {
+                            setQuick(it.filename);
+                            setMsg("");
+                          }}
+                        >
+                          🗑
+                        </button>
+                      )}
                     </li>
                   );
                 })}

@@ -39,6 +39,8 @@ export default function AdminDashboard({ galleries }) {
   const [copiedId, setCopiedId] = useState(null);
   // Which cards have their Manage drawer open (several can be).
   const [managing, setManaging] = useState(() => new Set());
+  // gallery id → bumps each time its card's Delete chip is tapped (opens Manage on the Delete tab)
+  const [askDelete, setAskDelete] = useState({});
   const router = useRouter();
   const toggleManage = (id) =>
     setManaging((m) => {
@@ -228,10 +230,22 @@ export default function AdminDashboard({ galleries }) {
                     >
                       {managing.has(g.id) ? "Close" : "Manage ▾"}
                     </button>
+                    <button
+                      type="button"
+                      className="achip achip-danger"
+                      title="Delete this gallery"
+                      onClick={() => {
+                        setAskDelete((m) => ({ ...m, [g.id]: (m[g.id] || 0) + 1 }));
+                        if (!managing.has(g.id)) toggleManage(g.id);
+                      }}
+                    >
+                      Delete
+                    </button>
                   </div>
                   <GalleryManage
                     gallery={g}
                     open={managing.has(g.id)}
+                    askDelete={askDelete[g.id]}
                     onChanged={() => router.refresh()}
                   />
                 </div>

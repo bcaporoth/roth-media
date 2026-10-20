@@ -205,7 +205,7 @@ function GalleryDelete({ gallery, onDeleted }) {
   );
 }
 
-export default function GalleryManage({ gallery, open, onChanged }) {
+export default function GalleryManage({ gallery, open, onChanged, askDelete }) {
   const [tab, setTab] = useState("edit");
   // Tabs stay mounted once visited (just hidden), so switching tabs or
   // closing the drawer never interrupts an upload in progress.
@@ -215,6 +215,12 @@ export default function GalleryManage({ gallery, open, onChanged }) {
   // "+ Add photos" button on an album heading in Photos & albums.
   const [addAlbum, setAddAlbum] = useState(null);
   const everOpen = useRef(false);
+  // The card's Delete chip opens the drawer straight on the Delete tab.
+  useEffect(() => {
+    if (!askDelete) return;
+    setTab("delete");
+    setVisited((v) => (v.has("delete") ? v : new Set(v).add("delete")));
+  }, [askDelete]);
   if (open) everOpen.current = true;
   if (!everOpen.current) return null;
 
