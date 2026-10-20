@@ -6345,3 +6345,76 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .pt-day-meta { font-size: 0.84rem; color: var(--ink-soft); }
 .pt-day-open { margin-top: 0.4rem; font-size: 0.85rem; color: var(--clay); font-weight: 600; }
 .pt-day .sday-head, .pt-day .sday-row, .pt-day .scr-thread, .pt-day .sday-kind { background: var(--surface); }
+
+/* Shoot day — toolbar, Plan/Import/Send boxes */
+.sday-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.sday-tools .achip, .sday-tools .abtn { min-height: 42px; display: inline-flex; align-items: center; }
+.sday-tools .achip.is-on { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.sday-box { display: grid; gap: 0.7rem; padding: 0.9rem 1rem; border: 1px dashed var(--clay); border-radius: 14px; background: var(--surface); }
+.sday-boxlabel { display: grid; gap: 0.3rem; font-weight: 600; }
+.sday-boxlabel em { font-weight: 400; font-style: normal; font-size: 0.8rem; color: var(--ink-soft); }
+.sday-box textarea { font: inherit; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: var(--ink); }
+.sday-counts { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; }
+.sday-counts label { display: grid; gap: 0.2rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.sday-counts input { width: 4.5rem; font: inherit; font-size: 1rem; padding: 0.35rem 0.5rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: var(--ink); }
+.sday-picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.sday-picks label { display: flex; gap: 0.5rem; align-items: flex-start; cursor: pointer; }
+.scr-done { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.scr-done input { width: 1.1rem; height: 1.1rem; margin: 0; }
+.scr-done em { font-style: normal; font-size: 0.72rem; color: #2e7d4f; }
+
+/* ▶ Film mode — full screen, phone first */
+.film { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto 1fr auto; background: var(--bone); color: var(--ink); }
+.film-bar, .film-foot { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem max(0.9rem, env(safe-area-inset-right)) 0.6rem max(0.9rem, env(safe-area-inset-left)); border-bottom: 1px solid var(--line); }
+.film-foot { border-bottom: 0; border-top: 1px solid var(--line); padding-bottom: max(0.6rem, env(safe-area-inset-bottom)); flex-wrap: wrap; }
+.film-bar .achip, .film-foot .achip, .film-foot .abtn { min-height: 44px; display: inline-flex; align-items: center; }
+.film-pos { font-weight: 600; font-size: 0.9rem; }
+.film-nav { margin-left: auto; display: flex; gap: 0.4rem; }
+.film-body { overflow-y: auto; padding: 1rem max(1rem, env(safe-area-inset-right)) 2rem max(1rem, env(safe-area-inset-left)); display: grid; gap: 0.9rem; align-content: start; max-width: 760px; width: 100%; margin: 0 auto; }
+.film-kick { margin: 0; font-size: 0.78rem; color: var(--ink-soft); display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+.film-title { margin: 0; font-size: clamp(1.4rem, 5vw, 2rem); line-height: 1.15; }
+.film-meta { margin: 0; color: var(--ink-soft); }
+.film-hook { padding: 0.9rem 1rem; border-radius: 14px; background: var(--ink); color: var(--bone); }
+.film-hook span, .film-broll span, .film-do span, .film-shot span { display: block; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.2rem; }
+.film-hook p { margin: 0; font-size: clamp(1.15rem, 4vw, 1.5rem); line-height: 1.35; font-weight: 600; }
+.film-cta { background: var(--clay); color: #fff; }
+.film-needs summary { cursor: pointer; font-weight: 600; }
+.film-needs ul { margin: 0.4rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.2rem; }
+.film-progress { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.film-progress span { display: block; height: 100%; background: var(--clay); transition: width 0.2s; }
+.film-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.film-step { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.85rem 0.9rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.film-step.is-done { opacity: 0.55; }
+.film-tick { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 2px solid var(--ink); background: transparent; color: var(--ink); font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; }
+.film-tick[aria-pressed="true"] { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
+.film-stepbody { display: grid; gap: 0.4rem; min-width: 0; }
+.film-say { margin: 0; font-size: clamp(1.1rem, 4vw, 1.4rem); line-height: 1.4; font-weight: 600; }
+.film-do, .film-shot { margin: 0; font-size: 0.95rem; line-height: 1.4; }
+.film-shot { color: var(--ink-soft); }
+.film-broll ul { margin: 0; padding-left: 1.2rem; }
+.film-notes { margin: 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--clay); color: var(--ink-soft); white-space: pre-wrap; }
+
+/* Printed shoot day (components/DayPrintSheet.js) */
+.dprint { gap: 1.2rem; }
+.dprint-h2 { margin: 0 0 0.45rem; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; border-bottom: 1px solid var(--field-line); padding-bottom: 0.25rem; }
+.dprint-order { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.dprint-order li { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.2rem 0.8rem; align-items: baseline; }
+.dprint-order em { grid-column: 2; font-style: normal; font-size: 0.78rem; color: #6b6358; }
+.dprint-at { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; }
+.dprint-script { display: grid; gap: 0.6rem; padding-top: 0.8rem; border-top: 2px solid #191612; break-inside: avoid-page; }
+.dprint-title { margin: 0; font-size: 1.25rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+.dprint-num { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #191612; color: #f1ebdf; font-size: 0.85rem; }
+.dprint-title em { font-style: normal; font-size: 0.8rem; font-weight: 400; color: #6b6358; }
+.dprint-facts { display: grid; gap: 0.3rem; }
+.dprint-facts p, .dprint-line { margin: 0; display: grid; grid-template-columns: 6rem 1fr; gap: 0.6rem; font-size: 0.92rem; line-height: 1.4; white-space: pre-wrap; }
+.dprint-facts p span, .dprint-line span { font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8a6a3e; padding-top: 0.2rem; }
+.dprint-hook { font-weight: 600; }
+.dprint-needs ul { list-style: none; margin: 0.3rem 0 0; padding: 0; columns: 2; column-gap: 1.2rem; }
+.dprint-needs li { display: flex; gap: 0.45rem; align-items: flex-start; break-inside: avoid; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.dprint-steps { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.dprint-steps th { text-align: left; font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8a6a3e; padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--field-line); }
+.dprint-steps td { vertical-align: top; padding: 0.4rem; border-bottom: 1px solid rgba(0, 0, 0, 0.1); white-space: pre-wrap; }
+.dprint-steps td:first-child, .dprint-steps td:last-child { white-space: nowrap; color: #6b6358; }
+.dprint-steps td:nth-child(2) { font-weight: 600; width: 38%; }
+.dprint-steps tr.is-done td { color: #6b6358; }
+@media (max-width: 640px) { .dprint-facts p, .dprint-line { grid-template-columns: 1fr; gap: 0.1rem; } .dprint-needs ul { columns: 1; } }

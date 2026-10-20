@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
-import { whoAmI, canOpen, loadDay, draftScript, aiConfigured } from "../../../lib/scripts-server";
-import { cleanScriptPatch, cleanDayPatch, cleanBody, isUuid, KIND_LABEL } from "../../../lib/scripts";
+import { whoAmI, canOpen, loadDay, draftScript, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
+import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // a Claude draft can take a minute
@@ -58,6 +58,42 @@ export async function POST(request) {
       return NextResponse.json({ ok: true });
     }
 
+    // Brandon: Claude writes the whole day in one go — N scripts, ordered, plus day notes.
+    if (body.action === "day-draft") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
+      const { scripts, dayNotes } = await draftDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts });
+      let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
+      const rows = scripts.map((sc) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(sc), created_by: "brandon", updated_by: "brandon" }));
+      const { error } = await db.from("scripts").insert(rows);
+      if (error) throw new Error(error.message);
+      if (dayNotes && !day.notes) await db.from("shoot_days").update({ notes: dayNotes, updated_at: now() }).eq("id", day.id);
+      return NextResponse.json({ ok: true, added: rows.length, day: await loadDay(db, day.id) });
+    }
+
+    // Brandon: the content plan's items, ready to drop in as scripts.
+    if (body.action === "plan-items") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      return NextResponse.json({ ok: true, items: await planItemsFor(db, day.client_id) });
+    }
+    if (body.action === "plan-import") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      const want = new Set(Array.isArray(body.itemIds) ? body.itemIds.map(String) : []);
+      const items = (await planItemsFor(db, day.client_id)).filter((it) => want.has(String(it.id)));
+      if (!items.length) return bad("Pick at least one item");
+      let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
+      const rows = items.map((it) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(it.script), created_by: "brandon", updated_by: "brandon" }));
+      const { error } = await db.from("scripts").insert(rows);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, added: rows.length, day: await loadDay(db, day.id) });
+    }
+
+    if (body.action === "day-send") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      const r = await sendDayEmail({ day, note: body.note });
+      return NextResponse.json({ ok: true, ...r });
+    }
+
     if (body.action === "script-add") {
       const kind = KIND_LABEL[body.kind] ? body.kind : "reel";
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
@@ -69,6 +105,33 @@ export async function POST(request) {
 
     const script = isUuid(body.scriptId) ? day.scripts.find((s) => s.id === body.scriptId) : null;
     if (["script-save", "script-delete", "script-note", "script-draft"].includes(body.action) && !script) return bad("Script not found", 404);
+
+    // Film mode: tick a step, or move the status — no rev needed, nothing else changes.
+    if (body.action === "script-tick") {
+      if (!script) return bad("Script not found", 404);
+      const i = Number(body.step);
+      const b = cleanBody(script.body);
+      if (!Number.isInteger(i) || !b.steps[i]) return bad("Bad step");
+      b.steps[i] = cleanStep({ ...b.steps[i], done: Boolean(body.done) });
+      const { data, error } = await db.from("scripts").update({ body: b, rev: script.rev + 1, updated_by: me.role, updated_at: now() }).eq("id", script.id).select("*").single();
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, script: data });
+    }
+    if (body.action === "script-status") {
+      if (!script) return bad("Script not found", 404);
+      if (!STATUS_LABEL[body.status]) return bad("Unknown status");
+      const { data, error } = await db.from("scripts").update({ status: body.status, rev: script.rev + 1, updated_by: me.role, updated_at: now() }).eq("id", script.id).select("*").single();
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, script: data });
+    }
+    if (body.action === "script-duplicate") {
+      if (!script) return bad("Script not found", 404);
+      const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
+      const b = cleanBody(script.body); b.steps = b.steps.map((st) => ({ ...st, done: false }));
+      const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, kind: script.kind, title: `${script.title || KIND_LABEL[script.kind]} (copy)`.slice(0, 140), status: "draft", minutes: script.minutes, body: b, created_by: me.role, updated_by: me.role }).select("*").single();
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, script: data });
+    }
 
     if (body.action === "script-save") {
       // Two people, one script: a save built on an older rev is refused and

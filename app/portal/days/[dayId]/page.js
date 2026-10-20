@@ -24,7 +24,7 @@ export default async function PortalShootDayPage({ params }) {
     <PortalFrame nav={nav} className="pt-day mx-page">
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap">
-          <ShootDay initial={day} role="client" backHref="/portal" backLabel="Your portal" />
+          <ShootDay initial={day} role="client" backHref="/portal" backLabel="Your portal" printHref={`/portal/days/${dayId}/print`} />
         </div>
       </section>
     </PortalFrame>

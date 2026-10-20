@@ -7,6 +7,7 @@ import { requireAdminPage } from "../../../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../../../../lib/studio-data";
 import { loadDay, aiConfigured } from "../../../../../../../lib/scripts-server";
+import { resendConfigured } from "../../../../../../../lib/resend";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Shoot day — Studio", robots: { index: false } };
@@ -27,7 +28,7 @@ export default async function AdminShootDayPage({ params }) {
       <StudioShell active="clients" newCount={newCount} kick={`Studio · Clients · ${day?.client?.name || ""}`} title="Shoot day" wide>
         {err
           ? <p className="sm-sqlhint">{/shoot_days|scripts/.test(err) ? <>Shoot days aren&apos;t set up yet — run <code>supabase/shoot-days.sql</code> once in the Supabase SQL editor.</> : err}</p>
-          : <ShootDay initial={day} role="brandon" aiReady={aiConfigured} backHref={`/portal/admin/clients/${id}`} backLabel={day.client?.name || "Client"} />}
+          : <ShootDay initial={day} role="brandon" aiReady={aiConfigured} emailReady={resendConfigured} backHref={`/portal/admin/clients/${id}`} backLabel={day.client?.name || "Client"} printHref={`/portal/admin/clients/${id}/days/${dayId}/print`} />}
       </StudioShell>
       <StudioFooter />
     </>
