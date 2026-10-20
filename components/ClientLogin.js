@@ -32,6 +32,7 @@ export default function ClientLogin({ client, account, onSaved }) {
   const [error, setError] = useState("");
   const [done, setDone] = useState(null); // the password just set, shown until dismissed
   const [copied, setCopied] = useState(false);
+  const [resetNote, setResetNote] = useState(""); // what happened with "Email them a reset code"
   const noEmail = isNoEmail(client.email);
   const first = (client.name || "").split(" ")[0];
   const details = (p) =>
@@ -56,6 +57,26 @@ export default function ClientLogin({ client, account, onSaved }) {
       setBusy(false);
     }
   }
+  // Let them choose their own: emails the same code the login screen's "forgot password?" sends.
+  async function sendReset() {
+    setBusy(true);
+    setError("");
+    setResetNote("");
+    try {
+      const r = await api({ action: "send-reset", email: client.email });
+      const at = r.sentAt ? new Date(r.sentAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+      setResetNote(
+        r.recent
+          ? `A code already went out${at ? ` at ${at}` : ""} and still works — nothing new was sent, so it isn't cancelled. You can send another in ${r.waitSeconds}s.`
+          : `Sent ✓ — tell them: open the email from Brandon Roth ("…is your Roth Media sign-in code"), tap the button or type the code at rothmediaco.com/portal, then choose a password. Check spam if it isn't there in a minute.`
+      );
+      if (r.account) onSaved?.(r.account);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function copy() {
     try { await navigator.clipboard.writeText(details(done)); setCopied(true); } catch { window.prompt("Copy:", details(done)); }
   }
@@ -70,7 +91,7 @@ export default function ClientLogin({ client, account, onSaved }) {
             ? `Has a login · last signed in ${fmt(account.lastSignIn)}.`
             : account.hasPassword ? "Has a login · hasn't signed in yet." : "Has a login, but no password yet — set one here."
           : "No login yet — the share link works without one."}
-        {" "}Pick a password for them and they can sign in at rothmediaco.com/portal straight away.
+        {" "}Two ways to (re)set it: pick a password for them and text it, or email them a reset code so they choose their own.
       </p>
 
       {done ? (
@@ -110,9 +131,13 @@ export default function ClientLogin({ client, account, onSaved }) {
             <button type="submit" className="abtn" disabled={busy || pw.trim().length < 8}>
               {busy ? "Saving…" : account ? "Save new password" : "Create login"}
             </button>
+            <button type="button" className="achip" disabled={busy} onClick={sendReset} title="Emails them a one-time code so they choose their own password">
+              Email them a reset code
+            </button>
           </div>
         </form>
       )}
+      {resetNote && <p className="gcard-meta clogin-note" role="status">{resetNote}</p>}
       {error && <p className="cform-error" role="alert">{error}</p>}
     </div>
   );

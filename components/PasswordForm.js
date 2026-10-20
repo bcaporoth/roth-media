@@ -35,10 +35,17 @@ export default function PasswordForm({ setup = false, next = "" }) {
       if (err) throw err;
       setDone(true);
     } catch (err) {
+      const msg = err?.message || "";
       setError(
-        err?.message?.includes("different from the old")
-          ? "That's already your password — pick a new one."
-          : "Couldn't save that password — try again, or text me at 845-549-4425."
+        (typeof navigator !== "undefined" && navigator.onLine === false) || /failed to fetch|load failed|network/i.test(msg)
+          ? "Your phone or computer looks offline — check your Wi-Fi or signal, then tap Save password again."
+          : /different from the old/i.test(msg)
+            ? "That's already your password — pick a different one."
+            : /session|not authenticated|jwt|expired|reauth/i.test(msg)
+              ? "This page timed out before the password saved. Go back to the sign-in page, tap \"First time here / forgot password?\", and use the new code — it takes a minute."
+              : /weak|pwned|leaked|characters|should contain/i.test(msg)
+                ? "That password is too easy to guess (it's shown up in known leaks, or is too simple). Try a longer one — a short phrase like \"blue-canoe-summer\" works well."
+                : "Couldn't save that password. Tap Save password once more — if it still won't save, text me at 845-549-4425 and I'll set it for you."
       );
     } finally {
       setBusy(false);

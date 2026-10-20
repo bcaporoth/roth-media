@@ -7,6 +7,7 @@ import { addMember } from "../../../../lib/album-access";
 import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 import { findAuthUser, accountView } from "../../../../lib/auth-users";
+import { sendSetupCode } from "../../../../lib/setup-code";
 
 export const dynamic = "force-dynamic";
 
@@ -214,6 +215,23 @@ export async function POST(request) {
       return bad(err.message, 500);
     }
     return NextResponse.json({ ok: true, password, account: accountView(user) });
+  }
+
+  // Studio → Login → "Email them a reset code": the same email as the login
+  // screen's "forgot password?", so they choose their own new password.
+  if (body.action === "send-reset") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("Bad email");
+    if (isNoEmail(email)) return bad("Add their email first — the login is their email.");
+    if (!resendConfigured) return bad("Email isn't set up yet — add RESEND_API_KEY in Vercel. Until then, set a password for them instead.", 503);
+    try {
+      const { data: c } = await db.from("clients").select("name").eq("email", email).maybeSingle();
+      const r = await sendSetupCode(db, { email, name: c?.name || "" });
+      const u = await findAuthUser(db, email).catch(() => null);
+      return NextResponse.json({ ...r, account: accountView(u) });
+    } catch (err) {
+      return bad(err.message, 502);
+    }
   }
 
   // "Your gallery is ready" — share link, with the portal as the long-term door.

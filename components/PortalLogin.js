@@ -33,6 +33,19 @@ const NEXT_KEY = "rm-after-login";
 // trailing spaces — accounts are stored lowercase, so normalize first.
 const cleanEmail = (e) => e.trim().toLowerCase();
 
+// Plain-words help, used in every message so no screen is a dead end.
+const SETUP_LABEL = "First time here / forgot password?";
+const TEXT_ME = "text me at 845-549-4425 and I'll set your password for you";
+const OFFLINE = "Your phone or computer looks offline — check your Wi-Fi or signal, then try again.";
+const isOffline = (err) =>
+  (typeof navigator !== "undefined" && navigator.onLine === false) ||
+  err instanceof TypeError ||
+  /failed to fetch|load failed|network/i.test(err?.message || "");
+const isRateLimited = (err) =>
+  err?.status === 429 || /rate limit|too many|security purposes|after \d+ seconds/i.test(err?.message || "");
+const clock = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const timeOf = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
 async function emailIsKnown(email) {
   try {
     const res = await fetch("/api/portal/known-email", {
@@ -59,6 +72,11 @@ export default function PortalLogin() {
   const [notice, setNotice] = useState("");
   const [autoSetup, setAutoSetup] = useState(false);
   const [recentSend, setRecentSend] = useState(false); // a code went out under a minute ago; nothing new was sent
+  const [sentAt, setSentAt] = useState(""); // when the code they should use went out
+  const [via, setVia] = useState("site"); // site (our Resend email) | supabase (fallback email)
+  const [waitUntil, setWaitUntil] = useState(0); // "Send a new code" unlocks at this time
+  const [now, setNow] = useState(() => Date.now());
+  const secsLeft = Math.max(0, Math.ceil((waitUntil - now) / 1000));
   // Where to go after signing in (?next=/portal/gallery/…). Portal paths only.
   const [nextPath, setNextPath] = useState("");
   const codeRef = useRef(null);
@@ -86,7 +104,7 @@ export default function PortalLogin() {
     const fail = () => {
       setMode("password");
       setError(
-        "That sign-in link didn't work — it may have expired or been used already. Sign in with your password, or request a fresh email below."
+        `That sign-in link didn't work — it has expired (they last about an hour), was already used, or is from an older email. Type your email below and tap "${SETUP_LABEL}" for a fresh one.`
       );
       window.history.replaceState(null, "", "/portal");
     };
@@ -159,6 +177,16 @@ export default function PortalLogin() {
     if (mode === "sent") codeRef.current?.focus();
   }, [mode]);
 
+  // Ticks the "Send a new code in 0:42" countdown.
+  useEffect(() => {
+    if (waitUntil <= Date.now()) return;
+    const t = setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() >= waitUntil) clearInterval(t);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [waitUntil]);
+
   async function handlePasswordSignIn(e) {
     e.preventDefault();
     setBusy(true);
@@ -172,13 +200,18 @@ export default function PortalLogin() {
       });
       if (err) throw err;
       window.location.assign(nextPath || "/portal");
-    } catch {
-      const known = await emailIsKnown(addr);
+    } catch (err) {
       setBusy(false);
+      if (isOffline(err)) return setError(OFFLINE);
+      if (isRateLimited(err))
+        return setError(`Too many tries in a row — wait about a minute, then try again. Forgot your password? Tap "${SETUP_LABEL}" below instead.`);
+      if (/not confirmed/i.test(err?.message || ""))
+        return setError(`Your login isn't finished yet. Tap "${SETUP_LABEL}" below — I'll email you a code, then you choose a password.`);
+      const known = await emailIsKnown(addr);
       setError(
         known
-          ? "The password didn't match. Tap \"First time here / forgot password?\" below — you'll be back in within a minute."
-          : `I don't have an account under ${addr}. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
+          ? `That password didn't match ${addr}. Passwords are case-sensitive — check caps lock, or tap "Show" to see what you typed. Never made one, or forgot it? Tap "${SETUP_LABEL}" below.`
+          : `I don't have an account under ${addr}. It's usually the email you booked with — double-check the spelling, or ${TEXT_ME}.`
       );
     }
   }
@@ -189,7 +222,8 @@ export default function PortalLogin() {
     e?.preventDefault();
     const addr = cleanEmail(email);
     if (!addr) {
-      setError("Type your email first, then tap that again.");
+      setMode("password");
+      setError(`Type your email in the box above first, then tap "${SETUP_LABEL}" again.`);
       return;
     }
     setMode("sending");
@@ -198,17 +232,18 @@ export default function PortalLogin() {
     const notOnFile = () => {
       setMode("password");
       setError(
-        `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
+        `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or ${TEXT_ME}.`
       );
     };
-    const sent = (recent = false) => {
+    // recent: a code already went out under a minute ago — nothing new was sent, that one still works.
+    const sent = ({ recent = false, wait = 60, at = "", from = "site" } = {}) => {
       setMode("sent");
       setRecentSend(recent);
-      setNotice(
-        recent
-          ? "I sent you a code a moment ago — use the one in that email (check spam too). Nothing came? Wait a minute, then tap \"Send a new code\"."
-          : "One-time email sent. This is just to prove it's you — after you set your password you'll never need email again."
-      );
+      setVia(from);
+      setSentAt(at || new Date().toISOString());
+      setWaitUntil(Date.now() + wait * 1000);
+      setNow(Date.now());
+      setNotice("Code sent — after you set your password you'll never need a code again.");
     };
     try {
       // Sent by the site itself (Resend). It checks the roster — a typo never
@@ -221,9 +256,9 @@ export default function PortalLogin() {
       });
       const json = await res.json().catch(() => ({}));
       if (json.known === false) return notOnFile();
-      if (json.recent) return sent(true);
-      if (json.ok) return sent();
-      if (!json.fallback) throw new Error(json.error || "send failed");
+      if (json.recent) return sent({ recent: true, wait: json.waitSeconds, at: json.sentAt });
+      if (json.ok) return sent({ wait: json.waitSeconds });
+      if (!json.fallback) throw Object.assign(new Error(json.error || "send failed"), { sendFailed: true });
 
       // Fallback (Resend not configured): Supabase's own email, as before.
       if (!(await emailIsKnown(addr))) return notOnFile();
@@ -236,13 +271,15 @@ export default function PortalLogin() {
         },
       });
       // Supabase refuses a second one inside 60s — the first one is still good.
-      if (err && (err.status === 429 || /security purposes|rate limit/i.test(err.message || ""))) return sent(true);
+      if (err && isRateLimited(err)) return sent({ recent: true, from: "supabase" });
       if (err) throw err;
-      sent();
-    } catch {
+      sent({ from: "supabase" });
+    } catch (err) {
       setMode("password");
       setError(
-        "Couldn't send the email just now — wait a minute and tap that again, or text me at 845-549-4425 and I'll get you in."
+        isOffline(err)
+          ? OFFLINE
+          : `The email didn't go out — that's on my end, not yours. Wait a minute and tap "${SETUP_LABEL}" again, or ${TEXT_ME}.`
       );
     }
   }
@@ -251,7 +288,7 @@ export default function PortalLogin() {
     e.preventDefault();
     const token = code.replace(/\D/g, "");
     if (token.length < 6) {
-      setError("Type the whole code from the email.");
+      setError("That's not the whole code — type every digit from the email (it's at least 6).");
       return;
     }
     setMode("verifying");
@@ -267,10 +304,15 @@ export default function PortalLogin() {
       window.location.assign(afterSetup(nextPath));
     } catch (err) {
       setMode("sent");
+      const msg = err?.message || "";
       setError(
-        /expired/i.test(err?.message || "")
-          ? "That code has expired — tap \"Send a new code\" below."
-          : "That code didn't work. Only the newest email's code counts — if you got two, use the latest one, or tap \"Send a new code\"."
+        isOffline(err)
+          ? OFFLINE
+          : isRateLimited(err)
+            ? "Too many tries in a row — wait about a minute, then type the code again."
+            : /expired/i.test(msg)
+              ? `That code has expired (each one lasts about an hour). Tap "Send a new code" below and use the code in the new email.`
+              : `That code didn't match. Make sure it's from the newest email — sending a new code cancels the old one — and that every digit is there. Still stuck? Tap "Send a new code", or ${TEXT_ME}.`
       );
     }
   }
@@ -289,12 +331,32 @@ export default function PortalLogin() {
       <div className="pt-desk" role="status">
         <p className="pt-status-title">Check your email.</p>
         <p className="pt-status-body">
-          I sent a one-time email to <strong>{email}</strong>. Tap the button
-          in it, or type the code here. Either way you&apos;ll land on
-          a page to choose your password — then it&apos;s email + password
-          from there on out.
+          {recentSend ? (
+            <>
+              I already sent a code to <strong>{email}</strong>
+              {sentAt ? ` at ${timeOf(sentAt)}` : ""} — it still works, so use
+              that one. (I didn&apos;t send another yet, so a double tap
+              can&apos;t cancel it.)
+            </>
+          ) : (
+            <>I just sent a code to <strong>{email}</strong>.</>
+          )}
         </p>
-        {recentSend && <p className="cx-help">{notice}</p>}
+        <ol className="pt-steps">
+          <li>
+            Open your email and find the one{" "}
+            {via === "site" ? (
+              <>
+                from <strong>Brandon Roth</strong> — the subject starts with your
+                code: <em>&ldquo;…is your Roth Media sign-in code&rdquo;</em>.
+              </>
+            ) : (
+              <>with your Roth Media sign-in code (it may come from &ldquo;Supabase Auth&rdquo;).</>
+            )}
+          </li>
+          <li>Type the code below and tap <strong>Continue</strong> — or just tap the button in the email.</li>
+          <li>Choose your password. From then on it&apos;s just email + password — no more codes.</li>
+        </ol>
         <form className="cx-form pt-form" onSubmit={handleVerify}>
           <div className="cx-field">
             <label className="cx-label" htmlFor="pl-code">Code from the email</label>
@@ -323,18 +385,35 @@ export default function PortalLogin() {
               {error}
             </p>
           )}
+          <div className="pt-nocode">
+            <p className="pt-nocode-title">Don&apos;t see it?</p>
+            <ul className="pt-steps">
+              <li>Give it a minute — it can take up to 60 seconds to arrive.</li>
+              <li>Check <strong>Spam</strong> or <strong>Junk</strong> — and in Gmail, the <strong>Promotions</strong> and <strong>Updates</strong> tabs.</li>
+              <li>Make sure <strong>{email}</strong> is right. If it isn&apos;t, tap &ldquo;Back to sign in&rdquo; and fix it.</li>
+              <li>Still nothing? Text me at 845-549-4425 and I&apos;ll set your password for you.</li>
+            </ul>
+          </div>
           <button
             type="button"
             className="pt-textbtn"
-            disabled={mode === "verifying"}
+            disabled={mode === "verifying" || secsLeft > 0}
             onClick={() => {
               setCode("");
               setError("");
               handleSendSetup();
             }}
           >
-            Send a new code
+            {secsLeft > 0 ? `Send a new code — available in ${clock(secsLeft)}` : "Send a new code"}
           </button>
+          {secsLeft > 0 && (
+            <p className="cx-help">
+              Hang tight — to keep your code from getting cancelled, a new one can only go out once a minute.
+            </p>
+          )}
+          {secsLeft === 0 && (
+            <p className="cx-help">A new code cancels the old one — after you tap it, use the newest email.</p>
+          )}
           <button
             type="button"
             className="pt-textbtn"
@@ -413,9 +492,13 @@ export default function PortalLogin() {
         disabled={mode === "sending"}
       >
         {mode === "sending"
-          ? "Sending…"
-          : "First time here / forgot password? Set one up →"}
+          ? "Sending your code…"
+          : `${SETUP_LABEL} Set one up →`}
       </button>
+      <p className="cx-help">
+        Type your email above, then tap that — I&apos;ll email you a one-time
+        code, and you choose a new password. Takes about a minute.
+      </p>
     </form>
   );
 }
