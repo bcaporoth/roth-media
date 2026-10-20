@@ -432,12 +432,12 @@ function PlanCard({ client: c, brand }) {
   if (!brand?.ready) return null;
   return (
     <section className="cprof-card">
-      <div className="cprof-cardhead"><h2>Content plan</h2>
-        <div className="gcard-actions"><a className="achip" href={`/portal/admin/clients/${c.id}/plan`}>{p?.items ? "Open plan" : "Start a plan"}</a></div>
+      <div className="cprof-cardhead"><h2>Content</h2>
+        <div className="gcard-actions"><a className="abtn" href={`/portal/admin/clients/${c.id}/months`}>Months (retainer)</a><a className="achip" href={`/portal/admin/clients/${c.id}/plan`}>{p?.items ? "One-off plan" : "One-off plan"}</a></div>
       </div>
       <p className="gcard-meta is-wrap">
         {!p?.items
-          ? "Reels, promos and photo sets — drafted from their brand palette, published to their portal."
+          ? "Month by month: the lineup, its status, the price and the pay link — on their portal. Or a one-off plan."
           : <><strong>{p.items} item{p.items === 1 ? "" : "s"}</strong>{p.published ? ` · on their portal since ${fmt(p.published_at)}` : " · draft, not on their portal yet"}</>}
       </p>
     </section>

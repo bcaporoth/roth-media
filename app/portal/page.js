@@ -11,6 +11,7 @@ import { loadBrand } from "../../lib/brand-server";
 import { loadPublishedPlan } from "../../lib/content-plan-server";
 import { listDays } from "../../lib/scripts-server";
 import { unreadFor } from "../../lib/notes-server";
+import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief } from "../../lib/intake";
 
@@ -237,6 +238,9 @@ export default async function PortalPage({ searchParams }) {
   if (palette) {
     const plan = adminConfigured ? await loadPublishedPlan(supabaseAdmin(), client.id) : null;
     const days = adminConfigured ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
+    const months = adminConfigured ? await publishedMonths(supabaseAdmin(), client.id).catch(() => []) : [];
+    const unpaid = months.find((m) => !m.paid_at && m.pay_url && m.price_cents > 0);
+    if (unpaid) todo.push({ who: "you", text: `${unpaid.label} content — pay link ready`, href: "#months" });
     const b = brandSummary(palette);
     if (b.done < b.of) todo.push({ who: "you", text: `Your brand: ${b.done} of ${b.of} essentials filled in`, href: "/portal/brand" });
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -256,6 +260,7 @@ export default async function PortalPage({ searchParams }) {
         brief={brief || false}
         plan={plan}
         days={days || []}
+        months={months}
         next={todo}
         clientName={client.name || ""}
       />

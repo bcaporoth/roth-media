@@ -553,7 +553,7 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
 .pt-biz .pt-plan-status { font-size: 0.8rem; font-weight: 600; color: var(--dim); }
 .pt-biz .is-delivered .pt-plan-status { color: #8fcaa2; }
 .pt-biz .pt-plan-title { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.25rem; line-height: 1.2; letter-spacing: -0.01em; color: var(--fg); }
-.pt-biz .pt-plan-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.pt-biz .pt-plan-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .pt-biz .pt-plan-steps i { display: block; height: 4px; border-radius: 2px; background: var(--bg-3); }
 .pt-biz .pt-plan-steps i.is-on { background: var(--gold); }
 .pt-biz .is-delivered .pt-plan-steps i.is-on { background: #6fae84; }
@@ -572,3 +572,22 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
   .pt-biz .pt-plan-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4rem; }
   .pt-biz .pt-plan-item { padding: 1.4rem 1.5rem 1.5rem; }
 }
+
+/* ── Months (the retainer) on the business home ── */
+.pt-biz .pt-months { display: grid; gap: 1.2rem; margin-bottom: 2.5rem; }
+.pt-biz .pt-month { display: grid; gap: 0.8rem; padding: 1.2rem 1.25rem; background: var(--bg-2); border: 1px solid var(--line); border-top: 2px solid var(--gold); border-radius: 2px; }
+.pt-biz .pt-month-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.pt-biz .pt-month-title { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.3rem; font-weight: 600; color: var(--fg); }
+.pt-biz .pt-month-meta { color: var(--faint); font-size: 0.88rem; }
+.pt-biz .pt-month-pay { margin-left: auto; }
+.pt-biz .pt-month-intro { margin: 0; color: var(--dim); }
+.pt-biz .pt-month-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.pt-biz .pt-month-item { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.8rem; align-items: center; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 2px; }
+.pt-biz .pt-month-item strong { color: var(--fg); font-weight: 600; }
+.pt-biz .pt-month-steps { grid-column: 1 / -1; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.pt-biz .pt-month-steps li { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem; border: 1px solid var(--line); border-radius: 999px; color: var(--faint); }
+.pt-biz .pt-month-steps li.is-past { color: var(--dim); border-color: var(--line-strong); }
+.pt-biz .pt-month-steps li.is-now { background: var(--gold); border-color: var(--gold); color: var(--on-clay); font-weight: 600; }
+.pt-biz .is-posted .pt-month-steps li.is-now, .pt-biz .is-delivered .pt-month-steps li.is-now { background: #6fae84; border-color: #6fae84; }
+.pt-biz .pt-month-when { grid-column: 1 / -1; color: var(--faint); font-size: 0.84rem; }
+.pt-biz .pt-month-day { font-size: 0.95rem; }

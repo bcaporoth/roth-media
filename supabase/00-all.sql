@@ -460,3 +460,24 @@ create table if not exists public.client_notes (
 create index if not exists client_notes_client_idx on public.client_notes (client_id, created_at);
 create index if not exists client_notes_unseen_idx on public.client_notes (who, seen_at) where seen_at is null;
 alter table public.client_notes enable row level security;
+
+-- 16. Monthly content / retainer (supabase/content-months.sql)
+create table if not exists public.content_months (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.clients (id) on delete cascade,
+  month text not null,                               -- 'YYYY-MM'
+  items jsonb not null default '[]'::jsonb,          -- lib/content-plan.js items, status up to 'posted'
+  intro text not null default '',
+  notes text not null default '',                    -- Brandon-only
+  price_cents integer not null default 0,
+  published_at timestamptz,                          -- on their portal once set
+  day_id uuid,                                       -- the shoot day made from this month
+  stripe_session_id text not null default '',
+  pay_url text not null default '',
+  paid_cents integer not null default 0,
+  paid_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (client_id, month)
+);
+alter table public.content_months enable row level security;

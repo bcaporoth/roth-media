@@ -6461,3 +6461,26 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .ix-book { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
 .ix-booked { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; margin: 0.6rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid #2e7d4f; border-radius: 12px; font-size: 0.92rem; }
 .ix-booked .gcard-actions { margin-left: auto; }
+
+/* ── Months board (components/MonthsBoard.js) ── */
+.mo { display: grid; gap: 1rem; }
+.mo-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.mo-nav .achip { min-height: 40px; display: inline-flex; align-items: center; }
+.mo-title { margin: 0; font-size: 1.5rem; display: flex; align-items: baseline; gap: 0.5rem; }
+.mo-title em { font-style: normal; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--clay); }
+.mo-state { margin-left: auto; font-size: 0.8rem; color: var(--ink-soft); }
+.mo-state.is-saved { color: #2e7d4f; }
+.mo-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+.mo-stat { display: grid; gap: 0.1rem; padding: 0.7rem 0.85rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+.mo-stat span { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
+.mo-stat strong { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; }
+.mo-stat strong a { color: var(--clay); text-decoration: none; }
+.mo-stat strong input { width: 7rem; font: inherit; font-size: 1.1rem; padding: 0.15rem 0.45rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: var(--ink); }
+.mo-stat em { font-style: normal; font-size: 0.76rem; color: var(--ink-soft); }
+.mo-intro { display: grid; gap: 0.25rem; }
+.mo-steps { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.mo-step { font: inherit; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.25rem 0.55rem; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink-soft); cursor: pointer; min-height: 32px; }
+.mo-step.is-past { color: var(--ink); border-color: var(--ink); }
+.mo-step.is-now { background: var(--clay); border-color: var(--clay); color: #fff; font-weight: 600; }
+.mo-item.is-delivered .mo-step.is-now, .mo-item.is-posted .mo-step.is-now { background: #2e7d4f; border-color: #2e7d4f; }
+@media (max-width: 760px) { .mo-strip { grid-template-columns: 1fr 1fr; } }

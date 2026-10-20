@@ -305,6 +305,7 @@ export function PortalBusinessHome({
   days = [],
   next = [],
   clientName = "",
+  months = [],
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -380,6 +381,8 @@ export function PortalBusinessHome({
       <NextStrip items={next} />
       <NotesCard clientName={clientName} />
 
+      {months.length > 0 && <MonthsSection months={months} />}
+
       {days.length > 0 && <DaysSection days={days} />}
 
       {plan && <PlanSection plan={plan} />}
@@ -449,6 +452,46 @@ function NotesCard({ clientName }) {
         <p className="pt-note">A question, a date, an idea, "can we swap this" — write it here. Brandon gets an email the moment you send it and answers right here.</p>
       </div>
       <NotesThread role="client" clientName={clientName} />
+    </section>
+  );
+}
+
+// This month's content (the retainer): the lineup with where each piece is,
+// and the pay link while it's unpaid. Newest month first.
+function MonthsSection({ months }) {
+  const usd = (c) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  return (
+    <section id="months" className="cx-wrap pt-months" aria-labelledby="pt-months-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-months-h" className="cx-kick">Your content, month by month</h2>
+        <p className="pt-note">Each piece moves planned → filmed → editing → delivered → posted. Questions or swaps: leave a note above.</p>
+      </div>
+      {months.map((m) => (
+        <article key={m.id} className="pt-month">
+          <div className="pt-month-head">
+            <h3 className="pt-month-title">{m.label}</h3>
+            <span className="pt-month-meta">{m.total} piece{m.total === 1 ? "" : "s"} · {m.done} done{m.price_cents ? ` · ${usd(m.price_cents)}` : ""}{m.paid_at ? " · paid ✓" : ""}</span>
+            {!m.paid_at && m.pay_url && m.price_cents > 0 && <a className="cx-btn cx-btn--light pt-month-pay" href={m.pay_url}>Pay {usd(m.price_cents)} →</a>}
+          </div>
+          {m.intro && <p className="pt-month-intro">{m.intro}</p>}
+          <ol className="pt-month-list">
+            {m.items.map((it) => {
+              const step = STATUSES.findIndex((s) => s.id === it.status);
+              return (
+                <li key={it.id} className={`pt-month-item is-${it.status}`}>
+                  <span className="pt-plan-kind">{KIND_LABEL[it.kind]}</span>
+                  <strong>{it.title || "Untitled"}</strong>
+                  <ol className="pt-month-steps" aria-label="Status">
+                    {STATUSES.map((s, i) => <li key={s.id} className={i < step ? "is-past" : i === step ? "is-now" : ""}>{s.label}</li>)}
+                  </ol>
+                  {it.when && <span className="pt-month-when">{it.when}</span>}
+                </li>
+              );
+            })}
+          </ol>
+          {m.day_id && <a className="cx-link pt-month-day" href={`/portal/days/${m.day_id}`}>The shoot day and scripts →</a>}
+        </article>
+      ))}
     </section>
   );
 }
