@@ -18,6 +18,7 @@ import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
 import { setOwner, sendAccessInvite, cleanEmail, EMAIL_RE } from "../../../../lib/album-access";
+import { canSignIn } from "../../../../lib/auth-users";
 import { readyEmail } from "../../../../lib/ready-email";
 import { isNoEmail } from "../../../../lib/no-email";
 import {
@@ -164,11 +165,12 @@ export async function POST(request) {
     const seen = new Set();
     const recipients = people.filter((p) => EMAIL_RE.test(p.email) && !isNoEmail(p.email) && p.email !== ADMIN_EMAIL && !seen.has(p.email) && seen.add(p.email));
     if (!recipients.length) return NextResponse.json({ error: "Nobody on this gallery has an email yet — add one under Edit first." }, { status: 422 });
-    // Who already has a portal login (Supabase auth pages; a roster this size fits in a page or two).
+    // Who can already sign in with a password (Supabase auth pages; a roster this size fits in a page or two).
+    // A login with no password (setup asked for, never finished) still gets the setup link.
     const logins = new Set();
     for (let page = 1; page <= 20; page++) {
       const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
-      for (const u of data?.users || []) logins.add((u.email || "").toLowerCase());
+      for (const u of data?.users || []) if (canSignIn(u)) logins.add((u.email || "").toLowerCase());
       if ((data?.users || []).length < 200) break;
     }
     const results = [];

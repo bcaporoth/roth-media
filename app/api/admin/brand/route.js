@@ -6,18 +6,15 @@ import { isNoEmail } from "../../../../lib/no-email";
 import { brandAction, ensureBrand } from "../../../../lib/brand-server";
 import { brandInviteEmail, brandLink } from "../../../../lib/brand-email";
 import { SECTION_BY_KEY } from "../../../../lib/brand";
+import { findAuthUser, canSignIn } from "../../../../lib/auth-users";
 
 export const dynamic = "force-dynamic";
 
 const bad = (error, status = 422) => NextResponse.json({ error }, { status });
 
+// Can they sign in with a password already? (A login with none still gets the setup link.)
 async function hasLogin(db, email) {
-  for (let page = 1; page <= 20; page++) {
-    const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    if ((data?.users || []).some((u) => (u.email || "").toLowerCase() === email)) return true;
-    if ((data?.users || []).length < 200) break;
-  }
-  return false;
+  return canSignIn(await findAuthUser(db, email).catch(() => null));
 }
 
 // Studio → Clients → profile → Brand. Everything the client can do, plus:

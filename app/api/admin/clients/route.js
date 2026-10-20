@@ -204,9 +204,10 @@ export async function POST(request) {
     let user;
     try {
       const existing = await findAuthUser(db, email);
+      const user_metadata = { ...(existing?.user_metadata || {}), password_set: true };
       const { data, error } = existing
-        ? await db.auth.admin.updateUserById(existing.id, { password, email_confirm: true })
-        : await db.auth.admin.createUser({ email, password, email_confirm: true });
+        ? await db.auth.admin.updateUserById(existing.id, { password, email_confirm: true, user_metadata })
+        : await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata });
       if (error) throw new Error(error.message);
       user = data?.user || existing;
     } catch (err) {

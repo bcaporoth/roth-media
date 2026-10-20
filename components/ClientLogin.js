@@ -66,7 +66,9 @@ export default function ClientLogin({ client, account, onSaved }) {
     <div className="clogin">
       <p className="gcard-meta">
         {account
-          ? account.lastSignIn ? `Has a login · last signed in ${fmt(account.lastSignIn)}.` : "Has a login · hasn't signed in yet."
+          ? account.lastSignIn
+            ? `Has a login · last signed in ${fmt(account.lastSignIn)}.`
+            : account.hasPassword ? "Has a login · hasn't signed in yet." : "Has a login, but no password yet — set one here."
           : "No login yet — the share link works without one."}
         {" "}Pick a password for them and they can sign in at rothmediaco.com/portal straight away.
       </p>

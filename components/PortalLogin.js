@@ -58,6 +58,7 @@ export default function PortalLogin() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [autoSetup, setAutoSetup] = useState(false);
+  const [recentSend, setRecentSend] = useState(false); // a code went out under a minute ago; nothing new was sent
   // Where to go after signing in (?next=/portal/gallery/…). Portal paths only.
   const [nextPath, setNextPath] = useState("");
   const codeRef = useRef(null);
@@ -74,6 +75,7 @@ export default function PortalLogin() {
     const accessToken = hashParams.get("access_token");
     const refreshToken = hashParams.get("refresh_token");
     const pkceCode = params.get("code");
+    const tokenHash = params.get("th"); // the button in our own setup email (/api/portal/setup-code)
 
     const dest = () => {
       const next = window.localStorage.getItem(NEXT_KEY);
@@ -97,6 +99,20 @@ export default function PortalLogin() {
         .then(({ error: err }) =>
           err ? fail() : window.location.replace(dest())
         )
+        .catch(fail);
+      return;
+    }
+
+    // Setup email button: verify the token here (any device), then on to
+    // choosing a password — and the album after, if the email was for one.
+    if (tokenHash) {
+      setMode("landing");
+      const supabase = createSupabaseBrowser();
+      const then = afterSetup(safeNext(params.get("next")));
+      supabase.auth
+        .verifyOtp({ token_hash: tokenHash, type: "magiclink" })
+        .then(({ error: err }) => (err ? supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" }) : { error: null }))
+        .then(({ error: err }) => (err ? fail() : window.location.replace(then)))
         .catch(fail);
       return;
     }
@@ -178,16 +194,39 @@ export default function PortalLogin() {
     }
     setMode("sending");
     setError("");
+    setNotice("");
+    const notOnFile = () => {
+      setMode("password");
+      setError(
+        `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
+      );
+    };
+    const sent = (recent = false) => {
+      setMode("sent");
+      setRecentSend(recent);
+      setNotice(
+        recent
+          ? "I sent you a code a moment ago — use the one in that email (check spam too). Nothing came? Wait a minute, then tap \"Send a new code\"."
+          : "One-time email sent. This is just to prove it's you — after you set your password you'll never need email again."
+      );
+    };
     try {
-      // Only email addresses that are actually on the roster — otherwise a
-      // typo would silently create an empty account with no galleries in it.
-      if (!(await emailIsKnown(addr))) {
-        setMode("password");
-        setError(
-          `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or text me at 845-549-4425 and I'll look it up.`
-        );
-        return;
-      }
+      // Sent by the site itself (Resend). It checks the roster — a typo never
+      // makes an empty account — and won't send a second code within a
+      // minute, so a double tap can't cancel the code they already have.
+      const res = await fetch("/api/portal/setup-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: addr, next: nextPath }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (json.known === false) return notOnFile();
+      if (json.recent) return sent(true);
+      if (json.ok) return sent();
+      if (!json.fallback) throw new Error(json.error || "send failed");
+
+      // Fallback (Resend not configured): Supabase's own email, as before.
+      if (!(await emailIsKnown(addr))) return notOnFile();
       window.localStorage.setItem(NEXT_KEY, afterSetup(nextPath));
       const supabase = createSenderClient();
       const { error: err } = await supabase.auth.signInWithOtp({
@@ -196,15 +235,14 @@ export default function PortalLogin() {
           emailRedirectTo: `${window.location.origin}/portal`,
         },
       });
+      // Supabase refuses a second one inside 60s — the first one is still good.
+      if (err && (err.status === 429 || /security purposes|rate limit/i.test(err.message || ""))) return sent(true);
       if (err) throw err;
-      setMode("sent");
-      setNotice(
-        "One-time email sent. This is just to prove it's you — after you set your password you'll never need email again."
-      );
+      sent();
     } catch {
       setMode("password");
       setError(
-        "Couldn't send the email — make sure it's the email you booked with, or text me at 845-549-4425."
+        "Couldn't send the email just now — wait a minute and tap that again, or text me at 845-549-4425 and I'll get you in."
       );
     }
   }
@@ -213,25 +251,26 @@ export default function PortalLogin() {
     e.preventDefault();
     const token = code.replace(/\D/g, "");
     if (token.length < 6) {
-      setError("The code is the 6 digits from the email.");
+      setError("Type the whole code from the email.");
       return;
     }
     setMode("verifying");
     setError("");
     try {
       const supabase = createSupabaseBrowser();
-      const { error: err } = await supabase.auth.verifyOtp({
-        email: cleanEmail(email),
-        token,
-        type: "email",
-      });
+      const addr = cleanEmail(email);
+      let { error: err } = await supabase.auth.verifyOtp({ email: addr, token, type: "email" });
+      // Codes for a brand-new login can come from the "confirm signup" path.
+      if (err) ({ error: err } = await supabase.auth.verifyOtp({ email: addr, token, type: "signup" }));
       if (err) throw err;
       window.localStorage.removeItem(NEXT_KEY);
       window.location.assign(afterSetup(nextPath));
-    } catch {
+    } catch (err) {
       setMode("sent");
       setError(
-        "That code didn't match — double-check the digits, or go back and resend."
+        /expired/i.test(err?.message || "")
+          ? "That code has expired — tap \"Send a new code\" below."
+          : "That code didn't work. Only the newest email's code counts — if you got two, use the latest one, or tap \"Send a new code\"."
       );
     }
   }
@@ -251,13 +290,14 @@ export default function PortalLogin() {
         <p className="pt-status-title">Check your email.</p>
         <p className="pt-status-body">
           I sent a one-time email to <strong>{email}</strong>. Tap the button
-          in it, or type the 6-digit code here. Either way you&apos;ll land on
+          in it, or type the code here. Either way you&apos;ll land on
           a page to choose your password — then it&apos;s email + password
           from there on out.
         </p>
+        {recentSend && <p className="cx-help">{notice}</p>}
         <form className="cx-form pt-form" onSubmit={handleVerify}>
           <div className="cx-field">
-            <label className="cx-label" htmlFor="pl-code">6-digit code</label>
+            <label className="cx-label" htmlFor="pl-code">Code from the email</label>
             <input
               id="pl-code"
               className="cx-input pt-code"
@@ -266,7 +306,7 @@ export default function PortalLogin() {
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="123456"
-              maxLength={6}
+              maxLength={8}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             />
@@ -283,6 +323,18 @@ export default function PortalLogin() {
               {error}
             </p>
           )}
+          <button
+            type="button"
+            className="pt-textbtn"
+            disabled={mode === "verifying"}
+            onClick={() => {
+              setCode("");
+              setError("");
+              handleSendSetup();
+            }}
+          >
+            Send a new code
+          </button>
           <button
             type="button"
             className="pt-textbtn"

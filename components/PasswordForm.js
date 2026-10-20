@@ -30,7 +30,8 @@ export default function PasswordForm({ setup = false, next = "" }) {
     setBusy(true);
     try {
       const supabase = createSupabaseBrowser();
-      const { error: err } = await supabase.auth.updateUser({ password });
+      // password_set: tells Studio's "it's ready" emails they can sign in with a password now.
+      const { error: err } = await supabase.auth.updateUser({ password, data: { password_set: true } });
       if (err) throw err;
       setDone(true);
     } catch (err) {
