@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay, draftScript, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
 import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
+import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
+import { loadPlaybook } from "../../../lib/playbook";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // a Claude draft can take a minute
@@ -48,7 +50,24 @@ export async function POST(request) {
       if (!Object.keys(allowed).length) return bad("Nothing to change");
       const { error } = await db.from("shoot_days").update({ ...allowed, updated_at: now() }).eq("id", day.id);
       if (error) throw new Error(error.message);
-      return NextResponse.json({ ok: true });
+      // A dated day lives on the Shoots calendar too (prep sheet, night-before
+      // email, drive time). Made once, then kept in step with the day.
+      let shootId = day.shoot_id || null;
+      const next = { ...day, ...allowed };
+      if (me.role === "brandon" && next.date) {
+        try {
+          const row = { title: next.title, kind: "business", client_name: day.client?.name || "", client_email: day.client?.email || "", date: next.date, start_time: next.start_time || "", address: next.location || "" };
+          if (shootId) await db.from("shoots").update(row).eq("id", shootId);
+          else {
+            let checklist = [];
+            try { const { lists } = await loadPlaybook(db); checklist = checklistFromPlaybook(lists, "business"); } catch {}
+            if (!checklist.length) checklist = seedChecklist("business");
+            const { data: sh } = await db.from("shoots").insert({ ...row, status: "planned", checklist }).select("id").single();
+            if (sh) { shootId = sh.id; await db.from("shoot_days").update({ shoot_id: sh.id }).eq("id", day.id); }
+          }
+        } catch {}
+      }
+      return NextResponse.json({ ok: true, shootId });
     }
 
     if (body.action === "day-delete") {
