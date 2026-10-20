@@ -1,7 +1,7 @@
 "use client";
 
 // Studio → Clients: the roster, each client's galleries and login status,
-// one-tap actions (share link, gallery-ready email, temp password), and a
+// one-tap actions (share link, gallery-ready email, set their password), and a
 // broadcast composer for everyone or a checked few.
 
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +9,7 @@ import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
+import ClientLogin from "./ClientLogin";
 
 async function api(payload) {
   const res = await fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -96,10 +97,6 @@ export default function ClientsBoard({ initial, emailReady }) {
     if (d.notes !== undefined && d.notes !== c.notes) patch.notes = d.notes;
     if (!Object.keys(patch).length) { say("Nothing to save"); return; }
     save(c, patch);
-  }
-  async function tempPassword(c) {
-    if (!window.confirm(`Set a new temporary password for ${c.email}? Their old one stops working.`)) return;
-    try { const r = await api({ action: "set-password", email: c.email }); window.prompt(`Temporary password for ${c.email} — copy it and text it to them:`, r.password); await refresh(); } catch (err) { fail(err); }
   }
   async function galleryReady(c, g) {
     if (!window.confirm(`Email ${c.email} that "${g.title}" is ready?`)) return;
@@ -249,12 +246,8 @@ export default function ClientsBoard({ initial, emailReady }) {
                   </ul>
 
                   <div className="kick-sm">Login</div>
-                  <p className="gcard-meta">
-                    {c.account ? (c.account.lastSignIn ? `Account exists · last sign-in ${fmt(c.account.lastSignIn)}.` : "Account exists · never signed in.") : "No account yet — the share link works without one."}
-                    {" "}Set a temporary password and text it to them; they can change it anytime from their account page.
-                  </p>
+                  <ClientLogin key={c.email} client={c} account={c.account} onSaved={() => refresh()} />
                   <div className="gcard-actions">
-                    <button type="button" className="achip" disabled={isNoEmail(c.email)} title={isNoEmail(c.email) ? "Add their email first — the login is their email" : ""} onClick={() => tempPassword(c)}>{c.account ? "Reset password" : "Create login + password"}</button>
                     <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
                     {c.email_opt_out && <button type="button" className="achip" onClick={() => resubscribe(c)}>Re-subscribe</button>}
                     <button type="button" className="achip achip-danger" onClick={() => remove(c)}>Remove</button>

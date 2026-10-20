@@ -6,6 +6,7 @@ import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/clie
 import { addMember } from "../../../../lib/album-access";
 import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
+import { findAuthUser, accountView } from "../../../../lib/auth-users";
 
 export const dynamic = "force-dynamic";
 
@@ -19,18 +20,6 @@ function tempPassword() {
   const a = "abcdefghjkmnpqrstuvwxyz23456789";
   const r = (n) => Array.from({ length: n }, () => a[Math.floor(Math.random() * a.length)]).join("");
   return `roth-${r(4)}-${r(4)}`;
-}
-
-async function findAuthUser(db, email) {
-  // Supabase admin API pages; rosters this size fit in a page or two.
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw new Error(error.message);
-    const hit = (data?.users || []).find((u) => (u.email || "").toLowerCase() === email);
-    if (hit) return hit;
-    if ((data?.users || []).length < 200) break;
-  }
-  return null;
 }
 
 // Roster + galleries + account status, one call.
@@ -202,26 +191,28 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
-  // Give a client a temporary password (creates the login if they never set one).
+  // Set a client's password — the one you typed, or a readable one made up here.
+  // Creates the login if they never had one, and marks it confirmed either way,
+  // so they sign in with email + password on day one (no emailed code first).
   if (body.action === "set-password") {
     const email = cleanEmail(body.email);
     if (!EMAIL_RE.test(email)) return bad("Bad email");
     if (isNoEmail(email)) return bad("Add their email first — the login is their email.");
     const password = String(body.password || "").trim() || tempPassword();
     if (password.length < 8) return bad("Password needs 8+ characters");
+    if (password.length > 72) return bad("Keep it under 72 characters");
+    let user;
     try {
       const existing = await findAuthUser(db, email);
-      if (existing) {
-        const { error } = await db.auth.admin.updateUserById(existing.id, { password });
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await db.auth.admin.createUser({ email, password, email_confirm: true });
-        if (error) throw new Error(error.message);
-      }
+      const { data, error } = existing
+        ? await db.auth.admin.updateUserById(existing.id, { password, email_confirm: true })
+        : await db.auth.admin.createUser({ email, password, email_confirm: true });
+      if (error) throw new Error(error.message);
+      user = data?.user || existing;
     } catch (err) {
       return bad(err.message, 500);
     }
-    return NextResponse.json({ ok: true, password });
+    return NextResponse.json({ ok: true, password, account: accountView(user) });
   }
 
   // "Your gallery is ready" — share link, with the portal as the long-term door.

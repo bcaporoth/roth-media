@@ -13,6 +13,8 @@ import { BOOKING_COLS, bookingView } from "../../../../../lib/money-view";
 import { loadBrand } from "../../../../../lib/brand-server";
 import { completeness } from "../../../../../lib/brand";
 import { listDays } from "../../../../../lib/scripts-server";
+import { findAuthUser, accountView } from "../../../../../lib/auth-users";
+import { isNoEmail } from "../../../../../lib/no-email";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +84,7 @@ export default async function ClientPage({ params }) {
     bookingsReady,
     brand,
     days: await listDays(db, client.id).catch(() => null), // null = table not created yet
+    account: isNoEmail(email) ? null : accountView(await findAuthUser(db, email).catch(() => null)),
     stage: clientStage({ subs: all, shoots: shoots || [], galleries }),
     type: clientType({ subs: all, shoots: shoots || [] }),
     referral: await (async () => {

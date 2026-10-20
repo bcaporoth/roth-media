@@ -10,6 +10,7 @@ import { ClientShoots } from "./ShootsBoard";
 import BalanceList from "./BalanceList";
 import NotesThread from "./NotesThread";
 import ReviewButton from "./ReviewButton";
+import ClientLogin from "./ClientLogin";
 import { dueFor, STEPS, rebookText } from "../lib/after-delivery";
 import { referralText } from "../lib/referral-rules";
 import { usd } from "../lib/money-view";
@@ -203,6 +204,13 @@ export default function ClientProfile({ initial, emailReady }) {
           <ClientShoots client={c} type={type} brief={brief} />
 
           <DaysCard client={c} days={d.days} fail={fail} />
+
+          <section className="cprof-card" id="login">
+            <div className="cprof-cardhead"><h2>Login</h2>
+              <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
+            </div>
+            <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
+          </section>
 
           <section className="cprof-card" id="galleries">
             <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
