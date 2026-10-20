@@ -296,6 +296,7 @@ export function PortalBusinessHome({
   brand,
   brief = false,
   plan = null,
+  days = [],
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -368,6 +369,8 @@ export function PortalBusinessHome({
         </p>
       </header>
 
+      {days.length > 0 && <DaysSection days={days} />}
+
       {plan && <PlanSection plan={plan} />}
 
       {todo && cards}
@@ -406,6 +409,33 @@ export function PortalBusinessHome({
 
 // The content plan Brandon published from Studio (lib/content-plan.js):
 // each piece, what gets filmed, and where it is right now.
+// Shoot days: the scripts for a day of filming, written together. Opening
+// one lands on the same page Brandon works from.
+function DaysSection({ days }) {
+  const fmt = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" }) : "Date to be set");
+  const STATUS = { planning: "Planning", locked: "Locked in", filmed: "Filmed", delivered: "Delivered" };
+  return (
+    <section id="days" className="cx-wrap pt-days" aria-labelledby="pt-days-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-days-h" className="cx-kick">Your shoot days</h2>
+        <p className="pt-note">The scripts we film from — what you say, what you do, what the camera sees. Open a day, read it through, change anything, add an idea. I see every edit.</p>
+      </div>
+      <ul className="pt-days-list">
+        {days.map((d) => (
+          <li key={d.id} className={`pt-day-card is-${d.status}`}>
+            <a href={`/portal/days/${d.id}`} className="pt-day-link">
+              <span className="pt-day-when">{fmt(d.date)}</span>
+              <strong className="pt-day-title">{d.title}</strong>
+              <span className="pt-day-meta">{d.scripts} script{d.scripts === 1 ? "" : "s"}{d.scripts ? ` · ${d.ready} ready to film` : ""} · {STATUS[d.status] || d.status}</span>
+              <span className="pt-day-open">Open →</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function PlanSection({ plan }) {
   const done = plan.items.filter((it) => it.status === "delivered").length;
   // "Reel 1", "Reel 2", "Promo video": numbered within a kind when there's more than one.

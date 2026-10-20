@@ -193,6 +193,8 @@ export default function ClientProfile({ initial, emailReady }) {
 
           <ClientShoots client={c} type={type} brief={brief} />
 
+          <DaysCard client={c} days={d.days} fail={fail} />
+
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
             {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
@@ -309,6 +311,47 @@ function CallSheet({ call, client, brief, open, onToggle, onDelete, onError }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Shoot days: the scripts for a business day, shared with the owner (they
+// open the same day from their portal). Plan one here, write it together.
+function DaysCard({ client: c, days, fail }) {
+  const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  async function create(e) {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.currentTarget).entries());
+    setBusy(true);
+    try {
+      const r = await api("/api/days", { action: "day-create", clientId: c.id, ...f });
+      window.location.href = `/portal/admin/clients/${c.id}/days/${r.id}`;
+    } catch (err) { fail(err); setBusy(false); }
+  }
+  const list = days || [];
+  return (
+    <section className="cprof-card">
+      <div className="cprof-cardhead"><h2>Shoot days{list.length > 0 && <em className="cprof-count">{list.length}</em>}</h2>
+        <button type="button" className="abtn" onClick={() => setAdding(!adding)}>{adding ? "Cancel" : "+ New shoot day"}</button>
+      </div>
+      {days === null && <p className="sm-sqlhint">Shoot days aren&apos;t set up yet — run <code>supabase/shoot-days.sql</code> once in the Supabase SQL editor.</p>}
+      {adding && (
+        <form className="cprof-newday" onSubmit={create}>
+          <label>Title<input name="title" defaultValue="Content day" required /></label>
+          <label>Date<input type="date" name="date" /></label>
+          <label>Start<input type="time" name="start_time" defaultValue="09:00" /></label>
+          <label className="wide">Where<input name="location" placeholder="Their shop, the kitchen…" /></label>
+          <button type="submit" className="abtn" disabled={busy}>{busy ? "Opening…" : "Create and open →"}</button>
+        </form>
+      )}
+      {days !== null && list.length === 0 && !adding && <p className="gcard-meta">The scripts for a day of filming — reels, recipes, how-tos — written with {c.name.split(" ")[0] || "them"}: they see and edit the same page from their portal.</p>}
+      {list.length > 0 && (
+        <ul className="cprof-list">{list.map((dd) => (
+          <li key={dd.id}><strong>{dd.title}</strong> <span className="gcard-meta">· {dd.date ? fmt(dd.date) : "no date"} · {dd.scripts} script{dd.scripts === 1 ? "" : "s"}{dd.scripts ? `, ${dd.ready} ready` : ""} · {dd.status}</span>
+            <span className="gcard-actions"><a className="achip" href={`/portal/admin/clients/${c.id}/days/${dd.id}`}>Open</a></span></li>
+        ))}</ul>
+      )}
+    </section>
   );
 }
 

@@ -12,6 +12,7 @@ import { resendConfigured } from "../../../../../lib/resend";
 import { BOOKING_COLS, bookingView } from "../../../../../lib/money-view";
 import { loadBrand } from "../../../../../lib/brand-server";
 import { completeness } from "../../../../../lib/brand";
+import { listDays } from "../../../../../lib/scripts-server";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export default async function ClientPage({ params }) {
     bookings,
     bookingsReady,
     brand,
+    days: await listDays(db, client.id).catch(() => null), // null = table not created yet
     stage: clientStage({ subs: all, shoots: shoots || [], galleries }),
     type: clientType({ subs: all, shoots: shoots || [] }),
     referral: await (async () => {

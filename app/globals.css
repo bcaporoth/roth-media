@@ -6233,3 +6233,115 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .pa-total .pa-today { border-top-color: rgba(20, 17, 14, 0.25); }
 :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) section.services, :where(body:not(:has(.admin-shell, .sprint-page, .bprint))) .svc-item { background: var(--bg-2); color: var(--fg); }
 /* ══ end CINEMA legacy ══ */
+
+/* ── Shoot day (components/ShootDay.js) — Studio and the client portal share it ── */
+.sday { display: grid; gap: 1.1rem; }
+.sday-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.sday-flash { font-size: 0.85rem; color: #2e7d4f; }
+.sday-head { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.sday-headtop { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
+.sday-kick { margin: 0 0 0.2rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.sday-title { margin: 0; font-size: clamp(1.4rem, 3.5vw, 2rem); line-height: 1.15; }
+.sday-when { margin: 0.25rem 0 0; color: var(--ink-soft); }
+.sday-when em { font-style: italic; }
+.sday-stats { margin: 0; display: flex; flex-wrap: wrap; gap: 1.2rem; }
+.sday-stats div { display: grid; gap: 0.05rem; }
+.sday-stats dt { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
+.sday-stats dd { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.25rem; font-weight: 600; }
+.sday-notes { display: grid; gap: 0.3rem; font-size: 0.78rem; color: var(--ink-soft); }
+.sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { font: inherit; font-size: 0.95rem; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: var(--ink); resize: vertical; }
+.sday-edit, .cprof-newday { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; align-items: end; }
+.sday-edit label, .cprof-newday label, .scr-meta label, .scr-secs { display: grid; gap: 0.25rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.sday-edit .wide, .cprof-newday .wide { grid-column: 1 / -1; }
+.sday-edit .gcard-actions, .cprof-newday .abtn { grid-column: 1 / -1; justify-self: start; }
+.sday-sechead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.sday-sechead h2, .sday-sechead h3 { margin: 0; font-size: 1.05rem; }
+.sday-order { display: grid; gap: 0.7rem; }
+.sday-empty { margin: 0; padding: 1rem; border: 1px dashed var(--line); border-radius: 14px; color: var(--ink-soft); }
+.sday-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.sday-row { position: relative; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.sday-row.is-open { border-color: var(--clay); }
+.sday-rowbtn { width: 100%; display: grid; grid-template-columns: auto 5.2rem 1fr auto; gap: 0.7rem; align-items: center; padding: 0.75rem 0.9rem; padding-right: 6.2rem; background: none; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; border-radius: 14px; }
+.sday-rowbtn::before { content: "▸"; width: 1.5rem; height: 1.5rem; display: inline-grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--bone, #f4efe6); font-size: 0.75rem; transition: transform 0.15s; }
+.sday-rowbtn[aria-expanded="true"]::before { transform: rotate(90deg); background: var(--clay); }
+.sday-rowbtn:hover { background: var(--surface-2); }
+.sday-at { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
+.sday-main { min-width: 0; display: grid; gap: 0.1rem; }
+.sday-main strong { font-weight: 600; }
+.sday-main em { font-style: normal; font-size: 0.8rem; color: var(--ink-soft); }
+.sday-main strong em { font-style: italic; font-size: inherit; }
+.sday-rowactions { position: absolute; top: 0.7rem; right: 0.8rem; display: flex; gap: 0.3rem; }
+.sday-rowactions .achip { min-height: 36px; display: inline-flex; align-items: center; }
+.sday-status { white-space: nowrap; }
+.itag.is-draft, .itag.is-planning { opacity: 0.75; }
+.itag.is-ready, .itag.is-locked { border-color: var(--clay); color: var(--clay); }
+.itag.is-filmed, .itag.is-delivered { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.sday-add { padding-top: 0.3rem; }
+.sday-kinds { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.sday-kinds .kick-sm { width: 100%; }
+.sday-kind { display: grid; gap: 0.1rem; text-align: left; padding: 0.6rem 0.9rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; min-width: 9rem; }
+.sday-kind:hover { border-color: var(--clay); }
+.sday-kind strong { font-weight: 600; }
+.sday-kind em { font-style: normal; font-size: 0.74rem; color: var(--ink-soft); }
+
+/* one script */
+.scr { display: grid; gap: 1rem; padding: 0.4rem 0.9rem 1rem; border-top: 1px solid var(--line); }
+.scr-stale { margin: 0.5rem 0 0; padding: 0.7rem 0.9rem; border-radius: 10px; background: rgba(217, 130, 43, 0.14); border: 1px solid #d9822b; font-size: 0.9rem; }
+.scr-top { display: grid; gap: 0.6rem; padding-top: 0.6rem; }
+.scr-title { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.3rem !important; font-weight: 600; }
+.scr-meta { display: flex; flex-wrap: wrap; align-items: end; gap: 0.6rem 1rem; }
+.scr-meta label { min-width: 7rem; }
+.scr-meta input[type="number"] { width: 6rem; }
+.scr-state { margin-left: auto; font-size: 0.78rem; color: var(--ink-soft); }
+.scr-state.is-saved { color: #2e7d4f; }
+.scr-state.is-stale { color: #d9822b; }
+.scr-ai { display: grid; gap: 0.5rem; }
+.scr-ai-box { display: grid; gap: 0.6rem; padding: 0.8rem 0.9rem; border: 1px dashed var(--clay); border-radius: 12px; }
+.scr-ai-box label { display: grid; gap: 0.3rem; font-weight: 600; }
+.scr-ai-box label em { font-weight: 400; font-style: normal; font-size: 0.8rem; color: var(--ink-soft); }
+.scr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 0.9rem; }
+.scr-field { display: grid; gap: 0.3rem; min-width: 0; }
+.scr-field.wide { grid-column: 1 / -1; }
+.scr-field > span { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.scr-field textarea { overflow: hidden; line-height: 1.45; }
+.scr-steps { display: grid; gap: 0.6rem; }
+.scr-steplist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; counter-reset: step; }
+.scr-step { display: grid; gap: 0.5rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; border-left: 4px solid var(--clay); }
+.scr-stephead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem; }
+.scr-stepactions { display: flex; flex-wrap: wrap; align-items: end; gap: 0.3rem; margin-left: auto; }
+.scr-stepactions .achip { min-height: 34px; display: inline-flex; align-items: center; }
+.scr-secs input { width: 4.2rem; padding: 0.3rem 0.5rem; }
+.scr-stepgrid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0.6rem; }
+.scr-thread { display: grid; gap: 0.5rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.scr-thread h3 { margin: 0; font-size: 0.98rem; }
+.scr-thread ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.scr-msg { padding: 0.5rem 0.7rem; border-radius: 10px; background: var(--surface-2); max-width: 46rem; }
+.scr-msg.is-brandon { border-left: 3px solid var(--clay); }
+.scr-msg.is-client { border-left: 3px solid var(--ink); }
+.scr-msg strong { font-weight: 600; }
+.scr-msg em { font-style: normal; font-size: 0.74rem; color: var(--ink-soft); margin-left: 0.4rem; }
+.scr-msg p { margin: 0.2rem 0 0; white-space: pre-wrap; }
+.scr-msgform { display: grid; gap: 0.5rem; }
+.scr-msgform .abtn { justify-self: start; }
+.scr-foot { padding-top: 0.2rem; }
+@media (max-width: 760px) {
+  .sday-rowbtn { grid-template-columns: auto 1fr; padding-right: 0.9rem; }
+  .sday-at { grid-column: 2; }
+  .sday-main { grid-column: 2; }
+  .sday-status { grid-column: 2; justify-self: start; }
+  .sday-rowactions { position: static; padding: 0 0.9rem 0.6rem; }
+  .sday-edit, .cprof-newday { grid-template-columns: 1fr 1fr; }
+  .scr-grid, .scr-stepgrid { grid-template-columns: 1fr; }
+  .scr-state { margin-left: 0; width: 100%; }
+}
+
+/* Portal (Cinema theme) list of days on the business home */
+.pt-days { display: grid; gap: 1rem; margin-bottom: 2.5rem; }
+.pt-days-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.pt-day-link { display: grid; gap: 0.25rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
+.pt-day-link:hover { border-color: var(--clay); transform: translateY(-2px); }
+.pt-day-when { font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.pt-day-title { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; font-weight: 600; }
+.pt-day-meta { font-size: 0.84rem; color: var(--ink-soft); }
+.pt-day-open { margin-top: 0.4rem; font-size: 0.85rem; color: var(--clay); font-weight: 600; }
+.pt-day .sday-head, .pt-day .sday-row, .pt-day .scr-thread, .pt-day .sday-kind { background: var(--surface); }

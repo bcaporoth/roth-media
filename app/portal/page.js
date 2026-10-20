@@ -9,6 +9,7 @@ import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
 import { ESSENTIALS, completeness } from "../../lib/brand";
 import { loadBrand } from "../../lib/brand-server";
 import { loadPublishedPlan } from "../../lib/content-plan-server";
+import { listDays } from "../../lib/scripts-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief } from "../../lib/intake";
 
@@ -226,6 +227,7 @@ export default async function PortalPage({ searchParams }) {
   // content and their brand on one page.
   if (palette) {
     const plan = adminConfigured ? await loadPublishedPlan(supabaseAdmin(), client.id) : null;
+    const days = adminConfigured ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
     return (
       <PortalBusinessHome
         nav={<PortalNav email={user.email} active="galleries" brand />}
@@ -239,6 +241,7 @@ export default async function PortalPage({ searchParams }) {
         brand={brandSummary(palette)}
         brief={brief || false}
         plan={plan}
+        days={days || []}
       />
     );
   }

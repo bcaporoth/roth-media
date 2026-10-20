@@ -31,6 +31,13 @@ export default function PortalNav({ email, isAdmin = false, active = "", extra =
             </Link>
           </li>
         )}
+        {biz && (
+          <li className="pnav-tab">
+            <Link className={cls("days")} href="/portal#days" title="The scripts we film from" aria-current={active === "days" ? "page" : undefined}>
+              Shoot days
+            </Link>
+          </li>
+        )}
         {!isAdmin && (
           <li className="pnav-tab">
             <Link className={cls("brief")} href="/portal/brief" title="Your shoot brief — the questions I plan the day from" aria-current={active === "brief" ? "page" : undefined}>
