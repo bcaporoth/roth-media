@@ -476,7 +476,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
 
   return (
     <li id={`shoot-${s.id}`} className={"shoot" + (open ? " is-open" : "") + ` is-${s.status}`}>
-      <button type="button" className="shoot-row" onClick={onToggle}>
+      <button type="button" className="shoot-row" onClick={onToggle} aria-expanded={open}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
         <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.address ? ` · ${s.address}` : " · no address yet"}</em></span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>

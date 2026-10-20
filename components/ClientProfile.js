@@ -28,6 +28,7 @@ export default function ClientProfile({ initial, emailReady }) {
   const [type, setType] = useState(initial.type || "wedding");
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
   const [pasting, setPasting] = useState(false);
+  const [editing, setEditing] = useState(false); // contact details form, closed until asked for
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
   const brief = latestBrief(d.intakes); // one record: their latest intake. The call sheet and shoots read it.
@@ -51,8 +52,9 @@ export default function ClientProfile({ initial, emailReady }) {
     if (f.email.trim() && f.email.trim().toLowerCase() !== c.email) patch.email = f.email.trim();
     if (f.phone !== c.phone) patch.phone = f.phone;
     if (f.notes !== c.notes) patch.notes = f.notes;
-    if (!Object.keys(patch).length) { say("Nothing to save"); return; }
+    if (!Object.keys(patch).length) { say("Nothing to save"); setEditing(false); return; }
     saveClient(patch);
+    setEditing(false);
   }
   const link = intakeUrl({ email: isNoEmail(c.email) ? "" : c.email, name: c.name, type });
   async function intakeSent(how) {
@@ -114,27 +116,39 @@ export default function ClientProfile({ initial, emailReady }) {
         </p>
       )}
 
-      <section className="cprof-card">
-        <form className="client-edit" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
-          <div className="client-fields">
-            <label>Name<input name="name" defaultValue={c.name} /></label>
-            <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
-            <label>Phone<input name="phone" defaultValue={c.phone} /></label>
-          </div>
-          <label className="client-notes">Notes<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" /></label>
-          <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
-        </form>
+      <section className="cprof-card cprof-contact">
+        <div className="cprof-cardhead">
+          <h2>Details</h2>
+          <button type="button" className="achip" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Cancel" : "Edit details"}</button>
+        </div>
+        {!editing ? (
+          <dl className="cprof-facts">
+            <div><dt>Email</dt><dd>{isNoEmail(c.email) ? <em>none yet</em> : c.email}</dd></div>
+            <div><dt>Phone</dt><dd>{c.phone || <em>none yet</em>}</dd></div>
+            <div className="is-wide"><dt>Notes</dt><dd>{c.notes || <em>nothing yet — anniversary, kids&apos; names, what they loved…</em>}</dd></div>
+          </dl>
+        ) : (
+          <form className="client-edit" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
+            <div className="client-fields">
+              <label>Name<input name="name" defaultValue={c.name} /></label>
+              <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
+              <label>Phone<input name="phone" defaultValue={c.phone} /></label>
+            </div>
+            <label className="client-notes">Notes<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" /></label>
+            <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
+          </form>
+        )}
         <div className="cprof-type">
           <span className="kick-sm" id="cprof-type-label">Questions to use</span>
           {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
-          <p className="sm-typehint" id="cprof-type-hint">Picks which questions the intake link, a new call sheet and a new shoot use. It isn&apos;t a saved setting — it starts on whatever their last intake, call sheet or shoot was.</p>
+          <p className="sm-typehint" id="cprof-type-hint" title="Not a saved setting — it starts on whatever their last intake, call sheet or shoot was.">For the intake link, new call sheets and new shoots.</p>
         </div>
       </section>
 
       <div className="cprof-cols">
         <div className="cprof-col cprof-ref">
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Initial inquiry</h2>
+            <div className="cprof-cardhead"><h2>Initial inquiry{d.messages.length > 0 && <em className="cprof-count">{d.messages.length}</em>}</h2>
               <button type="button" className="achip" onClick={() => setPasting(!pasting)}>{pasting ? "Cancel" : "+ Paste an old one"}</button>
             </div>
             {pasting && (
@@ -143,12 +157,12 @@ export default function ClientProfile({ initial, emailReady }) {
                 <div className="gcard-actions"><label className="gcard-meta">Sent on <input type="date" value={paste.date} onChange={(e) => setPaste({ ...paste, date: e.target.value })} /></label><button type="submit" className="abtn">Save</button></div>
               </form>
             )}
-            {d.messages.length === 0 && !pasting && <p className="gcard-meta">No form from them on file. If they reached out before Studio existed, paste it in so it&apos;s beside you on the call.</p>}
+            {d.messages.length === 0 && !pasting && <p className="gcard-meta">Nothing on file yet — paste in what they first sent, if you have it.</p>}
             {d.messages.map((m, i) => <Answers key={m.id} item={m} title={`${m.summary || m.subject || m.kind} · ${fmt(m.created_at)}`} closed={i > 0} />)}
           </section>
 
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Their brief</h2>
+            <div className="cprof-cardhead"><h2>Their brief{d.intakes.length > 0 && <em className="cprof-count">{d.intakes.length}</em>}</h2>
               <div className="gcard-actions">
                 <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
                 {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
@@ -156,9 +170,9 @@ export default function ClientProfile({ initial, emailReady }) {
               </div>
             </div>
             {d.intakes.length === 0 && (
-              <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "One record for everything they tell you. Send the link, or they fill it in from their portal (Your brief). The call sheet and the day plan read from it."}</p>
+              <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "Nothing yet — send them the link. Their answers feed the call sheet and the day plan."}</p>
             )}
-            {brief && <p className="gcard-meta">Current as of {fmt(brief.updated_at)}. They can edit it any time from their portal — the call sheet and the day plan always show this version.</p>}
+            {brief && <p className="gcard-meta">Updated {fmt(brief.updated_at)} · they can edit it from their portal.</p>}
             {d.intakes.map((it, i) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} brief · ${fmt(it.updated_at || it.created_at)}${i > 0 ? " (older)" : ""}`} closed={i > 0} />)}
           </section>
 
@@ -168,10 +182,10 @@ export default function ClientProfile({ initial, emailReady }) {
 
         <div className="cprof-col">
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Orientation call</h2>
+            <div className="cprof-cardhead"><h2>Orientation call{d.calls.length > 0 && <em className="cprof-count">{d.calls.length}</em>}</h2>
               <button type="button" className="abtn" onClick={newCall}>+ New call sheet</button>
             </div>
-            {d.calls.length === 0 && <p className="gcard-meta">Start a sheet when you&apos;re on the call. Their brief shows beside each question; you type only what&apos;s new. Blanks are flagged so you ask.</p>}
+            {d.calls.length === 0 && <p className="gcard-meta">No sheets yet — start one when you&apos;re on the call. Their brief sits beside each question.</p>}
             {d.calls.map((call) => (
               <CallSheet key={call.id} call={call} client={c} brief={brief} open={openCall === call.id} onToggle={() => setOpenCall(openCall === call.id ? null : call.id)} onDelete={() => deleteCall(call)} onError={fail} />
             ))}
@@ -180,7 +194,7 @@ export default function ClientProfile({ initial, emailReady }) {
           <ClientShoots client={c} type={type} brief={brief} />
 
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Galleries</h2></div>
+            <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
             {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
               <ul className="cprof-list">{d.galleries.map((g) => (
                 <li key={g.id + (g.shared ? "-s" : "")}><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
@@ -190,7 +204,7 @@ export default function ClientProfile({ initial, emailReady }) {
           </section>
 
           <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Payments</h2>
+            <div className="cprof-cardhead"><h2>Payments{bookings.length + d.payments.length > 0 && <em className="cprof-count">{bookings.length + d.payments.length}</em>}</h2>
               {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}
             </div>
             {d.bookingsReady === false && <p className="sm-sqlhint">Bookings aren&apos;t set up yet — run <code>supabase/bookings.sql</code> once and what they pay through the site shows here.</p>}
@@ -214,7 +228,7 @@ function Answers({ item, title, closed = false }) {
   const fields = (item.fields || []).filter(([k]) => k !== "for");
   return (
     <div className="cprof-answers">
-      <button type="button" className="cprof-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>{title} <span className="gcard-meta">{open ? "▾" : "▸"}</span></button>
+      <button type="button" className="cprof-toggle" onClick={() => setOpen(!open)} aria-expanded={open}><span className="cprof-toggle-text">{title}</span></button>
       {open && (
         <dl>
           {fields.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{String(v)}</dd></div>)}
@@ -259,7 +273,7 @@ function CallSheet({ call, client, brief, open, onToggle, onDelete, onError }) {
   return (
     <div className={"callsheet" + (open ? " is-open" : "")}>
       <button type="button" className="cprof-toggle" onClick={onToggle} aria-expanded={open}>
-        {TYPE_LABEL[type]} call · {fmt(callDate)} <span className="gcard-meta">· {done}/{def.checks.length} ticked {open ? "▾" : "▸"}</span>
+        <span className="cprof-toggle-text">{TYPE_LABEL[type]} call · {fmt(callDate)} <span className="gcard-meta">· {done}/{def.checks.length} ticked</span></span>
       </button>
       {open && (
         <div className="callsheet-body">
@@ -339,7 +353,7 @@ function BrandCard({ client: c, initial, emailReady, say, fail, copy }) {
         )}
       </div>
       {!b.ready && <p className="sm-sqlhint">Brand palettes aren&apos;t set up yet — run <code>supabase/brand.sql</code> once (it&apos;s also in <code>00-all.sql</code>) and this card switches on.</p>}
-      {b.ready && !b.palette && <p className="gcard-meta">Logo, colors, vibe, customers, goals and content — one record per business. Open one and send it; their business brief fills in what it already answers.</p>}
+      {b.ready && !b.palette && <p className="gcard-meta">Logo, colors, vibe and goals — one record per business. Open one, then send it.</p>}
       {b.ready && b.palette && (
         <div className="cprof-brand">
           {b.logo && <img src={b.logo} alt="" className="cprof-brand-logo" />}
@@ -374,7 +388,7 @@ function PlanCard({ client: c, brand }) {
       </div>
       <p className="gcard-meta is-wrap">
         {!p?.items
-          ? "Reels, promos and photo sets for this business. Claude drafts it from their brand palette and brief; you edit and publish it to their portal."
+          ? "Reels, promos and photo sets — drafted from their brand palette, published to their portal."
           : <><strong>{p.items} item{p.items === 1 ? "" : "s"}</strong>{p.published ? ` · on their portal since ${fmt(p.published_at)}` : " · draft, not on their portal yet"}</>}
       </p>
     </section>
