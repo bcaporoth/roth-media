@@ -6,6 +6,7 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { newLeadCount } from "../../../../lib/studio-data";
 import { actionsFor } from "../../../../lib/lead-intel";
+import { unreadForBrandon } from "../../../../lib/notes-server";
 
 export const dynamic = "force-dynamic";
 
@@ -60,11 +61,27 @@ export default async function InboxPage() {
   }
   const items = rows.map(({ visitor, ...r }) => r);
   const newCount = await newLeadCount();
+  const clientNotes = (await unreadForBrandon(db)) || [];
 
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
       <StudioShell active="inbox" newCount={newCount} kick="Studio" title="Inbox">
+        {clientNotes.length > 0 && (
+          <section className="ix-notes" aria-label="Notes from clients">
+            <h2 className="kick-sm">Notes from clients — {clientNotes.length} waiting on you</h2>
+            <ul>
+              {clientNotes.map((c) => (
+                <li key={c.id}>
+                  <a href={`/portal/admin/clients/${c.id}#notes`}>
+                    <strong>{c.name}</strong>{c.count > 1 && <em className="cprof-count">{c.count}</em>}
+                    <span>{c.latest}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {error ? (
           <p className="portal-empty">
             The inbox table isn&apos;t set up yet — run <code>supabase/studio.sql</code> in the

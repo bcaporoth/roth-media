@@ -447,3 +447,16 @@ create table if not exists public.scripts (
 );
 create index if not exists scripts_day_idx on public.scripts (day_id, position);
 alter table public.scripts enable row level security;
+
+-- 15. Notes with Brandon (supabase/client-notes.sql) — one thread per client, both sides write
+create table if not exists public.client_notes (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.clients (id) on delete cascade,
+  who text not null check (who in ('brandon', 'client')),
+  text text not null,
+  created_at timestamptz not null default now(),
+  seen_at timestamptz                       -- when the OTHER side opened the thread after this note
+);
+create index if not exists client_notes_client_idx on public.client_notes (client_id, created_at);
+create index if not exists client_notes_unseen_idx on public.client_notes (who, seen_at) where seen_at is null;
+alter table public.client_notes enable row level security;

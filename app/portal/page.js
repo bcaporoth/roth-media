@@ -10,6 +10,7 @@ import { ESSENTIALS, completeness } from "../../lib/brand";
 import { loadBrand } from "../../lib/brand-server";
 import { loadPublishedPlan } from "../../lib/content-plan-server";
 import { listDays } from "../../lib/scripts-server";
+import { unreadFor } from "../../lib/notes-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief } from "../../lib/intake";
 
@@ -223,11 +224,24 @@ export default async function PortalPage({ searchParams }) {
     } catch { brief = null; }
   }
 
+  // What's next — the strip at the top of either home.
+  const todo = [];
+  if (adminConfigured && !isAdmin) {
+    const unread = await unreadFor(supabaseAdmin(), client.id, "client").catch(() => 0);
+    if (unread) todo.push({ who: "brandon", text: `${unread} new note${unread === 1 ? "" : "s"} from Brandon`, href: "#notes" });
+    if (brief === false) todo.push({ who: "you", text: "Fill in your brief — five minutes, and every shoot is planned from it", href: "/portal/brief" });
+  }
+
   // Business client (Brandon has opened a brand palette for them): their
   // content and their brand on one page.
   if (palette) {
     const plan = adminConfigured ? await loadPublishedPlan(supabaseAdmin(), client.id) : null;
     const days = adminConfigured ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
+    const b = brandSummary(palette);
+    if (b.done < b.of) todo.push({ who: "you", text: `Your brand: ${b.done} of ${b.of} essentials filled in`, href: "/portal/brand" });
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const upcoming = (days || []).filter((d) => d.date && d.date >= todayStr).sort((a, c) => a.date.localeCompare(c.date))[0];
+    if (upcoming) todo.push({ who: "soon", text: `${upcoming.title} — ${new Date(upcoming.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}${upcoming.scripts ? ` · ${upcoming.scripts} script${upcoming.scripts === 1 ? "" : "s"} to read` : ""}`, href: `/portal/days/${upcoming.id}` });
     return (
       <PortalBusinessHome
         nav={<PortalNav email={user.email} active="galleries" brand />}
@@ -242,6 +256,8 @@ export default async function PortalPage({ searchParams }) {
         brief={brief || false}
         plan={plan}
         days={days || []}
+        next={todo}
+        clientName={client.name || ""}
       />
     );
   }
@@ -260,6 +276,8 @@ export default async function PortalPage({ searchParams }) {
       money={money}
       dateFmt={dateFmt}
       brief={brief}
+      next={todo}
+      clientName={client.name || ""}
     />
   );
 }

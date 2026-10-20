@@ -8,6 +8,7 @@ import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
 import BalanceList from "./BalanceList";
+import NotesThread from "./NotesThread";
 import { usd } from "../lib/money-view";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latestBrief, INTAKE } from "../lib/intake";
 
@@ -181,6 +182,11 @@ export default function ClientProfile({ initial, emailReady }) {
         </div>
 
         <div className="cprof-col">
+          <section className="cprof-card" id="notes">
+            <div className="cprof-cardhead"><h2>Notes with {c.name.split(" ")[0] || "them"}</h2><span className="gcard-meta">They see this on their portal · you both get an email per note</span></div>
+            <NotesThread role="brandon" clientId={c.id} clientName={c.name} />
+          </section>
+
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Orientation call{d.calls.length > 0 && <em className="cprof-count">{d.calls.length}</em>}</h2>
               <button type="button" className="abtn" onClick={newCall}>+ New call sheet</button>

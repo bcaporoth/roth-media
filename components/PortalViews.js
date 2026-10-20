@@ -6,6 +6,7 @@ import Reveal from "./Reveal";
 import PortalNav from "./PortalNav";
 import PortalGallery from "./PortalGallery";
 import GuestInvite from "./GuestInvite";
+import NotesThread from "./NotesThread";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
 
 // The client side of the portal, in the Cinema design: the lobby (signed
@@ -230,6 +231,8 @@ export function PortalHome({
   money,
   dateFmt,
   brief = null, // null = not shown; false = none yet; object = saved
+  next = [],
+  clientName = "",
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -245,6 +248,9 @@ export function PortalHome({
           anytime.
         </p>
       </header>
+
+      <NextStrip items={next} />
+      <NotesCard clientName={clientName} />
 
       {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} />}
 
@@ -297,6 +303,8 @@ export function PortalBusinessHome({
   brief = false,
   plan = null,
   days = [],
+  next = [],
+  clientName = "",
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -369,6 +377,9 @@ export function PortalBusinessHome({
         </p>
       </header>
 
+      <NextStrip items={next} />
+      <NotesCard clientName={clientName} />
+
       {days.length > 0 && <DaysSection days={days} />}
 
       {plan && <PlanSection plan={plan} />}
@@ -409,6 +420,39 @@ export function PortalBusinessHome({
 
 // The content plan Brandon published from Studio (lib/content-plan.js):
 // each piece, what gets filmed, and where it is right now.
+// What's next: the one strip at the top of the portal — what's waiting on
+// them, what's waiting on Brandon, what's coming up. Built server-side in
+// app/portal/page.js; nothing shows when there's nothing to do.
+function NextStrip({ items }) {
+  if (!items || !items.length) return null;
+  return (
+    <section className="cx-wrap pt-next" aria-label="What's next">
+      <ul className="pt-next-list">
+        {items.map((it, i) => (
+          <li key={i} className={"pt-next-item is-" + (it.who || "you")}>
+            <span className="pt-next-who">{it.who === "brandon" ? "On Brandon" : it.who === "soon" ? "Coming up" : "On you"}</span>
+            {it.href ? <a href={it.href} className="pt-next-text">{it.text} <span aria-hidden="true">→</span></a> : <span className="pt-next-text">{it.text}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// Notes with Brandon — the client's direct line. Same thread Brandon sees
+// on their profile in Studio.
+function NotesCard({ clientName }) {
+  return (
+    <section id="notes" className="cx-wrap pt-notes" aria-labelledby="pt-notes-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-notes-h" className="cx-kick">Notes with Brandon</h2>
+        <p className="pt-note">A question, a date, an idea, "can we swap this" — write it here. Brandon gets an email the moment you send it and answers right here.</p>
+      </div>
+      <NotesThread role="client" clientName={clientName} />
+    </section>
+  );
+}
+
 // Shoot days: the scripts for a day of filming, written together. Opening
 // one lands on the same page Brandon works from.
 function DaysSection({ days }) {
