@@ -454,3 +454,5 @@ body:has(.admin-shell.is-dark) { background: #191612; }
 .cprof-brand-logo { flex: none; width: 56px; height: 56px; object-fit: contain; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 .today-money { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.15rem; color: var(--ink-soft); }
 .today-money b { color: var(--ink); font-weight: 700; font-size: 1.4rem; }
+.st-domore { border-color: var(--clay); }
+.st-domore p { margin: 0; line-height: 1.5; }

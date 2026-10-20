@@ -290,6 +290,9 @@ export default function StatsBoard({ data }) {
         ) : (
           <Tile value="—" label="Collected" hint="run supabase/bookings.sql once" help="Payments are recorded in the bookings table, which isn't set up yet." />
         )}
+        {data.retainer?.ok && (
+          <Tile value={usd(data.retainer.mrrCents)} label="Retainers / month" hint={`${fmt(data.retainer.clients)} business${data.retainer.clients === 1 ? "" : "es"} this month · ${usd(data.retainer.paidCents)} paid in this window`} help="Every priced month on the books for this calendar month, added up — the recurring part of the business. The $10k/month goal is this number plus weddings. Paid in window = retainer months whose pay link was paid during this window." />
+        )}
         <Tile value={fmt(k.galleryOpens)} label="Gallery opens" hint={`${fmt(k.gallerySaves)} saves`} help="Times a client (or someone they shared with) opened a gallery, and how many photos they saved. High opens + low saves means they're browsing on the phone — a nudge to download everything before the 12-month window helps." />
         <Tile value={fmt(k.guestUploads)} label="Guest uploads" hint="photos, videos, messages" help="What wedding guests sent through the QR cards. Each one is a guest who now knows your name — and a couple who got extra value you can mention in the next pitch." />
       </div>
@@ -319,6 +322,12 @@ export default function StatsBoard({ data }) {
 
         <Ranked title="Where visitors came from" rows={data.sources} />
 
+        {data.doMore && (
+          <section className="spanel st-domore">
+            <h3>Do more of this</h3>
+            <p><strong>{data.doMore.source}</strong> turned {fmt(data.doMore.leads)} lead{data.doMore.leads === 1 ? "" : "s"} ({pct(data.doMore.share)} of all leads) into {fmt(data.doMore.booked)} booking{data.doMore.booked === 1 ? "" : "s"}{data.doMore.cents ? ` and ${usd(data.doMore.cents)}` : ""} in this window — the best-paying place a client has come from. Put the next hour of marketing there: {/google/i.test(data.doMore.source) ? "a Google post this week and two more reviews." : /facebook|instagram|meta/i.test(data.doMore.source) ? "keep the ad set running and post the newest reel to it." : /qr/i.test(data.doMore.source) ? "hand out more cards — every shop you walk into." : /referr|friend/i.test(data.doMore.source) ? "send the friend code to every client whose album went out this month." : "do the thing that brought them, again."}</p>
+          </section>
+        )}
         <section className="spanel">
           <h3>What each source turned into</h3>
           {data.leadSources.length === 0 ? (

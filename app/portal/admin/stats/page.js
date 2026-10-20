@@ -203,6 +203,22 @@ export default async function StatsPage({ searchParams }) {
   };
   const money = collected({ bookings: bookingRows, bookingsOk, paySubs });
   const booked = bookedPeople(leads, paidEmails);
+  // Retainers: months paid in this window, and the run-rate (every priced
+  // month on the books this calendar month). Quietly empty until
+  // content-months.sql has run.
+  let retainer = { ok: false, paidCents: 0, paidMonths: 0, mrrCents: 0, clients: 0 };
+  try {
+    const sinceIso = new Date(Date.now() - range * 86400000).toISOString();
+    const nowMonth = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7);
+    const [{ data: paidRows, error: e1 }, { data: nowRows }] = await Promise.all([
+      db.from("content_months").select("paid_cents, price_cents").gte("paid_at", sinceIso),
+      db.from("content_months").select("client_id, price_cents").eq("month", nowMonth).gt("price_cents", 0),
+    ]);
+    if (!e1) retainer = { ok: true, paidCents: (paidRows || []).reduce((n, r) => n + (r.paid_cents || r.price_cents || 0), 0), paidMonths: (paidRows || []).length, mrrCents: (nowRows || []).reduce((n, r) => n + r.price_cents, 0), clients: new Set((nowRows || []).map((r) => r.client_id)).size };
+  } catch {}
+  // "Do more of this": the source that turned into the most money, then bookings.
+  const best = [...leadSources].filter((r) => r.booked > 0).sort((a, b) => b.cents - a.cents || b.booked - a.booked)[0] || null;
+  const doMore = best ? { source: best.source, booked: best.booked, cents: best.cents, leads: best.leads, share: leads.length ? best.leads / leads.length : 0 } : null;
 
   const data = {
     range,
@@ -210,6 +226,8 @@ export default async function StatsPage({ searchParams }) {
     board: board.slice(0, 40),
     hot,
     ready: !error,
+    retainer,
+    doMore,
     kpis: {
       visits: visits.size,
       pageviews: views.length,
