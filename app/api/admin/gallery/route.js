@@ -530,6 +530,30 @@ export async function POST(request) {
     return s || null;
   };
 
+  // The albums in one gallery, in the order the client sees them (first
+  // appearance), with counts. Cheap — no signed URLs — so the uploader can
+  // offer "put these in …" without loading every thumbnail.
+  if (body.action === "albums") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data, error } = await db
+      .from("media")
+      .select("section")
+      .eq("gallery_id", galleryId)
+      .order("position", { ascending: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const albums = [];
+    let loose = 0;
+    for (const r of data || []) {
+      const name = albumName(r.section);
+      if (!name) { loose += 1; continue; }
+      let a = albums.find((x) => x.name === name);
+      if (!a) albums.push((a = { name, count: 0 }));
+      a.count += 1;
+    }
+    return NextResponse.json({ albums, loose, total: (data || []).length });
+  }
+
   // Put these files in an album (or in none).
   if (body.action === "album-assign") {
     const { galleryId } = body;

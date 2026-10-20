@@ -39,10 +39,10 @@ const RESUME_KEY = "rm-upload-resume";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Folder mode: the picked folder's SUBFOLDERS become gallery sections.
-// "Gallery/02 Ceremony/IMG_1.jpg" → section "Ceremony" (leading numbers are
+// Folder mode: the picked folder's SUBFOLDERS become the gallery's albums.
+// "Gallery/02 Ceremony/IMG_1.jpg" → album "Ceremony" (leading numbers are
 // sort order, not display). Files sitting directly in the picked folder
-// get no section.
+// get no album. (An album is media.section in the database.)
 function relPath(file) {
   return file.webkitRelativePath || file.name;
 }
@@ -351,7 +351,11 @@ function readResume(key) {
 
 // `gallery` ({ id, title, shareToken }) switches the form to "add files to
 // this gallery": no title/client fields, new files land after what's there.
-export default function AdminUploader({ gallery = null, onDone = null }) {
+// `album` pre-picks where the files go (the "+ Add photos" button on an album
+// header passes its name; "" = top of the gallery, no album).
+const NO_ALBUM = "__none";
+const NEW_ALBUM = "__new";
+export default function AdminUploader({ gallery = null, onDone = null, album = null }) {
   const append = Boolean(gallery && gallery.id);
   const resumeKey = append ? `${RESUME_KEY}:${gallery.id}` : RESUME_KEY;
   const [busy, setBusy] = useState(false);
@@ -362,6 +366,13 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
   const [folderMode, setFolderMode] = useState(false);
+  // Where the files go. Picked from the gallery's existing albums, a new
+  // name, or none (top of the gallery). Folder mode ignores this: there the
+  // subfolders decide.
+  const [albums, setAlbums] = useState([]);
+  const [albumsVer, setAlbumsVer] = useState(0);
+  const [albumPick, setAlbumPick] = useState(album ? album : NO_ALBUM);
+  const [albumNew, setAlbumNew] = useState("");
   // Client roster: pick a saved client or type a new one — new clients are
   // saved to the roster automatically when the gallery is created.
   const [clients, setClients] = useState([]);
@@ -399,6 +410,28 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
   useEffect(() => {
     setResume(readResume(resumeKey));
   }, [resumeKey]);
+
+  // Existing albums of this gallery, for the "put these in" picker.
+  useEffect(() => {
+    if (!append) return;
+    api({ action: "albums", galleryId: gallery.id })
+      .then((r) => setAlbums((r.albums || []).map((a) => a.name)))
+      .catch(() => {});
+  }, [append, gallery?.id, albumsVer]);
+
+  // A header's "+ Add photos" button changes `album` while this form stays mounted.
+  useEffect(() => {
+    if (album === null || album === undefined) return;
+    setAlbumPick(album === "" ? NO_ALBUM : album);
+    setAlbumNew("");
+  }, [album]);
+
+  // The album name every file in this run gets (folder mode: per subfolder).
+  const chosenAlbum = () => {
+    if (albumPick === NO_ALBUM) return null;
+    if (albumPick === NEW_ALBUM) return albumNew.trim().replace(/\s+/g, " ").slice(0, 80) || null;
+    return albumPick;
+  };
 
   // Don't let a stray tab-close silently kill a long gallery.
   useEffect(() => {
@@ -441,9 +474,15 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
       setError("Pick at least one photo or video.");
       return;
     }
+    if (!folderMode && albumPick === NEW_ALBUM && !chosenAlbum()) {
+      setError("Give the new album a name, or pick “Top of gallery”.");
+      return;
+    }
     // Folder mode: sorting by relative path keeps each subfolder's photos
-    // together and orders sections by folder name (01 …, 02 …).
+    // together and orders albums by folder name (01 …, 02 …).
     all.sort((a, b) => relPath(a).localeCompare(relPath(b), undefined, { numeric: true }));
+    const runAlbum = folderMode ? null : chosenAlbum();
+    const albumFor = (file) => (folderMode ? sectionOf(file) : runAlbum);
 
     const title = append ? gallery.title : String(data.get("title") || "").trim();
     const resuming = append
@@ -474,7 +513,7 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
           p: relPath(f),
           f: safeName(f.name),
           k: VIDEO_EXT.test(f.name) ? "video" : "photo",
-          s: sectionOf(f),
+          s: albumFor(f),
         });
       }
     }
@@ -595,7 +634,7 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
             p: relPath(file),
             f: bySize.orig.filename || name,
             k: "video",
-            s: sectionOf(file),
+            s: albumFor(file),
             poster: hasPoster,
           };
         }
@@ -624,7 +663,7 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
           p: relPath(file),
           f: bySize.orig.filename || name,
           k: "photo",
-          s: sectionOf(file),
+          s: albumFor(file),
           w: size.width,
           h: size.height,
         };
@@ -670,6 +709,7 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
           };
         });
 
+      setAlbumsVer((v) => v + 1);
       if (media.length === 0) {
         // Nothing landed — don't leave a ghost gallery in the dashboard.
         // (Never discards a gallery that existed before this run.)
@@ -854,11 +894,55 @@ export default function AdminUploader({ gallery = null, onDone = null }) {
             onChange={(e) => setFolderMode(e.target.checked)}
           />
           <span>
-            Upload a whole folder — subfolders become <strong>sections</strong> of
-            the gallery (&ldquo;01 Getting Ready&rdquo;, &ldquo;02 Ceremony&rdquo;… numbers set the
+            Upload a whole folder — each subfolder becomes an <strong>album</strong>
+            (&ldquo;01 Getting Ready&rdquo;, &ldquo;02 Ceremony&rdquo;… numbers set the
             order and are hidden from clients).
           </span>
         </label>
+      </div>
+
+      <div className="au-album">
+        <label htmlFor={`${filesId}-album`}>Put these in</label>
+        {folderMode ? (
+          <p className="au-client-hint">
+            Folder mode: the subfolder names decide the album. Files sitting right in the
+            picked folder go to the top of the gallery.
+          </p>
+        ) : (
+          <>
+            <div className="au-album-row">
+              <select
+                id={`${filesId}-album`}
+                value={albumPick}
+                onChange={(e) => setAlbumPick(e.target.value)}
+                disabled={busy}
+              >
+                <option value={NO_ALBUM}>Top of gallery (no album)</option>
+                {albums.map((a) => (
+                  <option key={a} value={a}>Album: {a}</option>
+                ))}
+                <option value={NEW_ALBUM}>+ New album…</option>
+              </select>
+              {albumPick === NEW_ALBUM && (
+                <input
+                  value={albumNew}
+                  maxLength={80}
+                  placeholder="New album name — e.g. Ceremony"
+                  onChange={(e) => setAlbumNew(e.target.value)}
+                  disabled={busy}
+                  aria-label="New album name"
+                />
+              )}
+            </div>
+            <p className="au-client-hint">
+              {albumPick === NO_ALBUM
+                ? "They'll show at the top of the gallery with no heading. You can move them into an album any time under Photos & albums."
+                : albumPick === NEW_ALBUM
+                  ? "A new heading in the gallery, with these files under it."
+                  : `They'll land under the “${albumPick}” heading, after what's already there.`}
+            </p>
+          </>
+        )}
         {append && (
           <p className="au-client-hint au-append-hint">
             New files go after what&apos;s already in the gallery — same gallery, same

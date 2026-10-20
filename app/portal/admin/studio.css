@@ -292,6 +292,44 @@ a.trow:hover strong { color: var(--clay); }
   .galb-actions .achip { flex: 1; justify-content: center; }
 }
 
+/* Photos & albums tab — the gallery as the client sees it, grouped by album */
+.gph { display: grid; gap: 0.7rem; }
+.gph-hint { margin: 0; }
+.gph-scroll { max-height: min(72vh, 760px); overflow-y: auto; padding: 0 2px 0 0; display: grid; gap: 1rem; align-content: start; }
+.gph-album { display: grid; gap: 0.5rem; }
+.gph-head { display: flex; flex-wrap: wrap; gap: 0.4rem 0.7rem; align-items: center; padding: 0.4rem 0.6rem; border: 1px solid var(--line); border-radius: 12px; min-width: 0; position: sticky; top: 0; z-index: 1; background: var(--paper); }
+.gph-title { margin: 0; flex: 1 1 10rem; min-width: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 0.6rem; align-items: baseline; font-size: 0.98rem; font-weight: 600; }
+.gph-title em { font-style: normal; font-size: 0.78rem; font-weight: 400; color: var(--ink-soft); white-space: nowrap; }
+.gph-title small { font-size: 0.72rem; font-weight: 400; color: var(--ink-soft); }
+.gph-actions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-left: auto; }
+.gph-actions .achip { min-height: 36px; display: inline-flex; align-items: center; }
+.gph-grid { max-height: none; overflow: visible; padding: 0 0.2rem; }
+.gph-album.is-top .gfiles-grid { padding-left: 0.2rem; }
+.gph-bar { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; align-items: center; min-height: 48px; padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.gph-bar.is-on { border-color: var(--clay); box-shadow: 0 -6px 18px rgba(20, 17, 13, 0.08); }
+.gph-bar .cover-picker-hint { margin: 0; }
+.gph-count { font-size: 0.9rem; white-space: nowrap; }
+.gph-moveto { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; flex: 1 1 16rem; min-width: 0; }
+.gph-label { font-size: 0.82rem; color: var(--ink-soft); margin-right: 0.15rem; }
+.gph-bar .achip { min-height: 40px; display: inline-flex; align-items: center; }
+.gph-dest { font-weight: 600; }
+.gph-dest:disabled { opacity: 0.45; cursor: default; }
+.gph-new { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; flex: 1 1 14rem; }
+.gph-new input { flex: 1 1 9rem; min-width: 0; min-height: 40px; padding: 0.3rem 0.6rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; }
+.gph-else { display: flex; gap: 0.35rem; margin-left: auto; }
+@media (max-width: 480px) {
+  .gph-actions { margin-left: 0; width: 100%; }
+  .gph-actions .achip { flex: 1 1 auto; justify-content: center; }
+  .gph-else { margin-left: 0; width: 100%; }
+  .gph-else .achip { flex: 1; justify-content: center; }
+}
+
+/* Uploader: "Put these in" album picker */
+.admin-upload .au-album { display: grid; gap: 0.4rem; }
+.admin-upload .au-album-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.admin-upload .au-album-row select, .admin-upload .au-album-row input { flex: 1 1 12rem; min-width: 0; }
+.admin-upload .au-album .au-client-hint { margin: 0; }
+
 /* It's ready tab */
 .gready { display: grid; gap: 0.75rem; }
 .gready-to { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; font-size: 0.9rem; }
@@ -314,6 +352,7 @@ a.trow:hover strong { color: var(--clay); }
 .admin-shell.is-dark .gdelete-warn { border-color: #ec8a78; }
 .admin-shell.is-dark .gdelete-warn strong { color: #ec8a78; }
 .admin-shell.is-dark .gfiles-tile.is-on .gfiles-thumb { border-color: #ec8a78; }
+.admin-shell.is-dark .gph-bar.is-on { box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.35); }
 
 /* Guest Reel → Review uploads */
 .guest-admin .gcard-actions .achip { min-height: 44px; display: inline-flex; align-items: center; }
