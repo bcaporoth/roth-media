@@ -228,6 +228,18 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, invite });
   }
 
+  // After delivery: stamp "friend code sent" / "rebook nudge sent" (Brandon
+  // sent the message himself from his own phone or mail; this just records it).
+  if (body.action === "mark") {
+    const { galleryId } = body;
+    const col = body.field === "referral" ? "referral_sent_at" : body.field === "rebook" ? "rebook_nudged_at" : null;
+    if (!isUuid(galleryId) || !col) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const at = body.undo ? null : new Date().toISOString();
+    const { error } = await db.from("galleries").update({ [col]: at }).eq("id", galleryId);
+    if (error) return NextResponse.json({ error: /column/i.test(error.message) ? "Run supabase/after-delivery.sql once in the Supabase SQL editor first." : error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, at });
+  }
+
   // Roster for the uploader's client picker — every client ever added.
   if (body.action === "clients") {
     const { data, error } = await db

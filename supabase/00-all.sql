@@ -481,3 +481,7 @@ create table if not exists public.content_months (
   unique (client_id, month)
 );
 alter table public.content_months enable row level security;
+
+-- 17. After delivery (supabase/after-delivery.sql) — friend code / rebook stamps on galleries
+alter table public.galleries add column if not exists referral_sent_at timestamptz;
+alter table public.galleries add column if not exists rebook_nudged_at timestamptz;

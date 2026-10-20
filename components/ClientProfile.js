@@ -9,6 +9,9 @@ import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
 import BalanceList from "./BalanceList";
 import NotesThread from "./NotesThread";
+import ReviewButton from "./ReviewButton";
+import { dueFor, STEPS, rebookText } from "../lib/after-delivery";
+import { referralText } from "../lib/referral-rules";
 import { usd } from "../lib/money-view";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latestBrief, INTAKE } from "../lib/intake";
 
@@ -201,12 +204,15 @@ export default function ClientProfile({ initial, emailReady }) {
 
           <DaysCard client={c} days={d.days} fail={fail} />
 
-          <section className="cprof-card">
+          <section className="cprof-card" id="galleries">
             <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
             {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
-              <ul className="cprof-list">{d.galleries.map((g) => (
-                <li key={g.id + (g.shared ? "-s" : "")}><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
-                  <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a></span></li>
+              <ul className="cprof-list cprof-gals">{d.galleries.map((g) => (
+                <li key={g.id + (g.shared ? "-s" : "")} className="cprof-gal">
+                  <div className="cprof-galrow"><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
+                    <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a></span></div>
+                  {!g.shared && <AfterDelivery gallery={g} client={c} type={type} say={say} fail={fail} />}
+                </li>
               ))}</ul>
             )}
           </section>
@@ -316,6 +322,53 @@ function CallSheet({ call, client, brief, open, onToggle, onDelete, onError }) {
           <div className="gcard-actions"><button type="button" className="achip achip-danger" onClick={onDelete}>Delete sheet</button></div>
         </div>
       )}
+    </div>
+  );
+}
+
+// After delivery, per gallery: Sent → Review asked → Friend code sent →
+// Rebook nudge. The next step is the one lit up; the words are Brandon's
+// approved pitch copy, opened in his own Messages/Mail; a tap stamps it.
+function AfterDelivery({ gallery: g, client: c, type, say, fail }) {
+  const [stamps, setStamps] = useState({ referral_sent_at: g.referral_sent_at || null, rebook_nudged_at: g.rebook_nudged_at || null });
+  const gg = { ...g, ...stamps };
+  const due = dueFor(gg);
+  const has = (k) => Boolean(gg[STEPS.find((st) => st.key === k).at]);
+  const phone = c.phone ? c.phone.replace(/[^\d+]/g, "") : "";
+  const noEmail = isNoEmail(c.email);
+  async function mark(field, undo = false) {
+    try {
+      const r = await api("/api/admin/gallery", { action: "mark", galleryId: g.id, field, undo });
+      setStamps((x) => ({ ...x, [field === "referral" ? "referral_sent_at" : "rebook_nudged_at"]: r.at }));
+      say(undo ? "Unmarked" : "Marked sent ✓");
+    } catch (err) { fail(err); }
+  }
+  const sendLinks = (text, subject) => (
+    <>
+      {phone && <a className="achip" href={`sms:${phone}&body=${encodeURIComponent(text)}`}>Text it</a>}
+      {!noEmail && <a className="achip" href={`mailto:${c.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`}>Email it</a>}
+    </>
+  );
+  if (!g.ready_sent_at) return <p className="cprof-chain gcard-meta">Not sent to them yet — Galleries → Manage → It's ready.</p>;
+  return (
+    <div className="cprof-chain">
+      <ol className="cprof-chainsteps">
+        {STEPS.map((st) => <li key={st.key} className={has(st.key) ? "is-done" : due?.step === st.key ? "is-due" : ""}>{has(st.key) ? "✓ " : ""}{st.label}{has(st.key) ? ` ${fmt(gg[st.at])}` : ""}</li>)}
+      </ol>
+      {due?.step === "review" && <span className="cprof-chainact"><ReviewButton galleryId={g.id} clientEmail={noEmail ? "" : c.email} requestedAt={g.review_requested_at} /></span>}
+      {due?.step === "referral" && (
+        <span className="cprof-chainact">
+          {c.referral_code ? sendLinks(referralText(c.referral_code, type), "$100 for a friend") : <span className="gcard-meta">No friend code yet — reload the page once they've booked.</span>}
+          <button type="button" className="achip" onClick={() => mark("referral")}>Mark sent</button>
+        </span>
+      )}
+      {due?.step === "rebook" && (
+        <span className="cprof-chainact">
+          {sendLinks(rebookText(c.name, type, g.event_date), "Next year?")}
+          <button type="button" className="achip" onClick={() => mark("rebook")}>Mark sent</button>
+        </span>
+      )}
+      {!due && has("rebook") && <span className="gcard-meta">Chain complete.</span>}
     </div>
   );
 }

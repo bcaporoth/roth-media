@@ -6484,3 +6484,15 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .mo-step.is-now { background: var(--clay); border-color: var(--clay); color: #fff; font-weight: 600; }
 .mo-item.is-delivered .mo-step.is-now, .mo-item.is-posted .mo-step.is-now { background: #2e7d4f; border-color: #2e7d4f; }
 @media (max-width: 760px) { .mo-strip { grid-template-columns: 1fr 1fr; } }
+
+/* Client profile: after-delivery chain under each gallery */
+.cprof-gals { gap: 0.8rem; }
+.cprof-gal { display: grid; gap: 0.4rem; }
+.cprof-galrow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.cprof-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; margin: 0; padding-left: 0.2rem; }
+.cprof-chainsteps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.cprof-chainsteps li { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.55rem; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); }
+.cprof-chainsteps li.is-done { color: #2e7d4f; border-color: #2e7d4f; }
+.cprof-chainsteps li.is-due { background: var(--clay); border-color: var(--clay); color: #fff; font-weight: 600; }
+.cprof-chainact { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.cprof-chainact .achip { min-height: 36px; display: inline-flex; align-items: center; }

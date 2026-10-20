@@ -34,7 +34,8 @@ export default async function ClientPage({ params }) {
   const [{ data: subs }, { data: shoots }, { data: owned }, { data: payments }] = await Promise.all([
     db.from("submissions").select("id, created_at, updated_at, kind, name, email, phone, subject, summary, fields, notes, status, utm").eq("email", email).order("created_at", { ascending: false }),
     db.from("shoots").select("id, title, kind, status, date, start_time, address, place_label, notes").eq("client_email", email).order("date", { ascending: false, nullsFirst: false }).then((r) => r, () => ({ data: [] })),
-    db.from("galleries").select("id, title, share_token, media_count, event_date, created_at").eq("client_id", client.id).order("created_at", { ascending: false }),
+    db.from("galleries").select("id, title, share_token, media_count, event_date, created_at, ready_sent_at, review_requested_at, referral_sent_at, rebook_nudged_at").eq("client_id", client.id).order("created_at", { ascending: false })
+      .then((r) => (r.error ? db.from("galleries").select("id, title, share_token, media_count, event_date, created_at").eq("client_id", client.id).order("created_at", { ascending: false }) : r)),
     db.from("payments").select("id, amount_cents, paid_on, note").eq("client_id", client.id).order("paid_on", { ascending: false }).then((r) => r, () => ({ data: [] })),
   ]);
   // What they've paid through the site. Stripe checkouts write `bookings`
@@ -69,7 +70,7 @@ export default async function ClientPage({ params }) {
   };
   const all = subs || [];
   const data = {
-    client: { ...client, phone: client.phone || "", notes: client.notes || "" },
+    client: { ...client, phone: client.phone || "", notes: client.notes || "", referral_code: client.referral_code || "" },
     intakes: all.filter((s) => s.kind === "intake"),
     intakeSent: all.find((s) => s.kind === "intake_sent") || null,
     calls: all.filter((s) => s.kind === "call"),

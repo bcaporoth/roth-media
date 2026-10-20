@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { unreadForBrandon } from "../../../../lib/notes-server";
+import { afterDeliveryList, afterDeliveryLine } from "../../../../lib/after-delivery";
 import { LEAD_ALERT_TO } from "../../../../lib/studio-emails";
 import { wrapHtml } from "../../../../lib/client-email";
 import { buildLeadBoard } from "../../../../lib/lead-intel";
@@ -82,14 +83,17 @@ export async function GET(request) {
   // Client notes Brandon hasn't answered — top of the email, they're the quickest wins.
   const notes = (await unreadForBrandon(db).catch(() => [])) || [];
   const noteLines = notes.map((n) => `${n.name}${n.count > 1 ? ` (${n.count} notes)` : ""}: "${String(n.latest).slice(0, 160)}"\nReply: https://rothmediaco.com/portal/admin/clients/${n.id}#notes`);
-  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
+  const afterCount = (await afterDeliveryList(db).catch(() => [])).length;
+  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length && !afterCount) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
+  const after = (await afterDeliveryList(db).catch(() => [])).slice(0, 12);
   const fus = open.filter((l) => l.followDue);
   const fuLine = (l) => `${l.name}${l.summary ? ` (${l.summary})` : ""} — you set ${l.followUp === todayKey ? "today" : `for ${l.followUp}`}\nOpen: https://rothmediaco.com/portal/admin/inbox`;
   const body = [
     ...(notes.length ? [`CLIENT NOTES WAITING ON YOU (${notes.length}):`, ...noteLines] : []),
     ...(fus.length ? [`FOLLOW-UPS YOU SET (${fus.length}):`, ...fus.map(fuLine)] : []),
+    ...(after.length ? [`AFTER DELIVERY (${after.length}) — review asks, friend codes, rebooks. Each one is a text from you:`, ...after.map(afterDeliveryLine)] : []),
     ...gbpNudge,
     ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),
