@@ -9,6 +9,9 @@ import { actionsFor } from "../../../../lib/lead-intel";
 import { balancesToSend } from "../../../../lib/balances";
 import { nextShoot, leadsNeedingYou, owedToday, recentNumbers } from "../../../../lib/today";
 
+import { unreadForBrandon } from "../../../../lib/notes-server";
+import { afterDeliveryList } from "../../../../lib/after-delivery";
+
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Today — Studio", robots: { index: false } };
 
@@ -85,7 +88,28 @@ export default async function TodayPage() {
     paySubs: paySubs.filter((p) => p.created_at >= monthAgo),
   });
 
+  // The new feeds: notes from clients, the after-delivery chain, retainers, and money this month.
+  const monthStart = new Date(now.toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7) + "-01T00:00:00-04:00").toISOString();
+  const monthKeyNow = now.toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7);
+  const [notes, after, monthsRes, paidRes] = await Promise.all([
+    quiet(() => unreadForBrandon(db), []),
+    quiet(() => afterDeliveryList(db, now.getTime()), []),
+    quiet(() => db.from("content_months").select("id, client_id, month, items, price_cents, paid_at, paid_cents, published_at, day_id, clients!client_id(name)").eq("month", monthKeyNow), { error: true }),
+    quiet(() => db.from("bookings").select("paid_cents, created_at").gte("created_at", monthStart), { error: true }),
+  ]);
+  const months = monthsRes.error ? null : (monthsRes.data || []).map((m) => {
+    const items = Array.isArray(m.items) ? m.items : [];
+    return { id: m.id, clientId: m.client_id, name: m.clients?.name || "", total: items.length, done: items.filter((it) => it.status === "delivered" || it.status === "posted").length, price: m.price_cents, paid: Boolean(m.paid_at), published: Boolean(m.published_at), dayId: m.day_id };
+  });
+  const bookingsPaid = paidRes.error ? 0 : (paidRes.data || []).reduce((n, b) => n + (b.paid_cents || 0), 0);
+  const monthsPaid = (months || []).filter((m) => m.paid).reduce((n, m) => n + (m.paid_cents || m.price || 0), 0);
+  const monthsDue = (months || []).filter((m) => !m.paid && m.price > 0).reduce((n, m) => n + m.price, 0);
+
   const view = {
+    notes: (notes || []).slice(0, 8),
+    after: (after || []).slice(0, 8).map((g) => ({ id: g.id, clientId: g.client_id, name: g.client?.name || g.client?.email || "", title: g.title, step: g.due.step, days: g.due.days })),
+    months,
+    money: { ok: !paidRes.error, collected: bookingsPaid + monthsPaid, due: monthsDue, label: now.toLocaleDateString("en-US", { timeZone: "America/New_York", month: "long" }) },
     dayLabel: now.toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", month: "long", day: "numeric" }),
     shoots: { ok: shootsOk, next: next.shoot, alsoThisWeek: next.alsoThisWeek, undated: next.undated },
     leads: { ok: leadsOk, followUps: leadsOk ? leadsRes.followUps : true, rows: needYou },

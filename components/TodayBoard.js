@@ -27,11 +27,54 @@ const LEADS_SHOWN = 5;
 const OWED_SHOWN = 4;
 
 export default function TodayBoard({ view }) {
-  const { dayLabel, shoots, leads, owed, balances, numbers } = view;
+  const { dayLabel, shoots, leads, owed, balances, numbers, notes = [], after = [], months = null, money: cash = null } = view;
   const s = shoots.next;
+  const usd = (c) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const STEP_WORD = { review: "ask for a review", referral: "send the $100 friend code", rebook: "say “book next year”" };
   return (
     <div className="today">
       <p className="today-date">{dayLabel}</p>
+
+      {cash?.ok && (
+        <p className="today-money"><b>{usd(cash.collected)}</b> collected in {cash.label}{cash.due > 0 ? <> · <b>{usd(cash.due)}</b> in retainer links out, unpaid</> : null}</p>
+      )}
+
+      {/* 0 — people waiting on a word from you */}
+      {(notes.length > 0 || after.length > 0) && (
+        <Block kick="Waiting on you" count={notes.length + after.length} href="/portal/admin/inbox" more="Inbox">
+          <ul className="tlist">
+            {notes.map((n) => (
+              <li key={"n" + n.id} className="trow trow-static">
+                <span className="trow-top"><strong>{n.name}</strong><span className="dchip is-over">{n.count > 1 ? `${n.count} notes` : "note"}</span></span>
+                <span className="trow-sub">“{String(n.latest).slice(0, 120)}”</span>
+                <span className="tcard-actions"><Link className="achip" href={`/portal/admin/clients/${n.id}#notes`}>Reply</Link></span>
+              </li>
+            ))}
+            {after.map((g) => (
+              <li key={"a" + g.id} className="trow trow-static">
+                <span className="trow-top"><strong>{g.name}</strong><span className="dchip">{g.title}</span></span>
+                <span className="trow-sub">Album out {g.days} days — {STEP_WORD[g.step]}</span>
+                <span className="tcard-actions"><Link className="achip" href={`/portal/admin/clients/${g.clientId}#galleries`}>Do it</Link></span>
+              </li>
+            ))}
+          </ul>
+        </Block>
+      )}
+
+      {/* retainers this month */}
+      {months && months.length > 0 && (
+        <Block kick={`Retainers · ${cash?.label || "this month"}`} count={months.length}>
+          <ul className="tlist">
+            {months.map((m) => (
+              <li key={m.id} className="trow trow-static">
+                <span className="trow-top"><strong>{m.name}</strong><span className={"dchip" + (!m.paid && m.price > 0 ? " is-over" : "")}>{m.paid ? "Paid" : m.price > 0 ? `${usd(m.price)} due` : "No price"}</span></span>
+                <span className="trow-sub">{m.done} of {m.total} delivered{m.published ? "" : " · not on their portal yet"}</span>
+                <span className="tcard-actions"><Link className="achip" href={`/portal/admin/clients/${m.clientId}/months`}>Open month</Link>{m.dayId && <Link className="achip" href={`/portal/admin/clients/${m.clientId}/days/${m.dayId}`}>Shoot day</Link>}</span>
+              </li>
+            ))}
+          </ul>
+        </Block>
+      )}
 
       {/* 1 — next shoot */}
       <Block kick={s?.isToday ? "Today's shoot" : "Next shoot"} href="/portal/admin/shoots" more="All shoots">
