@@ -83,6 +83,8 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
   const [needsSql, setNeedsSql] = useState(!migrated);
   const [flash, setFlash] = useState("");
   const [busyProfile, setBusyProfile] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [booked, setBooked] = useState(null); // { clientId, shootId, dayId, date, kind } after "Book it"
   const [now, setNow] = useState(() => Date.now());
 
   // Keep "2h ago / overdue" honest while the tab sits open.
@@ -155,6 +157,7 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
     setNotes(open.notes || "");
     setNoteState("");
     setJourney(null);
+    setBooked(null);
     setScript(open.intel.status === "booked" || open.kind === "booking" || open.kind === "intake" ? "welcome" : open.intel.lead && open.status === "new" ? "first" : "blank");
     if (!open.read_at) {
       const now = new Date().toISOString();
@@ -235,6 +238,19 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
   }
 
   // Same call Clients uses: find (or make) this person's profile, then go there.
+  // Book it: client + calendar shoot (+ shoot day for business) + Booked, one tap.
+  async function bookIt() {
+    if (!open || booking) return;
+    setBooking(true);
+    try {
+      const res = await fetch("/api/admin/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: open.id }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Couldn't book it");
+      setItems((list) => list.map((it) => (it.id === open.id ? { ...it, status: "booked" } : it)));
+      setBooked(json);
+      say("Booked ✓");
+    } catch (e) { say(e.message || "Couldn't book it"); } finally { setBooking(false); }
+  }
   async function openProfile() {
     if (!open?.email || busyProfile) return;
     setBusyProfile(true);
@@ -460,7 +476,22 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                     </button>
                   )}
                   <a className="abtn abtn-ghost" href={planHref}>Plan shoot</a>
+                  {open.intel.lead && open.status !== "booked" && (
+                    <button type="button" className="abtn ix-book" onClick={bookIt} disabled={booking} title="Makes their client record, a calendar shoot, and (for business) a shoot day — then marks them Booked">
+                      {booking ? "Booking…" : "✓ Book it"}
+                    </button>
+                  )}
                 </div>
+                {booked && booked.clientId && (
+                  <div className="ix-booked" role="status">
+                    <strong>Booked.</strong> {booked.name} is a client{booked.date ? `, shoot on ${new Date(booked.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ", shoot date to set"}.
+                    <span className="gcard-actions">
+                      <a className="achip" href={`/portal/admin/clients/${booked.clientId}`}>Profile</a>
+                      <a className="achip" href={`/portal/admin/shoots#shoot-${booked.shootId}`}>Shoot</a>
+                      {booked.dayId && <a className="achip" href={`/portal/admin/clients/${booked.clientId}/days/${booked.dayId}`}>Shoot day</a>}
+                    </span>
+                  </div>
+                )}
                 {(open.phone || open.email) && (
                   <p className="ix-preview">
                     {script === "blank"

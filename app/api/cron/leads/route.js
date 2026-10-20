@@ -27,10 +27,21 @@ export async function GET(request) {
   const db = supabaseAdmin();
   const since = new Date(Date.now() - 14 * 86400000).toISOString();
 
-  const [subsRes, evRes] = await Promise.all([
-    db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)").gte("created_at", since),
+  // Leads from the last two weeks, plus any older open lead with a follow-up
+  // date set (a reminder set for next month must still fire next month).
+  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const SUB_COLS = "id, created_at, updated_at, kind, status, name, email, phone, summary, visitor, next_follow_up, first_contacted_at";
+  const [subsRes, evRes, fuRes] = await Promise.all([
+    db.from("submissions").select(SUB_COLS).not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)").gte("created_at", since),
     db.from("site_events").select("created_at, type, name, path, utm_source, visitor").eq("type", "event").gte("created_at", since).limit(5000),
+    db.from("submissions").select(SUB_COLS).in("status", ["new", "contacted"]).lte("next_follow_up", todayKey).lt("created_at", since).then((r) => r, () => ({ data: [] })),
   ]);
+  if (subsRes.error && /next_follow_up|first_contacted_at/.test(subsRes.error.message)) {
+    // studio-2.sql not run yet: fall back to the columns that exist.
+    const again = await db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent)").gte("created_at", since);
+    subsRes.data = again.data; subsRes.error = again.error;
+  }
+  if (!subsRes.error && fuRes?.data?.length) subsRes.data = [...(subsRes.data || []), ...fuRes.data];
   if (subsRes.error) return NextResponse.json({ error: subsRes.error.message }, { status: 500 });
 
   const open = buildLeadBoard(subsRes.data || [], evRes.data || []).filter((l) => l.open);
@@ -74,8 +85,11 @@ export async function GET(request) {
   if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
+  const fus = open.filter((l) => l.followDue);
+  const fuLine = (l) => `${l.name}${l.summary ? ` (${l.summary})` : ""} — you set ${l.followUp === todayKey ? "today" : `for ${l.followUp}`}\nOpen: https://rothmediaco.com/portal/admin/inbox`;
   const body = [
     ...(notes.length ? [`CLIENT NOTES WAITING ON YOU (${notes.length}):`, ...noteLines] : []),
+    ...(fus.length ? [`FOLLOW-UPS YOU SET (${fus.length}):`, ...fus.map(fuLine)] : []),
     ...gbpNudge,
     ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),
@@ -87,7 +101,7 @@ export async function GET(request) {
   const baseSubject = bal.due.length
     ? `${bal.due.length} wedding balance${bal.due.length > 1 ? "s" : ""} to send${open.length ? ` · ${open.length} open lead${open.length > 1 ? "s" : ""}` : ""}`
     : overdue.length ? `${overdue.length} lead${overdue.length > 1 ? "s" : ""} overdue — ${open.length} open` : open.length ? `${open.length} open lead${open.length > 1 ? "s" : ""} today` : reviews.length ? "Partner review coming up" : gbpNudge.length ? "This week's Google post" : (bal.unclear.length || !owed.length) ? "A wedding balance needs a date check" : "";
-  const notesTag = notes.length ? `${notes.length} client note${notes.length > 1 ? "s" : ""} waiting` : "";
+  const notesTag = [notes.length ? `${notes.length} client note${notes.length > 1 ? "s" : ""} waiting` : "", fus.length ? `${fus.length} follow-up${fus.length > 1 ? "s" : ""} due` : ""].filter(Boolean).join(" · ");
   const subject = [notesTag, baseSubject, owedTag].filter(Boolean).join(" · ");
 
   let sent = false;

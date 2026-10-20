@@ -6456,3 +6456,8 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .ix-notes a:hover { background: var(--surface-2); }
 .ix-notes a strong { font-weight: 600; }
 .ix-notes a span { grid-column: 1 / -1; font-size: 0.86rem; color: var(--ink-soft); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Inbox: Book it */
+.ix-book { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
+.ix-booked { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; margin: 0.6rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid #2e7d4f; border-radius: 12px; font-size: 0.92rem; }
+.ix-booked .gcard-actions { margin-left: auto; }
