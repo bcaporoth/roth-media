@@ -3,7 +3,7 @@
 // the data fetch. With no shoot it prints the blank guide for a type.
 
 import { timing, fmt12 } from "../lib/sun";
-import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL } from "../lib/shoot-guides";
+import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL, usesSun } from "../lib/shoot-guides";
 import { OWNER_NAME, PHONE } from "../lib/site";
 
 import { SHOOT_KIND_LABEL as KIND_LABEL } from "../lib/studio-labels";
@@ -38,7 +38,7 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
       <section className="sprint-facts">
         <Fact label="Start" value={t.start ? fmt12(t.start) : shoot?.time_note || "________"} note={shoot?.time_note && t.start && !shoot.start_time ? `from “${shoot.time_note}”` : ""} />
         <Fact label="Leave home" value={t.leave ? fmt12(t.leave) : "________"} note={shoot?.drive_min ? `${shoot.drive_min} min drive + 20 to set up` : ""} />
-        <Fact label="Sunset" value={t.sunset ? fmt12(t.sunset) : "________"} note={t.golden ? `golden hour from ${fmt12(t.golden)}` : ""} />
+        {usesSun(k) && <Fact label="Sunset" value={t.sunset ? fmt12(t.sunset) : "________"} note={t.golden ? `golden hour from ${fmt12(t.golden)}` : ""} />}
         <Fact label="Distance" value={shoot?.miles != null ? `${shoot.miles} mi` : "________"} note={shoot?.place_label ? shoot.place_label.split(",").slice(0, 3).join(",") : ""} />
       </section>
 

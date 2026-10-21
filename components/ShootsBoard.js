@@ -23,7 +23,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { timing, fmt12 } from "../lib/sun";
 import { mapsUrl, HOME } from "../lib/geo";
-import { GROUPS, GROUP_LABEL, groupOf } from "../lib/shoot-guides";
+import { GROUPS, GROUP_LABEL, groupOf, usesSun } from "../lib/shoot-guides";
 import { isNoEmail } from "../lib/no-email";
 import { briefToShoot } from "../lib/intake";
 import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
@@ -418,7 +418,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
       <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
-      <label>…or relative to sunset<input value={f.time_note} onChange={set("time_note")} placeholder="two hours before sunset" /></label>
+      {usesSun(kind) && <label>…or relative to sunset<input value={f.time_note} onChange={set("time_note")} placeholder="two hours before sunset" /></label>}
       <label className="wide">Address / place<input value={f.address} onChange={set("address")} placeholder="Apples and Moore, Watkins Glen NY" /></label>
       {!compact && <label>Client<input value={f.client_name} onChange={set("client_name")} /></label>}
       {!compact && <label>Phone<input value={f.client_phone} onChange={set("client_phone")} /></label>}
@@ -497,8 +497,8 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
       {open && (
         <div className="shoot-detail">
           <div className="shoot-facts">
-            <div><span className="kick-sm">Sunset there</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden hour from {t.golden ? fmt12(t.golden) : "—"}</em></div>
-            <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : "TBD"}</strong><em>{t.resolved ? `from “${s.time_note}”` : s.time_note || "set a time or a sunset note"}</em></div>
+            {usesSun(s.kind) && <div><span className="kick-sm">Sunset there</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden hour from {t.golden ? fmt12(t.golden) : "—"}</em></div>}
+            <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : "TBD"}</strong><em>{t.resolved ? `from “${s.time_note}”` : s.time_note || (usesSun(s.kind) ? "set a time or a sunset note" : "set a time")}</em></div>
             <div><span className="kick-sm">Leave home</span><strong>{t.leave ? fmt12(t.leave) : "—"}</strong><em>{s.drive_min ? `${s.drive_min} min drive + 20 to set up` : "needs an address"}</em></div>
             <div><span className="kick-sm">Distance</span><strong>{s.miles != null ? `${s.miles} mi` : "—"}</strong><em>{s.place_label ? s.place_label.split(",").slice(0, 3).join(",") : "not located"}</em></div>
           </div>
@@ -521,7 +521,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
               <label>Type<select name="kind" defaultValue={s.kind}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
               <label>Date<input type="date" name="date" defaultValue={s.date || ""} /></label>
               <label>Start time<input type="time" name="start_time" defaultValue={s.start_time} /></label>
-              <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>
+              {usesSun(s.kind) && <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>}
               <label className="wide">Address / place<input name="address" defaultValue={s.address} /></label>
               <label>Client<input name="client_name" defaultValue={s.client_name} /></label>
               <label>Phone<input name="client_phone" defaultValue={s.client_phone} /></label>
