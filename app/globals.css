@@ -3095,6 +3095,10 @@ body:has(.lightbox) nav.rm-nav {
   --ink-soft: #b4a894;
   --line: #3b332a;
   --sand: #8d7f68;
+  /* Card fills: the light palette's 60% cream reads as a gray slab on dark — use a faint tint instead. */
+  --surface: rgba(246, 241, 232, 0.05);
+  --surface-2: rgba(246, 241, 232, 0.1);
+  --field-line: rgba(246, 241, 232, 0.38);
 }
 
 .admin-wrap {
