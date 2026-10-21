@@ -6251,7 +6251,10 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .sday-wraps { font-family: inherit; font-size: 0.72rem; font-weight: 500; color: var(--ink-soft); }
 .sday-stats .is-over dd, .sday-stats .is-over .sday-wraps { color: #c0392b; }
 .sday-notes { display: grid; gap: 0.3rem; font-size: 0.78rem; color: var(--ink-soft); }
-.sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { font: inherit; font-size: 0.95rem; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: var(--ink); resize: vertical; }
+.sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { font: inherit; font-size: 0.95rem; width: 100%; padding: 0.6rem 0.75rem; border: 1.5px solid var(--sday-fieldline, rgba(128, 118, 100, 0.55)); border-radius: 10px; background: var(--sday-fieldbg, rgba(255, 255, 255, 0.07)); color: var(--ink); resize: vertical; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08); }
+.sday-notes textarea:focus, .sday-edit input:focus, .sday-edit select:focus, .scr textarea:focus, .scr input:focus, .scr select:focus, .cprof-newday input:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 25%, transparent); }
+.sday-notes textarea::placeholder, .scr textarea::placeholder, .scr input::placeholder { color: var(--ink-soft); opacity: 0.7; }
+body:has(.admin-shell, .sprint-page) .sday, .admin-shell .cprof-newday, .admin-shell:not(.is-dark) .sday { --sday-fieldline: rgba(0, 0, 0, 0.32); --sday-fieldbg: rgba(255, 255, 255, 0.85); }
 .sday-edit, .cprof-newday { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; align-items: end; }
 .sday-edit label, .cprof-newday label, .scr-meta label, .scr-secs { display: grid; gap: 0.25rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 .sday-edit .wide, .cprof-newday .wide { grid-column: 1 / -1; }
@@ -6314,6 +6317,18 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .scr-stepactions .achip { min-height: 34px; display: inline-flex; align-items: center; }
 .scr-secs input { width: 4.2rem; padding: 0.3rem 0.5rem; }
 .scr-stepgrid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0.6rem; }
+/* T-chart: what's said | what's shown */
+.scr-tchart-head { display: grid; grid-template-columns: 5.5rem 1.1fr 1fr; gap: 0 0.9rem; padding: 0 0.8rem; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+.scr-tchart-head span:nth-child(2), .scr-tchart-head span:nth-child(3) { padding-bottom: 0.3rem; border-bottom: 2px solid var(--ink); }
+.scr-tchart-head span:nth-child(3) { border-bottom-color: var(--clay); }
+.scr-tchart { display: grid; grid-template-columns: 1.1fr 1fr; gap: 0; }
+.scr-tcol { display: grid; gap: 0.5rem; align-content: start; min-width: 0; }
+.scr-tcol-say { padding-right: 0.9rem; border-right: 2px solid var(--ink); }
+.scr-tcol-show { padding-left: 0.9rem; }
+.scr-tcol-say .scr-field > span::before { content: "🗣 "; }
+.scr-tcol-show .scr-field > span { color: var(--clay); }
+.scr-tcol .scr-field > span { font-weight: 600; }
+@media (max-width: 640px) { .scr-tchart { grid-template-columns: 1fr; gap: 0.6rem; } .scr-tcol-say { padding-right: 0; border-right: 0; padding-bottom: 0.6rem; border-bottom: 2px solid var(--ink); } .scr-tcol-show { padding-left: 0; } .scr-tchart-head { display: none; } }
 .scr-thread { display: grid; gap: 0.5rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .scr-thread h3 { margin: 0; font-size: 0.98rem; }
 .scr-thread ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }

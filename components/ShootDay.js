@@ -367,34 +367,39 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
 
       <div className="scr-steps">
         <div className="sday-sechead">
-          <h3>Steps — in filming order</h3>
-          <span className="gcard-meta">{body.steps.length} step{body.steps.length === 1 ? "" : "s"}{secs ? ` · ${secs}s on screen` : ""}</span>
+          <h3>Scenes — in filming order</h3>
+          <span className="gcard-meta">{body.steps.length} scene{body.steps.length === 1 ? "" : "s"}{secs ? ` · ${secs}s on screen` : ""}</span>
         </div>
         {body.steps.length === 0 && (
-          <p className="gcard-meta">Each step: what to <strong>say</strong>, what to <strong>do</strong>, what the <strong>camera shows</strong>, and how many seconds it gets. <button type="button" className="rm-linkbtn" onClick={() => addStep(-1)}>Add the first step</button></p>
+          <p className="gcard-meta">One row per scene: <strong>what&apos;s said</strong> on the left, <strong>what&apos;s shown</strong> on the right — the action and how the camera frames it — and how many seconds it gets. <button type="button" className="rm-linkbtn" onClick={() => addStep(-1)}>Add the first scene</button></p>
         )}
+        {body.steps.length > 0 && <div className="scr-tchart-head" aria-hidden="true"><span>Scene</span><span>What&apos;s said</span><span>What&apos;s shown</span></div>}
         <ol className="scr-steplist">
           {body.steps.map((st, i) => (
             <li key={i} className="scr-step">
               <div className="scr-stephead">
-                <label className="scr-done"><input type="checkbox" checked={Boolean(st.done)} onChange={(e) => setStep(i, "done", e.target.checked)} /><strong>Step {i + 1}</strong>{st.done && <em>filmed</em>}</label>
+                <label className="scr-done"><input type="checkbox" checked={Boolean(st.done)} onChange={(e) => setStep(i, "done", e.target.checked)} /><strong>Scene {i + 1}</strong>{st.done && <em>filmed</em>}</label>
                 <span className="scr-stepactions">
                   <label className="scr-secs">secs<input type="number" min={0} max={3600} value={st.secs || ""} onChange={(e) => setStep(i, "secs", Number(e.target.value))} /></label>
-                  <button type="button" className="achip" onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label="Move step up">↑</button>
-                  <button type="button" className="achip" onClick={() => moveStep(i, 1)} disabled={i === body.steps.length - 1} aria-label="Move step down">↓</button>
+                  <button type="button" className="achip" onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label="Move scene up">↑</button>
+                  <button type="button" className="achip" onClick={() => moveStep(i, 1)} disabled={i === body.steps.length - 1} aria-label="Move scene down">↓</button>
                   <button type="button" className="achip" onClick={() => addStep(i)}>+ After</button>
-                  <button type="button" className="achip achip-danger" onClick={() => delStep(i)} aria-label="Remove step">✕</button>
+                  <button type="button" className="achip achip-danger" onClick={() => delStep(i)} aria-label="Remove scene">✕</button>
                 </span>
               </div>
-              <div className="scr-stepgrid">
-                <Field label="Say" v={st.say} on={(v) => setStep(i, "say", v)} rows={2} ph="The exact words — or (no talking)" />
-                <Field label="Do" v={st.do} on={(v) => setStep(i, "do", v)} rows={2} ph="The action, specific: amounts, which hand, which button" />
-                <Field label="Camera shows" v={st.shot} on={(v) => setStep(i, "shot", v)} rows={2} ph="Wide / medium / close / top-down · angle · movement" />
+              <div className="scr-tchart">
+                <div className="scr-tcol scr-tcol-say">
+                  <Field label="Say" v={st.say} on={(v) => setStep(i, "say", v)} rows={3} ph="The exact words, as they'd come out — or (no talking)" />
+                </div>
+                <div className="scr-tcol scr-tcol-show">
+                  <Field label="Do" v={st.do} on={(v) => setStep(i, "do", v)} rows={2} ph="The action, specific: amounts, which hand, which button" />
+                  <Field label="Camera" v={st.shot} on={(v) => setStep(i, "shot", v)} rows={1} ph="Wide / medium / close / top-down · angle · movement" />
+                </div>
               </div>
             </li>
           ))}
         </ol>
-        {body.steps.length > 0 && <button type="button" className="achip" onClick={() => addStep(body.steps.length - 1)}>+ Add a step</button>}
+        {body.steps.length > 0 && <button type="button" className="achip" onClick={() => addStep(body.steps.length - 1)}>+ Add a scene</button>}
       </div>
 
       <div className="scr-grid">
