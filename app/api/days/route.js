@@ -118,6 +118,7 @@ export async function POST(request) {
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
       const patch = cleanScriptPatch({ title: body.title || "", kind, minutes: body.minutes ?? (kind === "recipe" || kind === "manual" ? 45 : kind === "photos" ? 30 : 20), body: body.body || {} });
       const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, ...patch, created_by: me.role, updated_by: me.role }).select("*").single();
+      if (error && /scripts_kind_check/.test(error.message)) return bad(`The database doesn't allow “${KIND_LABEL[kind]}” yet — run supabase/scripts-cards.sql in the Supabase SQL editor.`, 500);
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, script: data });
     }

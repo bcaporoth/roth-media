@@ -27,7 +27,7 @@ create table if not exists public.scripts (
   day_id uuid not null references public.shoot_days (id) on delete cascade,
   client_id uuid not null references public.clients (id) on delete cascade,
   position integer not null default 0,
-  kind text not null default 'reel' check (kind in ('reel', 'howto', 'recipe', 'manual', 'promo', 'photos', 'other')),
+  kind text not null default 'reel' check (kind in ('reel', 'howto', 'recipe', 'manual', 'promo', 'photos', 'tchart', 'questions', 'other')),
   title text not null default '',
   status text not null default 'draft' check (status in ('draft', 'ready', 'filmed', 'delivered')),
   minutes integer not null default 20,            -- how long to film it, for the running order

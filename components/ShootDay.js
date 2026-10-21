@@ -32,6 +32,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const [scripts, setScripts] = useState(initial.scripts || []);
   const [open, setOpen] = useState(() => (initial.scripts?.length === 1 ? initial.scripts[0].id : null));
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState("");
   const [tool, setTool] = useState(""); // "" | plan | import | send
   const [filming, setFilming] = useState(null); // index into the running order, or null
   const [busy, setBusy] = useState(false);
@@ -52,14 +53,17 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day.id]);
 
+  // The picker stays open on failure and shows the error right there — the
+  // toolbar error is off-screen when you're down at the bottom of a long day.
   async function addScript(kind) {
-    setAdding(false);
+    setAddError("");
     try {
       const r = await api({ action: "script-add", dayId: day.id, kind });
+      setAdding(false);
       setScripts((s) => [...s, r.script]);
       setOpen(r.script.id);
       say(`${KIND_LABEL[kind]} added`);
-    } catch (e) { fail(e); }
+    } catch (e) { setAddError(e.message || String(e)); }
   }
   async function move(id, dir) {
     const ids = scripts.map((s) => s.id);
@@ -177,7 +181,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                   <strong>{k.label}</strong>{k.hint && <em>{k.hint}</em>}
                 </button>
               ))}
-              <button type="button" className="achip" onClick={() => setAdding(false)}>Cancel</button>
+              <button type="button" className="achip" onClick={() => { setAdding(false); setAddError(""); }}>Cancel</button>
+              {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
             </div>
           ) : (
             <button type="button" className="abtn" onClick={() => setAdding(true)}>+ Add a script or card</button>
