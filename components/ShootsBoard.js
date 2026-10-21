@@ -456,6 +456,11 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
   function setTime(item, time) {
     commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, time } : c)); });
   }
+  function renameItem(item, text) {
+    const t = (text || "").trim();
+    if (!t || t === item.text) return;
+    commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, text: t } : c)); });
+  }
   // Pull a playbook list into this shoot: adds what isn't already there.
   function loadList(list) {
     const have = new Set(items.filter((c) => c.group === list.section).map((c) => c.text));
@@ -538,7 +543,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
             </div>
             <div className="shoot-cols">
               {GROUPS.map((g) => (
-                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onLoad={loadList} onClear={clearGroup} onTime={setTime} />
+                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onRename={renameItem} onLoad={loadList} onClear={clearGroup} onTime={setTime} />
               ))}
             </div>
           </div>
@@ -588,9 +593,15 @@ function DeliveryDetail({ s, d, clock, onUpdate }) {
 // pull in a list from the playbook. The flow carries a time per step and
 // shows in time order once times are set.
 const ADD_HINT = { gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
-function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove, onLoad, onClear, onTime }) {
+function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove, onRename, onLoad, onClear, onTime }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState("");
+  const [editing, setEditing] = useState(null); // index into `shown` being edited
+  const [draft, setDraft] = useState("");
+  const cancelled = useRef(false);
+  function startEdit(i, c) { cancelled.current = false; setEditing(i); setDraft(c.text); }
+  function finishEdit(c) { if (editing === null) return; if (!cancelled.current) onRename(c, draft); cancelled.current = false; setEditing(null); }
+  function cancelEdit() { cancelled.current = true; setEditing(null); }
   const isFlow = group === "flow";
   const done = items.filter((c) => c.done).length;
   const shown = isFlow ? [...items.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...items.filter((c) => !c.time)] : items;
@@ -622,8 +633,21 @@ function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove,
         {shown.map((c, i) => (
           <li key={`${c.text}-${i}`} className={c.done ? "is-done" : ""}>
             {isFlow && <input type="time" className="pbook-time" key={c.time || "none"} defaultValue={c.time || ""} aria-label={`Time for ${c.text}`} onBlur={(e) => e.target.value !== (c.time || "") && onTime(c, e.target.value)} />}
-            <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span>{c.text}</span></label>
+            {editing === i ? (
+              <input
+                className="prep-edit"
+                autoFocus
+                value={draft}
+                aria-label={`Edit ${c.text}`}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={() => finishEdit(c)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); finishEdit(c); } else if (e.key === "Escape") { cancelEdit(); } }}
+              />
+            ) : (
+              <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span onDoubleClick={() => startEdit(i, c)} title="Double-click to edit">{c.text}</span></label>
+            )}
             {c.img_url && <a className="pbook-thumb" href={c.img_url} target="_blank" rel="noreferrer" title="Open reference photo"><img src={c.img_url} alt="" loading="lazy" /></a>}
+            {editing !== i && <button type="button" className="prep-x prep-pen" aria-label={`Edit ${c.text}`} title="Edit" onClick={() => startEdit(i, c)}>✎</button>}
             <button type="button" className="prep-x" aria-label={`Remove ${c.text}`} title="Remove" onClick={() => onRemove(c)}>×</button>
           </li>
         ))}
