@@ -128,10 +128,21 @@ export async function POST(request) {
     // Film mode: tick a step, or move the status — no rev needed, nothing else changes.
     if (body.action === "script-tick") {
       if (!script) return bad("Script not found", 404);
-      const i = Number(body.step);
       const b = cleanBody(script.body);
-      if (!Number.isInteger(i) || !b.steps[i]) return bad("Bad step");
-      b.steps[i] = cleanStep({ ...b.steps[i], done: Boolean(body.done) });
+      const done = Boolean(body.done);
+      if (body.question !== undefined) {
+        const q = Number(body.question);
+        if (!Number.isInteger(q) || !b.questions[q]) return bad("Bad question");
+        b.questions[q] = { ...b.questions[q], done };
+      } else if (body.scene !== undefined) {
+        const sc = Number(body.scene), ln = Number(body.line);
+        if (!Number.isInteger(sc) || !b.scenes[sc] || !Number.isInteger(ln) || !b.scenes[sc].lines[ln]) return bad("Bad line");
+        b.scenes[sc].lines[ln] = { ...b.scenes[sc].lines[ln], done };
+      } else {
+        const i = Number(body.step);
+        if (!Number.isInteger(i) || !b.steps[i]) return bad("Bad step");
+        b.steps[i] = cleanStep({ ...b.steps[i], done });
+      }
       const { data, error } = await db.from("scripts").update({ body: b, rev: script.rev + 1, updated_by: me.role, updated_at: now() }).eq("id", script.id).select("*").single();
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, script: data });

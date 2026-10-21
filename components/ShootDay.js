@@ -14,7 +14,8 @@
 //   + Add        — a kind picker; Brandon can ask Claude to draft it
 
 import { useEffect, useRef, useState } from "react";
-import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, stepsDone } from "../lib/scripts";
+import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
+import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 
 async function api(payload) {
   const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -130,7 +131,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           who={who}
           onJump={setFilming}
           onClose={() => setFilming(null)}
-          onTick={async (s, i, done) => { try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: s.id, step: i, done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
+          onTick={async (s, i, done) => { try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: s.id, ...(typeof i === "object" ? i : { step: i }), done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
           onStatus={async (s, status) => { try { const r = await api({ action: "script-status", dayId: day.id, scriptId: s.id, status }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
         />
       )}
@@ -152,7 +153,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                 <span className="sday-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span>
                 <span className="sday-main">
                   <strong>{s.title || <em>Untitled {KIND_LABEL[s.kind]}</em>}</strong>
-                  <em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} to film{(s.body?.steps || []).length ? ` · ${stepsDone(s.body) ? `${stepsDone(s.body)}/` : ""}${s.body.steps.length} steps${stepsDone(s.body) ? " done" : ""}` : ""}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
+                  <em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} to film{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
                 </span>
                 <span className={`itag sday-status is-${s.status}`}>{STATUS_LABEL[s.status]}</span>
               </button>
@@ -179,7 +180,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
               <button type="button" className="achip" onClick={() => setAdding(false)}>Cancel</button>
             </div>
           ) : (
-            <button type="button" className="abtn" onClick={() => setAdding(true)}>+ Add a script</button>
+            <button type="button" className="abtn" onClick={() => setAdding(true)}>+ Add a script or card</button>
           )}
         </div>
       </section>
@@ -337,7 +338,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
         </div>
       </div>
 
-      {role === "brandon" && (
+      {role === "brandon" && !isCard(kind) && (
         <div className="scr-ai">
           {asking ? (
             <div className="scr-ai-box">
@@ -356,6 +357,11 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
         </div>
       )}
 
+      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} />}
+      {kind === "questions" && <QuestionsEditor body={body} setBody={setBody} />}
+      {kind === "questions" && <div className="scr-grid"><Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={2} ph="Where this happens, who answers, anything to set up first" wide /></div>}
+
+      {!isCard(kind) && <>
       <div className="scr-grid">
         <Field label="What it's for" v={body.goal} on={(v) => set("goal", v)} rows={2} ph="One sentence: trust, proof, craving, teaching, or selling one thing." />
         <Field label="The hook — first words / first thing on screen" v={body.hook} on={(v) => set("hook", v)} rows={2} ph="The exact words. For a reel it lands in under 2 seconds." />
@@ -408,6 +414,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
         <Field label="Caption" v={body.caption} on={(v) => set("caption", v)} rows={3} ph="1–3 lines + hashtags" />
         <Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={3} ph="Safety, timing, shoot this first while the light is good, what can be faked for camera" />
       </div>
+      </>}
 
       <div className="scr-thread">
         <h3>Notes between you</h3>
@@ -454,7 +461,7 @@ function PlanDayBox({ aiReady, busy, onGo, onCancel, existing }) {
         <textarea rows={2} value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Holiday pre-orders: the three best sellers, how to order, and one 'why we're different' piece. Kaci's happy on camera." />
       </label>
       <div className="sday-counts">
-        {KINDS.filter((k) => k.id !== "other").map((k) => (
+        {KINDS.filter((k) => k.id !== "other" && !isCard(k.id)).map((k) => (
           <label key={k.id}><span>{k.label}</span><input type="number" min={0} max={8} value={counts[k.id]} onChange={(e) => setCounts({ ...counts, [k.id]: Math.max(0, Math.min(8, Number(e.target.value) || 0)) })} /></label>
         ))}
       </div>
@@ -511,7 +518,8 @@ function SendBox({ day, emailReady, busy, onGo, onCancel }) {
 function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
   const s = order[index];
   const b = cleanBody(s.body);
-  const done = stepsDone(b);
+  const prog = progressOf(s.kind, b);
+  const done = prog.done;
   const next = index + 1 < order.length ? index + 1 : null;
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowRight" && next !== null) onJump(next); if (e.key === "ArrowLeft" && index > 0) onJump(index - 1); };
@@ -535,8 +543,39 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
         {(b.on_camera || b.where) && <p className="film-meta">{[b.on_camera, b.where].filter(Boolean).join(" · ")}</p>}
         {b.hook && <div className="film-hook"><span>Hook</span><p>{b.hook}</p></div>}
         {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
-        <div className="film-progress"><span style={{ width: `${b.steps.length ? Math.round((done / b.steps.length) * 100) : 0}%` }} /></div>
-        <ol className="film-steps">
+        <div className="film-progress"><span style={{ width: `${prog.total ? Math.round((done / prog.total) * 100) : 0}%` }} /></div>
+        {s.kind === "tchart" && b.scenes.map((sc, si) => (
+          <div key={si} className="film-scene">
+            <h3 className="film-scenelabel">{sc.label || `Scene ${si + 1}`}</h3>
+            <ol className="film-steps">
+              {sc.lines.map((l, li) => (
+                <li key={li} className={"film-step" + (l.done ? " is-done" : "")}>
+                  <button type="button" className="film-tick" aria-pressed={Boolean(l.done)} onClick={() => onTick(s, { scene: si, line: li }, !l.done)}>{l.done ? "✓" : li + 1}</button>
+                  <div className="film-stepbody">
+                    {l.say && <p className="film-say">{l.say}</p>}
+                    {l.see && <p className="film-shot"><span>{SEE_LABEL[l.tag] || "Seen"}</span>{l.see}</p>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ))}
+        {s.kind === "tchart" && b.scenes.length === 0 && <p className="gcard-meta">No scenes written yet.</p>}
+        {s.kind === "questions" && (
+          <ol className="film-steps">
+            {b.questions.map((q, qi) => (
+              <li key={qi} className={"film-step" + (q.done ? " is-done" : "")}>
+                <button type="button" className="film-tick" aria-pressed={Boolean(q.done)} onClick={() => onTick(s, { question: qi }, !q.done)}>{q.done ? "✓" : qi + 1}</button>
+                <div className="film-stepbody">
+                  <p className="film-say">{q.q}</p>
+                  {q.a && <p className="film-do"><span>After</span>{q.a}</p>}
+                </div>
+              </li>
+            ))}
+            {b.questions.length === 0 && <li className="gcard-meta">No questions written yet.</li>}
+          </ol>
+        )}
+        {!isCard(s.kind) && <ol className="film-steps">
           {b.steps.map((st, i) => (
             <li key={i} className={"film-step" + (st.done ? " is-done" : "")}>
               <button type="button" className="film-tick" aria-pressed={Boolean(st.done)} onClick={() => onTick(s, i, !st.done)}>{st.done ? "✓" : i + 1}</button>
@@ -548,7 +587,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
             </li>
           ))}
           {b.steps.length === 0 && <li className="gcard-meta">No steps written yet.</li>}
-        </ol>
+        </ol>}
         {b.broll.length > 0 && <div className="film-broll"><span>B-roll</span><ul>{b.broll.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
         {b.cta && <div className="film-hook film-cta"><span>Close with</span><p>{b.cta}</p></div>}
         {b.notes && <p className="film-notes">{b.notes}</p>}
@@ -559,7 +598,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
         ) : (
           <button type="button" className="abtn" onClick={async () => { await onStatus(s, "filmed"); if (next !== null) onJump(next); }}>{next !== null ? "Filmed → next" : "Filmed ✓"}</button>
         )}
-        <span className="gcard-meta">{done}/{b.steps.length} steps · last by {who(s.updated_by)}</span>
+        <span className="gcard-meta">{done}/{prog.total} {prog.noun}s · last by {who(s.updated_by)}</span>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 // the closing line. Same sheet for Brandon (Studio) and the owner (portal).
 // Pure markup; the print routes load the day and hand it over.
 
-import { KIND_LABEL, STATUS_LABEL, NEEDS_LABEL, cleanBody, runningOrder, totalMinutes, fmt12, fmtMins } from "../lib/scripts";
+import { KIND_LABEL, STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, cleanBody, runningOrder, totalMinutes, fmt12, fmtMins } from "../lib/scripts";
 
 const dateLong = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date to be set");
 
@@ -51,6 +51,18 @@ export default function DayPrintSheet({ day }) {
               <table className="dprint-steps">
                 <thead><tr><th>#</th><th>Say</th><th>Do</th><th>Camera shows</th><th>s</th></tr></thead>
                 <tbody>{b.steps.map((st, j) => <tr key={j} className={st.done ? "is-done" : ""}><td>{j + 1}</td><td>{st.say}</td><td>{st.do}</td><td>{st.shot}</td><td>{st.secs || ""}</td></tr>)}</tbody>
+              </table>
+            )}
+            {b.scenes.map((sc, j) => (
+              <table key={j} className="dprint-steps dprint-tchart">
+                <thead><tr><th colSpan={4} className="dprint-scene">{sc.label || `Scene ${j + 1}`}</th></tr><tr><th>#</th><th>What&apos;s said</th><th>On camera</th><th>What&apos;s seen</th></tr></thead>
+                <tbody>{sc.lines.map((l, k) => <tr key={k} className={l.done ? "is-done" : ""}><td>{k + 1}</td><td>{l.say}</td><td>{SEE_LABEL[l.tag]}</td><td>{l.see}</td></tr>)}</tbody>
+              </table>
+            ))}
+            {b.questions.length > 0 && (
+              <table className="dprint-steps">
+                <thead><tr><th>#</th><th>Question</th><th>Answer / notes</th></tr></thead>
+                <tbody>{b.questions.map((q, k) => <tr key={k} className={q.done ? "is-done" : ""}><td>{k + 1}</td><td>{q.q}</td><td>{q.a}</td></tr>)}</tbody>
               </table>
             )}
             {b.broll.length > 0 && <p className="dprint-line"><span>B-roll</span>{b.broll.join(" · ")}</p>}

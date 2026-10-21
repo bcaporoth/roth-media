@@ -6389,6 +6389,47 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .sday-picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
 .sday-picks label { display: flex; gap: 0.5rem; align-items: flex-start; cursor: pointer; }
 .scr-done { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+/* ---- Cards on a shoot day: T-chart + Questions (components/ScriptCards.js) ---- */
+.tc, .qc { display: grid; gap: 0.7rem; }
+.tc-filters { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
+.tc-filters .achip.is-on { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.tc-scene { display: grid; gap: 0.5rem; padding: 0.7rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; border-left: 4px solid var(--clay); }
+.tc-label { font: inherit; font-weight: 600; font-size: 1rem; background: transparent; border: 0; border-bottom: 1px dashed var(--field-line); padding: 0.2rem 0; color: inherit; min-width: 0; flex: 1; }
+.tc-label:focus { outline: none; border-bottom-color: var(--ink); }
+.tc-table { display: grid; gap: 0.35rem; }
+.tc-head, .tc-row { display: grid; grid-template-columns: 2.2rem 1.1fr 1fr auto; gap: 0 0.7rem; align-items: start; }
+.tc-head { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+.tc-head span:nth-child(2), .tc-head span:nth-child(3) { padding-bottom: 0.3rem; border-bottom: 2px solid var(--ink); }
+.tc-head span:nth-child(3) { border-bottom-color: var(--clay); color: var(--clay); }
+.tc-row { padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+.tc-row:last-child { border-bottom: 0; }
+.tc-row textarea, .tc-see select, .qc-q, .qc-a, .qc-bulk textarea { width: 100%; font: inherit; font-size: 0.92rem; line-height: 1.45; color: inherit; background: transparent; border: 1px solid var(--field-line); border-radius: 8px; padding: 0.35rem 0.5rem; resize: none; overflow: hidden; min-width: 0; }
+.tc-say { border-right: 2px solid var(--ink) !important; }
+.tc-see { display: grid; gap: 0.3rem; min-width: 0; }
+.tc-see select { appearance: auto; font-size: 0.78rem; padding: 0.2rem 0.4rem; width: auto; color: var(--clay); font-weight: 600; }
+.tc-done { display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem; font-size: 0.72rem; color: var(--ink-soft); cursor: pointer; padding-top: 0.4rem; }
+.tc-done input { width: 1.1rem; height: 1.1rem; margin: 0; }
+.tc-row.is-done .tc-say, .tc-row.is-done .tc-see textarea, .qc-item.is-done .qc-q { text-decoration: line-through; color: var(--ink-soft); }
+.tc-rowactions { display: flex; flex-direction: column; gap: 0.2rem; }
+.tc-rowactions .achip { min-height: 28px; padding: 0.1rem 0.45rem; font-size: 0.8rem; }
+.qc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.qc-item { display: grid; gap: 0.3rem; padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: 12px; border-left: 4px solid var(--clay); }
+.qc-row { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: 0 0.7rem; align-items: start; }
+.qc-q { font-weight: 600; }
+.qc-a { grid-column: 1 / -1; font-size: 0.88rem; color: var(--ink-soft); border-style: dashed; margin-left: 2.9rem; width: calc(100% - 2.9rem); }
+.qc-bulk { display: grid; gap: 0.5rem; }
+.film-scene { display: grid; gap: 0.5rem; margin-bottom: 0.8rem; }
+.film-scenelabel { margin: 0; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clay); }
+.dprint-scene { text-align: left; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 0.6rem; }
+.admin-shell.is-dark .tc-row textarea, .admin-shell.is-dark .tc-see select, .admin-shell.is-dark .qc-q, .admin-shell.is-dark .qc-a, .admin-shell.is-dark .qc-bulk textarea { border-color: rgba(255, 255, 255, 0.22); }
+@media (max-width: 640px) {
+  .tc-head { display: none; }
+  .tc-row { grid-template-columns: 2.2rem 1fr auto; }
+  .tc-say { grid-column: 2; border-right: 0 !important; border-left: 3px solid var(--ink) !important; }
+  .tc-see { grid-column: 2; border-left: 3px solid var(--clay); padding-left: 0.4rem; }
+  .tc-rowactions { grid-column: 3; grid-row: 1 / span 2; }
+}
+
 .scr-done input { width: 1.1rem; height: 1.1rem; margin: 0; }
 .scr-done em { font-style: normal; font-size: 0.72rem; color: #2e7d4f; }
 
