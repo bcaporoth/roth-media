@@ -6253,8 +6253,12 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .sday-notes { display: grid; gap: 0.3rem; font-size: 0.78rem; color: var(--ink-soft); }
 .sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { font: inherit; font-size: 0.95rem; width: 100%; padding: 0.6rem 0.75rem; border: 1.5px solid var(--sday-fieldline, rgba(128, 118, 100, 0.55)); border-radius: 10px; background: var(--sday-fieldbg, rgba(255, 255, 255, 0.07)); color: var(--ink); resize: vertical; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08); }
 .sday-notes textarea:focus, .sday-edit input:focus, .sday-edit select:focus, .scr textarea:focus, .scr input:focus, .scr select:focus, .cprof-newday input:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 3px color-mix(in srgb, var(--clay) 25%, transparent); }
-.sday-notes textarea::placeholder, .scr textarea::placeholder, .scr input::placeholder { color: var(--ink-soft); opacity: 0.7; }
-body:has(.admin-shell, .sprint-page) .sday, .admin-shell .cprof-newday, .admin-shell:not(.is-dark) .sday { --sday-fieldline: rgba(0, 0, 0, 0.32); --sday-fieldbg: rgba(255, 255, 255, 0.85); }
+/* Field colors by look — explicit, so the text is never the same tone as the box. */
+.admin-shell:not(.is-dark) .sday, .admin-shell:not(.is-dark) .cprof-newday, .sprint-page .sday { --sday-fieldline: rgba(0, 0, 0, 0.35); --sday-fieldbg: #ffffff; --sday-fieldink: #1d1a15; }
+.admin-shell.is-dark .sday, .admin-shell.is-dark .cprof-newday { --sday-fieldline: rgba(255, 255, 255, 0.35); --sday-fieldbg: #2b251e; --sday-fieldink: #f6f1e8; }
+.portal-shell .sday, body:not(:has(.admin-shell)) .sday { --sday-fieldline: rgba(255, 255, 255, 0.35); --sday-fieldbg: #262119; --sday-fieldink: #f6f1e8; }
+.sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { color: var(--sday-fieldink, var(--ink)); font-weight: 500; font-size: 1rem; line-height: 1.5; }
+.sday-notes textarea::placeholder, .scr textarea::placeholder, .scr input::placeholder { color: var(--sday-fieldink, var(--ink)); opacity: 0.45; }
 .sday-edit, .cprof-newday { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; align-items: end; }
 .sday-edit label, .cprof-newday label, .scr-meta label, .scr-secs { display: grid; gap: 0.25rem; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 .sday-edit .wide, .cprof-newday .wide { grid-column: 1 / -1; }
