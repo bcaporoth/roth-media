@@ -6248,6 +6248,8 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .sday-stats div { display: grid; gap: 0.05rem; }
 .sday-stats dt { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); }
 .sday-stats dd { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.25rem; font-weight: 600; }
+.sday-wraps { font-family: inherit; font-size: 0.72rem; font-weight: 500; color: var(--ink-soft); }
+.sday-stats .is-over dd, .sday-stats .is-over .sday-wraps { color: #c0392b; }
 .sday-notes { display: grid; gap: 0.3rem; font-size: 0.78rem; color: var(--ink-soft); }
 .sday-notes textarea, .sday-edit input, .sday-edit select, .scr textarea, .scr input, .scr select, .cprof-newday input { font: inherit; font-size: 0.95rem; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: var(--ink); resize: vertical; }
 .sday-edit, .cprof-newday { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem 0.8rem; align-items: end; }

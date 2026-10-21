@@ -14,7 +14,7 @@
 //   + Add        — a kind picker; Brandon can ask Claude to draft it
 
 import { useEffect, useRef, useState } from "react";
-import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, cleanBody, blankStep, runningOrder, totalMinutes, fmt12, fmtMins, stepSecs, stepsDone } from "../lib/scripts";
+import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, stepsDone } from "../lib/scripts";
 
 async function api(payload) {
   const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -208,8 +208,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
     setBusy(true);
     try { await api({ action: "day-update", dayId: day.id, patch: f }); onSaved(f); setEdit(false); } catch (err) { onError(err); } finally { setBusy(false); }
   }
-  const endMins = /^\d{2}:\d{2}$/.test(day.start_time || "") ? day.start_time.split(":").map(Number).reduce((h, m) => h * 60 + m) + total : null;
-  const end = endMins !== null ? `${String(Math.floor(endMins / 60) % 24).padStart(2, "0")}:${String(endMins % 60).padStart(2, "0")}` : "";
+  const win = dayWindow(day, scripts);
 
   return (
     <header className="sday-head">
@@ -218,6 +217,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
           <label>Title<input name="title" defaultValue={day.title} required /></label>
           <label>Date<input type="date" name="date" defaultValue={day.date || ""} /></label>
           <label>Start<input type="time" name="start_time" defaultValue={day.start_time || ""} /></label>
+          <label>End<input type="time" name="end_time" defaultValue={day.end_time || ""} /></label>
           <label className="wide">Where<input name="location" defaultValue={day.location} placeholder="The shop, the kitchen, out front…" /></label>
           <label>Status<select name="status" defaultValue={day.status}>{DAY_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
           <div className="gcard-actions"><button type="submit" className="abtn" disabled={busy}>Save</button><button type="button" className="achip" onClick={() => setEdit(false)}>Cancel</button></div>
@@ -230,7 +230,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
               <h1 className="sday-title">{day.title}</h1>
               <p className="sday-when">
                 {day.date ? dateLong(day.date) : <em>Date to be set</em>}
-                {day.start_time && ` · ${fmt12(day.start_time)}${end ? ` – ${fmt12(end)}` : ""}`}
+                {day.start_time && ` · ${fmt12(day.start_time)}${day.end_time ? ` – ${fmt12(day.end_time)}` : ""}`}
                 {day.location && ` · ${day.location}`}
               </p>
             </div>
@@ -238,7 +238,10 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
           </div>
           <dl className="sday-stats">
             <div><dt>Scripts</dt><dd>{count}</dd></div>
-            <div><dt>Filming</dt><dd>{fmtMins(total)}</dd></div>
+            <div><dt>Filming</dt><dd>{fmtMins(total)}{win.wraps && <small className="sday-wraps"> · wraps {fmt12(win.wraps)}</small>}</dd></div>
+            {win.available !== null && (
+              <div className={win.over > 0 ? "is-over" : ""}><dt>Window</dt><dd>{fmtMins(win.available)}{win.over > 0 ? <small className="sday-wraps"> · {fmtMins(win.over)} over</small> : win.over < 0 ? <small className="sday-wraps"> · {fmtMins(-win.over)} spare</small> : null}</dd></div>
+            )}
             <div><dt>Ready</dt><dd>{ready} of {count}</dd></div>
           </dl>
         </>

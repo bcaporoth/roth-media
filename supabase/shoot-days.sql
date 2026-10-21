@@ -11,6 +11,7 @@ create table if not exists public.shoot_days (
   title text not null default 'Shoot day',
   date date,
   start_time text not null default '',            -- "09:30" (24h)
+  end_time text not null default '',              -- "15:00" (24h) — when the owner needs the day wrapped
   location text not null default '',
   notes text not null default '',                 -- the day's plain notes, both sides edit
   status text not null default 'planning' check (status in ('planning', 'locked', 'filmed', 'delivered')),
@@ -19,6 +20,7 @@ create table if not exists public.shoot_days (
 );
 create index if not exists shoot_days_client_idx on public.shoot_days (client_id, date desc);
 alter table public.shoot_days enable row level security;
+alter table public.shoot_days add column if not exists end_time text not null default '';
 
 create table if not exists public.scripts (
   id uuid primary key default gen_random_uuid(),

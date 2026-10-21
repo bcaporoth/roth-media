@@ -31,7 +31,7 @@ export async function POST(request) {
       if (!isUuid(body.clientId)) return bad("Bad client");
       const { data: client } = await db.from("clients").select("id").eq("id", body.clientId).maybeSingle();
       if (!client) return bad("Client not found", 404);
-      const patch = cleanDayPatch({ title: body.title || "Shoot day", date: body.date, start_time: body.start_time || "09:00", location: body.location });
+      const patch = cleanDayPatch({ title: body.title || "Shoot day", date: body.date, start_time: body.start_time || "09:00", end_time: body.end_time, location: body.location });
       const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch }).select("id").single();
       if (error) throw new Error(/shoot_days/.test(error.message) ? "Run supabase/shoot-days.sql once in the Supabase SQL editor first." : error.message);
       return NextResponse.json({ ok: true, id: data.id });
@@ -81,7 +81,7 @@ export async function POST(request) {
     if (body.action === "day-draft") {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
-      const { scripts, dayNotes } = await draftDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts });
+      const { scripts, dayNotes } = await draftDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts, day });
       let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
       const rows = scripts.map((sc) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(sc), created_by: "brandon", updated_by: "brandon" }));
       const { error } = await db.from("scripts").insert(rows);

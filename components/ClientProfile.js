@@ -407,6 +407,7 @@ function DaysCard({ client: c, days, fail }) {
           <label>Title<input name="title" defaultValue="Content day" required /></label>
           <label>Date<input type="date" name="date" /></label>
           <label>Start<input type="time" name="start_time" defaultValue="09:00" /></label>
+          <label>End<input type="time" name="end_time" defaultValue="15:00" /></label>
           <label className="wide">Where<input name="location" placeholder="Their shop, the kitchen…" /></label>
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Opening…" : "Create and open →"}</button>
         </form>

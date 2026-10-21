@@ -16,7 +16,7 @@ export default function DayPrintSheet({ day }) {
         <div>
           <span className="sprint-kick">Shoot day · {day.client?.name || ""}</span>
           <h1>{day.title}</h1>
-          <p className="sprint-when">{dateLong(day.date)}{day.start_time ? ` · ${fmt12(day.start_time)}` : ""}{day.location ? ` · ${day.location}` : ""}</p>
+          <p className="sprint-when">{dateLong(day.date)}{day.start_time ? ` · ${fmt12(day.start_time)}${day.end_time ? ` – ${fmt12(day.end_time)}` : ""}` : ""}{day.location ? ` · ${day.location}` : ""}</p>
         </div>
         <div className="sprint-owner">
           <span className="sprint-label">Filming</span><strong>{fmtMins(total)}</strong>
