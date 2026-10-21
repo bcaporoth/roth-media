@@ -208,7 +208,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
     setBusy(true);
     try { await api({ action: "day-update", dayId: day.id, patch: f }); onSaved(f); setEdit(false); } catch (err) { onError(err); } finally { setBusy(false); }
   }
-  const win = dayWindow(day, scripts);
+  const win = dayWindow(day, [{ minutes: total }]);
 
   return (
     <header className="sday-head">
