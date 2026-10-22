@@ -6379,6 +6379,16 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .sday-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .sday-tools .achip, .sday-tools .abtn { min-height: 42px; display: inline-flex; align-items: center; }
 .sday-tools .achip.is-on { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.sday-more { margin-top: -0.2rem; padding-left: 0.2rem; }
+.sday-todo { display: grid; gap: 0.35rem; padding: 0.75rem 0.95rem; border: 1px solid var(--clay); border-radius: 14px; background: color-mix(in srgb, var(--clay) 10%, transparent); font-size: 0.9rem; }
+.sday-todo p { margin: 0; overflow-wrap: anywhere; }
+.sday-todo em { font-style: normal; color: var(--ink-soft); font-size: 0.8rem; }
+.sday-todo.is-clear { border-color: var(--line); background: transparent; color: var(--ink-soft); }
+.sday-sync { font-size: 0.76rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.sday-sync.is-new { color: var(--clay); font-weight: 600; }
+.scr-more { border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.scr-more > summary { cursor: pointer; font-size: 0.85rem; color: var(--ink-soft); padding: 0.3rem 0; }
+.scr-more[open] > summary { margin-bottom: 0.5rem; }
 .sday-box { display: grid; gap: 0.7rem; padding: 0.9rem 1rem; border: 1px dashed var(--clay); border-radius: 14px; background: var(--surface); }
 .sday-boxlabel { display: grid; gap: 0.3rem; font-weight: 600; }
 .sday-boxlabel em { font-weight: 400; font-style: normal; font-size: 0.8rem; color: var(--ink-soft); }

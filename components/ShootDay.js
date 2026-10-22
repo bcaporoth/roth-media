@@ -26,6 +26,20 @@ async function api(payload) {
 const when = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");
 const dateLong = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "");
 const lines = (arr) => (arr || []).join("\n");
+// The add picker leads with these; the rest sit behind "More kinds…".
+const MAIN_KINDS = ["tchart", "questions", "reel"];
+
+// Under each row: the other person's latest note (unanswered) or the note
+// count, and who last changed it — so neither side has to open a script to
+// know something moved.
+function SyncLine({ s, me, who, last, notes }) {
+  const fresh = last && last.who !== me;
+  const bits = [];
+  if (fresh) bits.push(`💬 ${who(last.who)}: “${last.text.length > 70 ? last.text.slice(0, 70) + "…" : last.text}”`);
+  else if (notes) bits.push(`💬 ${notes} note${notes === 1 ? "" : "s"}`);
+  if (s.updated_by && s.updated_by !== me) bits.push(`changed by ${who(s.updated_by)} ${when(s.updated_at)}`);
+  return bits.length ? <small className={"sday-sync" + (fresh ? " is-new" : "")}>{bits.join(" · ")}</small> : null;
+}
 
 export default function ShootDay({ initial, role, aiReady = false, emailReady = false, backHref = "/portal", backLabel = "Back", printHref = "" }) {
   const [day, setDay] = useState(initial);
@@ -34,6 +48,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState("");
   const [tool, setTool] = useState(""); // "" | plan | import | send
+  const [more, setMore] = useState(false); // Brandon's less-used tools, folded away
+  const [allKinds, setAllKinds] = useState(false);
   const [filming, setFilming] = useState(null); // index into the running order, or null
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState("");
@@ -107,6 +123,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const order = runningOrder(day, scripts);
   const total = totalMinutes(scripts);
   const ready = scripts.filter((s) => s.status !== "draft").length;
+  // What's waiting on whoever is looking: a note from the other person that
+  // hasn't been answered, and scripts still in draft.
+  const threadOf = (s) => (Array.isArray(s.thread) ? s.thread : []);
+  const lastNote = (s) => threadOf(s)[threadOf(s).length - 1];
+  const waiting = order.filter((s) => { const l = lastNote(s); return l && l.who !== me; });
+  const drafts = order.filter((s) => s.status === "draft");
+  const openScript = (id, toNotes = false) => { setOpen(id); setTimeout(() => (toNotes && document.getElementById("notes-" + id) || document.getElementById("scr-" + id))?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
   return (
     <div className="sday">
@@ -120,11 +143,18 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
 
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
-        {me === "brandon" && <button type="button" className={"achip" + (tool === "plan" ? " is-on" : "")} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Plan the day with Claude</button>}
-        {me === "brandon" && <button type="button" className={"achip" + (tool === "import" ? " is-on" : "")} onClick={() => setTool(tool === "import" ? "" : "import")}>Import from content plan</button>}
-        {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">Print the day ↗</a>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
+        {me === "brandon" ? (
+          <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>
+        ) : printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">Print the day ↗</a>}
       </div>
+      {me === "brandon" && more && (
+        <div className="sday-tools sday-more">
+          <button type="button" className={"achip" + (tool === "plan" ? " is-on" : "")} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Plan the day with Claude</button>
+          <button type="button" className={"achip" + (tool === "import" ? " is-on" : "")} onClick={() => setTool(tool === "import" ? "" : "import")}>Import from content plan</button>
+          {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">Print the day ↗</a>}
+        </div>
+      )}
       {tool === "plan" && <PlanDayBox aiReady={aiReady} busy={busy} onGo={planDay} onCancel={() => setTool("")} existing={scripts.length} />}
       {tool === "import" && <ImportBox dayId={day.id} busy={busy} onGo={importPlan} onCancel={() => setTool("")} onError={fail} />}
       {tool === "send" && <SendBox day={day} emailReady={emailReady} busy={busy} onGo={sendDay} onCancel={() => setTool("")} />}
@@ -140,10 +170,27 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         />
       )}
 
+      {scripts.length > 0 && (
+        <div className={"sday-todo" + (waiting.length || drafts.length ? "" : " is-clear")} role="status">
+          {waiting.length === 0 && drafts.length === 0 && <p>✓ All caught up: no notes waiting on you, nothing still in draft.</p>}
+          {waiting.length > 0 && (
+            <p><strong>💬 Waiting on you:</strong>{" "}
+              {waiting.map((s, i) => <span key={s.id}>{i > 0 && " · "}<button type="button" className="rm-linkbtn" onClick={() => openScript(s.id, true)}>{who(lastNote(s).who)} on “{s.title || `Untitled ${KIND_LABEL[s.kind]}`}”</button></span>)}
+            </p>
+          )}
+          {drafts.length > 0 && (
+            <p><strong>Still draft:</strong>{" "}
+              {drafts.map((s, i) => <span key={s.id}>{i > 0 && " · "}<button type="button" className="rm-linkbtn" onClick={() => openScript(s.id)}>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</button></span>)}
+              <em> (set it to Ready to film once you both agree)</em>
+            </p>
+          )}
+        </div>
+      )}
+
       <section className="sday-order">
         <div className="sday-sechead">
           <h2>Running order</h2>
-          <span className="gcard-meta">{scripts.length === 0 ? "Nothing yet" : `${scripts.length} piece${scripts.length === 1 ? "" : "s"} · ${fmtMins(total)} of filming · ${ready} ready`}</span>
+          {scripts.length === 0 && <span className="gcard-meta">Nothing yet</span>}
         </div>
         {scripts.length === 0 && (
           <p className="sday-empty">
@@ -152,12 +199,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         )}
         <ol className="sday-list">
           {order.map((s, i) => (
-            <li key={s.id} className={"sday-row is-" + s.status + (open === s.id ? " is-open" : "")}>
+            <li key={s.id} id={"scr-" + s.id} className={"sday-row is-" + s.status + (open === s.id ? " is-open" : "")}>
               <button type="button" className="sday-rowbtn" aria-expanded={open === s.id} onClick={() => setOpen(open === s.id ? null : s.id)}>
                 <span className="sday-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span>
                 <span className="sday-main">
                   <strong>{s.title || <em>Untitled {KIND_LABEL[s.kind]}</em>}</strong>
                   <em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} to film{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
+                  <SyncLine s={s} me={me} who={who} last={lastNote(s)} notes={threadOf(s).length} />
                 </span>
                 <span className={`itag sday-status is-${s.status}`}>{STATUS_LABEL[s.status]}</span>
               </button>
@@ -176,12 +224,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           {adding ? (
             <div className="sday-kinds">
               <span className="kick-sm">What kind?</span>
-              {KINDS.map((k) => (
+              {KINDS.filter((k) => allKinds || MAIN_KINDS.includes(k.id)).map((k) => (
                 <button key={k.id} type="button" className="sday-kind" onClick={() => addScript(k.id)}>
                   <strong>{k.label}</strong>{k.hint && <em>{k.hint}</em>}
                 </button>
               ))}
-              <button type="button" className="achip" onClick={() => { setAdding(false); setAddError(""); }}>Cancel</button>
+              {!allKinds && <button type="button" className="achip" onClick={() => setAllKinds(true)}>More kinds…</button>}
+              <button type="button" className="achip" onClick={() => { setAdding(false); setAddError(""); setAllKinds(false); }}>Cancel</button>
               {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
             </div>
           ) : (
@@ -253,8 +302,8 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
         </>
       )}
       <label className="sday-notes">
-        <span>Day notes — both of you can write here</span>
-        <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Parking, who's around that day, what has to be done before lunch, anything either of you should know…" />
+        <span>Talking points: you both see and edit this</span>
+        <textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={"What we're filming and why\nThe 2–3 things that must come across\nWho's on camera, parking, anything to sort before the day"} />
       </label>
     </header>
   );
@@ -321,6 +370,8 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
     } catch (err) { onError(err); } finally { setBusy(false); setAsking(false); }
   }
   const secs = stepSecs(body);
+  // Decided once on open, so the fold never snaps shut while you type.
+  const [moreOpen] = useState(() => Boolean(body.on_camera || body.where || body.length || body.broll.length || body.caption || body.notes));
   const thread = Array.isArray(script.thread) ? script.thread : [];
 
   return (
@@ -370,10 +421,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
       <div className="scr-grid">
         <Field label="What it's for" v={body.goal} on={(v) => set("goal", v)} rows={2} ph="One sentence: trust, proof, craving, teaching, or selling one thing." />
         <Field label="The hook — first words / first thing on screen" v={body.hook} on={(v) => set("hook", v)} rows={2} ph="The exact words. For a reel it lands in under 2 seconds." />
-        <Field label="On camera" v={body.on_camera} on={(v) => set("on_camera", v)} rows={1} ph="Who's in it, who's filming" />
-        <Field label="Where" v={body.where} on={(v) => set("where", v)} rows={1} ph="The spot, the light, time of day" />
-        <Field label="Finished length" v={body.length} on={(v) => set("length", v)} rows={1} ph="30–45s · 3 min" />
-        <Field label={NEEDS_LABEL[kind] || "What to have ready"} v={lines(body.needs)} on={(v) => set("needs", v.split("\n"))} rows={4} ph={kind === "recipe" ? "One per line, with amounts:\n2 cups GF flour blend\n1 tsp xanthan gum\nOven at 375°F" : "One per line"} wide />
+        <Field label={NEEDS_LABEL[kind] || "What to have ready"} v={lines(body.needs)} on={(v) => set("needs", v.split("\n"))} rows={3} ph={kind === "recipe" ? "One per line, with amounts:\n2 cups GF flour blend\n1 tsp xanthan gum\nOven at 375°F" : "One per line"} wide />
       </div>
 
       <div className="scr-steps">
@@ -414,14 +462,23 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
       </div>
 
       <div className="scr-grid">
-        <Field label="B-roll to grab" v={lines(body.broll)} on={(v) => set("broll", v.split("\n"))} rows={3} ph="One per line: hands, textures, the sign, the street, customers" />
-        <Field label="Call to action — the closing line" v={body.cta} on={(v) => set("cta", v)} rows={2} ph="One ask." />
-        <Field label="Caption" v={body.caption} on={(v) => set("caption", v)} rows={3} ph="1–3 lines + hashtags" />
-        <Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={3} ph="Safety, timing, shoot this first while the light is good, what can be faked for camera" />
+        <Field label="Call to action — the closing line" v={body.cta} on={(v) => set("cta", v)} rows={2} ph="One ask." wide />
       </div>
+      {/* The extras: folded away unless something's already in them. */}
+      <details className="scr-more" open={moreOpen}>
+        <summary>More details: on camera, where, length, B-roll, caption, notes</summary>
+        <div className="scr-grid">
+          <Field label="On camera" v={body.on_camera} on={(v) => set("on_camera", v)} rows={1} ph="Who's in it, who's filming" />
+          <Field label="Where" v={body.where} on={(v) => set("where", v)} rows={1} ph="The spot, the light, time of day" />
+          <Field label="Finished length" v={body.length} on={(v) => set("length", v)} rows={1} ph="30–45s · 3 min" />
+          <Field label="B-roll to grab" v={lines(body.broll)} on={(v) => set("broll", v.split("\n"))} rows={3} ph="One per line: hands, textures, the sign, the street, customers" />
+          <Field label="Caption" v={body.caption} on={(v) => set("caption", v)} rows={3} ph="1–3 lines + hashtags" />
+          <Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={3} ph="Safety, timing, shoot this first while the light is good, what can be faked for camera" />
+        </div>
+      </details>
       </>}
 
-      <div className="scr-thread">
+      <div className="scr-thread" id={"notes-" + script.id}>
         <h3>Notes between you</h3>
         {thread.length === 0 && <p className="gcard-meta">Questions, changes, “can we do this instead” — it all goes here so the script stays the script.</p>}
         <ul>
