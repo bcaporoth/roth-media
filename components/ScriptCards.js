@@ -21,7 +21,7 @@ function Grow({ value, onChange, rows = 2, placeholder = "", className = "", ari
 }
 
 // ---------- T-chart ----------
-export function TChartEditor({ body, setBody }) {
+export function TChartEditor({ body, setBody, onPrompt }) {
   const [filter, setFilter] = useState(""); // "" | talent | place | thing
   const scenes = body.scenes || [];
   const all = sceneLines(body);
@@ -41,6 +41,7 @@ export function TChartEditor({ body, setBody }) {
     <div className="tc">
       <div className="sday-sechead">
         <h3>Scenes — said | seen</h3>
+        {onPrompt && all.some((l) => l.say.trim()) && <button type="button" className="achip" onClick={onPrompt}>▶ Teleprompter</button>}
         <span className="tc-filters" role="group" aria-label="Show lines where the viewer sees">
           <button type="button" className={"achip" + (filter === "" ? " is-on" : "")} onClick={() => setFilter("")}>All · {all.length}</button>
           {SEE_TAGS.map((t) => (

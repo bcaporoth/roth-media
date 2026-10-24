@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState } from "react";
 import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
+import Teleprompter, { promptItems } from "./Teleprompter";
 
 async function api(payload) {
   const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -323,6 +324,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
   const [idea, setIdea] = useState("");
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [prompting, setPrompting] = useState(false);
   const rev = useRef(script.rev);
   const timer = useRef(null);
   const first = useRef(true);
@@ -413,7 +415,8 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
         </div>
       )}
 
-      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} />}
+      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} onPrompt={() => setPrompting(true)} />}
+      {prompting && <Teleprompter title={title || "T-chart"} items={promptItems(kind, cleanBody(body))} onClose={() => setPrompting(false)} />}
       {kind === "questions" && <QuestionsEditor body={body} setBody={setBody} />}
       {kind === "questions" && <div className="scr-grid"><Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={2} ph="Where this happens, who answers, anything to set up first" wide /></div>}
 
@@ -583,12 +586,14 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
   const prog = progressOf(s.kind, b);
   const done = prog.done;
   const next = index + 1 < order.length ? index + 1 : null;
+  const [prompting, setPrompting] = useState(false);
+  const items = promptItems(s.kind, b);
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose(); if (e.key === "ArrowRight" && next !== null) onJump(next); if (e.key === "ArrowLeft" && index > 0) onJump(index - 1); };
+    const onKey = (e) => { if (prompting) return; if (e.key === "Escape") onClose(); if (e.key === "ArrowRight" && next !== null) onJump(next); if (e.key === "ArrowLeft" && index > 0) onJump(index - 1); };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
-  }, [index, next, onClose, onJump]);
+  }, [index, next, onClose, onJump, prompting]);
   return (
     <div className="film" role="dialog" aria-modal="true" aria-label="Film mode">
       <div className="film-bar">
@@ -599,9 +604,11 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
           <button type="button" className="achip" disabled={next === null} onClick={() => onJump(next)}>Next →</button>
         </span>
       </div>
+      {prompting && <Teleprompter title={s.title || KIND_LABEL[s.kind]} items={items} onClose={() => setPrompting(false)} />}
       <div className="film-body">
         <p className="film-kick">{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)}{b.length ? ` · ${b.length} finished` : ""} · <span className={`itag is-${s.status}`}>{STATUS_LABEL[s.status]}</span></p>
         <h2 className="film-title">{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</h2>
+        {items.length > 0 && <button type="button" className="abtn film-prompt" onClick={() => setPrompting(true)}>▶ Teleprompter</button>}
         {(b.on_camera || b.where) && <p className="film-meta">{[b.on_camera, b.where].filter(Boolean).join(" · ")}</p>}
         {b.hook && <div className="film-hook"><span>Hook</span><p>{b.hook}</p></div>}
         {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}

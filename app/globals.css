@@ -6483,6 +6483,37 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .film-shot { color: var(--ink-soft); }
 .film-broll ul { margin: 0; padding-left: 1.2rem; }
 .film-notes { margin: 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--clay); color: var(--ink-soft); white-space: pre-wrap; }
+.film-prompt { justify-self: start; min-height: 44px; }
+
+/* ▶ Teleprompter (components/Teleprompter.js) — always white on black, like the real thing */
+.tp { position: fixed; inset: 0; z-index: 70; background: #000; color: #fff; overflow: hidden; }
+.tp-scroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; cursor: pointer; }
+.tp-scroll::-webkit-scrollbar { display: none; }
+.tp-text { margin: 0 auto; padding-bottom: 75vh; line-height: 1.3; font-weight: 600; max-width: 100%; }
+.tp-line { margin-bottom: 0.9em; }
+.tp-say { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tp-cue { margin: 0.25em 0 0; font-size: max(0.32em, 14px); font-weight: 400; line-height: 1.35; color: #e0a46e; letter-spacing: 0.02em; }
+.tp-scene { margin: 0.4em 0 0.6em; padding-top: 0.5em; border-top: 1px solid rgba(255, 255, 255, 0.25); font-size: max(0.3em, 13px); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.tp-empty, .tp-end { color: rgba(255, 255, 255, 0.45); font-size: max(0.4em, 16px); text-align: center; }
+.tp-read { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid rgba(224, 164, 110, 0.55); pointer-events: none; z-index: 1; }
+.tp-read::before, .tp-read::after { content: ""; position: absolute; top: -9px; border: 8px solid transparent; }
+.tp-read::before { left: 0; border-left-color: #e0a46e; }
+.tp-read::after { right: 0; border-right-color: #e0a46e; }
+.tp-progress { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255, 255, 255, 0.12); z-index: 2; }
+.tp-progress span { display: block; height: 100%; background: #e0a46e; }
+.tp-count { position: absolute; inset: 0; display: grid; place-items: center; font-size: 30vmin; font-weight: 700; background: rgba(0, 0, 0, 0.55); pointer-events: none; z-index: 3; }
+.tp-panel { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; gap: 0.5rem; padding: 0.7rem max(0.9rem, env(safe-area-inset-right)) max(0.8rem, env(safe-area-inset-bottom)) max(0.9rem, env(safe-area-inset-left)); background: rgba(18, 18, 18, 0.94); border-top: 1px solid rgba(255, 255, 255, 0.14); transition: transform 0.25s, opacity 0.25s; max-width: 640px; margin: 0 auto; border-radius: 16px 16px 0 0; }
+.tp.is-rolling .tp-panel { transform: translateY(105%); opacity: 0; pointer-events: none; }
+.tp-row { display: flex; align-items: center; gap: 0.45rem; min-width: 0; }
+.tp-title { flex: 1; min-width: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-btn { min-width: 44px; height: 44px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: #fff; font: inherit; font-size: 1rem; cursor: pointer; flex: none; }
+.tp-play { min-width: 56px; background: #fff; color: #000; font-weight: 700; }
+.tp-slide { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); align-items: center; gap: 0.6rem; font-size: 0.82rem; color: rgba(255, 255, 255, 0.75); }
+.tp-slide b { color: #fff; }
+.tp-slide input { width: 100%; min-width: 0; accent-color: #e0a46e; height: 28px; }
+.tp-toggles { flex-wrap: wrap; }
+.tp-chip { min-height: 38px; padding: 0 0.85rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: #fff; font: inherit; font-size: 0.82rem; cursor: pointer; }
+.tp-chip[aria-pressed="true"] { background: #e0a46e; border-color: #e0a46e; color: #000; font-weight: 600; }
 
 /* Printed shoot day (components/DayPrintSheet.js) */
 .dprint { gap: 1.2rem; }
