@@ -35,7 +35,7 @@ export async function GET(request) {
     if (s.address) lines.push(`${s.address}\nDirections: ${mapsUrl(s.address, s.lat, s.lng)}`);
     if (s.client_phone) lines.push(`Text ${s.client_name.split(" ")[0] || "the client"}: ${s.client_phone}`);
     const list = Array.isArray(s.checklist) ? s.checklist : [];
-    for (const g of ["gear", "flow", "shots"]) {
+    for (const g of ["gear", "flow", "camera", "shots"]) {
       const items = list.filter((c) => c.group === g && !c.done);
       if (items.length) lines.push(`${GROUP_LABEL[g]} (${items.length}):\n` + items.slice(0, 25).map((c) => `  ☐ ${c.time ? `${fmt12(c.time)} ` : ""}${c.text}`).join("\n") + (items.length > 25 ? `\n  + ${items.length - 25} more` : ""));
     }

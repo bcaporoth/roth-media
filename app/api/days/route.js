@@ -19,6 +19,24 @@ const clip = (v, n) => String(v ?? "").slice(0, n);
 //   script-delete (Brandon; client only their own)   script-order (both)
 //   script-note (both)        script-draft (Brandon — Claude writes it)
 //   load (both) — the day + scripts, for refreshes
+// The calendar entry behind a dated shoot day: create it once (with the
+// Content Day prep lists from the playbook), then keep it in step.
+async function syncShoot(db, day, next) {
+  let shootId = day.shoot_id || null;
+  try {
+    const row = { title: next.title, kind: "business", client_name: day.client?.name || "", client_email: day.client?.email || "", date: next.date, start_time: next.start_time || "", address: next.location || "" };
+    if (shootId) await db.from("shoots").update(row).eq("id", shootId);
+    else {
+      let checklist = [];
+      try { const { lists } = await loadPlaybook(db); checklist = checklistFromPlaybook(lists, "business"); } catch {}
+      if (!checklist.length) checklist = seedChecklist("business");
+      const { data: sh } = await db.from("shoots").insert({ ...row, status: "planned", checklist }).select("id").single();
+      if (sh) { shootId = sh.id; await db.from("shoot_days").update({ shoot_id: sh.id }).eq("id", day.id); }
+    }
+  } catch {}
+  return shootId;
+}
+
 export async function POST(request) {
   const me = await whoAmI();
   if (!me) return bad("Sign in first", 401);
@@ -34,6 +52,11 @@ export async function POST(request) {
       const patch = cleanDayPatch({ title: body.title || "Shoot day", date: body.date, start_time: body.start_time || "09:00", end_time: body.end_time, location: body.location });
       const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch }).select("id").single();
       if (error) throw new Error(/shoot_days/.test(error.message) ? "Run supabase/shoot-days.sql once in the Supabase SQL editor first." : error.message);
+      // Dated from the start → it's on the Shoots calendar right away.
+      if (patch.date) {
+        const { data: who } = await db.from("clients").select("name, email").eq("id", client.id).maybeSingle();
+        await syncShoot(db, { id: data.id, shoot_id: null, client: who || {} }, { ...patch });
+      }
       return NextResponse.json({ ok: true, id: data.id });
     }
 
@@ -52,21 +75,8 @@ export async function POST(request) {
       if (error) throw new Error(error.message);
       // A dated day lives on the Shoots calendar too (prep sheet, night-before
       // email, drive time). Made once, then kept in step with the day.
-      let shootId = day.shoot_id || null;
       const next = { ...day, ...allowed };
-      if (me.role === "brandon" && next.date) {
-        try {
-          const row = { title: next.title, kind: "business", client_name: day.client?.name || "", client_email: day.client?.email || "", date: next.date, start_time: next.start_time || "", address: next.location || "" };
-          if (shootId) await db.from("shoots").update(row).eq("id", shootId);
-          else {
-            let checklist = [];
-            try { const { lists } = await loadPlaybook(db); checklist = checklistFromPlaybook(lists, "business"); } catch {}
-            if (!checklist.length) checklist = seedChecklist("business");
-            const { data: sh } = await db.from("shoots").insert({ ...row, status: "planned", checklist }).select("id").single();
-            if (sh) { shootId = sh.id; await db.from("shoot_days").update({ shoot_id: sh.id }).eq("id", day.id); }
-          }
-        } catch {}
-      }
+      const shootId = me.role === "brandon" && next.date ? await syncShoot(db, day, next) : day.shoot_id || null;
       return NextResponse.json({ ok: true, shootId });
     }
 

@@ -5,7 +5,7 @@ create table if not exists public.playbook (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  section text not null check (section in ('gear', 'shots', 'flow', 'poses')),
+  section text not null check (section in ('gear', 'shots', 'flow', 'poses', 'camera')),
   kind text not null default 'any' check (kind in ('any', 'wedding', 'engagement', 'family', 'business', 'event', 'other')),
   title text not null,
   notes text not null default '',

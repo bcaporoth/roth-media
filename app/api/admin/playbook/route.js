@@ -57,7 +57,10 @@ export async function POST(request) {
   if (!(await isAdminRequest())) return deny();
   const body = await request.json().catch(() => ({}));
   const db = supabaseAdmin();
-  const missing = (error) => bad(/playbook/i.test(error.message) && /does not exist|schema cache/i.test(error.message) ? "Run supabase/playbook.sql first" : error.message, 500);
+  const missing = (error) => bad(
+    /playbook/i.test(error.message) && /does not exist|schema cache/i.test(error.message) ? "Run supabase/playbook.sql first"
+      : /playbook_section_check/i.test(error.message) ? "Run supabase/camera-section.sql once in Supabase — it lets the playbook hold Settings & reminders lists"
+      : error.message, 500);
 
   try {
     if (body.action === "photo") {

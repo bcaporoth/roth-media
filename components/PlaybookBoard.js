@@ -1,23 +1,24 @@
 "use client";
 
-// Studio → Playbook: the reusable library behind every shoot — gear lists,
-// shot lists, flows of the day, poses & prompts. Edit in place; everything
+// Studio → Playbook: the reusable library behind every shoot — settings &
+// reminders, gear lists, shot lists, flows of the day, poses & prompts. Edit in place; everything
 // saves as you go. Lists marked "auto" are copied onto new shoots of that
 // type; any list can also be pulled into a shoot from its prep section.
 
 import { useEffect, useRef, useState } from "react";
 import { SECTION_LABEL } from "../lib/shoot-guides";
 
-const SECTIONS = ["gear", "shots", "flow", "poses"];
+const SECTIONS = ["camera", "gear", "shots", "flow", "poses"];
 import { PLAYBOOK_KIND_OPTIONS as KINDS } from "../lib/studio-labels";
 const KIND_LABEL = Object.fromEntries(KINDS);
 const BLURB = {
+  camera: "The on-camera nags: white balance, slo-mo, hold still, check the tripod angle. Shows on every shoot so you tick them while you're there, not after.",
   gear: "What goes in the bag. The “every shoot” kit plus extras per type.",
   shots: "The frames you don't leave without.",
   flow: "The order of the day. Put times on it once it's on a shoot.",
   poses: "Poses and things to say that get real reactions.",
 };
-const ADD_HINT = { gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
+const ADD_HINT = { camera: "Add a reminder…", gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
 
 // Shrink a picked photo in the browser (longest side 1200px, JPEG) so the
 // upload is a few hundred KB at most, whatever the phone shot it at.
@@ -128,7 +129,7 @@ export default function PlaybookBoard() {
 
       {adding && (
         <form className="shoot-new" onSubmit={(e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); create({ title: f.title, kind: f.kind, auto: f.auto === "on", items: [] }); }}>
-          <label className="wide">Name<input name="title" required autoFocus placeholder={section === "poses" ? "Engagement session — prompts" : section === "flow" ? "Elopement — run of show" : section === "gear" ? "Drone day" : "Reception must-haves"} /></label>
+          <label className="wide">Name<input name="title" required autoFocus placeholder={section === "poses" ? "Engagement session — prompts" : section === "flow" ? "Elopement — run of show" : section === "gear" ? "Drone day" : section === "camera" ? "Low light — settings" : "Reception must-haves"} /></label>
           <label>For<select name="kind" defaultValue={kind === "all" ? "any" : kind}>{KINDS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}</select></label>
           <label className="pbook-auto"><input type="checkbox" name="auto" /> Copy onto new shoots of this type automatically</label>
           <button type="submit" className="abtn">Add list</button>
@@ -136,7 +137,7 @@ export default function PlaybookBoard() {
       )}
 
       {!missing && kind !== "all" && !lists.some((l) => l.kind === kind) && (
-        <p className="portal-empty">No {KIND_LABEL[kind]} lists yet. <button type="button" className="achip" onClick={() => seed(kind)}>Add the {KIND_LABEL[kind]} starter lists</button> — gear, shots, flow and poses to make your own.</p>
+        <p className="portal-empty">No {KIND_LABEL[kind]} lists yet. <button type="button" className="achip" onClick={() => seed(kind)}>Add the {KIND_LABEL[kind]} starter lists</button> — settings, gear, shots, flow and poses to make your own.</p>
       )}
       {shown.length === 0 && !adding && lists.some((l) => l.kind === kind) && <p className="portal-empty">No {SECTION_LABEL[section].toLowerCase()} for that type yet. Hit “+ New list”.</p>}
       {shown.length === 0 && !adding && kind === "all" && <p className="portal-empty">Nothing here yet. Hit “+ New list”.</p>}

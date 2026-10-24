@@ -5,8 +5,8 @@
 // kind of shoot, and notes. New shoots can be spun up from a lead in the
 // inbox (address + date pulled from the form).
 //
-// Prep: every shoot carries four lists — the flow of the day (timed),
-// shots to get, poses & prompts, gear to pack — copied in from the Playbook
+// Prep: every shoot carries five lists — the flow of the day (timed),
+// camera settings & reminders, shots to get, poses & prompts, gear to pack — copied in from the Playbook
 // library and edited per job (add, remove, tick, pull in another list).
 // "Print prep sheet" opens a one-page version to print or save as PDF.
 //
@@ -357,34 +357,97 @@ function DeliveryButtons({ s, d, clock }) {
 }
 
 // One client's shoots, planned right on their profile: the same rows and
-// the same prep lists as the Shoots tab, filtered to their email.
+// the same prep lists as the Shoots tab, filtered to their email. A business
+// client's shoot days (the scripts, shared with the owner) live here too —
+// a dated day IS a shoot on the calendar, so each row carries its scripts
+// button instead of the day being listed a second time further down.
 const PLAN_LABEL = { wedding: "Plan the wedding day", business: "Plan a Content Day", family: "Plan a session" };
-export function ClientShoots({ client, type = "wedding", brief = null }) {
+export function ClientShoots({ client, type = "wedding", brief = null, days = [], onFail }) {
   const pulled = useMemo(() => briefToShoot(brief), [brief]);
   const sh = useShoots();
   const { data, error, openId, setOpenId, showNew, setShowNew, busy, flash, refresh, create, clock } = sh;
+  const [newDay, setNewDay] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refresh(); }, []);
   const email = (client.email || "").toLowerCase();
   const mine = (data?.shoots || []).filter((s) => (s.client_email || "").toLowerCase() === email);
   const sorted = [...mine].sort((a, b) => (a.status === "done" || a.status === "cancelled") - (b.status === "done" || b.status === "cancelled"));
+  const dayHref = (dd) => `/portal/admin/clients/${client.id}/days/${dd.id}`;
+  const dayList = days || [];
+  const dayByShoot = Object.fromEntries(dayList.filter((dd) => dd.shoot_id).map((dd) => [dd.shoot_id, { ...dd, href: dayHref(dd) }]));
+  // Days with no calendar entry yet (undated, or made before days and shoots were linked).
+  const loose = dayList.filter((dd) => !dd.shoot_id || !mine.some((s) => s.id === dd.shoot_id));
+  const isBiz = type === "business";
+  const toggleNew = () => { if (isBiz) { setNewDay((v) => !v); setShowNew(false); } else { setShowNew((v) => !v); setNewDay(false); } };
+  const anyOpen = showNew || newDay;
 
   return (
     <section className="cprof-card cprof-shoots">
-      <div className="cprof-cardhead"><h2>Shoots &amp; day plan</h2>
-        <button type="button" className="abtn" onClick={() => setShowNew((v) => !v)} disabled={!data}>{showNew ? "Close" : `+ ${PLAN_LABEL[type] || "Plan a shoot"}`}</button>
+      <div className="cprof-cardhead"><h2>Shoots{mine.length + loose.length > 0 && <em className="cprof-count">{mine.length + loose.length}</em>}</h2>
+        <span className="gcard-actions">
+          {isBiz && !anyOpen && data && <button type="button" className="achip" onClick={() => { setShowNew(true); setNewDay(false); }}>+ Shoot only (no scripts)</button>}
+          <button type="button" className="abtn" onClick={toggleNew} disabled={!data}>{anyOpen ? "Close" : `+ ${PLAN_LABEL[type] || "Plan a shoot"}`}</button>
+        </span>
       </div>
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
+      {days === null && <p className="sm-sqlhint">Shoot days (the scripts) aren&apos;t set up yet — run <code>supabase/shoot-days.sql</code> once in the Supabase SQL editor.</p>}
       {!data && !error && <p className="gcard-meta">Loading…</p>}
+      {newDay && <NewDay client={client} onFail={onFail} />}
       {data && showNew && <NewShoot key={type} compact prefill={{ client_name: client.name, client_email: client.email, client_phone: client.phone, kind: type, address: pulled.address, notes: pulled.notes, brief_shots: pulled.shots }} leads={data.leads.filter((l) => (l.email || "").toLowerCase() === email)} guides={data.guides} busy={busy} onCreate={create} />}
-      {data && mine.length === 0 && !showNew && <p className="gcard-meta">Nothing planned yet. Start one and the flow of the day, shot list, poses and gear from your playbook come with it{brief ? ", with their brief pulled in — the one shot they can't miss leads the shot list" : ""}. All editable for this client.</p>}
+      {data && mine.length === 0 && loose.length === 0 && !anyOpen && (
+        <p className="gcard-meta">{isBiz
+          ? `Nothing planned yet. A Content Day is the scripts for a day of filming — reels, recipes, how-tos — written with ${client.name.split(" ")[0] || "them"}: they see and edit the same page from their portal. Give it a date and it lands on the calendar with your Content Day prep lists.`
+          : `Nothing planned yet. Start one and the flow of the day, settings & reminders, shot list, poses and gear from your playbook come with it${brief ? ", with their brief pulled in — the one shot they can't miss leads the shot list" : ""}. All editable for this client.`}</p>
+      )}
       {data && mine.length > 0 && (
         <ul className="shoot-list">
-          {sorted.map((s) => <ShootRow key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
+          {sorted.map((s) => <ShootRow key={s.id} s={s} day={dayByShoot[s.id]} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
         </ul>
       )}
+      {loose.length > 0 && (
+        <div className="shoot-loose">
+          <span className="kick-sm">Scripts not on the calendar yet</span>
+          <ul className="shoot-list">
+            {loose.map((dd) => (
+              <li key={dd.id} className="shoot shoot-dayonly">
+                <a className="shoot-row shoot-row-link" href={dayHref(dd)}>
+                  <span className="shoot-when"><strong>{dd.date ? fmtDate(dd.date) : "No date"}</strong><em>{dd.date ? (dd.start_time ? fmt12(dd.start_time) : "") : "set one on the day page"}</em></span>
+                  <span className="shoot-main"><strong>{dd.title}</strong><em>{dd.scripts} script{dd.scripts === 1 ? "" : "s"}{dd.scripts ? ` · ${dd.ready} ready` : ""} · {dd.status}</em></span>
+                  <span className="abtn shoot-daybtn">Open scripts →</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
+  );
+}
+
+// Plan a Content Day: creates the shoot day (scripts page) and opens it.
+// Dated, it's put on the Shoots calendar at the same time.
+function NewDay({ client: c, onFail }) {
+  const [busy, setBusy] = useState(false);
+  async function create(e) {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.currentTarget).entries());
+    setBusy(true);
+    try {
+      const r = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId: c.id, ...f }) }).then(async (res) => { const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.error || "Couldn't create the day"); return j; });
+      window.location.href = `/portal/admin/clients/${c.id}/days/${r.id}`;
+    } catch (err) { setBusy(false); if (onFail) onFail(err); else alert(err.message); }
+  }
+  return (
+    <form className="shoot-new cprof-newday" onSubmit={create}>
+      <label>Title<input name="title" defaultValue="Content day" required /></label>
+      <label>Date<input type="date" name="date" /></label>
+      <label>Start<input type="time" name="start_time" defaultValue="09:00" /></label>
+      <label>End<input type="time" name="end_time" defaultValue="15:00" /></label>
+      <label className="wide">Where<input name="location" placeholder="Their shop, the kitchen…" /></label>
+      <p className="gcard-meta wide">Opens the scripts page for the day — you and {c.name.split(" ")[0] || "the owner"} write it together. With a date it goes on the calendar with your Content Day prep lists.</p>
+      <button type="submit" className="abtn" disabled={busy}>{busy ? "Opening…" : "Create and open →"}</button>
+    </form>
   );
 }
 
@@ -432,7 +495,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
 const NO_CLOCK = { ready: false, deliver: () => {} };
 const SAVE_LABEL = { saving: "Saving…", saved: "Saved ✓", retrying: "No signal — still trying. Your ticks are safe.", failed: "Couldn't save." };
-export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
+export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
   const d = deliveryState(s);
@@ -487,6 +550,12 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>
+      {day && (
+        <div className="shoot-daylink">
+          <a className="abtn shoot-daybtn" href={day.href}>Open scripts →</a>
+          <span className="gcard-meta">{day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready to film` : " — nothing written yet"} · shared with {s.client_name ? s.client_name.split(" ")[0] : "the client"}</span>
+        </div>
+      )}
       {d.applies && (
         <div className="shoot-clock">
           <DeliveryChips d={d} />
@@ -592,7 +661,7 @@ function DeliveryDetail({ s, d, clock, onUpdate }) {
 // One prep list (flow, shots, poses or gear): tick, add inline, remove,
 // pull in a list from the playbook. The flow carries a time per step and
 // shows in time order once times are set.
-const ADD_HINT = { gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
+const ADD_HINT = { camera: "Add a reminder…", gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
 function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove, onRename, onLoad, onClear, onTime }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState("");

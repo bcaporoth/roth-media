@@ -166,6 +166,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           who={who}
           onJump={setFilming}
           onClose={() => setFilming(null)}
+          reminders={me === "brandon" ? day.reminders || [] : []}
           onTick={async (s, i, done) => { try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: s.id, ...(typeof i === "object" ? i : { step: i }), done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
           onStatus={async (s, status) => { try { const r = await api({ action: "script-status", dayId: day.id, scriptId: s.id, status }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
         />
@@ -580,7 +581,7 @@ function SendBox({ day, emailReady, busy, onGo, onCancel }) {
 // ▶ Film mode: one script at a time, phone-sized. The hook and the Say lines
 // big enough to read from across a counter; tick each step as it's in the
 // can; "Filmed → next" moves on. Ticks save, so the other person sees them.
-function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
+function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, reminders = [] }) {
   const s = order[index];
   const b = cleanBody(s.body);
   const prog = progressOf(s.kind, b);
@@ -611,6 +612,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus }) {
         {items.length > 0 && <button type="button" className="abtn film-prompt" onClick={() => setPrompting(true)}>▶ Teleprompter</button>}
         {(b.on_camera || b.where) && <p className="film-meta">{[b.on_camera, b.where].filter(Boolean).join(" · ")}</p>}
         {b.hook && <div className="film-hook"><span>Hook</span><p>{b.hook}</p></div>}
+        {reminders.length > 0 && <details className="film-needs film-remind"><summary>📷 Camera reminders ({reminders.length})</summary><ul>{reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
         {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
         <div className="film-progress"><span style={{ width: `${prog.total ? Math.round((done / prog.total) * 100) : 0}%` }} /></div>
         {s.kind === "tchart" && b.scenes.map((sc, si) => (

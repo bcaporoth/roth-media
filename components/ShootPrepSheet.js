@@ -17,6 +17,7 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
     ? (shoot.checklist || []).map((c) => ({ ...c, group: groupOf(c) }))
     : [...GEAR_BASE.map((text) => ({ text, done: false, group: "gear" })), ...guide.gear.map((text) => ({ text, done: false, group: "gear" })), ...guide.shots.map((text) => ({ text, done: false, group: "shots" }))];
   const gear = items.filter((c) => c.group === "gear");
+  const camera = items.filter((c) => c.group === "camera");
   const shots = items.filter((c) => c.group === "shots");
   const poses = items.filter((c) => c.group === "poses");
   const flowAll = items.filter((c) => c.group === "flow");
@@ -48,6 +49,7 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
       </section>
 
       {flow.length > 0 && <List title={GROUP_LABEL.flow} items={flow} timed />}
+      {camera.length > 0 && <List title={GROUP_LABEL.camera} items={camera} wide />}
 
       <div className="sprint-cols">
         <List title="Shots to get" items={shots} />
