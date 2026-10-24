@@ -6432,12 +6432,22 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .film-scenelabel { margin: 0; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clay); }
 .dprint-scene { text-align: left; font-size: 0.9rem; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 0.6rem; }
 .admin-shell.is-dark .tc-row textarea, .admin-shell.is-dark .tc-see select, .admin-shell.is-dark .qc-q, .admin-shell.is-dark .qc-a, .admin-shell.is-dark .qc-bulk textarea { border-color: rgba(255, 255, 255, 0.22); }
+/* Cards never grow past their column — grid children default to min-width:auto, which lets a textarea push the box out on phones */
+.qc, .qc-list, .qc-item, .qc-row, .qc-bulk, .tc, .tc-scene, .tc-table, .tc-row, .tc-see { min-width: 0; max-width: 100%; }
+.qc-row { grid-template-columns: 2.2rem minmax(0, 1fr) auto; }
+.tc-head, .tc-row { grid-template-columns: 2.2rem minmax(0, 1.1fr) minmax(0, 1fr) auto; }
+.qc-q, .qc-a, .tc-row textarea, .qc-bulk textarea { max-width: 100%; overflow-wrap: anywhere; }
+
 @media (max-width: 640px) {
   .tc-head { display: none; }
-  .tc-row { grid-template-columns: 2.2rem 1fr auto; }
+  .tc-row { grid-template-columns: 2.2rem minmax(0, 1fr) auto; }
   .tc-say { grid-column: 2; border-right: 0 !important; border-left: 3px solid var(--ink) !important; }
   .tc-see { grid-column: 2; border-left: 3px solid var(--clay); padding-left: 0.4rem; }
   .tc-rowactions { grid-column: 3; grid-row: 1 / span 2; }
+  /* Phone: question + answer boxes stay inside their card */
+  .qc-row { grid-template-columns: 2rem minmax(0, 1fr) auto; gap: 0 0.45rem; }
+  .qc-a { margin-left: 0; width: 100%; }
+  .qc-item { padding: 0.5rem 0.55rem; }
 }
 
 .scr-done input { width: 1.1rem; height: 1.1rem; margin: 0; }
