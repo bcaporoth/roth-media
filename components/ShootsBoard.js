@@ -594,7 +594,7 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
     <li id={`shoot-${s.id}`} className={"shoot" + (open ? " is-open" : "") + (open && dayMode ? " is-day" : "") + ` is-${s.status}`}>
       <button type="button" className="shoot-row" onClick={onToggle} aria-expanded={open}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
-        <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{!s.address ? " · no address yet" : ""}</em></span>
+        <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.project_id ? " · part of a project" : ""}{!s.address ? " · no address yet" : ""}</em></span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>
@@ -678,6 +678,7 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
               <select className="achip" value={s.status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
               <a className="achip" href={`/portal/admin/shoots/print?id=${s.id}`} target="_blank" rel="noreferrer">Print prep sheet ↗</a>
               <button type="button" className={"achip" + (crew ? " is-on" : "")} onClick={() => setCrew(!crew)}>Crew link / QR</button>
+              {s.project_id && <a className="achip" href={`/portal/admin/projects/${s.project_id}`}>Open project ↗</a>}
               <button type="button" className="achip" onClick={() => setEdit((v) => !v)}>{edit ? "Close edit" : "Edit details"}</button>
               <button type="button" className="achip achip-danger" onClick={() => onRemove(s)}>Delete</button>
             </div>

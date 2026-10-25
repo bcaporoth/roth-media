@@ -29,6 +29,7 @@ export const STUDIO_TABS = [
     href: "/portal/admin/shoots",
     subs: [
       { key: "shoots", label: "List", href: "/portal/admin/shoots" },
+      { key: "projects", label: "Projects", href: "/portal/admin/projects" },
       { key: "calendar", label: "Month", href: "/portal/admin/calendar" },
       { key: "playbook", label: "Playbook", href: "/portal/admin/playbook" },
     ],
@@ -50,6 +51,7 @@ export const STUDIO_TABS = [
     subs: [
       { key: "stats", label: "Stats", href: "/portal/admin/stats" },
       { key: "card", label: "Card & QR", href: "/portal/admin/card" },
+      { key: "vault", label: "Vault", href: "/portal/admin/vault" },
       { key: "look", label: "✦ Look", look: true },
     ],
   },
