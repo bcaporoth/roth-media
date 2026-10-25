@@ -141,6 +141,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       </div>
 
       <DayHeader day={day} role={me} onSaved={(patch) => setDay((d) => ({ ...d, ...patch }))} onError={fail} total={total} ready={ready} count={scripts.length} />
+      {me === "client" && <QuickTips scripts={scripts} client={day.client} />}
 
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
@@ -167,6 +168,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           onJump={setFilming}
           onClose={() => setFilming(null)}
           reminders={me === "brandon" ? day.reminders || [] : []}
+          tips={me === "client" ? { scripts, client: day.client } : null}
           onTick={async (s, i, done) => { try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: s.id, ...(typeof i === "object" ? i : { step: i }), done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
           onStatus={async (s, status) => { try { const r = await api({ action: "script-status", dayId: day.id, scriptId: s.id, status }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
         />
@@ -245,6 +247,46 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
 }
 
 // Title / date / start / where / status / day notes. Owner edits notes only.
+// Quick tips for whoever's on camera — shown to the client on their day
+// page and in Film mode, so the talent reads the rules before the first take.
+// Who the talent is comes from the scripts' "On camera" lines; otherwise it's
+// the owner. Brandon's own copy, keep it blunt.
+export const TALENT_TIPS = [
+  "Eye contact with the lens from the first word to the last — the lens is the customer.",
+  "Don't look up at Brandon mid-take. If you lose your place, pause, breathe, restart the line — we cut it.",
+  "Stay engaged the whole take: energy up, face alive, even between lines.",
+  "Empty your pockets — phone, keys, wallet. They show.",
+  "Clear the background: boxes, cords, trash cans, yesterday's stuff. Clean counter, clean wall.",
+  "Be eccentric. Big gestures, big expressions. What feels like too much on the day is exactly right on a phone screen.",
+  "Don't be boring. Say it like you'd say it to a friend, not like you're reading.",
+  "Smile before you start talking — it reads for the first second, which is the only second that matters.",
+  "Hands: hold the thing, point at the thing, do the thing. Don't hide them.",
+  "Wear what you'd wear on your best day there. No busy patterns, no logos that aren't yours.",
+];
+function talentOf(scripts, client) {
+  const names = [...new Set((scripts || []).map((s) => (s.body?.on_camera || "").trim()).filter(Boolean))];
+  if (names.length) return names.join(" · ");
+  return client?.name ? `${client.name.split(" ")[0]} — that's you` : "you";
+}
+function QuickTips({ scripts, client, compact = false }) {
+  const talent = talentOf(scripts, client);
+  const [open, setOpen] = useState(!compact);
+  return (
+    <section className={"sday-tips" + (compact ? " is-compact" : "")}>
+      <button type="button" className="sday-tips-head" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <span className="kick-sm">Quick tips for on camera</span>
+        <strong>Talent: {talent}</strong>
+        <em>{open ? "Hide" : "Show"}</em>
+      </button>
+      {open && (
+        <ol className="sday-tips-list">
+          {TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
   const [edit, setEdit] = useState(false);
   const [notes, setNotes] = useState(day.notes || "");
@@ -581,7 +623,7 @@ function SendBox({ day, emailReady, busy, onGo, onCancel }) {
 // ▶ Film mode: one script at a time, phone-sized. The hook and the Say lines
 // big enough to read from across a counter; tick each step as it's in the
 // can; "Filmed → next" moves on. Ticks save, so the other person sees them.
-function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, reminders = [] }) {
+function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, reminders = [], tips = null }) {
   const s = order[index];
   const b = cleanBody(s.body);
   const prog = progressOf(s.kind, b);
@@ -612,6 +654,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
         {items.length > 0 && <button type="button" className="abtn film-prompt" onClick={() => setPrompting(true)}>▶ Teleprompter</button>}
         {(b.on_camera || b.where) && <p className="film-meta">{[b.on_camera, b.where].filter(Boolean).join(" · ")}</p>}
         {b.hook && <div className="film-hook"><span>Hook</span><p>{b.hook}</p></div>}
+        {tips && <details className="film-needs film-remind"><summary>🎯 Quick tips · talent: {talentOf(tips.scripts, tips.client)}</summary><ul>{TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}</ul></details>}
         {reminders.length > 0 && <details className="film-needs film-remind"><summary>📷 Camera reminders ({reminders.length})</summary><ul>{reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
         {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
         <div className="film-progress"><span style={{ width: `${prog.total ? Math.round((done / prog.total) * 100) : 0}%` }} /></div>

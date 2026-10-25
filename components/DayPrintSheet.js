@@ -3,11 +3,12 @@
 // the closing line. Same sheet for Brandon (Studio) and the owner (portal).
 // Pure markup; the print routes load the day and hand it over.
 
+import { TALENT_TIPS } from "./ShootDay";
 import { KIND_LABEL, STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, cleanBody, runningOrder, totalMinutes, fmt12, fmtMins } from "../lib/scripts";
 
 const dateLong = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date to be set");
 
-export default function DayPrintSheet({ day }) {
+export default function DayPrintSheet({ day, tips = false }) {
   const order = runningOrder(day, day.scripts || []);
   const total = totalMinutes(day.scripts || []);
   return (
@@ -25,6 +26,7 @@ export default function DayPrintSheet({ day }) {
       </header>
 
       {day.notes && <section className="sprint-notes"><h2 className="dprint-h2">Day notes</h2><p>{day.notes}</p></section>}
+      {tips && <section className="sprint-notes"><h2 className="dprint-h2">Quick tips for on camera</h2><ol className="sday-tips-list">{TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}</ol></section>}
 
       <section>
         <h2 className="dprint-h2">Running order</h2>

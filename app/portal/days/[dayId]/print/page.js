@@ -19,7 +19,7 @@ export default async function PortalDayPrintPage({ params }) {
         <Link href={`/portal/days/${dayId}`}>← Back to the day</Link>
         <span className="sprint-bar-hint">⌘P / Ctrl+P → Save as PDF</span>
       </nav>
-      <DayPrintSheet day={day} />
+      <DayPrintSheet day={day} tips />
     </div>
   );
 }
