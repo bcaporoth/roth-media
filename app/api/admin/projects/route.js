@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, putSignature, signedUrl } from "../../../../lib/r2";
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
 import { PROJECT_STATUSES, PERSON_STATUSES, PERSON_KINDS } from "../../../../lib/projects";
+import { ARC_KEYS } from "../../../../lib/story-arc";
 
 // Studio → Projects: the job above the dates. Projects, the people in them
 // (cast + sources), story beats, archive to-gets, and the releases signed on
@@ -26,6 +27,7 @@ function cleanProject(b) {
   if (b.logline !== undefined) o.logline = clip(b.logline, 400);
   if (b.notes !== undefined) o.notes = clip(b.notes, 8000);
   if (b.beats !== undefined) o.beats = (Array.isArray(b.beats) ? b.beats : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), done: Boolean(x?.done), who: clip(x?.who, 120) })).filter((x) => x.text);
+  if (b.arc !== undefined) o.arc = Object.fromEntries(ARC_KEYS.map((k) => [k, clip(b.arc?.[k], 2000)]).filter(([, v]) => v));
   if (b.archive !== undefined) o.archive = (Array.isArray(b.archive) ? b.archive : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), source: clip(x?.source, 160), status: ["wanted", "requested", "in_hand"].includes(x?.status) ? x.status : "wanted" })).filter((x) => x.text);
   return o;
 }

@@ -14,7 +14,8 @@ create table if not exists public.projects (
   logline text not null default '',             -- the one-sentence story
   notes text not null default '',
   beats jsonb not null default '[]'::jsonb,       -- [{ "text", "done", "who" }] story beats, in order
-  archive jsonb not null default '[]'::jsonb      -- [{ "text", "source", "status": "wanted|requested|in_hand" }]
+  archive jsonb not null default '[]'::jsonb,     -- [{ "text", "source", "status": "wanted|requested|in_hand" }]
+  arc jsonb not null default '{}'::jsonb          -- story arc beats, keys in lib/story-arc.js
 );
 alter table public.shoots add column if not exists project_id uuid;
 create index if not exists shoots_project_idx on public.shoots(project_id);

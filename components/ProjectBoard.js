@@ -11,6 +11,7 @@ import { RELEASE_KINDS } from "../lib/releases";
 import ReleaseSign from "./ReleaseSign";
 import { ReleaseView } from "./VaultList";
 import AddressInput from "./AddressInput";
+import StoryArc from "./StoryArc";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -71,6 +72,11 @@ export default function ProjectBoard({ initial }) {
         <div className="cprof-cardhead"><h2>The story</h2></div>
         <Editable label="Logline" value={p.logline} rows={1} placeholder="One sentence: what this film is about" onSave={(v) => patchProject({ logline: v })} />
         <Editable label="Notes" value={p.notes} rows={3} placeholder="Angle, tone, references, what the client wants it to do" onSave={(v) => patchProject({ notes: v })} />
+      </section>
+
+      <section className="cprof-card">
+        <div className="cprof-cardhead"><h2>Story line — the hero&apos;s journey</h2><span className="gcard-meta">The whole film on one line. Highs are wins, lows are trouble. Fill the blanks.</span></div>
+        <StoryArc arc={p.arc || {}} onSave={(arc) => patchProject({ arc }, "Beat saved")} />
       </section>
 
       <div className="cprof-cols">

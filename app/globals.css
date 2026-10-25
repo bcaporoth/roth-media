@@ -6130,6 +6130,46 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .arch-add input:nth-child(2) { max-width: 10rem; }
 .proj-pct { flex: 1 1 140px; max-width: 220px; height: 1.1rem; }
 .proj-pct em { font-size: 0.7rem; }
+/* Story arc */
+.arc { display: grid; gap: 0.7rem; }
+.arc-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.arc-grid { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 4 6; }
+.arc-pct { font-size: 15px; font-weight: 700; fill: var(--ink-soft); letter-spacing: 0.06em; }
+.arc-fill { fill: color-mix(in srgb, var(--ink) 9%, transparent); }
+.arc-line { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.arc-pt { cursor: pointer; }
+.arc-hit { fill: transparent; }
+.arc-dot { fill: var(--bone, #f4efe6); stroke: var(--ink); stroke-width: 3.5; transition: r 0.15s; }
+.arc-pt.is-filled .arc-dot { fill: var(--clay); stroke: var(--clay); }
+.arc-pt.is-open .arc-dot { stroke: var(--clay); stroke-width: 6; }
+.arc-pt:hover .arc-dot, .arc-pt:focus-visible .arc-dot { r: 12; }
+.arc-pt:focus-visible { outline: none; }
+.arc-label { font-size: 15px; font-weight: 700; fill: var(--ink); letter-spacing: 0.02em; paint-order: stroke; stroke: var(--bone, #f4efe6); stroke-width: 5px; stroke-linejoin: round; }
+.arc-pt.is-open .arc-label { fill: var(--clay); }
+.is-dark .arc-label { stroke: #1f1b17; }
+.is-dark .arc-dot { fill: #1f1b17; stroke: var(--bone, #f4efe6); }
+.is-dark .arc-line { stroke: var(--bone, #f4efe6); }
+.arc-count { margin: 0; }
+.arc-edit { border: 2px solid var(--clay); border-radius: 14px; padding: 0.9rem 1rem; display: grid; gap: 0.6rem; background: color-mix(in srgb, var(--clay) 7%, transparent); }
+.arc-edit-head { display: grid; gap: 0.15rem; }
+.arc-edit-head em { font-style: normal; font-size: 0.92rem; }
+.arc-edit textarea { width: 100%; font: inherit; font-size: 1rem; line-height: 1.5; padding: 0.75rem 0.85rem; border: 1px solid var(--field-line); border-radius: 10px; background: var(--surface); color: inherit; resize: vertical; }
+.arc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.arc-row { width: 100%; display: grid; grid-template-columns: 3rem 1fr auto; gap: 0.6rem; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 0.8rem; font: inherit; color: inherit; cursor: pointer; min-height: 2.9rem; }
+.arc-row-pct { font-family: var(--font-display), "Syne", sans-serif; font-size: 0.95rem; color: var(--ink-soft); }
+.arc-row-main { min-width: 0; display: grid; }
+.arc-row-main strong { font-weight: 600; }
+.arc-row-main em { font-style: normal; font-size: 0.85rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arc-list li.is-filled .arc-row-main em { color: var(--ink); font-style: italic; }
+.arc-row-dot { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid var(--ink); }
+.arc-list li.is-filled .arc-row-dot { background: var(--clay); border-color: var(--clay); }
+.arc-list li.is-open .arc-row { border-color: var(--clay); }
+@media (max-width: 640px) {
+  /* Phone: the curve + dots carry the picture; labels live in the list below (the open beat still shows its name). */
+  .arc-label { display: none; }
+  .arc-pt.is-open .arc-label { display: block; font-size: 30px; }
+  .arc-pct { font-size: 22px; } .arc-line { stroke-width: 6; } .arc-dot { stroke-width: 5; r: 11; } .arc-pt.is-filled .arc-dot { r: 12; }
+}
 /* Journal */
 .jrnl-new { display: grid; gap: 0.5rem; }
 .jrnl-new textarea { width: 100%; font: inherit; font-size: 1.02rem; line-height: 1.5; padding: 0.8rem 0.9rem; border: 1.5px solid var(--clay); border-radius: 12px; background: var(--surface); color: inherit; resize: vertical; }
