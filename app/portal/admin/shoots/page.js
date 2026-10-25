@@ -15,7 +15,6 @@ export default async function ShootsPage() {
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
       <StudioShell active="shoots" newCount={newCount} kick="Studio" title="Shoots" wide>
-        <p className="inbox-hint">Your itinerary: every job with its place, how far it is, when the sun sets there, a checklist, and notes. Start one from a lead and the address comes along.</p>
         <ShootsBoard />
       </StudioShell>
       <StudioFooter />

@@ -55,10 +55,13 @@ function clean(body, existing = {}) {
   if (body.notes !== undefined) out.notes = clip(body.notes, 8000);
   if (body.checklist !== undefined)
     out.checklist = (Array.isArray(body.checklist) ? body.checklist : []).slice(0, 300).map((c) => {
-      const group = GROUPS.includes(c.group) ? c.group : "shots";
+      const group = GROUPS.includes(c.group) || c.group === "wrap" ? c.group : "shots";
       const time = group === "flow" && /^\d{2}:\d{2}$/.test(String(c.time || "")) ? c.time : "";
       const img = PLAYBOOK_IMG_RE.test(String(c.img || "")) ? c.img : "";
-      return { text: clip(c.text, 600), done: Boolean(c.done), group, ...(time ? { time } : {}), ...(img ? { img } : {}) };
+      // "wrap" = before-you-leave counters (day mode): need N, got M.
+      const need = group === "wrap" ? Math.max(0, Math.min(20, Math.round(Number(c.need) || 0))) : 0;
+      const got = group === "wrap" ? Math.max(0, Math.min(99, Math.round(Number(c.got) || 0))) : 0;
+      return { text: clip(c.text, 600), done: Boolean(c.done), group, ...(time ? { time } : {}), ...(img ? { img } : {}), ...(group === "wrap" ? { need, got } : {}) };
     }).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
@@ -107,6 +110,12 @@ export async function POST(request) {
         const { lists } = await loadPlaybook(db);
         row.checklist = checklistFromPlaybook(lists, row.kind || "other");
         if (!row.checklist.length) row.checklist = seedChecklist(row.kind || "other");
+        // A type with no playbook lists of its own yet (documentary, before its
+        // starter lists are added) still gets the built-in guide for it.
+        else if (!(lists || []).some((l) => l.kind === row.kind && l.auto)) {
+          const have = new Set(row.checklist.map((c) => `${c.group}|${c.text}`));
+          for (const c of seedChecklist(row.kind || "other")) if (!have.has(`${c.group}|${c.text}`)) row.checklist.push(c);
+        }
       }
       // Shots pulled from the client's brief (non-negotiable, must-haves) lead the shot list.
       const fromBrief = (Array.isArray(body.brief_shots) ? body.brief_shots : []).slice(0, 20).map((t) => clip(t, 240)).filter(Boolean);
