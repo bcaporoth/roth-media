@@ -35,6 +35,7 @@ import { isNoEmail } from "../lib/no-email";
 import { briefToShoot } from "../lib/intake";
 import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
 import StudioCalendar, { gcalUrl } from "./StudioCalendar";
+import QRCode from "qrcode";
 
 async function api(payload, { keepalive = false } = {}) {
   const res = await fetch("/api/admin/shoots", { method: payload ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: payload ? JSON.stringify(payload) : undefined, keepalive });
@@ -584,6 +585,9 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
   }
   const saveNotes = () => { if (notes !== s.notes) onUpdate(s.id, { notes }, "Notes saved"); };
   const groups = GROUPS.filter((g) => showsGroup(s.kind, g));
+  const counted = items.filter((c) => ["flow", "camera", "shots", "poses"].includes(c.group));
+  const pct = counted.length ? Math.round((counted.filter((c) => c.done).length / counted.length) * 100) : 0;
+  const [crew, setCrew] = useState(false);
   const flowSorted = (list) => [...list.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...list.filter((c) => !c.time)];
 
   return (
@@ -609,12 +613,15 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
             {usesSun(s.kind) && <div><span className="kick-sm">Sunset</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden {t.golden ? fmt12(t.golden) : "—"}</em></div>}
             {t.leave && <div><span className="kick-sm">Leave</span><strong>{fmt12(t.leave)}</strong></div>}
           </div>
+          <div className="crew-progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${pct}%` }} /><em>{pct}%</em></div>
           <div className="gcard-actions sday-actions">
             {s.address && <a className="abtn" href={mapsUrl(s.address, s.lat, s.lng)} target="_blank" rel="noreferrer">Directions ↗</a>}
             {s.client_phone && <a className="abtn" href={`sms:${s.client_phone.replace(/[^\d+]/g, "")}`}>Text {first}</a>}
             {s.client_phone && <a className="abtn" href={`tel:${s.client_phone.replace(/[^\d+]/g, "")}`}>Call</a>}
+            <button type="button" className={"achip" + (crew ? " is-on" : "")} onClick={() => setCrew(!crew)}>Crew QR</button>
             <button type="button" className="achip" onClick={() => setDayMode(false)}>Full view</button>
           </div>
+          {crew && <CrewShare s={s} />}
 
           <RollGate />
 
@@ -670,11 +677,13 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
               {s.date && s.status !== "cancelled" && <a className="achip" href={gcalUrl(s)} target="_blank" rel="noreferrer">+ Google Cal</a>}
               <select className="achip" value={s.status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
               <a className="achip" href={`/portal/admin/shoots/print?id=${s.id}`} target="_blank" rel="noreferrer">Print prep sheet ↗</a>
+              <button type="button" className={"achip" + (crew ? " is-on" : "")} onClick={() => setCrew(!crew)}>Crew link / QR</button>
               <button type="button" className="achip" onClick={() => setEdit((v) => !v)}>{edit ? "Close edit" : "Edit details"}</button>
               <button type="button" className="achip achip-danger" onClick={() => onRemove(s)}>Delete</button>
             </div>
           )}
 
+          {crew && <CrewShare s={s} />}
           {edit && (
             <form className="shoot-new shoot-edit" key={s.updated_at} onSubmit={(e) => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); onUpdate(s.id, f); setEdit(false); }}>
               <label>Title<input name="title" defaultValue={s.title} required /></label>
@@ -714,6 +723,30 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
         </div>
       )}
     </li>
+  );
+}
+
+// Crew link: the QR a second shooter scans to get /crew/<token> — the same
+// flow, reminders and shot list, ticks shared both ways. No login.
+function CrewShare({ s }) {
+  const [png, setPng] = useState("");
+  const [copied, setCopied] = useState(false);
+  const url = s.crew_token ? `https://rothmediaco.com/crew/${s.crew_token}` : "";
+  useEffect(() => { if (url) QRCode.toDataURL(url, { width: 320, margin: 1 }).then(setPng).catch(() => setPng("")); }, [url]);
+  if (!url) return <p className="sm-sqlhint">Crew links need <code>supabase/crew.sql</code> run once in the Supabase SQL editor.</p>;
+  return (
+    <div className="crewshare">
+      {png && <img src={png} alt="QR code for the crew link" width={160} height={160} />}
+      <div className="crewshare-side">
+        <strong>Second shooter: scan this</strong>
+        <p className="gcard-meta">They get the flow, the roll gate and the shot list — no login. Ticks show for both of you.</p>
+        <div className="gcard-actions">
+          <button type="button" className="achip" onClick={() => navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}>{copied ? "Copied ✓" : "Copy link"}</button>
+          <a className="achip" href={url} target="_blank" rel="noreferrer">Open ↗</a>
+          {navigator.share && <button type="button" className="achip" onClick={() => navigator.share({ title: s.title, url }).catch(() => {})}>Share…</button>}
+        </div>
+      </div>
+    </div>
   );
 }
 
