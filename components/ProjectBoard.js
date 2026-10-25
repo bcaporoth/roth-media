@@ -10,6 +10,7 @@ import { SHOOT_KIND_LABEL, SHOOT_STATUS_LABEL } from "../lib/studio-labels";
 import { RELEASE_KINDS } from "../lib/releases";
 import ReleaseSign from "./ReleaseSign";
 import { ReleaseView } from "./VaultList";
+import AddressInput from "./AddressInput";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -235,7 +236,7 @@ function DaysCard({ project, days, setDays, people, onSign, fail }) {
           <label className="wide">What this day is<input name="title" required autoFocus placeholder="Interviews — Fr. Jones + the Kellys" /></label>
           <label>Date<input type="date" name="date" /></label>
           <label>Start<input type="time" name="start_time" /></label>
-          <label className="wide">Where<input name="address" placeholder="St. Mary's Church, 155 State St, Corning NY" /></label>
+          <label className="wide">Where<AddressInput name="address" placeholder="Type it — St. Mary's Corning…" /></label>
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : "Add the day"}</button>
           <p className="gcard-meta wide">Goes on the Shoots calendar with the {SHOOT_KIND_LABEL[project.kind]} prep lists — day mode, roll gate, crew QR, the lot.</p>
         </form>

@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
+import AddressInput from "./AddressInput";
 
 async function api(payload) {
   const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -313,11 +314,11 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
     <header className="sday-head">
       {edit ? (
         <form className="sday-edit" onSubmit={save}>
-          <label>Title<input name="title" defaultValue={day.title} required /></label>
+          <label className="wide">Title<input name="title" defaultValue={day.title} required /></label>
           <label>Date<input type="date" name="date" defaultValue={day.date || ""} /></label>
           <label>Start<input type="time" name="start_time" defaultValue={day.start_time || ""} /></label>
           <label>End<input type="time" name="end_time" defaultValue={day.end_time || ""} /></label>
-          <label className="wide">Where<input name="location" defaultValue={day.location} placeholder="The shop, the kitchen, out front…" /></label>
+          <label className="wide">Where{role === "brandon" ? <AddressInput name="location" defaultValue={day.location} placeholder="Type the place — their shop, the church…" /> : <input name="location" defaultValue={day.location} placeholder="The shop, the kitchen, out front…" />}</label>
           <label>Status<select name="status" defaultValue={day.status}>{DAY_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
           <div className="gcard-actions"><button type="submit" className="abtn" disabled={busy}>Save</button><button type="button" className="achip" onClick={() => setEdit(false)}>Cancel</button></div>
         </form>

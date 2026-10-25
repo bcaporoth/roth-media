@@ -36,6 +36,7 @@ import { briefToShoot } from "../lib/intake";
 import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
 import StudioCalendar, { gcalUrl } from "./StudioCalendar";
 import QRCode from "qrcode";
+import AddressInput from "./AddressInput";
 
 async function api(payload, { keepalive = false } = {}) {
   const res = await fetch("/api/admin/shoots", { method: payload ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: payload ? JSON.stringify(payload) : undefined, keepalive });
@@ -455,7 +456,7 @@ function NewDay({ client: c, onFail }) {
       <label>Date<input type="date" name="date" /></label>
       <label>Start<input type="time" name="start_time" defaultValue="09:00" /></label>
       <label>End<input type="time" name="end_time" defaultValue="15:00" /></label>
-      <label className="wide">Where<input name="location" placeholder="Their shop, the kitchen…" /></label>
+      <label className="wide">Where<AddressInput name="location" placeholder="Type the place — their shop, the church…" /></label>
       <p className="gcard-meta wide">Opens the scripts page for the day — you and {c.name.split(" ")[0] || "the owner"} write it together. With a date it goes on the calendar with your Content Day prep lists.</p>
       <button type="submit" className="abtn" disabled={busy}>{busy ? "Opening…" : "Create and open →"}</button>
     </form>
@@ -494,7 +495,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
       <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
-      <label className="wide">Address / place<input value={f.address} onChange={set("address")} placeholder="Apples and Moore, Watkins Glen NY" /></label>
+      <label className="wide">Address / place<AddressInput value={f.address} onChange={(v) => setF((x) => ({ ...x, address: v }))} placeholder="Type a place — St. Mary's Corning, Apples and Moore…" /></label>
       {!compact && !f.client_name && !more && <label className="wide">Client<input value={f.client_name} onChange={set("client_name")} placeholder="Who it's for" /></label>}
       <div className="wide shoot-new-foot">
         <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Add shoot${f.client_name || f.title ? ` · ${f.title.trim() || autoTitle}` : ""}`}</button>
@@ -558,6 +559,17 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
     if (!fresh.length) return say("Already all here");
     commit((cur) => [...cur, ...fresh]);
     say(`Added ${fresh.length} from “${list.title}”`);
+  }
+  // This shoot's version of a list → a new playbook list (so the next shoot starts from it).
+  async function saveToPlaybook(group) {
+    const list = items.filter((c) => c.group === group);
+    if (!list.length) return say("Nothing to save");
+    const title = window.prompt(`Save “${GROUP_LABEL[group]}” to the playbook as…`, `${s.title} — ${GROUP_LABEL[group].toLowerCase()}`);
+    if (!title) return;
+    try {
+      await fetch("/api/admin/playbook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", section: group, kind: s.kind, title, auto: false, items: list.map((c) => ({ text: c.text, ...(c.time ? { time: c.time } : {}), ...(c.img ? { img: c.img } : {}) })) }) }).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't save"); });
+      say(`Saved to the playbook as “${title}”`);
+    } catch (e) { alert(e.message); }
   }
   function clearGroup(group) {
     if (!window.confirm(`Empty “${GROUP_LABEL[group]}” on this shoot? The playbook isn't touched.`)) return;
@@ -692,7 +704,7 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
               <label>Date<input type="date" name="date" defaultValue={s.date || ""} /></label>
               <label>Start time<input type="time" name="start_time" defaultValue={s.start_time} /></label>
               {usesSun(s.kind) && <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>}
-              <label className="wide">Address / place<input name="address" defaultValue={s.address} /></label>
+              <label className="wide">Address / place<AddressInput name="address" defaultValue={s.address} /></label>
               <label>Client<input name="client_name" defaultValue={s.client_name} /></label>
               <label>Phone<input name="client_phone" defaultValue={s.client_phone} /></label>
               <label>Email<input type="email" name="client_email" defaultValue={s.client_email} /></label>
@@ -711,7 +723,7 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
             </div>
             <div className="shoot-cols shoot-accordion">
               {groups.map((g) => (
-                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} collapsed={openList !== g} onOpen={() => setOpenList(openList === g ? "" : g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onRename={renameItem} onLoad={loadList} onClear={clearGroup} onTime={setTime} />
+                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} collapsed={openList !== g} onOpen={() => setOpenList(openList === g ? "" : g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onRename={renameItem} onLoad={loadList} onClear={clearGroup} onSave={saveToPlaybook} onTime={setTime} />
               ))}
             </div>
           </div>
@@ -846,7 +858,7 @@ function DeliveryDetail({ s, d, clock, onUpdate }) {
 // pull in a list from the playbook. The flow carries a time per step and
 // shows in time order once times are set.
 const ADD_HINT = { camera: "Add a reminder…", gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
-function PrepList({ title, group, kind, items, lists, collapsed = false, onOpen = null, onToggle, onAdd, onRemove, onRename, onLoad, onClear, onTime }) {
+function PrepList({ title, group, kind, items, lists, collapsed = false, onOpen = null, onToggle, onAdd, onRemove, onRename, onLoad, onClear, onSave = null, onTime }) {
   const [text, setText] = useState("");
   const [time, setTime] = useState("");
   const [editing, setEditing] = useState(null); // index into `shown` being edited
@@ -886,6 +898,7 @@ function PrepList({ title, group, kind, items, lists, collapsed = false, onOpen 
               {options.map((l) => <option key={l.id} value={l.id}>{l.title} ({(l.items || []).length})</option>)}
             </select>
           )}
+          {items.length > 0 && onSave && <button type="button" className="achip" onClick={() => onSave(group)} title="Keep this version in the playbook for next time">Save to playbook</button>}
           {items.length > 0 && <button type="button" className="achip" onClick={() => onClear(group)}>Clear</button>}
         </span>
       </div>
