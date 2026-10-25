@@ -52,6 +52,7 @@ export const STUDIO_TABS = [
       { key: "stats", label: "Stats", href: "/portal/admin/stats" },
       { key: "card", label: "Card & QR", href: "/portal/admin/card" },
       { key: "vault", label: "Vault", href: "/portal/admin/vault" },
+      { key: "staff", label: "Staff", href: "/portal/admin/staff" },
       { key: "look", label: "✦ Look", look: true },
     ],
   },

@@ -179,6 +179,11 @@ export default async function PortalPage({ searchParams }) {
 
   if (user && next) redirect(next);
   if (user && !wantGalleries && adminConfigured && user.email?.toLowerCase() === ADMIN_EMAIL) redirect("/portal/admin");
+  // Staff (not a client, not Brandon) → their projects.
+  if (user && !client && adminConfigured) {
+    const { data: staff } = await supabaseAdmin().from("staff").select("id").eq("email", user.email.toLowerCase()).eq("active", true).maybeSingle().then((r) => r, () => ({ data: null }));
+    if (staff) redirect("/portal/crew");
+  }
 
   if (!user) {
     return (

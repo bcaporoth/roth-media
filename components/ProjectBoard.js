@@ -24,7 +24,8 @@ const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US"
 const fmt12 = (t) => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
 const tel = (v) => v.replace(/[^\d+]/g, "");
 
-export default function ProjectBoard({ initial }) {
+export default function ProjectBoard({ initial, role = "brandon", staffList = null }) {
+  const isOwner = role === "brandon";
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -53,7 +54,7 @@ export default function ProjectBoard({ initial }) {
         </div>
         <div className="gcard-actions">
           <button type="button" className="abtn" onClick={() => setSigning({})}>✍ Sign a release</button>
-          <a className="achip" href="/portal/admin/projects">← Projects</a>
+          <a className="achip" href={isOwner ? "/portal/admin/projects" : "/portal/crew"}>← {isOwner ? "Projects" : "My projects"}</a>
         </div>
       </div>
       {flash && <p className="clients-flash">{flash}</p>}
@@ -85,7 +86,8 @@ export default function ProjectBoard({ initial }) {
           <ReleasesCard releases={releases} people={people} onView={setViewing} onSign={() => setSigning({})} />
         </div>
         <div className="cprof-col">
-          <DaysCard project={p} days={days} setDays={setDays} people={people} onSign={(shoot) => setSigning({ shoot })} fail={fail} />
+          <DaysCard project={p} days={days} setDays={setDays} people={people} onSign={(shoot) => setSigning({ shoot })} fail={fail} isOwner={isOwner} />
+          <TeamCard project={p} team={initial.team} staffList={staffList} isOwner={isOwner} fail={fail} say={say} />
           <BeatsCard project={p} people={people} onSave={(beats) => patchProject({ beats }, "Beats saved")} />
           <ArchiveCard project={p} onSave={(archive) => patchProject({ archive }, "Archive saved")} />
         </div>
@@ -287,7 +289,7 @@ function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView }) 
 }
 
 // ── Shoot days ──
-function DaysCard({ project, days, setDays, people, onSign, fail }) {
+function DaysCard({ project, days, setDays, people, onSign, fail, isOwner = true }) {
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   async function add(e) {
@@ -303,7 +305,7 @@ function DaysCard({ project, days, setDays, people, onSign, fail }) {
   return (
     <section className="cprof-card">
       <div className="cprof-cardhead"><h2>Shoot days{days.length > 0 && <em className="cprof-count">{days.length}</em>}</h2>
-        <button type="button" className="abtn" onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Plan a day"}</button>
+        {isOwner && <button type="button" className="abtn" onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Plan a day"}</button>}
       </div>
       {adding && (
         <form className="shoot-new" onSubmit={add}>
@@ -322,7 +324,7 @@ function DaysCard({ project, days, setDays, people, onSign, fail }) {
           const pct = d.total ? Math.round((d.done / d.total) * 100) : 0;
           return (
             <li key={d.id} className={`shoot is-${d.status}`}>
-              <a className="shoot-row shoot-row-link" href={`/portal/admin/shoots?open=${d.id}`}>
+              <a className="shoot-row shoot-row-link" href={isOwner ? `/portal/admin/shoots?open=${d.id}` : d.crew_token ? `/crew/${d.crew_token}` : "#"}>
                 <span className="shoot-when"><strong>{fmtDate(d.date)}</strong><em>{d.start_time ? fmt12(d.start_time) : "time TBD"}</em></span>
                 <span className="shoot-main"><strong>{d.title}</strong><em>{d.address || "no address yet"}{who.length ? ` · ${who.map((x) => x.name.split(" ")[0]).join(", ")}` : ""}</em></span>
                 <span className={`itag itag-${d.status}`}>{SHOOT_STATUS_LABEL[d.status]}</span>
@@ -334,6 +336,44 @@ function DaysCard({ project, days, setDays, people, onSign, fail }) {
             </li>
           );
         })}
+      </ul>
+    </section>
+  );
+}
+
+// ── Team: who's on this project (staff logins). Brandon assigns; staff see. ──
+function TeamCard({ project, team, staffList, isOwner, fail, say }) {
+  const [members, setMembers] = useState(team || []);
+  const [pick, setPick] = useState("");
+  if (team === null) return isOwner ? <section className="cprof-card"><div className="cprof-cardhead"><h2>Team</h2></div><p className="sm-sqlhint">Staff logins need <code>supabase/staff.sql</code> run once in the Supabase SQL editor.</p></section> : null;
+  async function call(payload) {
+    const res = await fetch("/api/admin/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.error || "Couldn't save"); return j;
+  }
+  async function add(id) {
+    const s = (staffList || []).find((x) => x.id === id); if (!s) return;
+    try { await call({ action: "assign", projectId: project.id, staffId: id }); setMembers((m) => [...m.filter((x) => x.id !== id), { ...s, member_role: "crew" }]); setPick(""); say(`${s.name} is on the project`); } catch (e) { fail(e); }
+  }
+  async function drop(x) {
+    if (!window.confirm(`Take ${x.name} off this project?`)) return;
+    try { await call({ action: "unassign", projectId: project.id, staffId: x.id }); setMembers((m) => m.filter((y) => y.id !== x.id)); } catch (e) { fail(e); }
+  }
+  const free = (staffList || []).filter((s) => s.active && !members.some((m) => m.id === s.id));
+  return (
+    <section className="cprof-card">
+      <div className="cprof-cardhead"><h2>Team{members.length > 0 && <em className="cprof-count">{members.length}</em>}</h2>
+        {isOwner && free.length > 0 && <select className="achip" value={pick} onChange={(e) => add(e.target.value)} aria-label="Add someone to the project"><option value="">+ Add from staff…</option>{free.map((s) => <option key={s.id} value={s.id}>{s.name}{s.title ? ` · ${s.title}` : ""}</option>)}</select>}
+        {isOwner && !(staffList || []).length && <a className="achip" href="/portal/admin/staff">Add staff first →</a>}
+      </div>
+      {members.length === 0 && <p className="gcard-meta">{isOwner ? "Nobody on this one yet. Staff on a project see its people, story, days and journal — nothing else of yours." : "Just you and Brandon so far."}</p>}
+      <ul className="cprof-list">
+        {members.map((x) => (
+          <li key={x.id}><strong>{x.name}</strong> <span className="gcard-meta">· {x.title || "Crew"}{x.phone ? ` · ${x.phone}` : ""}{!x.active ? " · login off" : ""}</span>
+            <span className="gcard-actions">
+              {x.phone && <a className="achip" href={`sms:${x.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
+              {isOwner && <button type="button" className="achip achip-danger" onClick={() => drop(x)}>Remove</button>}
+            </span></li>
+        ))}
       </ul>
     </section>
   );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAdminRequest } from "../../../../lib/admin-guard";
+import { whoIs, canProject, projectOf } from "../../../../lib/staff-server";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, putSignature, signedUrl } from "../../../../lib/r2";
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
@@ -45,10 +45,24 @@ function cleanPerson(b) {
 }
 
 export async function POST(request) {
-  if (!(await isAdminRequest())) return deny();
+  const me = await whoIs();
+  if (!me || (me.role !== "brandon" && me.role !== "staff")) return deny();
   const body = await request.json().catch(() => ({}));
   const db = supabaseAdmin();
   const now = () => new Date().toISOString();
+  // Brandon does anything. Staff: only on projects they're on, and never
+  // create or delete a project. Every row-level action resolves its project.
+  const OWNER_ONLY = new Set(["project-create", "project-delete"]);
+  if (me.role === "staff") {
+    if (OWNER_ONLY.has(body.action)) return deny();
+    let pid = body.projectId || null;
+    if (body.action === "project-update") pid = body.id;
+    else if (/^person-(update|delete)$/.test(body.action)) pid = await projectOf(db, "project_people", body.id);
+    else if (/^entry-(update|delete)$/.test(body.action)) pid = await projectOf(db, "project_entries", body.id);
+    else if (body.action === "release-delete") pid = await projectOf(db, "releases", body.id);
+    else if (body.action === "release-text") pid = null; // just text, nothing touched
+    if (body.action !== "release-text" && !canProject(me, pid)) return deny();
+  }
   try {
     // ── projects ──
     if (body.action === "project-create") {
