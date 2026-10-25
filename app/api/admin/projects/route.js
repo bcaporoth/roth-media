@@ -14,7 +14,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|releases/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? "Run supabase/projects.sql once in the Supabase SQL editor first" : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -89,6 +89,33 @@ export async function POST(request) {
     if (body.action === "person-delete") {
       if (!isId(body.id)) return bad("Bad request");
       const { error } = await db.from("project_people").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    // ── journal ──
+    if (body.action === "entry-add") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const text = clip(body.body, 20000);
+      if (!text) return bad("Write something first");
+      const row = { project_id: body.projectId, body: text, pinned: Boolean(body.pinned) };
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.entry_date || ""))) row.entry_date = body.entry_date;
+      const { data, error } = await db.from("project_entries").insert(row).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ entry: data });
+    }
+    if (body.action === "entry-update") {
+      if (!isId(body.id)) return bad("Bad request");
+      const patch = { updated_at: now() };
+      if (body.body !== undefined) { patch.body = clip(body.body, 20000); if (!patch.body) return bad("An entry can't be empty — delete it instead"); }
+      if (body.pinned !== undefined) patch.pinned = Boolean(body.pinned);
+      if (body.entry_date !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(String(body.entry_date))) patch.entry_date = body.entry_date;
+      const { data, error } = await db.from("project_entries").update(patch).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ entry: data });
+    }
+    if (body.action === "entry-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("project_entries").delete().eq("id", body.id);
       if (error) return missing(error);
       return NextResponse.json({ ok: true });
     }

@@ -28,6 +28,7 @@ export default function ProjectBoard({ initial }) {
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
   const [releases, setReleases] = useState(initial.releases);
+  const [entries, setEntries] = useState(initial.entries);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [signing, setSigning] = useState(null); // { person?, shoot? }
@@ -64,6 +65,8 @@ export default function ProjectBoard({ initial }) {
         <div><strong>{releases.length}</strong><em>releases signed</em></div>
       </div>
 
+      <JournalCard project={p} entries={entries} setEntries={setEntries} fail={fail} say={say} />
+
       <section className="cprof-card">
         <div className="cprof-cardhead"><h2>The story</h2></div>
         <Editable label="Logline" value={p.logline} rows={1} placeholder="One sentence: what this film is about" onSave={(v) => patchProject({ logline: v })} />
@@ -87,6 +90,71 @@ export default function ProjectBoard({ initial }) {
     </div>
   );
 }
+
+// ── Journal: the film taking shape, one dated entry at a time ──
+const dayLong = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+const todayET = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+function JournalCard({ project, entries, setEntries, fail, say }) {
+  const [draft, setDraft] = useState("");
+  const [date, setDate] = useState(todayET());
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  if (entries === null) return <section className="cprof-card"><div className="cprof-cardhead"><h2>Journal</h2></div><p className="sm-sqlhint">The journal needs <code>supabase/journal.sql</code> run once in the Supabase SQL editor.</p></section>;
+  async function add(e) {
+    e.preventDefault();
+    const t = draft.trim(); if (!t) return;
+    setBusy(true);
+    try { const r = await P({ action: "entry-add", projectId: project.id, body: t, entry_date: date }); setEntries((l) => [r.entry, ...l].sort(sortEntries)); setDraft(""); setDate(todayET()); say("Written down"); }
+    catch (err) { fail(err); } finally { setBusy(false); }
+  }
+  async function patch(id, fields) {
+    try { const r = await P({ action: "entry-update", id, ...fields }); setEntries((l) => l.map((x) => (x.id === id ? r.entry : x)).sort(sortEntries)); } catch (err) { fail(err); }
+  }
+  async function remove(x) {
+    if (!window.confirm("Delete this entry?")) return;
+    try { await P({ action: "entry-delete", id: x.id }); setEntries((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); }
+  }
+  const pinned = entries.filter((x) => x.pinned);
+  const rest = entries.filter((x) => !x.pinned);
+  const shown = showAll ? rest : rest.slice(0, 5);
+  const Entry = ({ x }) => (
+    <li className={"jrnl-entry" + (x.pinned ? " is-pinned" : "")}>
+      <div className="jrnl-meta">
+        <strong>{dayLong(x.entry_date)}</strong>
+        <span className="gcard-actions">
+          <button type="button" className="achip" onClick={() => patch(x.id, { pinned: !x.pinned })} title={x.pinned ? "Unpin" : "Pin to the top — part of the outline"}>{x.pinned ? "📌 Pinned" : "Pin"}</button>
+          <button type="button" className="achip" onClick={() => { setEditing(x.id); setEditText(x.body); }}>Edit</button>
+          <button type="button" className="achip achip-danger" onClick={() => remove(x)}>×</button>
+        </span>
+      </div>
+      {editing === x.id ? (
+        <div className="jrnl-edit">
+          <textarea rows={6} value={editText} onChange={(e) => setEditText(e.target.value)} autoFocus />
+          <div className="gcard-actions"><button type="button" className="abtn" onClick={() => { patch(x.id, { body: editText }); setEditing(null); }}>Save</button><button type="button" className="achip" onClick={() => setEditing(null)}>Cancel</button></div>
+        </div>
+      ) : <p className="jrnl-body">{x.body}</p>}
+    </li>
+  );
+  return (
+    <section className="cprof-card jrnl" id="journal">
+      <div className="cprof-cardhead"><h2>Journal{entries.length > 0 && <em className="cprof-count">{entries.length}</em>}</h2><span className="gcard-meta">Where the film gets built. Dictate it, write it, pin what sticks.</span></div>
+      <form className="jrnl-new" onSubmit={add}>
+        <textarea rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={"What happened today. What someone said that changed the story. The scene you can suddenly see. The question you still don't have an answer to."} />
+        <div className="jrnl-newfoot">
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Entry date" />
+          <button type="submit" className="abtn" disabled={busy || !draft.trim()}>{busy ? "Saving…" : "Write it down"}</button>
+        </div>
+      </form>
+      {pinned.length > 0 && <><span className="kick-sm">Pinned — the working outline</span><ul className="jrnl-list">{pinned.map((x) => <Entry key={x.id} x={x} />)}</ul></>}
+      {rest.length > 0 && <><span className="kick-sm">Entries</span><ul className="jrnl-list">{shown.map((x) => <Entry key={x.id} x={x} />)}</ul></>}
+      {rest.length > 5 && <button type="button" className="achip" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : `Show all ${rest.length}`}</button>}
+      {entries.length === 0 && <p className="gcard-meta">Nothing yet. First entry: why this film, in your words.</p>}
+    </section>
+  );
+}
+const sortEntries = (a, b) => (b.pinned - a.pinned) || (b.entry_date || "").localeCompare(a.entry_date || "") || (b.created_at || "").localeCompare(a.created_at || "");
 
 // A textarea that saves when you tap away.
 function Editable({ label, value, rows = 2, placeholder, onSave }) {

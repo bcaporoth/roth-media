@@ -6130,6 +6130,19 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .arch-add input:nth-child(2) { max-width: 10rem; }
 .proj-pct { flex: 1 1 140px; max-width: 220px; height: 1.1rem; }
 .proj-pct em { font-size: 0.7rem; }
+/* Journal */
+.jrnl-new { display: grid; gap: 0.5rem; }
+.jrnl-new textarea { width: 100%; font: inherit; font-size: 1.02rem; line-height: 1.5; padding: 0.8rem 0.9rem; border: 1.5px solid var(--clay); border-radius: 12px; background: var(--surface); color: inherit; resize: vertical; }
+.jrnl-newfoot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; justify-content: space-between; }
+.jrnl-newfoot input { font: inherit; padding: 0.45rem 0.6rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
+.jrnl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.jrnl-entry { border: 1px solid var(--line); border-radius: 12px; padding: 0.7rem 0.9rem; display: grid; gap: 0.4rem; background: var(--surface); }
+.jrnl-entry.is-pinned { border-color: var(--clay); background: color-mix(in srgb, var(--clay) 7%, transparent); }
+.jrnl-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem; }
+.jrnl-meta strong { font-family: var(--font-display), "Syne", sans-serif; }
+.jrnl-body { margin: 0; white-space: pre-wrap; font-size: 1rem; line-height: 1.5; }
+.jrnl-edit { display: grid; gap: 0.5rem; }
+.jrnl-edit textarea { width: 100%; font: inherit; font-size: 1rem; line-height: 1.5; padding: 0.7rem 0.8rem; border: 1px solid var(--field-line); border-radius: 10px; background: transparent; color: inherit; resize: vertical; }
 /* Signing + the vault */
 .relsign-body, .relview-body { max-width: 680px; width: 100%; margin: 0 auto; display: grid; gap: 0.9rem; }
 .relsign-setup { margin: 0; }
