@@ -151,14 +151,11 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
 
       {tab === "story" && (
         <>
-          <section className="cprof-card">
-            <div className="cprof-cardhead"><h2>Story line — the hero&apos;s journey</h2><span className="gcard-meta">The whole film on one line. Highs are wins, lows are trouble. Fill the blanks.</span></div>
-            <StoryArc arc={p.arc || {}} onSave={(arc) => patchProject({ arc }, "Beat saved")} />
-          </section>
+          <StoryLinesCard project={p} onProject={patchProject} />
           <ThesisCard project={p} onProject={onProject} ready={Boolean(s3)} />
           <div className="cprof-cols">
             <div className="cprof-col">
-              <ScenesCard project={p} scenes={scenes} setScenes={setScenes} people={people} locations={locations} fail={fail} say={say} ready={Boolean(s1)} />
+              <ScenesCard project={p} scenes={scenes} setScenes={setScenes} people={people} locations={locations} fail={fail} say={say} ready={Boolean(s1)} lines={[{ id: "", title: "The film" }, ...(p.arcs || []).map((a) => ({ id: a.id, title: a.kind === "episode" ? `Ep ${a.number} · ${a.title}` : a.title }))]} />
               <ChronologyCard project={p} rows={chronology} setRows={setChronology} people={people} sources={sources} scenes={scenes} fail={fail} ready={Boolean(s3)} />
               <SourcesCard project={p} rows={sources} setRows={setSources} fail={fail} ready={Boolean(s3)} />
             </div>
@@ -346,6 +343,68 @@ function JournalCard({ project, entries, setEntries, fail, say }) {
 const sortEntries = (a, b) => (b.pinned - a.pinned) || (b.entry_date || "").localeCompare(a.entry_date || "") || (b.created_at || "").localeCompare(a.created_at || "");
 
 // A textarea that saves when you tap away.
+// ── Story lines: the film, plus episodes / shorts / trailer, each with its own arc ──
+const LINE_KIND_LABEL = { episode: "Episode", short: "Short", trailer: "Trailer", cut: "Alt cut" };
+function StoryLinesCard({ project, onProject }) {
+  const lines = project.arcs || [];
+  const [cur, setCur] = useState("film");
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const line = lines.find((l) => l.id === cur) || null;
+  const saveLines = (next, msg) => onProject({ arcs: next }, msg || "Saved ✓");
+  function add(e) {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const id = `ep-${Date.now().toString(36)}`;
+    const number = f.kind === "episode" ? Number(f.number) || lines.filter((l) => l.kind === "episode").length + 1 : 0;
+    saveLines([...lines, { id, title: f.title.trim(), kind: f.kind, number, logline: "", runtime_min: Number(f.runtime_min) || 0, status: "idea", arc: {} }], "Story line added");
+    setAdding(false); setCur(id); e.target.reset();
+  }
+  const patchLine = (fields) => saveLines(lines.map((l) => (l.id === cur ? { ...l, ...fields } : l)));
+  function removeLine() { if (!window.confirm(`Delete "${line.title}" and its story line?`)) return; saveLines(lines.filter((l) => l.id !== cur), "Removed"); setCur("film"); }
+  function move(dir) { const i = lines.findIndex((l) => l.id === cur); const j = i + dir; if (j < 0 || j >= lines.length) return; const next = [...lines]; [next[i], next[j]] = [next[j], next[i]]; saveLines(next.map((l, k) => (l.kind === "episode" ? { ...l, number: next.slice(0, k + 1).filter((x) => x.kind === "episode").length } : l))); }
+  const label = (l) => (l.kind === "episode" ? `Ep ${l.number}` : LINE_KIND_LABEL[l.kind]) + (l.title ? ` · ${l.title}` : "");
+  const filled = (arc) => Object.values(arc || {}).filter((v) => String(v).trim()).length;
+  return (
+    <section className="cprof-card storylines">
+      <div className="cprof-cardhead"><h2>Story lines — the hero&apos;s journey</h2><span className="gcard-actions"><span className="gcard-meta">One line for the film, one per episode. Same research, different spines.</span><button type="button" className="abtn" onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Episode"}</button></span></div>
+      <span className="pbook-kinds line-tabs" role="tablist">
+        <button type="button" role="tab" className={"ifilter" + (cur === "film" ? " is-on" : "")} onClick={() => setCur("film")}>The film <em>{filled(project.arc)}/12</em></button>
+        {lines.map((l) => <button key={l.id} type="button" role="tab" className={"ifilter" + (cur === l.id ? " is-on" : "")} onClick={() => setCur(l.id)}>{label(l)} <em>{filled(l.arc)}/12</em></button>)}
+      </span>
+      {adding && (
+        <form className="shoot-new" onSubmit={add}>
+          <label>Kind<select name="kind" defaultValue="episode">{Object.entries(LINE_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+          <label>Episode #<input name="number" type="number" min="1" placeholder={String(lines.filter((l) => l.kind === "episode").length + 1)} /></label>
+          <label>Runtime (min)<input name="runtime_min" type="number" min="0" placeholder="22" /></label>
+          <label className="wide">Title<input name="title" required autoFocus placeholder="The Bells · 1962 · The Vote" /></label>
+          <button type="submit" className="abtn">Add</button>
+        </form>
+      )}
+      {cur === "film" ? (
+        <>
+          <p className="gcard-meta">{project.logline || "The whole film on one line. Highs are wins, lows are trouble. Fill the blanks."}</p>
+          <StoryArc key="film" arc={project.arc || {}} onSave={(arc) => onProject({ arc }, "Beat saved")} />
+        </>
+      ) : line ? (
+        <>
+          <div className="line-head">
+            {!editing ? <p className="gcard-meta"><strong>{label(line)}</strong>{line.runtime_min ? ` · ${line.runtime_min} min` : ""} · {line.status}{line.logline ? ` — ${line.logline}` : ""} <button type="button" className="achip" onClick={() => setEditing(true)}>edit</button></p> : (
+              <div className="shoot-new scene-fields">
+                <label className="wide">Title<input defaultValue={line.title} onBlur={(e) => e.target.value.trim() && e.target.value !== line.title && patchLine({ title: e.target.value.trim() })} /></label>
+                <label className="wide">Logline<input defaultValue={line.logline} placeholder="One sentence: what this episode is about" onBlur={(e) => e.target.value !== line.logline && patchLine({ logline: e.target.value })} /></label>
+                <label>Runtime (min)<input type="number" defaultValue={line.runtime_min || ""} onBlur={(e) => Number(e.target.value) !== line.runtime_min && patchLine({ runtime_min: Number(e.target.value) || 0 })} /></label>
+                <label>Status<select value={line.status} onChange={(e) => patchLine({ status: e.target.value })}>{["idea", "outlined", "shooting", "cutting", "locked", "delivered"].map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
+                <div className="gcard-actions wide"><button type="button" className="achip" onClick={() => move(-1)}>← earlier</button><button type="button" className="achip" onClick={() => move(1)}>later →</button><button type="button" className="achip achip-danger" onClick={removeLine}>Delete</button><button type="button" className="achip" onClick={() => setEditing(false)}>Done</button></div>
+              </div>
+            )}
+          </div>
+          <StoryArc key={line.id} arc={line.arc || {}} onSave={(arc) => patchLine({ arc })} />
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 // Textareas grow with their text — phones don't offer the drag corner.
 export const grow = (el) => { if (!el) return; el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; };
 function Editable({ label, value, rows = 2, placeholder, onSave }) {

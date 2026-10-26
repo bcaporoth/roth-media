@@ -7128,3 +7128,8 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 @supports (field-sizing: content) { .admin-shell textarea, .cproj textarea { field-sizing: content; overflow: hidden; } }
 textarea.grow { overflow: hidden; }
 @media (pointer: coarse) { .admin-shell textarea, .cproj textarea { min-height: 5.5rem; font-size: 16px; } }
+
+/* Story lines (film + episodes) */
+.line-tabs { margin-bottom: .5rem; }
+.line-tabs .ifilter em { font-style: normal; opacity: .55; font-size: .75rem; margin-left: .25rem; }
+.line-head { margin: .2rem 0 .5rem; }

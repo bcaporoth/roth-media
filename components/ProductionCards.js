@@ -27,9 +27,10 @@ function F({ label, value, onSave, type = "text", placeholder = "", rows = 0, op
 }
 
 // ── Scenes ──────────────────────────────────────────────────────────
-export function ScenesCard({ project, scenes, setScenes, people, locations, fail, say, ready }) {
+export function ScenesCard({ project, scenes, setScenes, people, locations, fail, say, ready, lines = [] }) {
   const [open, setOpen] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [lineFilter, setLineFilter] = useState("all");
   if (!ready) return <section className="cprof-card"><div className="cprof-cardhead"><h2>Scenes</h2></div><SqlHint what="Scenes" /></section>;
   const beats = project.beats || [];
   async function add(e) {
@@ -46,17 +47,21 @@ export function ScenesCard({ project, scenes, setScenes, people, locations, fail
     try { await P({ action: "scenes-reorder", projectId: project.id, ids: next.map((s) => s.id) }); } catch (err) { fail(err); }
   }
   const total = scenes.reduce((a, s) => a + (s.est_seconds || 0), 0);
-  const byAct = (a) => scenes.filter((s) => s.act === a);
+  const inLine = (s) => lineFilter === "all" || (s.line_id || "") === lineFilter;
+  const byAct = (a) => scenes.filter((s) => s.act === a && inLine(s));
+  const lineName = (id) => lines.find((l) => l.id === (id || ""))?.title || "";
   const personName = (id) => people.find((p) => p.id === id)?.name || "";
   return (
     <section className="cprof-card scenes">
       <div className="cprof-cardhead"><h2>Scenes{scenes.length > 0 && <em className="cprof-count">{scenes.length}</em>}</h2>
         <span className="gcard-actions"><span className="gcard-meta">est. {fmtSecs(total)}</span><button type="button" className="abtn" onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Scene"}</button></span>
       </div>
+      {lines.length > 1 && <span className="pbook-kinds">{[{ id: "all", title: "All" }, ...lines].map((l) => <button key={l.id} type="button" className={"ifilter" + (lineFilter === l.id ? " is-on" : "")} onClick={() => setLineFilter(l.id)}>{l.title} <em>{l.id === "all" ? scenes.length : scenes.filter((s) => (s.line_id || "") === l.id).length}</em></button>)}</span>}
       {adding && (
         <form className="shoot-new" onSubmit={add}>
           <label className="wide">Title<input name="title" required autoFocus placeholder="Bells at 6am — the empty nave" /></label>
           <label>Act<select name="act" defaultValue="1"><option value="1">Act 1 — now</option><option value="2">Act 2 — how it almost died</option><option value="3">Act 3 — why it matters</option></select></label>
+          {lines.length > 1 && <label>Story line<select name="line_id" defaultValue={lineFilter === "all" ? "" : lineFilter}>{lines.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}</select></label>}
           <label>Kind<select name="kind" defaultValue="interview">{SCENE_KINDS.map((k) => <option key={k} value={k}>{SCENE_KIND_LABEL[k]}</option>)}</select></label>
           <label>Beat<select name="beat_index" defaultValue=""><option value="">—</option>{beats.map((b, i) => <option key={i} value={i}>{i + 1}. {b.text}</option>)}</select></label>
           <label className="wide">Purpose — what it does for the argument<input name="purpose" placeholder="Shows the result before we show the fight" /></label>
@@ -74,10 +79,10 @@ export function ScenesCard({ project, scenes, setScenes, people, locations, fail
                 <li key={s.id} className={"scene st-" + s.status + (open === s.id ? " is-open" : "")}>
                   <button type="button" className="scene-row" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id}>
                     <span className="scene-num">{s.number}</span>
-                    <span className="scene-main"><strong>{s.title}</strong><em>{SCENE_KIND_LABEL[s.kind]}{s.purpose ? ` · ${s.purpose}` : ""}{s.people?.length ? ` · ${s.people.map(personName).filter(Boolean).join(", ")}` : ""}</em></span>
+                    <span className="scene-main"><strong>{s.title}</strong><em>{lineFilter === "all" && s.line_id && lineName(s.line_id) ? `${lineName(s.line_id)} · ` : ""}{SCENE_KIND_LABEL[s.kind]}{s.purpose ? ` · ${s.purpose}` : ""}{s.people?.length ? ` · ${s.people.map(personName).filter(Boolean).join(", ")}` : ""}</em></span>
                     <span className="scene-tags"><span className={`itag st-${s.status}`}>{SCENE_STATUS_LABEL[s.status]}</span>{s.est_seconds ? <span className="itag">{fmtSecs(s.est_seconds)}</span> : null}{(s.tchart || []).some((r) => r.said && !r.seen) && <span className="itag is-alert" title="Said with nothing seen">needs b-roll</span>}</span>
                   </button>
-                  {open === s.id && <SceneDetail s={s} beats={beats} people={people} locations={locations} onPatch={(f, m) => patch(s.id, f, m)} onRemove={() => remove(s)} onMove={(d) => move(i, d)} />}
+                  {open === s.id && <SceneDetail s={s} beats={beats} people={people} locations={locations} lines={lines} onPatch={(f, m) => patch(s.id, f, m)} onRemove={() => remove(s)} onMove={(d) => move(i, d)} />}
                 </li>
               );
             })}
@@ -88,7 +93,7 @@ export function ScenesCard({ project, scenes, setScenes, people, locations, fail
   );
 }
 
-function SceneDetail({ s, beats, people, locations, onPatch, onRemove, onMove }) {
+function SceneDetail({ s, beats, people, locations, lines = [], onPatch, onRemove, onMove }) {
   const [tchart, setTchart] = useState(s.tchart || []);
   const [broll, setBroll] = useState(s.broll || []);
   const [said, setSaid] = useState(""); const [seen, setSeen] = useState(""); const [want, setWant] = useState("");
@@ -100,6 +105,7 @@ function SceneDetail({ s, beats, people, locations, onPatch, onRemove, onMove })
       <div className="shoot-new scene-fields">
         <F label="Title" value={s.title} onSave={(v) => onPatch({ title: v })} wide />
         <F label="Act" value={s.act} options={[["1", "Act 1"], ["2", "Act 2"], ["3", "Act 3"]]} onSave={(v) => onPatch({ act: v })} />
+        {lines.length > 1 && <F label="Story line" value={s.line_id || ""} options={lines.map((l) => [l.id, l.title])} onSave={(v) => onPatch({ line_id: v })} />}
         <F label="Kind" value={s.kind} options={SCENE_KINDS.map((k) => [k, SCENE_KIND_LABEL[k]])} onSave={(v) => onPatch({ kind: v })} />
         <F label="Status" value={s.status} options={SCENE_STATUSES.map((k) => [k, SCENE_STATUS_LABEL[k]])} onSave={(v) => onPatch({ status: v })} />
         <F label="Beat" value={s.beat_index ?? ""} options={[["", "—"], ...beats.map((b, i) => [String(i), `${i + 1}. ${b.text}`])]} onSave={(v) => onPatch({ beat_index: v === "" ? null : Number(v) })} />
