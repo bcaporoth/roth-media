@@ -1,4 +1,5 @@
 import PortalLogin from "../../components/PortalLogin";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import PortalNav from "../../components/PortalNav";
 import { PortalLobby, PortalNotice, PortalHome, PortalBusinessHome } from "../../components/PortalViews";
@@ -217,6 +218,9 @@ export default async function PortalPage({ searchParams }) {
   }
 
   const total = payments.reduce((sum, p) => sum + p.amount_cents, 0);
+  // Projects (a documentary, say) this client is on → one nav link each.
+  const { data: myProjects } = adminConfigured ? await supabaseAdmin().from("projects").select("id, title").eq("client_id", client.id).then((r) => r, () => ({ data: [] })) : { data: [] };
+  const projectLinks = (myProjects || []).length ? (myProjects || []).map((pr) => <li key={pr.id} className="pnav-tab"><Link className="pnav-link" href={`/portal/projects/${pr.id}`} title="Where the film is and what we need from you">Your project</Link></li>) : null;
 
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
 
@@ -253,7 +257,7 @@ export default async function PortalPage({ searchParams }) {
     if (upcoming) todo.push({ who: "soon", text: `${upcoming.title} — ${new Date(upcoming.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}${upcoming.scripts ? ` · ${upcoming.scripts} script${upcoming.scripts === 1 ? "" : "s"} to read` : ""}`, href: `/portal/days/${upcoming.id}` });
     return (
       <PortalBusinessHome
-        nav={<PortalNav email={user.email} active="galleries" brand />}
+        nav={<PortalNav email={user.email} active="galleries" brand extra={projectLinks} />}
         name={palette.data?.business?.name || client.name}
         hostedGalleries={hostedGalleries || []}
         galleries={galleries}
@@ -277,7 +281,7 @@ export default async function PortalPage({ searchParams }) {
 
   return (
     <PortalHome
-      nav={<PortalNav email={user.email} isAdmin={isAdmin} active="galleries" />}
+      nav={<PortalNav email={user.email} isAdmin={isAdmin} active="galleries" extra={projectLinks} />}
       firstName={firstName}
       hostedGalleries={hostedGalleries || []}
       galleries={galleries}

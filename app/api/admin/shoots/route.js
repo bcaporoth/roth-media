@@ -64,6 +64,8 @@ function clean(body, existing = {}) {
       return { text: clip(c.text, 600), done: Boolean(c.done), group, ...(time ? { time } : {}), ...(img ? { img } : {}), ...(group === "wrap" ? { need, got } : {}) };
     }).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
+  if (body.client_visible !== undefined) out.client_visible = Boolean(body.client_visible);
+  if (body.location_id !== undefined) out.location_id = /^[0-9a-f-]{36}$/.test(String(body.location_id || "")) ? body.location_id : null;
   if (body.project_id !== undefined) out.project_id = /^[0-9a-f-]{36}$/.test(String(body.project_id || "")) ? body.project_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;
   return out;

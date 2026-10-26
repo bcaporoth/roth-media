@@ -12,6 +12,8 @@ import ReleaseSign from "./ReleaseSign";
 import { ReleaseView } from "./VaultList";
 import AddressInput from "./AddressInput";
 import StoryArc from "./StoryArc";
+import { ScenesCard, LocationsCard, BudgetCard, ConventionsCard, ClientSideCard } from "./ProductionCards";
+import { PHASE_LABEL } from "../lib/production";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -24,8 +26,16 @@ const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US"
 const fmt12 = (t) => { if (!t) return ""; const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
 const tel = (v) => v.replace(/[^\d+]/g, "");
 
-export default function ProjectBoard({ initial, role = "brandon", staffList = null }) {
+export default function ProjectBoard({ initial, role = "brandon", staffList = null, clients = [] }) {
   const isOwner = role === "brandon";
+  const s1 = initial.sprint1; // null until sprint1.sql has run
+  const [scenes, setScenes] = useState(s1?.scenes || []);
+  const [locations, setLocations] = useState(s1?.locations || []);
+  const [lines, setLines] = useState(s1?.lines || []);
+  const [costs, setCosts] = useState(s1?.costs || []);
+  const [stakeholders, setStakeholders] = useState(s1?.stakeholders || []);
+  const [tasks, setTasks] = useState(s1?.tasks || []);
+  const [tab, setTab] = useState("story");
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -38,6 +48,11 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const say = (m) => { setFlash(m); setTimeout(() => setFlash(""), 2500); };
   const fail = (e) => setError(e.message);
   async function patchProject(fields, msg = "Saved ✓") { try { const r = await P({ action: "project-update", id: p.id, ...fields }); setP(r.project); say(msg); } catch (e) { fail(e); } }
+  // ProductionCards call onProject(fields) — or onProject(null, project) when they already have the fresh row.
+  const onProject = (fields, fresh) => (fresh ? setP(fresh) : patchProject(fields));
+  async function setDayVisible(d, visible) {
+    try { await api("/api/admin/shoots", { action: "update", id: d.id, client_visible: visible }); setDays((l) => l.map((x) => (x.id === d.id ? { ...x, client_visible: visible } : x))); } catch (e) { fail(e); }
+  }
 
   const byPerson = {};
   for (const r of releases) if (r.person_id) (byPerson[r.person_id] = byPerson[r.person_id] || []).push(r);
@@ -75,25 +90,71 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
         <Editable label="Notes" value={p.notes} rows={3} placeholder="Angle, tone, references, what the client wants it to do" onSave={(v) => patchProject({ notes: v })} />
       </section>
 
-      <section className="cprof-card">
-        <div className="cprof-cardhead"><h2>Story line — the hero&apos;s journey</h2><span className="gcard-meta">The whole film on one line. Highs are wins, lows are trouble. Fill the blanks.</span></div>
-        <StoryArc arc={p.arc || {}} onSave={(arc) => patchProject({ arc }, "Beat saved")} />
-      </section>
-
-      <div className="cprof-cols">
-        <div className="cprof-col">
-          <PeopleCard project={p} people={people} setPeople={setPeople} days={days} byPerson={byPerson} onSign={(person) => setSigning({ person })} onView={setViewing} fail={fail} say={say} />
-          <ReleasesCard releases={releases} people={people} onView={setViewing} onSign={() => setSigning({})} />
-        </div>
-        <div className="cprof-col">
-          <DaysCard project={p} days={days} setDays={setDays} people={people} onSign={(shoot) => setSigning({ shoot })} fail={fail} isOwner={isOwner} />
-          <TeamCard project={p} team={initial.team} staffList={staffList} isOwner={isOwner} fail={fail} say={say} />
-          <BeatsCard project={p} people={people} onSave={(beats) => patchProject({ beats }, "Beats saved")} />
-          <ArchiveCard project={p} onSave={(archive) => patchProject({ archive }, "Archive saved")} />
-        </div>
+      <div className="pbook-kinds proj-tabs" role="tablist" aria-label="Project sections">
+        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ...(isOwner ? [["client", "Client side"]] : [])].map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{l}</button>
+        ))}
+        <span className="gcard-meta proj-phase">{PHASE_LABEL[p.phase] || "Development"}{p.code ? ` · ${p.code}` : ""}</span>
       </div>
 
-      {signing && <ReleaseSign project={p} person={signing.person || null} shoot={signing.shoot || null} onSigned={(r) => { setReleases((l) => [r, ...l]); if (signing.person) setPeople((l) => l.map((x) => (x.id === signing.person.id ? x : x))); }} onClose={() => setSigning(null)} />}
+      {tab === "story" && (
+        <>
+          <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Story line — the hero&apos;s journey</h2><span className="gcard-meta">The whole film on one line. Highs are wins, lows are trouble. Fill the blanks.</span></div>
+            <StoryArc arc={p.arc || {}} onSave={(arc) => patchProject({ arc }, "Beat saved")} />
+          </section>
+          <div className="cprof-cols">
+            <div className="cprof-col">
+              <ScenesCard project={p} scenes={scenes} setScenes={setScenes} people={people} locations={locations} fail={fail} say={say} ready={Boolean(s1)} />
+            </div>
+            <div className="cprof-col">
+              <BeatsCard project={p} people={people} onSave={(beats) => patchProject({ beats }, "Beats saved")} />
+              <ArchiveCard project={p} onSave={(archive) => patchProject({ archive }, "Archive saved")} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "people" && (
+        <div className="cprof-cols">
+          <div className="cprof-col">
+            <PeopleCard project={p} people={people} setPeople={setPeople} days={days} byPerson={byPerson} onSign={(person) => setSigning({ person })} onView={setViewing} fail={fail} say={say} />
+          </div>
+          <div className="cprof-col">
+            <ReleasesCard releases={releases} people={people} onView={setViewing} onSign={() => setSigning({})} />
+          </div>
+        </div>
+      )}
+
+      {tab === "days" && (
+        <div className="cprof-cols">
+          <div className="cprof-col">
+            <DaysCard project={p} days={days} setDays={setDays} people={people} locations={locations} onSign={(shoot) => setSigning({ shoot })} fail={fail} isOwner={isOwner} />
+          </div>
+          <div className="cprof-col">
+            <TeamCard project={p} team={initial.team} staffList={staffList} isOwner={isOwner} fail={fail} say={say} onDeal={(m) => setSigning({ preset: { kind: "deal", staffId: m.id, name: m.name, email: m.email, phone: m.phone, position: m.position || m.title || "", rate: m.project_rate_cents != null ? `$${m.project_rate_cents / 100} / ${m.rate_type || "day"}` : m.rate_cents ? `$${m.rate_cents / 100} / ${m.rate_type || "day"}` : "", kit: m.kit_fee_cents ? `$${m.kit_fee_cents / 100} / day` : "none" } })} onView={setViewing} releases={releases} />
+          </div>
+        </div>
+      )}
+
+      {tab === "production" && (
+        <div className="cprof-cols">
+          <div className="cprof-col">
+            <LocationsCard project={p} locations={locations} setLocations={setLocations} fail={fail} ready={Boolean(s1)} isOwner={isOwner} />
+            {isOwner && <ConventionsCard project={p} onProject={onProject} clients={clients} />}
+          </div>
+          <div className="cprof-col">
+            {isOwner && <BudgetCard project={p} lines={lines} setLines={setLines} costs={costs} setCosts={setCosts} days={days} fail={fail} say={say} ready={Boolean(s1)} onProject={onProject} />}
+            {!isOwner && <p className="gcard-meta">Budget is Brandon&apos;s. Locations are yours to scout.</p>}
+          </div>
+        </div>
+      )}
+
+      {tab === "client" && isOwner && (
+        <ClientSideCard project={p} stakeholders={stakeholders} setStakeholders={setStakeholders} tasks={tasks} setTasks={setTasks} days={days} onProject={onProject} onDayVisible={setDayVisible} fail={fail} say={say} ready={Boolean(s1)} />
+      )}
+
+      {signing && <ReleaseSign project={p} person={signing.person || null} shoot={signing.shoot || null} preset={signing.preset || null} onSigned={(r) => { setReleases((l) => [r, ...l]); if (signing.person) setPeople((l) => l.map((x) => (x.id === signing.person.id ? x : x))); }} onClose={() => setSigning(null)} />}
       {viewing && <ReleaseView r={{ ...viewing, project_title: p.title }} onClose={() => setViewing(null)} />}
     </div>
   );
@@ -289,7 +350,7 @@ function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView }) 
 }
 
 // ── Shoot days ──
-function DaysCard({ project, days, setDays, people, onSign, fail, isOwner = true }) {
+function DaysCard({ project, days, setDays, people, locations = [], onSign, fail, isOwner = true }) {
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   async function add(e) {
@@ -312,6 +373,7 @@ function DaysCard({ project, days, setDays, people, onSign, fail, isOwner = true
           <label className="wide">What this day is<input name="title" required autoFocus placeholder="Interviews — Fr. Jones + the Kellys" /></label>
           <label>Date<input type="date" name="date" /></label>
           <label>Start<input type="time" name="start_time" /></label>
+          {locations.length > 0 && <label className="wide">Location (from your scouted list)<select name="location_id" defaultValue="" onChange={(e) => { const l = locations.find((x) => x.id === e.target.value); if (l?.address) { const inp = e.target.form.querySelector('input[name="address"]'); if (inp) { const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set; setter.call(inp, l.address); inp.dispatchEvent(new Event("input", { bubbles: true })); } } }}><option value="">— pick one, or type an address below —</option>{locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>}
           <label className="wide">Where<AddressInput name="address" placeholder="Type it — St. Mary's Corning…" /></label>
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : "Add the day"}</button>
           <p className="gcard-meta wide">Goes on the Shoots calendar with the {SHOOT_KIND_LABEL[project.kind]} prep lists — day mode, roll gate, crew QR, the lot.</p>
@@ -342,7 +404,7 @@ function DaysCard({ project, days, setDays, people, onSign, fail, isOwner = true
 }
 
 // ── Team: who's on this project (staff logins). Brandon assigns; staff see. ──
-function TeamCard({ project, team, staffList, isOwner, fail, say }) {
+function TeamCard({ project, team, staffList, isOwner, fail, say, onDeal = null, onView = null, releases = [] }) {
   const [members, setMembers] = useState(team || []);
   const [pick, setPick] = useState("");
   if (team === null) return isOwner ? <section className="cprof-card"><div className="cprof-cardhead"><h2>Team</h2></div><p className="sm-sqlhint">Staff logins need <code>supabase/staff.sql</code> run once in the Supabase SQL editor.</p></section> : null;
@@ -368,9 +430,12 @@ function TeamCard({ project, team, staffList, isOwner, fail, say }) {
       {members.length === 0 && <p className="gcard-meta">{isOwner ? "Nobody on this one yet. Staff on a project see its people, story, days and journal — nothing else of yours." : "Just you and Brandon so far."}</p>}
       <ul className="cprof-list">
         {members.map((x) => (
-          <li key={x.id}><strong>{x.name}</strong> <span className="gcard-meta">· {x.title || "Crew"}{x.phone ? ` · ${x.phone}` : ""}{!x.active ? " · login off" : ""}</span>
+          <li key={x.id}><strong>{x.name}</strong> <span className="gcard-meta">· {x.position || x.title || "Crew"}{isOwner && (x.project_rate_cents != null || x.rate_cents) ? ` · $${(x.project_rate_cents ?? x.rate_cents) / 100}/${x.rate_type || "day"}` : ""}{x.phone ? ` · ${x.phone}` : ""}{!x.active ? " · login off" : ""}</span>
             <span className="gcard-actions">
               {x.phone && <a className="achip" href={`sms:${x.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
+              {(() => { const deal = releases.find((r) => r.id === x.deal_release_id) || releases.find((r) => r.kind === "deal" && r.signer_name === x.name); return deal
+                ? <button type="button" className="achip is-rel" onClick={() => onView?.(deal)}>✍ Deal signed</button>
+                : isOwner && onDeal ? <button type="button" className="achip achip-primary" onClick={() => onDeal(x)}>✍ Deal memo</button> : null; })()}
               {isOwner && <button type="button" className="achip achip-danger" onClick={() => drop(x)}>Remove</button>}
             </span></li>
         ))}

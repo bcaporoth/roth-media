@@ -5,6 +5,7 @@ import { r2Configured, putSignature, signedUrl } from "../../../../lib/r2";
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
 import { PROJECT_STATUSES, PERSON_STATUSES, PERSON_KINDS } from "../../../../lib/projects";
 import { ARC_KEYS } from "../../../../lib/story-arc";
+import { PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES } from "../../../../lib/production";
 
 // Studio → Projects: the job above the dates. Projects, the people in them
 // (cast + sources), story beats, archive to-gets, and the releases signed on
@@ -15,7 +16,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -27,6 +28,12 @@ function cleanProject(b) {
   if (b.logline !== undefined) o.logline = clip(b.logline, 400);
   if (b.notes !== undefined) o.notes = clip(b.notes, 8000);
   if (b.beats !== undefined) o.beats = (Array.isArray(b.beats) ? b.beats : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), done: Boolean(x?.done), who: clip(x?.who, 120) })).filter((x) => x.text);
+  if (b.code !== undefined) o.code = clip(b.code, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (b.phase !== undefined) o.phase = PHASES.includes(b.phase) ? b.phase : "development";
+  if (b.client_id !== undefined) o.client_id = isId(b.client_id) ? b.client_id : null;
+  if (b.conventions !== undefined && typeof b.conventions === "object") o.conventions = Object.fromEntries(Object.entries(b.conventions || {}).slice(0, 30).map(([k, v]) => [clip(k, 40), clip(v, 300)]));
+  if (b.milestones !== undefined) o.milestones = (Array.isArray(b.milestones) ? b.milestones : []).slice(0, 30).map((m) => ({ key: clip(m?.key, 40), label: clip(m?.label, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(String(m?.date || "")) ? m.date : "", done: Boolean(m?.done), client_visible: m?.client_visible !== false })).filter((m) => m.label);
+  if (b.contingency_pct !== undefined) o.contingency_pct = Math.max(0, Math.min(50, Number(b.contingency_pct) || 0));
   if (b.arc !== undefined) o.arc = Object.fromEntries(ARC_KEYS.map((k) => [k, clip(b.arc?.[k], 2000)]).filter(([, v]) => v));
   if (b.archive !== undefined) o.archive = (Array.isArray(b.archive) ? b.archive : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), source: clip(x?.source, 160), status: ["wanted", "requested", "in_hand"].includes(x?.status) ? x.status : "wanted" })).filter((x) => x.text);
   return o;
@@ -60,6 +67,9 @@ export async function POST(request) {
     else if (/^person-(update|delete)$/.test(body.action)) pid = await projectOf(db, "project_people", body.id);
     else if (/^entry-(update|delete)$/.test(body.action)) pid = await projectOf(db, "project_entries", body.id);
     else if (body.action === "release-delete") pid = await projectOf(db, "releases", body.id);
+    else if (/^scene-(update|delete)$/.test(body.action)) pid = await projectOf(db, "scenes", body.id);
+    else if (/^location-(update|delete)$/.test(body.action)) pid = await projectOf(db, "locations", body.id);
+    else if (/^(budget|cost|stakeholder|task)-/.test(body.action)) return deny(); // owner only: money + the client relationship
     else if (body.action === "release-text") pid = null; // just text, nothing touched
     if (body.action !== "release-text" && !canProject(me, pid)) return deny();
   }
@@ -107,6 +117,206 @@ export async function POST(request) {
       const { error } = await db.from("project_people").delete().eq("id", body.id);
       if (error) return missing(error);
       return NextResponse.json({ ok: true });
+    }
+    // ── scenes ──
+    const cleanScene = (b) => {
+      const o = {};
+      if (b.title !== undefined) { o.title = clip(b.title, 160); if (!o.title) throw new Error("Give the scene a title"); }
+      if (b.act !== undefined) o.act = ["1", "2", "3"].includes(String(b.act)) ? String(b.act) : "1";
+      if (b.beat_index !== undefined) o.beat_index = Number.isInteger(Number(b.beat_index)) && b.beat_index !== "" && b.beat_index !== null ? Number(b.beat_index) : null;
+      if (b.purpose !== undefined) o.purpose = clip(b.purpose, 600);
+      if (b.kind !== undefined) o.kind = SCENE_KINDS.includes(b.kind) ? b.kind : "interview";
+      if (b.people !== undefined) o.people = (Array.isArray(b.people) ? b.people : []).filter(isId).slice(0, 20);
+      if (b.location_id !== undefined) o.location_id = isId(b.location_id) ? b.location_id : null;
+      if (b.est_seconds !== undefined) o.est_seconds = Math.max(0, Math.min(7200, Math.round(Number(b.est_seconds) || 0)));
+      if (b.status !== undefined) o.status = SCENE_STATUSES.includes(b.status) ? b.status : "idea";
+      if (b.tchart !== undefined) o.tchart = (Array.isArray(b.tchart) ? b.tchart : []).slice(0, 40).map((r) => ({ said: clip(r?.said, 600), seen: clip(r?.seen, 400), rel: ["illustrates", "counterpoints", "reveals", "transitions"].includes(r?.rel) ? r.rel : "illustrates" })).filter((r) => r.said || r.seen);
+      if (b.broll !== undefined) o.broll = (Array.isArray(b.broll) ? b.broll : []).slice(0, 60).map((r) => ({ text: clip(r?.text, 300), when: clip(r?.when, 80), status: ["wanted", "scheduled", "shot"].includes(r?.status) ? r.status : "wanted" })).filter((r) => r.text);
+      if (b.notes !== undefined) o.notes = clip(b.notes, 4000);
+      if (b.sort !== undefined) o.sort = Math.round(Number(b.sort) || 0);
+      if (b.number !== undefined) o.number = Math.round(Number(b.number) || 0);
+      return o;
+    };
+    if (body.action === "scene-add") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const row = cleanScene(body); if (!row.title) return bad("Give the scene a title");
+      const { data: last } = await db.from("scenes").select("sort, number").eq("project_id", body.projectId).order("sort", { ascending: false }).limit(1);
+      row.sort = (last?.[0]?.sort ?? 0) + 1; row.number = row.number || (last?.[0]?.number ?? 0) + 1;
+      const { data, error } = await db.from("scenes").insert({ project_id: body.projectId, ...row }).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ scene: data });
+    }
+    if (body.action === "scene-update") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("scenes").update({ ...cleanScene(body), updated_at: now() }).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ scene: data });
+    }
+    if (body.action === "scene-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("scenes").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "scenes-reorder") {
+      if (!isId(body.projectId) || !Array.isArray(body.ids)) return bad("Bad request");
+      await Promise.all(body.ids.filter(isId).map((id, i) => db.from("scenes").update({ sort: i + 1, number: i + 1 }).eq("id", id).eq("project_id", body.projectId)));
+      return NextResponse.json({ ok: true });
+    }
+    // ── locations ──
+    const cleanLocation = (b) => {
+      const o = {};
+      if (b.name !== undefined) { o.name = clip(b.name, 160); if (!o.name) throw new Error("Give the location a name"); }
+      if (b.kind !== undefined) o.kind = LOCATION_KINDS.includes(b.kind) ? b.kind : "interior";
+      for (const k of ["address", "contact_name", "contact_phone", "contact_email", "authority", "access_hours", "blackout", "parking", "power", "sound", "light", "hazards", "hospital"]) if (b[k] !== undefined) o[k] = clip(b[k], 400);
+      if (b.notes !== undefined) o.notes = clip(b.notes, 4000);
+      if (b.lat !== undefined) o.lat = Number.isFinite(Number(b.lat)) ? Number(b.lat) : null;
+      if (b.lng !== undefined) o.lng = Number.isFinite(Number(b.lng)) ? Number(b.lng) : null;
+      if (b.permit !== undefined) o.permit = ["none", "needed", "requested", "granted"].includes(b.permit) ? b.permit : "none";
+      if (b.coi !== undefined) o.coi = ["none", "needed", "requested", "delivered"].includes(b.coi) ? b.coi : "none";
+      if (b.status !== undefined) o.status = ["idea", "scouted", "cleared", "shot"].includes(b.status) ? b.status : "idea";
+      return o;
+    };
+    if (body.action === "location-add") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const row = cleanLocation(body); if (!row.name) return bad("Give the location a name");
+      const { data: last } = await db.from("locations").select("sort").eq("project_id", body.projectId).order("sort", { ascending: false }).limit(1);
+      row.sort = (last?.[0]?.sort ?? 0) + 1;
+      const { data, error } = await db.from("locations").insert({ project_id: body.projectId, ...row }).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ location: data });
+    }
+    if (body.action === "location-update") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("locations").update({ ...cleanLocation(body), updated_at: now() }).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ location: data });
+    }
+    if (body.action === "location-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("locations").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    // ── budget (owner only, enforced above) ──
+    if (body.action === "budget-seed") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const { data: have } = await db.from("budget_lines").select("code").eq("project_id", body.projectId);
+      const codes = new Set((have || []).map((x) => x.code));
+      const rows = BUDGET_TOPSHEET.filter(([code]) => !codes.has(code)).map(([code, section, description, unit], i) => ({ project_id: body.projectId, code, section, description, unit, qty: 1, rate_cents: 0, sort: i + 1 }));
+      if (!rows.length) return NextResponse.json({ lines: [] });
+      const { data, error } = await db.from("budget_lines").insert(rows).select("*");
+      if (error) return missing(error);
+      return NextResponse.json({ lines: data });
+    }
+    if (body.action === "budget-line-add" || body.action === "budget-line-update") {
+      const o = {};
+      if (body.code !== undefined) o.code = clip(body.code, 10);
+      if (body.section !== undefined) o.section = BUDGET_SECTIONS.includes(body.section) ? body.section : "production";
+      if (body.description !== undefined) o.description = clip(body.description, 160);
+      if (body.unit !== undefined) o.unit = ["day", "week", "flat", "allow", "each"].includes(body.unit) ? body.unit : "day";
+      if (body.qty !== undefined) o.qty = Math.max(0, Number(body.qty) || 0);
+      if (body.rate_cents !== undefined) o.rate_cents = Math.max(0, Math.round(Number(body.rate_cents) || 0));
+      if (body.notes !== undefined) o.notes = clip(body.notes, 600);
+      if (body.action === "budget-line-add") {
+        if (!isId(body.projectId) || !o.description) return bad("Describe the line");
+        const { data: last } = await db.from("budget_lines").select("sort").eq("project_id", body.projectId).order("sort", { ascending: false }).limit(1);
+        const { data, error } = await db.from("budget_lines").insert({ project_id: body.projectId, code: o.code || "", section: o.section || "production", unit: o.unit || "day", qty: o.qty ?? 1, rate_cents: o.rate_cents || 0, ...o, sort: (last?.[0]?.sort ?? 0) + 1 }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ line: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("budget_lines").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ line: data });
+    }
+    if (body.action === "budget-line-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("budget_lines").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "cost-add" || body.action === "cost-update") {
+      const o = {};
+      if (body.line_id !== undefined) o.line_id = isId(body.line_id) ? body.line_id : null;
+      if (body.shoot_id !== undefined) o.shoot_id = isId(body.shoot_id) ? body.shoot_id : null;
+      if (body.date !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(String(body.date))) o.date = body.date;
+      if (body.vendor !== undefined) o.vendor = clip(body.vendor, 160);
+      if (body.amount_cents !== undefined) o.amount_cents = Math.round(Number(body.amount_cents) || 0);
+      if (body.kind !== undefined) o.kind = ["invoice", "card", "cash", "mileage", "perdiem"].includes(body.kind) ? body.kind : "invoice";
+      if (body.paid !== undefined) o.paid = Boolean(body.paid);
+      if (body.notes !== undefined) o.notes = clip(body.notes, 600);
+      if (body.action === "cost-add") {
+        if (!isId(body.projectId)) return bad("Bad request");
+        if (!o.amount_cents) return bad("Amount?");
+        const { data, error } = await db.from("cost_entries").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ cost: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("cost_entries").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ cost: data });
+    }
+    if (body.action === "cost-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("cost_entries").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    // ── client side: stakeholders + needs-from-you ──
+    if (body.action === "stakeholder-add" || body.action === "stakeholder-update") {
+      const o = {};
+      for (const k of ["name", "role", "email", "phone", "notes"]) if (body[k] !== undefined) o[k] = clip(body[k], k === "notes" ? 1000 : 160);
+      if (body.portal_role !== undefined) o.portal_role = ["approver", "reviewer", "viewer"].includes(body.portal_role) ? body.portal_role : "viewer";
+      if (body.decision_maker !== undefined) o.decision_maker = Boolean(body.decision_maker);
+      if (body.primary_contact !== undefined) o.primary_contact = Boolean(body.primary_contact);
+      if (body.action === "stakeholder-add") {
+        if (!isId(body.projectId) || !o.name) return bad("Give them a name");
+        const { data, error } = await db.from("project_stakeholders").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ stakeholder: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("project_stakeholders").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ stakeholder: data });
+    }
+    if (body.action === "stakeholder-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("project_stakeholders").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "task-add" || body.action === "task-update") {
+      const o = {};
+      if (body.title !== undefined) o.title = clip(body.title, 200);
+      if (body.category !== undefined) o.category = ["access", "document", "introduction", "approval", "scheduling", "materials", "payment"].includes(body.category) ? body.category : "access";
+      if (body.due !== undefined) o.due = /^\d{4}-\d{2}-\d{2}$/.test(String(body.due || "")) ? body.due : null;
+      if (body.done !== undefined) o.done_at = body.done ? now() : null;
+      if (body.note !== undefined) o.note = clip(body.note, 1000);
+      if (body.action === "task-add") {
+        if (!isId(body.projectId) || !o.title) return bad("What do you need from them?");
+        const { data, error } = await db.from("client_tasks").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ task: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("client_tasks").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ task: data });
+    }
+    if (body.action === "task-delete") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { error } = await db.from("client_tasks").delete().eq("id", body.id);
+      if (error) return missing(error);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "milestones-seed") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("projects").update({ milestones: DEFAULT_MILESTONES.map((m) => ({ ...m, date: "", done: false })), updated_at: now() }).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ project: data });
     }
     // ── journal ──
     if (body.action === "entry-add") {
@@ -159,10 +369,12 @@ export async function POST(request) {
       };
       const { data, error } = await db.from("releases").insert(row).select("*").single();
       if (error) return missing(error);
+      // A signed deal memo hangs on the crew assignment.
+      if (body.kind === "deal" && isId(body.staffId) && row.project_id) await db.from("project_members").update({ deal_release_id: data.id }).eq("project_id", row.project_id).eq("staff_id", body.staffId);
       return NextResponse.json({ release: { ...data, signature_url: await signedUrl(key).catch(() => "") } });
     }
     if (body.action === "release-text") {
-      return NextResponse.json({ body: releaseBody(body.kind, { name: clip(body.name, 120) || "____________", project: clip(body.project, 160) || "the project", date: clip(body.date, 60) || "the agreed date", place: clip(body.place, 200) || "the agreed location", minor: clip(body.minor, 120) }), version: TEXT_VERSION });
+      return NextResponse.json({ body: releaseBody(body.kind, { name: clip(body.name, 120) || "____________", project: clip(body.project, 160) || "the project", date: clip(body.date, 60) || "the agreed date", place: clip(body.place, 200) || "the agreed location", minor: clip(body.minor, 120), position: clip(body.position, 80) || "crew", rate: clip(body.rate, 80) || "as agreed", kit: clip(body.kit, 80) || "none", credit: clip(body.credit, 120) || "as agreed", items: clip(body.items, 600) || "the items listed with Roth Media" }), version: TEXT_VERSION });
     }
     if (body.action === "release-delete") {
       if (!isId(body.id)) return bad("Bad request");

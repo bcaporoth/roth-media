@@ -44,11 +44,13 @@ function SignaturePad({ onChange }) {
 }
 SignaturePad.toPng = (el) => el?.querySelector("canvas")?.toDataURL("image/png") || "";
 
-export default function ReleaseSign({ project = null, person = null, shoot = null, onSigned, onClose }) {
-  const [kind, setKind] = useState("appearance");
-  const [name, setName] = useState(person?.name || "");
-  const [email, setEmail] = useState(person?.email || "");
-  const [phone, setPhone] = useState(person?.phone || "");
+export default function ReleaseSign({ project = null, person = null, shoot = null, preset = null, onSigned, onClose }) {
+  // preset: { kind, staffId, position, rate, kit, credit, items, name, email, phone } — a deal memo from the Team card, say.
+  const [kind, setKind] = useState(preset?.kind || "appearance");
+  const [x, setX] = useState({ position: preset?.position || "", rate: preset?.rate || "", kit: preset?.kit || "", credit: preset?.credit || "", items: preset?.items || "" });
+  const [name, setName] = useState(preset?.name || person?.name || "");
+  const [email, setEmail] = useState(preset?.email || person?.email || "");
+  const [phone, setPhone] = useState(preset?.phone || person?.phone || "");
   const [minor, setMinor] = useState("");
   const [text, setText] = useState("");
   const [step, setStep] = useState("setup"); // setup → read → done
@@ -63,14 +65,14 @@ export default function ReleaseSign({ project = null, person = null, shoot = nul
   async function prepare() {
     if (!name.trim()) return setErr("Type their name first");
     setErr(""); setBusy(true);
-    try { const r = await api({ action: "release-text", kind, name, project: project?.title || "", date, place, minor }); setText(r.body); setStep("read"); }
+    try { const r = await api({ action: "release-text", kind, name, project: project?.title || "", date: date || (kind === "deal" ? x.dates : ""), place, minor, ...x }); setText(r.body); setStep("read"); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
   async function sign() {
     const png = SignaturePad.toPng(padWrap.current);
     setErr(""); setBusy(true);
     try {
-      const r = await api({ action: "release-sign", kind, projectId: project?.id, personId: person?.id, shootId: shoot?.id, signer_name: name, signer_email: email, signer_phone: phone, signature: png, body: text });
+      const r = await api({ action: "release-sign", kind, projectId: project?.id, personId: person?.id, shootId: shoot?.id, staffId: preset?.staffId, signer_name: name, signer_email: email, signer_phone: phone, signature: png, body: text });
       setStep("done"); onSigned?.(r.release);
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   }
@@ -90,6 +92,17 @@ export default function ReleaseSign({ project = null, person = null, shoot = nul
             <label className="wide">Which release<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(RELEASE_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
             <label className="wide">Their full name<input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="As they'd sign it" /></label>
             {kind === "minor" && <label className="wide">The minor&apos;s name<input value={minor} onChange={(e) => setMinor(e.target.value)} /></label>}
+            {kind === "deal" && <>
+              <label>Position<input value={x.position} onChange={(e) => setX({ ...x, position: e.target.value })} placeholder="Second shooter" /></label>
+              <label>Rate<input value={x.rate} onChange={(e) => setX({ ...x, rate: e.target.value })} placeholder="$350 / day" /></label>
+              <label>Kit fee<input value={x.kit} onChange={(e) => setX({ ...x, kit: e.target.value })} placeholder="$50 / day or none" /></label>
+              <label>Dates<input value={x.dates || ""} onChange={(e) => setX({ ...x, dates: e.target.value })} placeholder="Nov 2026 – Feb 2027, as scheduled" /></label>
+              <label className="wide">Credit<input value={x.credit} onChange={(e) => setX({ ...x, credit: e.target.value })} placeholder="Second Camera — Brady —" /></label>
+            </>}
+            {kind === "materials" && <>
+              <label className="wide">What they&apos;re lending<input value={x.items} onChange={(e) => setX({ ...x, items: e.target.value })} placeholder="12 photographs (1950s–70s), one parish bulletin from 1962" /></label>
+              <label className="wide">Credit line<input value={x.credit} onChange={(e) => setX({ ...x, credit: e.target.value })} placeholder="Courtesy of the Kelly family" /></label>
+            </>}
             <label>Email (optional)<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
             <label>Phone (optional)<input value={phone} onChange={(e) => setPhone(e.target.value)} /></label>
             <p className="gcard-meta wide">{project ? `Project: ${project.title}. ` : ""}{date ? `Date: ${date}. ` : ""}{place ? `Place: ${place}.` : ""}</p>

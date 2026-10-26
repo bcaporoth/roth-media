@@ -36,8 +36,12 @@ export async function POST(request) {
     if (body.action === "update") {
       if (!isId(body.id)) return bad("Bad request");
       const patch = {};
-      for (const k of ["name", "title", "phone", "notes"]) if (body[k] !== undefined) patch[k] = clip(body[k], k === "notes" ? 2000 : 120);
+      for (const k of ["name", "title", "phone", "notes", "emergency", "dietary"]) if (body[k] !== undefined) patch[k] = clip(body[k], k === "notes" ? 2000 : 160);
       if (body.active !== undefined) patch.active = Boolean(body.active);
+      if (body.rate_type !== undefined) patch.rate_type = ["day", "half", "hour", "flat"].includes(body.rate_type) ? body.rate_type : "day";
+      if (body.rate_cents !== undefined) patch.rate_cents = Math.max(0, Math.round(Number(body.rate_cents) || 0));
+      if (body.kit_fee_cents !== undefined) patch.kit_fee_cents = Math.max(0, Math.round(Number(body.kit_fee_cents) || 0));
+      if (body.tax_status !== undefined) patch.tax_status = ["1099", "w2", "corp"].includes(body.tax_status) ? body.tax_status : "1099";
       const { data, error } = await db.from("staff").update(patch).eq("id", body.id).select("*").single();
       if (error) return missing(error);
       return NextResponse.json({ staff: data });
@@ -67,7 +71,10 @@ export async function POST(request) {
     if (body.action === "assign") {
       if (!isId(body.projectId) || !isId(body.staffId)) return bad("Bad request");
       const role = body.role === "lead" ? "lead" : "crew";
-      const { error } = await db.from("project_members").upsert({ project_id: body.projectId, staff_id: body.staffId, role }, { onConflict: "project_id,staff_id" });
+      const extra = {};
+      if (body.position !== undefined) extra.position = clip(body.position, 80);
+      if (body.rate_cents !== undefined) extra.rate_cents = body.rate_cents === null || body.rate_cents === "" ? null : Math.max(0, Math.round(Number(body.rate_cents) || 0));
+      const { error } = await db.from("project_members").upsert({ project_id: body.projectId, staff_id: body.staffId, role, ...extra }, { onConflict: "project_id,staff_id" });
       if (error) return missing(error);
       return NextResponse.json({ ok: true });
     }

@@ -16,13 +16,14 @@ export default async function ProjectPage({ params }) {
   const user = await requireAdminPage();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
-  const [newCount, data, staff] = await Promise.all([newLeadCount(), loadProject(supabaseAdmin(), id), listStaff(supabaseAdmin()).catch(() => null)]);
+  const db = supabaseAdmin();
+  const [newCount, data, staff, { data: clients }] = await Promise.all([newLeadCount(), loadProject(db, id), listStaff(db).catch(() => null), db.from("clients").select("id, name, email").order("name", { ascending: true })]);
   if (!data || data.missing) notFound();
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
       <StudioShell active="projects" newCount={newCount} kick="Project" title={data.project.title} wide>
-        <ProjectBoard initial={data} staffList={staff || []} />
+        <ProjectBoard initial={data} staffList={staff || []} clients={clients || []} />
       </StudioShell>
       <StudioFooter />
     </>
