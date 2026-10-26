@@ -16,6 +16,7 @@ import { ScenesCard, LocationsCard, BudgetCard, ConventionsCard, ClientSideCard 
 import { PHASE_LABEL } from "../lib/production";
 import { CallSheetEditor, MediaCard } from "./DayMachine";
 import { ThesisCard, ChronologyCard, SourcesCard, QuestionsCard, EventsCard, StyleCard, EyelineMap, InterviewPlan } from "./StoryEngine";
+import { FootageCard, StringoutCard, CutsCard } from "./EditRoom";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -44,6 +45,11 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [sources, setSources] = useState(s3?.sources || []);
   const [questions, setQuestions] = useState(s3?.questions || []);
   const [events, setEvents] = useState(s3?.events || []);
+  const s4 = initial.sprint4;
+  const [clips, setClips] = useState(s4?.clips || []);
+  const [selects, setSelects] = useState(s4?.selects || []);
+  const [cuts, setCuts] = useState(s4?.cuts || []);
+  const [notes, setNotes] = useState(s4?.notes || []);
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -108,7 +114,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       </section>
 
       <div className="pbook-kinds proj-tabs" role="tablist" aria-label="Project sections">
-        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ...(isOwner ? [["client", "Client side"]] : [])].map(([k, l]) => (
+        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ["edit", "Edit"], ...(isOwner ? [["client", "Client side"]] : [])].map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{l}</button>
         ))}
         <span className="gcard-meta proj-phase">{PHASE_LABEL[p.phase] || "Development"}{p.code ? ` · ${p.code}` : ""}</span>
@@ -172,6 +178,16 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
             {!isOwner && <p className="gcard-meta">Budget is Brandon&apos;s. Locations are yours to scout.</p>}
           </div>
         </div>
+      )}
+
+      {tab === "edit" && (
+        <>
+          <FootageCard project={p} clips={clips} setClips={setClips} selects={selects} setSelects={setSelects} days={days} scenes={scenes} people={people} setPeople={setPeople} fail={fail} say={say} ready={Boolean(s4)} transcribe={Boolean(s4?.transcribe)} />
+          <div className="cprof-cols">
+            <div className="cprof-col"><StringoutCard project={p} selects={selects} setSelects={setSelects} clips={clips} scenes={scenes} people={people} setPeople={setPeople} fail={fail} say={say} ready={Boolean(s4)} /></div>
+            <div className="cprof-col"><CutsCard project={p} cuts={cuts} setCuts={setCuts} notes={notes} setNotes={setNotes} scenes={scenes} fail={fail} say={say} ready={Boolean(s4)} /></div>
+          </div>
+        </>
       )}
 
       {tab === "client" && isOwner && (
@@ -358,7 +374,7 @@ function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView, qu
       <div className="person-quotes">
         <span className="kick-sm">What they said{x.quotes?.length ? ` · ${x.quotes.length}` : ""}</span>
         <ul>
-          {(x.quotes || []).map((q, i) => <li key={i}><q>{q.text}</q><em>{[q.at, q.when].filter(Boolean).join(" · ")}</em><button type="button" className="prep-x" aria-label="Remove quote" onClick={() => dropQuote(i)}>×</button></li>)}
+          {(x.quotes || []).map((q, i) => <li key={i}><q>{q.text}</q><em>{[q.clip, q.at, q.when].filter(Boolean).join(" · ")}</em><button type="button" className="prep-x" aria-label="Remove quote" onClick={() => dropQuote(i)}>×</button></li>)}
         </ul>
         <form className="prep-add" onSubmit={addQuote}>
           <input value={quote} onChange={(e) => setQuote(e.target.value)} placeholder="The line — as close to verbatim as you can" aria-label="Quote" />

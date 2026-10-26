@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { whoIs, canProject, projectOf } from "../../../../lib/staff-server";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { r2Configured, putSignature, signedUrl } from "../../../../lib/r2";
+import { r2Configured, putSignature, signedUrl, putUrl, PROXY_KEY_RE } from "../../../../lib/r2";
+import { parseName, parseSubs, parsePlain, fromAssembly, CUT_STAGES } from "../../../../lib/edit";
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
 import { PROJECT_STATUSES, PERSON_STATUSES, PERSON_KINDS } from "../../../../lib/projects";
 import { ARC_KEYS } from "../../../../lib/story-arc";
@@ -16,7 +17,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events|clips|transcripts|selects|cuts|screening_notes/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /clips|transcripts|selects|cuts|screening_notes/i.test(e.message) ? "Run supabase/sprint4.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -60,7 +61,7 @@ function cleanPerson(b) {
     if (pl.best_takes !== undefined) o2.best_takes = (Array.isArray(pl.best_takes) ? pl.best_takes : []).slice(0, 60).map((t) => ({ at: clip(t?.at, 20), note: clip(t?.note, 400) })).filter((t) => t.note);
     o.plan = o2;
   }
-  if (b.quotes !== undefined) o.quotes = (Array.isArray(b.quotes) ? b.quotes : []).slice(0, 200).map((q) => ({ text: clip(q?.text, 1200), at: clip(q?.at, 20), when: clip(q?.when, 10) })).filter((q) => q.text);
+  if (b.quotes !== undefined) o.quotes = (Array.isArray(b.quotes) ? b.quotes : []).slice(0, 300).map((q) => ({ text: clip(q?.text, 1200), at: clip(q?.at, 20), when: clip(q?.when, 10), ...(q?.clip ? { clip: clip(q.clip, 160) } : {}), ...(isId(q?.select_id) ? { select_id: q.select_id } : {}) })).filter((q) => q.text);
   if (b.sort !== undefined) o.sort = Number.isFinite(Number(b.sort)) ? Math.round(Number(b.sort)) : 0;
   return o;
 }
@@ -86,6 +87,8 @@ export async function POST(request) {
     else if (/^(chrono|source|question|event)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { chrono: "chronology", source: "sources", question: "questions", event: "events" }[body.action.split("-")[0]], body.id);
     else if (/^(card|drive)-(update|delete)$/.test(body.action)) pid = await projectOf(db, body.action.startsWith("card") ? "media_cards" : "drives", body.id);
     else if (/^roll-(update|delete)$/.test(body.action)) pid = await projectOf(db, "rolls", body.id);
+    else if (/^(clip|select|cut|note)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { clip: "clips", select: "selects", cut: "cuts", note: "screening_notes" }[body.action.split("-")[0]], body.id);
+    else if (/^(clip-proxy-sign|clip-proxy-done|clip-urls|transcript-get|transcript-upload|transcribe|transcript-poll)$/.test(body.action)) pid = await projectOf(db, "clips", body.id);
     else if (/^(budget|cost|stakeholder|task)-/.test(body.action)) return deny(); // owner only: money + the client relationship
     else if (body.action === "release-text") pid = null; // just text, nothing touched
     if (body.action !== "release-text" && !canProject(me, pid)) return deny();
@@ -337,7 +340,122 @@ export async function POST(request) {
       question: { table: "questions", clean: (b) => { const o = {}; if (b.theme !== undefined) o.theme = clip(b.theme, 40) || "general"; if (b.text !== undefined) o.text = clip(b.text, 500); if (b.followups !== undefined) o.followups = clip(b.followups, 800); if (b.beat_index !== undefined) o.beat_index = b.beat_index === "" || b.beat_index === null ? null : Math.round(Number(b.beat_index)); if (b.people !== undefined) o.people = uuids(b.people); if (b.priority !== undefined) o.priority = [1, 2, 3].includes(Number(b.priority)) ? Number(b.priority) : 2; if (b.asked !== undefined && typeof b.asked === "object") o.asked = Object.fromEntries(Object.entries(b.asked || {}).filter(([k]) => isId(k)).slice(0, 60).map(([k, v]) => [k, { date: clip(v?.date, 10), quality: Math.max(0, Math.min(5, Math.round(Number(v?.quality) || 0))) }])); if (b.sort !== undefined) o.sort = Math.round(Number(b.sort) || 0); return o; }, need: "text" },
       event: { table: "events", clean: (b) => { const o = {}; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; for (const k of ["time_text", "recurring", "why", "restrictions", "plan"]) if (b[k] !== undefined) o[k] = clip(b[k], k === "plan" ? 2000 : 400); if (b.location_id !== undefined) o.location_id = isId(b.location_id) ? b.location_id : null; if (b.scene_id !== undefined) o.scene_id = isId(b.scene_id) ? b.scene_id : null; if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null; if (b.access !== undefined) o.access = ["ask", "asked", "approved", "restricted"].includes(b.access) ? b.access : "ask"; if (b.status !== undefined) o.status = ["planned", "shot", "missed"].includes(b.status) ? b.status : "planned"; return o; }, need: "title" },
     };
-    const m3 = /^(chrono|source|question|event)-(add|update|delete)$/.exec(body.action || "");
+    const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d; };
+    Object.assign(TABLES, {
+      clip: { table: "clips", clean: (b) => { const o = {}; if (b.filename !== undefined) { o.filename = clip(b.filename, 160); o.stem = parseName(o.filename).stem.toLowerCase(); } for (const k of ["shoot_id", "roll_id", "scene_id", "person_id"]) if (b[k] !== undefined) o[k] = isId(b[k]) ? b[k] : null; if (b.camera !== undefined) o.camera = clip(b.camera, 4).toUpperCase(); if (b.card !== undefined) o.card = clip(b.card, 8).toUpperCase(); if (b.duration_s !== undefined) o.duration_s = num(b.duration_s, 0, 1e6, 0); if (b.width !== undefined) o.width = Math.round(num(b.width, 0, 20000, 0)); if (b.height !== undefined) o.height = Math.round(num(b.height, 0, 20000, 0)); if (b.fps !== undefined) o.fps = num(b.fps, 1, 1000, 23.976); if (b.codec !== undefined) o.codec = clip(b.codec, 40); if (b.size_bytes !== undefined) o.size_bytes = Math.round(num(b.size_bytes, 0, 1e13, 0)); if (b.start_tc !== undefined) o.start_tc = clip(b.start_tc, 11); if (b.rating !== undefined) o.rating = Math.round(num(b.rating, 0, 5, 0)); if (b.keywords !== undefined) o.keywords = (Array.isArray(b.keywords) ? b.keywords : String(b.keywords).split(",")).map((k) => clip(k, 30)).filter(Boolean).slice(0, 20); if (b.notes !== undefined) o.notes = clip(b.notes, 2000); return o; }, need: "filename" },
+      select: { table: "selects", clean: (b) => { const o = {}; if (b.clip_id !== undefined) o.clip_id = isId(b.clip_id) ? b.clip_id : null; for (const k of ["scene_id", "person_id"]) if (b[k] !== undefined) o[k] = isId(b[k]) ? b[k] : null; if (b.kind !== undefined) o.kind = ["bite", "broll", "sound", "archival"].includes(b.kind) ? b.kind : "bite"; if (b.in_s !== undefined) o.in_s = num(b.in_s, 0, 1e6, 0); if (b.out_s !== undefined) o.out_s = num(b.out_s, 0, 1e6, 0); if (b.text !== undefined) o.text = clip(b.text, 2000); if (b.note !== undefined) o.note = clip(b.note, 600); if (b.rating !== undefined) o.rating = Math.round(num(b.rating, 1, 5, 3)); if (b.sort !== undefined) o.sort = Math.round(num(b.sort, 0, 1e6, 0)); return o; }, need: "clip_id" },
+      cut: { table: "cuts", clean: (b) => { const o = {}; if (b.stage !== undefined) o.stage = CUT_STAGES.includes(b.stage) ? b.stage : "stringout"; if (b.version !== undefined) o.version = Math.round(num(b.version, 1, 999, 1)); if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; if (b.intent !== undefined) o.intent = clip(b.intent, 1500); if (b.thesis_v !== undefined) o.thesis_v = b.thesis_v === "" || b.thesis_v == null ? null : Math.round(num(b.thesis_v, 1, 999, 1)); if (b.scene_order !== undefined) o.scene_order = (Array.isArray(b.scene_order) ? b.scene_order : []).filter(isId).slice(0, 300); if (b.runtime_s !== undefined) o.runtime_s = Math.round(num(b.runtime_s, 0, 1e6, 0)); if (b.link !== undefined) o.link = clip(b.link, 500); if (b.notes !== undefined) o.notes = clip(b.notes, 4000); if (b.status !== undefined) o.status = ["open", "screened", "superseded"].includes(b.status) ? b.status : "open"; return o; }, need: "stage" },
+      note: { table: "screening_notes", clean: (b) => { const o = {}; if (b.cut_id !== undefined) o.cut_id = isId(b.cut_id) ? b.cut_id : null; if (b.at_s !== undefined) o.at_s = b.at_s === "" || b.at_s == null ? null : num(b.at_s, 0, 1e6, 0); if (b.text !== undefined) o.text = clip(b.text, 1500); if (b.who !== undefined) o.who = clip(b.who, 60); if (b.verdict !== undefined) o.verdict = ["", "accept", "reject", "park"].includes(b.verdict) ? b.verdict : ""; if (b.scene_id !== undefined) o.scene_id = isId(b.scene_id) ? b.scene_id : null; if (b.done !== undefined) o.done = Boolean(b.done); return o; }, need: "text" },
+    });
+    // A bite with a person on it is also a quote on that person — the edit
+    // room and the People tab stay one list.
+    if (body.action === "select-add" && isId(body.projectId)) {
+      const row = TABLES.select.clean(body); if (!row.clip_id) return bad("Needs a clip");
+      const { data, error } = await db.from("selects").insert({ project_id: body.projectId, ...row }).select("*").single();
+      if (error) return missing(error);
+      let person = null;
+      if (data.person_id && data.kind === "bite" && data.text) {
+        const { data: pr } = await db.from("project_people").select("id, quotes").eq("id", data.person_id).maybeSingle();
+        if (pr) {
+          const { data: c } = await db.from("clips").select("filename").eq("id", data.clip_id).maybeSingle();
+          const at = `${Math.floor(data.in_s / 60)}:${String(Math.floor(data.in_s % 60)).padStart(2, "0")}`;
+          const quotes = [...(pr.quotes || []), { text: data.text, at, when: now().slice(0, 10), clip: c?.filename || "", select_id: data.id }].slice(-300);
+          const { data: up } = await db.from("project_people").update({ quotes }).eq("id", pr.id).select("*").single();
+          person = up || null;
+        }
+      }
+      return NextResponse.json({ row: data, person });
+    }
+    if (body.action === "select-delete" && isId(body.id)) {
+      const { data: sel } = await db.from("selects").select("id, person_id").eq("id", body.id).maybeSingle();
+      if (sel?.person_id) { const { data: pr } = await db.from("project_people").select("id, quotes").eq("id", sel.person_id).maybeSingle(); if (pr) await db.from("project_people").update({ quotes: (pr.quotes || []).filter((q) => q.select_id !== sel.id) }).eq("id", pr.id); }
+      const { error } = await db.from("selects").delete().eq("id", body.id); if (error) return missing(error); return NextResponse.json({ ok: true });
+    }
+    // Bulk clip log from the browser's folder read. Upsert by filename;
+    // roll/day are matched from the roll naming convention when it's there.
+    if (body.action === "clips-ingest") {
+      if (!isId(body.projectId) || !Array.isArray(body.clips)) return bad("Bad request");
+      const { data: rolls } = await db.from("rolls").select("id, roll_name, shoot_id, camera").eq("project_id", body.projectId);
+      const { data: shoots } = await db.from("shoots").select("id, date").eq("project_id", body.projectId);
+      const rows = body.clips.slice(0, 500).map((c) => {
+        const o = TABLES.clip.clean(c); if (!o.filename) return null;
+        const pn = parseName(o.filename);
+        if (!o.camera && pn.camera) o.camera = pn.camera; if (!o.card && pn.card) o.card = pn.card;
+        const roll = pn.roll && (rolls || []).find((r) => r.roll_name.toUpperCase() === pn.roll);
+        if (roll) { o.roll_id = roll.id; if (roll.shoot_id) o.shoot_id = roll.shoot_id; }
+        if (!o.shoot_id && pn.ymd) { const d = (shoots || []).find((x) => x.date === pn.ymd); if (d) o.shoot_id = d.id; }
+        if (!o.shoot_id && isId(body.shoot_id)) o.shoot_id = body.shoot_id;
+        return { project_id: body.projectId, ...o };
+      }).filter(Boolean);
+      if (!rows.length) return bad("No clips in that folder");
+      const { data, error } = await db.from("clips").upsert(rows, { onConflict: "project_id,filename", ignoreDuplicates: false }).select("*");
+      if (error) return missing(error);
+      return NextResponse.json({ rows: data });
+    }
+    // Proxy + thumb: presigned PUT straight to R2, then record the key.
+    if (body.action === "clip-proxy-sign") {
+      if (!isId(body.id)) return bad("Bad request"); if (!r2Configured) return bad("R2 isn't configured", 500);
+      const { data: c } = await db.from("clips").select("id, project_id").eq("id", body.id).maybeSingle(); if (!c) return bad("No such clip", 404);
+      const isThumb = body.which === "thumb";
+      const key = `proxies/${c.project_id}/${c.id}.${isThumb ? "jpg" : "mp4"}`;
+      return NextResponse.json({ key, url: await putUrl(key, isThumb ? "image/jpeg" : "video/mp4") });
+    }
+    if (body.action === "clip-proxy-done") {
+      if (!isId(body.id) || !PROXY_KEY_RE.test(body.key || "")) return bad("Bad request");
+      const col = body.key.endsWith(".jpg") ? "thumb_key" : "proxy_key";
+      const { data, error } = await db.from("clips").update({ [col]: body.key }).eq("id", body.id).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data, url: await signedUrl(body.key) });
+    }
+    if (body.action === "clip-urls") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data: c } = await db.from("clips").select("proxy_key, thumb_key").eq("id", body.id).maybeSingle(); if (!c) return bad("No such clip", 404);
+      return NextResponse.json({ proxy_url: c.proxy_key ? await signedUrl(c.proxy_key) : "", thumb_url: c.thumb_key ? await signedUrl(c.thumb_key) : "" });
+    }
+    // Transcripts: SRT/VTT/plain from Resolve/Premiere, or AssemblyAI off the proxy.
+    if (body.action === "transcript-get") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("transcripts").select("*").eq("clip_id", body.id).maybeSingle(); if (error) return missing(error);
+      return NextResponse.json({ transcript: data || null });
+    }
+    if (body.action === "transcript-upload") {
+      if (!isId(body.id)) return bad("Bad request");
+      const raw = String(body.body || "").slice(0, 2_000_000); if (!raw.trim()) return bad("Empty transcript");
+      const parsed = /-->/.test(raw) ? parseSubs(raw) : parsePlain(raw);
+      if (!parsed.words.length) return bad("Couldn't read that — SRT, VTT or plain text");
+      const { data: c } = await db.from("clips").select("id, project_id").eq("id", body.id).maybeSingle(); if (!c) return bad("No such clip", 404);
+      const { data, error } = await db.from("transcripts").upsert({ clip_id: c.id, project_id: c.project_id, source: /-->/.test(raw) ? "srt" : "text", ...parsed }, { onConflict: "clip_id" }).select("*").single(); if (error) return missing(error);
+      await db.from("clips").update({ transcript_status: "done" }).eq("id", c.id);
+      return NextResponse.json({ transcript: data });
+    }
+    if (body.action === "transcribe") {
+      if (!isId(body.id)) return bad("Bad request");
+      const key = process.env.ASSEMBLYAI_API_KEY; if (!key) return bad("Add ASSEMBLYAI_API_KEY in Vercel → Settings → Environment Variables, redeploy, then this button works. Or upload the SRT from Resolve.", 500);
+      const { data: c } = await db.from("clips").select("id, proxy_key").eq("id", body.id).maybeSingle(); if (!c) return bad("No such clip", 404);
+      if (!c.proxy_key) return bad("Upload a proxy first — the transcriber listens to it");
+      const audio_url = await signedUrl(c.proxy_key, { expiresIn: 6 * 3600 });
+      const r = await fetch("https://api.assemblyai.com/v2/transcript", { method: "POST", headers: { authorization: key, "content-type": "application/json" }, body: JSON.stringify({ audio_url, speaker_labels: true, punctuate: true, format_text: true }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.id) return bad(`AssemblyAI: ${j.error || r.status}`, 502);
+      const { data, error } = await db.from("clips").update({ transcript_status: "queued", transcript_id: j.id }).eq("id", c.id).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
+    if (body.action === "transcript-poll") {
+      if (!isId(body.id)) return bad("Bad request");
+      const key = process.env.ASSEMBLYAI_API_KEY; if (!key) return bad("No ASSEMBLYAI_API_KEY", 500);
+      const { data: c } = await db.from("clips").select("id, project_id, transcript_id, transcript_status").eq("id", body.id).maybeSingle(); if (!c?.transcript_id) return bad("Nothing queued");
+      const r = await fetch(`https://api.assemblyai.com/v2/transcript/${c.transcript_id}`, { headers: { authorization: key } });
+      const j = await r.json().catch(() => ({}));
+      if (j.status === "completed") {
+        const parsed = fromAssembly(j);
+        const { data: t, error } = await db.from("transcripts").upsert({ clip_id: c.id, project_id: c.project_id, source: "assemblyai", ...parsed }, { onConflict: "clip_id" }).select("*").single(); if (error) return missing(error);
+        const { data: row } = await db.from("clips").update({ transcript_status: "done" }).eq("id", c.id).select("*").single();
+        return NextResponse.json({ row, transcript: t });
+      }
+      if (j.status === "error") { const { data: row } = await db.from("clips").update({ transcript_status: "error" }).eq("id", c.id).select("*").single(); return NextResponse.json({ row, error: j.error }); }
+      const { data: row } = await db.from("clips").update({ transcript_status: "processing" }).eq("id", c.id).select("*").single();
+      return NextResponse.json({ row });
+    }
+    const m3 = /^(chrono|source|question|event|clip|select|cut|note)-(add|update|delete)$/.exec(body.action || "");
     if (m3) {
       const def = TABLES[m3[1]]; const op = m3[2];
       if (op === "add") {
