@@ -309,6 +309,7 @@ export function ConventionsCard({ project, onProject, clients = [] }) {
       <div className="shoot-new scene-fields">
         <F label="Project code" value={project.code || ""} onSave={(v) => onProject({ code: v })} placeholder="STMARY" />
         <F label="Phase" value={project.phase || "development"} options={PHASES.map((p) => [p, PHASE_LABEL[p]])} onSave={(v) => onProject({ phase: v })} />
+        <F label="Production phone (on every call sheet)" value={project.production_phone || ""} onSave={(v) => onProject({ production_phone: v })} placeholder="845-549-4425" />
         <F label="Client (portal login)" value={project.client_id || ""} options={[["", "— none —"], ...clients.map((c) => [c.id, `${c.name} · ${c.email}`])]} onSave={(v) => onProject({ client_id: v || null })} wide />
         {CONV.map(([k, label, ph]) => <F key={k} label={label} value={conv[k] || ""} onSave={(v) => onProject({ conventions: { ...conv, [k]: v } })} placeholder={ph} wide={["folders", "rolls", "drives", "cameras"].includes(k)} />)}
       </div>

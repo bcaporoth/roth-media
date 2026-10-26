@@ -16,7 +16,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -28,6 +28,7 @@ function cleanProject(b) {
   if (b.logline !== undefined) o.logline = clip(b.logline, 400);
   if (b.notes !== undefined) o.notes = clip(b.notes, 8000);
   if (b.beats !== undefined) o.beats = (Array.isArray(b.beats) ? b.beats : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), done: Boolean(x?.done), who: clip(x?.who, 120) })).filter((x) => x.text);
+  if (b.production_phone !== undefined) o.production_phone = clip(b.production_phone, 40);
   if (b.code !== undefined) o.code = clip(b.code, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (b.phase !== undefined) o.phase = PHASES.includes(b.phase) ? b.phase : "development";
   if (b.client_id !== undefined) o.client_id = isId(b.client_id) ? b.client_id : null;
@@ -69,6 +70,8 @@ export async function POST(request) {
     else if (body.action === "release-delete") pid = await projectOf(db, "releases", body.id);
     else if (/^scene-(update|delete)$/.test(body.action)) pid = await projectOf(db, "scenes", body.id);
     else if (/^location-(update|delete)$/.test(body.action)) pid = await projectOf(db, "locations", body.id);
+    else if (/^(card|drive)-(update|delete)$/.test(body.action)) pid = await projectOf(db, body.action.startsWith("card") ? "media_cards" : "drives", body.id);
+    else if (/^roll-(update|delete)$/.test(body.action)) pid = await projectOf(db, "rolls", body.id);
     else if (/^(budget|cost|stakeholder|task)-/.test(body.action)) return deny(); // owner only: money + the client relationship
     else if (body.action === "release-text") pid = null; // just text, nothing touched
     if (body.action !== "release-text" && !canProject(me, pid)) return deny();
@@ -312,6 +315,85 @@ export async function POST(request) {
       if (error) return missing(error);
       return NextResponse.json({ ok: true });
     }
+    // ── media chain: cards → rolls → drives ──
+    if (body.action === "card-add" || body.action === "card-update") {
+      const o = {};
+      if (body.label !== undefined) o.label = clip(body.label, 12).toUpperCase();
+      if (body.camera !== undefined) o.camera = clip(body.camera, 4).toUpperCase() || "A";
+      if (body.capacity_gb !== undefined) o.capacity_gb = Math.max(0, Math.round(Number(body.capacity_gb) || 0));
+      if (body.notes !== undefined) o.notes = clip(body.notes, 300);
+      if (body.retired !== undefined) o.retired = Boolean(body.retired);
+      if (body.action === "card-add") {
+        if (!isId(body.projectId) || !o.label) return bad("Card label? (A01)");
+        const { data, error } = await db.from("media_cards").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ card: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("media_cards").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ card: data });
+    }
+    if (body.action === "card-delete") { if (!isId(body.id)) return bad("Bad request"); const { error } = await db.from("media_cards").delete().eq("id", body.id); if (error) return missing(error); return NextResponse.json({ ok: true }); }
+    if (body.action === "drive-add" || body.action === "drive-update") {
+      const o = {};
+      if (body.label !== undefined) o.label = clip(body.label, 40);
+      if (body.role !== undefined) o.role = ["working", "mirror", "offsite", "archive", "shuttle"].includes(body.role) ? body.role : "working";
+      if (body.capacity_tb !== undefined) o.capacity_tb = Math.max(0, Number(body.capacity_tb) || 0);
+      if (body.used_tb !== undefined) o.used_tb = Math.max(0, Number(body.used_tb) || 0);
+      if (body.location !== undefined) o.location = clip(body.location, 120);
+      if (body.last_verified !== undefined) o.last_verified = /^\d{4}-\d{2}-\d{2}$/.test(String(body.last_verified || "")) ? body.last_verified : null;
+      if (body.notes !== undefined) o.notes = clip(body.notes, 300);
+      if (body.action === "drive-add") {
+        if (!isId(body.projectId) || !o.label) return bad("Drive label? (STMARY-WORK-01)");
+        const { data, error } = await db.from("drives").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ drive: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      const { data, error } = await db.from("drives").update(o).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ drive: data });
+    }
+    if (body.action === "drive-delete") { if (!isId(body.id)) return bad("Bad request"); const { error } = await db.from("drives").delete().eq("id", body.id); if (error) return missing(error); return NextResponse.json({ ok: true }); }
+    if (body.action === "roll-add" || body.action === "roll-update") {
+      const o = {};
+      if (body.shoot_id !== undefined) o.shoot_id = isId(body.shoot_id) ? body.shoot_id : null;
+      if (body.card_id !== undefined) o.card_id = isId(body.card_id) ? body.card_id : null;
+      if (body.camera !== undefined) o.camera = clip(body.camera, 4).toUpperCase() || "A";
+      if (body.roll_name !== undefined) o.roll_name = clip(body.roll_name, 60);
+      if (body.shot_by !== undefined) o.shot_by = clip(body.shot_by, 80);
+      if (body.used_gb !== undefined) o.used_gb = Math.max(0, Number(body.used_gb) || 0);
+      if (body.clip_count !== undefined) o.clip_count = Math.max(0, Math.round(Number(body.clip_count) || 0));
+      if (body.offload_tool !== undefined) o.offload_tool = clip(body.offload_tool, 40);
+      if (body.checksum_verified !== undefined) o.checksum_verified = Boolean(body.checksum_verified);
+      for (const k of ["copy1_drive_id", "copy2_drive_id"]) if (body[k] !== undefined) o[k] = isId(body[k]) ? body[k] : null;
+      for (const k of ["offloaded_at", "copy1_verified_at", "copy2_verified_at", "cloud_at"]) if (body[k] !== undefined) o[k] = body[k] ? now() : null;
+      if (body.notes !== undefined) o.notes = clip(body.notes, 600);
+      if (body.action === "roll-add") {
+        if (!isId(body.projectId) || !o.roll_name) return bad("Roll name?");
+        const { data, error } = await db.from("rolls").insert({ project_id: body.projectId, ...o }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ roll: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      // Status is derived, never set by hand: two verified copies before a card may be formatted.
+      const { data: cur } = await db.from("rolls").select("*").eq("id", body.id).maybeSingle();
+      if (!cur) return bad("Roll's gone", 404);
+      const next = { ...cur, ...o };
+      let status = "in_camera";
+      if (next.offloaded_at) status = "offloading";
+      if (next.copy1_verified_at && next.checksum_verified) status = "copy1";
+      if (next.copy1_verified_at && next.copy2_verified_at && next.checksum_verified) status = "cleared";
+      if (body.formatted !== undefined) {
+        if (body.formatted && status !== "cleared" && cur.status !== "formatted") return bad("Not yet — two verified copies before this card is formatted.");
+        status = body.formatted ? "formatted" : status;
+      } else if (cur.status === "formatted") status = "formatted";
+      const { data, error } = await db.from("rolls").update({ ...o, status, updated_at: now() }).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ roll: data });
+    }
+    if (body.action === "roll-delete") { if (!isId(body.id)) return bad("Bad request"); const { error } = await db.from("rolls").delete().eq("id", body.id); if (error) return missing(error); return NextResponse.json({ ok: true }); }
     if (body.action === "milestones-seed") {
       if (!isId(body.id)) return bad("Bad request");
       const { data, error } = await db.from("projects").update({ milestones: DEFAULT_MILESTONES.map((m) => ({ ...m, date: "", done: false })), updated_at: now() }).eq("id", body.id).select("*").single();

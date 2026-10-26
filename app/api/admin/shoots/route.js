@@ -65,6 +65,18 @@ function clean(body, existing = {}) {
     }).filter((c) => c.text);
   if (body.gallery_id !== undefined) out.gallery_id = /^[0-9a-f-]{36}$/.test(String(body.gallery_id || "")) ? body.gallery_id : null;
   if (body.client_visible !== undefined) out.client_visible = Boolean(body.client_visible);
+  if (body.scene_ids !== undefined) out.scene_ids = (Array.isArray(body.scene_ids) ? body.scene_ids : []).filter((x) => /^[0-9a-f-]{36}$/.test(String(x))).slice(0, 60);
+  if (body.callsheet !== undefined && typeof body.callsheet === "object") {
+    const c = body.callsheet || {};
+    const tm = (v) => (/^\d{2}:\d{2}$/.test(String(v || "")) ? v : "");
+    out.callsheet = {
+      version: Math.max(0, Math.round(Number(c.version) || 0)), issued_at: c.issued_at || null,
+      general_call: tm(c.general_call), first_shot: tm(c.first_shot), wrap_est: tm(c.wrap_est),
+      crew: (Array.isArray(c.crew) ? c.crew : []).slice(0, 40).map((x) => ({ staff_id: String(x.staff_id || "").slice(0, 36), call: tm(x.call), note: clip(x.note, 200), on: x.on !== false, confirmed_at: x.confirmed_at || null })),
+      cast: (Array.isArray(c.cast) ? c.cast : []).slice(0, 40).map((x) => ({ person_id: String(x.person_id || "").slice(0, 36), call: tm(x.call), note: clip(x.note, 200) })),
+      meals: clip(c.meals, 400), notes: clip(c.notes, 2000), advance: clip(c.advance, 600), walkie: clip(c.walkie, 80), safety: clip(c.safety, 800), hospital: clip(c.hospital, 200), parking: clip(c.parking, 300), production_phone: clip(c.production_phone, 40),
+    };
+  }
   if (body.location_id !== undefined) out.location_id = /^[0-9a-f-]{36}$/.test(String(body.location_id || "")) ? body.location_id : null;
   if (body.project_id !== undefined) out.project_id = /^[0-9a-f-]{36}$/.test(String(body.project_id || "")) ? body.project_id : null;
   if (body.submission_id !== undefined) out.submission_id = /^[0-9a-f-]{36}$/.test(String(body.submission_id || "")) ? body.submission_id : null;

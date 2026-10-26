@@ -6225,6 +6225,46 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .cproj-ms li.is-done { color: var(--ink-soft); } .cproj-ms li.is-next { font-weight: 700; }
 .cproj-ms em { font-style: normal; color: var(--ink-soft); font-size: 0.85rem; }
 @media (max-width: 640px) { .budget-stats { grid-template-columns: 1fr 1fr; } .budget-table th:nth-child(4), .budget-table td:nth-child(4) { display: none; } .ms-list li { grid-template-columns: 1fr auto; } .ms-list li input[type="date"] { grid-column: 1 / -1; } }
+/* Sprint 2: call sheets + media */
+.callsheet { display: grid; gap: 0.8rem; }
+.cs-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.8rem; align-items: flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 0.6rem; }
+.cs-head h1 { margin: 0.1rem 0 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.6rem; line-height: 1.1; }
+.cs-sub { margin: 0.2rem 0 0; color: var(--ink-soft); }
+.cs-calls { display: flex; gap: 1.2rem; }
+.cs-calls strong { display: block; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.6rem; line-height: 1.1; }
+.cs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.cs-box { border: 1px solid var(--line); border-radius: 12px; padding: 0.7rem 0.9rem; display: grid; gap: 0.3rem; background: var(--surface); }
+.cs-box p { margin: 0; line-height: 1.4; }
+.cs-emergency { border-color: #c0392b; }
+.cs-sched { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.25rem; }
+.cs-sched li { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.5rem; }
+.cs-time { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.cs-scenes { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+.cs-table { width: 100%; border-collapse: collapse; }
+.cs-table td { padding: 0.4rem 0.3rem; border-top: 1px solid var(--line); vertical-align: top; }
+.cs-table tr:first-child td { border-top: 0; }
+.cs-table em { font-style: normal; color: var(--ink-soft); font-size: 0.85rem; }
+.cs-table tr.is-ok td:first-child strong { color: #2e7d32; }
+.cs-kit { font-size: 0.9rem; }
+.cs-pre { white-space: pre-wrap; }
+.cs-ack { border-color: var(--clay); background: color-mix(in srgb, var(--clay) 8%, transparent); }
+.call-page { max-width: 760px; }
+.cse { border: 1px solid var(--clay); border-radius: 12px; padding: 0.8rem 0.9rem; margin: 0 0 0.6rem; display: grid; gap: 0.7rem; background: color-mix(in srgb, var(--clay) 5%, transparent); }
+.cse-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4rem; }
+.cse-block { display: grid; gap: 0.4rem; }
+.cse-table td input[type="time"], .cse-table td input[type="text"], .cse-table td input:not([type]) { font: inherit; font-size: 0.9rem; padding: 0.35rem 0.5rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; width: 100%; min-width: 6rem; }
+.cse-table tr.is-off td { opacity: 0.45; }
+.cse-on { display: inline-flex; gap: 0.4rem; align-items: center; }
+.cse-ack { white-space: nowrap; display: flex; gap: 0.3rem; align-items: center; }
+.roll-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.roll { border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 0.8rem; display: grid; gap: 0.4rem; background: var(--surface); }
+.roll.st-cleared, .roll.st-formatted { border-color: #2e7d32; }
+.roll-head { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.roll-steps { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; font-size: 0.9rem; }
+.roll-steps label { display: inline-flex; gap: 0.35rem; align-items: center; }
+.roll-steps select { font: inherit; font-size: 0.82rem; padding: 0.2rem 0.3rem; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; }
+@media (max-width: 640px) { .cs-grid { grid-template-columns: 1fr; } .cs-calls { gap: 0.8rem; } .cs-calls strong { font-size: 1.3rem; } .cse-table td:nth-child(3) { display: none; } }
+@media print { .call-page { max-width: none; padding: 0; } .cs-ack, .portal-nav, .rm-nav { display: none !important; } .cs-box { break-inside: avoid; } body { background: #fff; } }
 /* Staff + crew portal */
 .staff-row { cursor: default; grid-template-columns: 1fr auto; }
 .staff-pw code { font-size: 1rem; padding: 0.3rem 0.6rem; border: 1px dashed var(--clay); border-radius: 8px; }

@@ -47,6 +47,7 @@ export async function GET(request) {
         lines.push(`${day.title} — ${(scripts || []).length} script${(scripts || []).length === 1 ? "" : "s"}, ${(scripts || []).filter((x) => x.status !== "draft").length} ready:\n` + (scripts || []).map((x) => `  • ${x.title || x.kind} (${x.minutes}m, ${x.status})`).join("\n") + `\nFilm mode: https://rothmediaco.com/portal/admin/clients/${day.client_id}/days/${day.id}`);
       }
     } catch {}
+    if (s.crew_token) lines.push(`Call sheet${s.callsheet?.version ? ` v${s.callsheet.version}` : " (not issued yet)"}: https://rothmediaco.com/call/${s.crew_token}`);
     lines.push(`Prep sheet: https://rothmediaco.com/portal/admin/shoots/print?id=${s.id}`);
     blocks.push(lines.join("\n"));
   }

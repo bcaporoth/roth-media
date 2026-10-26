@@ -35,6 +35,16 @@ export async function POST(request) {
       checklist = checklist.map((c, j) => (j === i ? { ...c, done: Boolean(body.done) } : c));
       const { error } = await db.from("shoots").update({ checklist, updated_at: new Date().toISOString() }).eq("id", s.id);
       if (error) throw new Error(error.message);
+    } else if (body.action === "confirm") {
+      // A crew member taps "Got it" on the call sheet.
+      const cs = s.callsheet || {};
+      const name = String(body.name || "").slice(0, 80);
+      const crew = (cs.crew || []).map((x) => (x.staff_id === body.staffId ? { ...x, confirmed_at: new Date().toISOString() } : x));
+      const extra = body.staffId && !crew.some((x) => x.staff_id === body.staffId) ? [{ staff_id: body.staffId, confirmed_at: new Date().toISOString(), on: true }] : [];
+      const acks = [...(cs.acks || []).filter((a) => a.name !== name), ...(name ? [{ name, at: new Date().toISOString() }] : [])].slice(-40);
+      const { error } = await db.from("shoots").update({ callsheet: { ...cs, crew: [...crew, ...extra], acks } }).eq("id", s.id);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true });
     } else if (body.action !== "load") return bad("Unknown action", 400);
     return NextResponse.json({ shoot: pick(s), checklist: await signItemPhotos(checklist) });
   } catch (e) {

@@ -14,6 +14,7 @@ import AddressInput from "./AddressInput";
 import StoryArc from "./StoryArc";
 import { ScenesCard, LocationsCard, BudgetCard, ConventionsCard, ClientSideCard } from "./ProductionCards";
 import { PHASE_LABEL } from "../lib/production";
+import { CallSheetEditor, MediaCard } from "./DayMachine";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -36,6 +37,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [stakeholders, setStakeholders] = useState(s1?.stakeholders || []);
   const [tasks, setTasks] = useState(s1?.tasks || []);
   const [tab, setTab] = useState("story");
+  const [media, setMedia] = useState(initial.sprint2 || { cards: [], drives: [], rolls: [] });
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -129,9 +131,10 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       {tab === "days" && (
         <div className="cprof-cols">
           <div className="cprof-col">
-            <DaysCard project={p} days={days} setDays={setDays} people={people} locations={locations} onSign={(shoot) => setSigning({ shoot })} fail={fail} isOwner={isOwner} />
+            <DaysCard project={p} days={days} setDays={setDays} people={people} locations={locations} scenes={scenes} team={initial.team || []} onSign={(shoot) => setSigning({ shoot })} fail={fail} say={say} isOwner={isOwner} />
           </div>
           <div className="cprof-col">
+            <MediaCard project={p} media={media} setMedia={setMedia} days={days} fail={fail} say={say} ready={Boolean(initial.sprint2)} />
             <TeamCard project={p} team={initial.team} staffList={staffList} isOwner={isOwner} fail={fail} say={say} onDeal={(m) => setSigning({ preset: { kind: "deal", staffId: m.id, name: m.name, email: m.email, phone: m.phone, position: m.position || m.title || "", rate: m.project_rate_cents != null ? `$${m.project_rate_cents / 100} / ${m.rate_type || "day"}` : m.rate_cents ? `$${m.rate_cents / 100} / ${m.rate_type || "day"}` : "", kit: m.kit_fee_cents ? `$${m.kit_fee_cents / 100} / day` : "none" } })} onView={setViewing} releases={releases} />
           </div>
         </div>
@@ -350,9 +353,10 @@ function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView }) 
 }
 
 // ── Shoot days ──
-function DaysCard({ project, days, setDays, people, locations = [], onSign, fail, isOwner = true }) {
+function DaysCard({ project, days, setDays, people, locations = [], scenes = [], team = [], onSign, fail, say = () => {}, isOwner = true }) {
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sheetFor, setSheetFor] = useState(null);
   async function add(e) {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.currentTarget).entries());
@@ -393,8 +397,13 @@ function DaysCard({ project, days, setDays, people, locations = [], onSign, fail
               </a>
               <div className="shoot-daylink">
                 <div className="crew-progress proj-pct" role="progressbar" aria-valuenow={pct}><span style={{ width: `${pct}%` }} /><em>{pct}%</em></div>
+                {isOwner && <button type="button" className={"achip" + (sheetFor === d.id ? " is-on" : "") + (d.callsheet?.version ? "" : " achip-primary")} onClick={() => setSheetFor(sheetFor === d.id ? null : d.id)}>{d.callsheet?.version ? `Call sheet v${d.callsheet.version}` : "Call sheet"}</button>}
+                {!isOwner && d.crew_token && <a className="achip" href={`/call/${d.crew_token}`}>Call sheet ↗</a>}
+                {d.scene_ids?.length > 0 && <span className="gcard-meta">{d.scene_ids.length} scene{d.scene_ids.length === 1 ? "" : "s"}</span>}
+                {d.callsheet?.crew?.some((c) => c.confirmed_at) && <span className="gcard-meta">✓ {d.callsheet.crew.filter((c) => c.confirmed_at).length} confirmed</span>}
                 <button type="button" className="achip" onClick={() => onSign(d)}>✍ Release for this day</button>
               </div>
+              {sheetFor === d.id && <CallSheetEditor project={project} day={d} team={team} people={people} scenes={scenes} onSaved={(sh) => setDays((l) => l.map((x) => (x.id === d.id ? { ...x, callsheet: sh.callsheet || x.callsheet, scene_ids: sh.scene_ids || x.scene_ids } : x)))} fail={fail} say={say} />}
             </li>
           );
         })}

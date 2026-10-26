@@ -63,7 +63,10 @@ export default function CrewDay({ token, initial }) {
           <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : shoot.time_note || "TBD"}</strong></div>
           {usesSun(shoot.kind) && <div><span className="kick-sm">Sunset</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden {t.golden ? fmt12(t.golden) : "—"}</em></div>}
         </div>
-        {shoot.address && <a className="abtn" href={mapsUrl(shoot.address, shoot.lat, shoot.lng)} target="_blank" rel="noreferrer">Directions ↗ {shoot.address}</a>}
+        <div className="gcard-actions">
+          {shoot.address && <a className="abtn" href={mapsUrl(shoot.address, shoot.lat, shoot.lng)} target="_blank" rel="noreferrer">Directions ↗</a>}
+          <a className="achip" href={`/call/${token}`}>Call sheet</a>
+        </div>
       </header>
       {err && <p className="cform-error">{err}</p>}
 
