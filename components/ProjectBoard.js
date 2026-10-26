@@ -4,7 +4,7 @@
 // scenes they carry, what to ask them, what they said), the story beats,
 // the archive to-gets, the shoot days, and the releases signed on the spot.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PROJECT_STATUSES, PROJECT_STATUS_LABEL, PERSON_STATUSES, PERSON_STATUS_LABEL, PERSON_KINDS, PERSON_KIND_LABEL, ARCHIVE_STATUS_LABEL } from "../lib/projects";
 import { SHOOT_KIND_LABEL, SHOOT_STATUS_LABEL } from "../lib/studio-labels";
 import { RELEASE_KINDS } from "../lib/releases";
@@ -18,6 +18,8 @@ import { CallSheetEditor, MediaCard } from "./DayMachine";
 import { ThesisCard, ChronologyCard, SourcesCard, QuestionsCard, EventsCard, StyleCard, EyelineMap, InterviewPlan } from "./StoryEngine";
 import { FootageCard, StringoutCard, CutsCard } from "./EditRoom";
 import { DiscoveryCard, ApprovalsCard, ReviewsCard, ChangeOrdersCard, PaymentsCard, CommsCard, UpdateCard, SensitivityCard } from "./ClientMachine";
+import { GatesCard, ClearanceCard, MusicCard, ArchivalCard, LegalRegisterCard } from "./LegalRoom";
+import { computeGates, buildEOPacket } from "../lib/legal";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -60,6 +62,11 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [comms, setComms] = useState(s5?.comms || []);
   const [updates, setUpdates] = useState(s5?.updates || []);
   const [sens, setSens] = useState(s5?.sens || []);
+  const s6 = initial.sprint6;
+  const [clearance, setClearance] = useState(s6?.clearance || []);
+  const [cues, setCues] = useState(s6?.cues || []);
+  const [archival, setArchival] = useState(s6?.archival || []);
+  const [legal, setLegal] = useState(s6?.legal || []);
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -87,6 +94,8 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
     try { await api("/api/admin/shoots", { action: "update", id: d.id, client_visible: visible }); setDays((l) => l.map((x) => (x.id === d.id ? { ...x, client_visible: visible } : x))); } catch (e) { fail(e); }
   }
 
+  // Gates recompute from live state, so a tick anywhere moves the needle here.
+  const gates = useMemo(() => (s6 ? computeGates({ project: p, people, days, releases, team: initial.team || [], sprint1: s1 ? { scenes, locations, stakeholders, tasks } : {}, sprint2: media, sprint3: s3 ? { questions } : {}, sprint4: s4 ? { selects } : {}, sprint5: s5 ? { approvals, payments } : {}, sprint6: { clearance, cues, archival, legal } }) : null), [s6, p, people, days, releases, scenes, locations, stakeholders, tasks, media, questions, selects, approvals, payments, clearance, cues, archival, legal]);
   const byPerson = {};
   for (const r of releases) if (r.person_id) (byPerson[r.person_id] = byPerson[r.person_id] || []).push(r);
   const interviewed = people.filter((x) => x.kind === "interview" && (x.status === "interviewed" || x.status === "done")).length;
@@ -124,7 +133,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       </section>
 
       <div className="pbook-kinds proj-tabs" role="tablist" aria-label="Project sections">
-        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ["edit", "Edit"], ...(isOwner ? [["client", "Client side"]] : [])].map(([k, l]) => (
+        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ["edit", "Edit"], ...(isOwner ? [["client", "Client side"], ["legal", "Legal"]] : [])].map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{l}</button>
         ))}
         <span className="gcard-meta proj-phase">{PHASE_LABEL[p.phase] || "Development"}{p.code ? ` · ${p.code}` : ""}</span>
@@ -196,6 +205,22 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
           <div className="cprof-cols">
             <div className="cprof-col"><StringoutCard project={p} selects={selects} setSelects={setSelects} clips={clips} scenes={scenes} people={people} setPeople={setPeople} fail={fail} say={say} ready={Boolean(s4)} /></div>
             <div className="cprof-col"><CutsCard project={p} cuts={cuts} setCuts={setCuts} notes={notes} setNotes={setNotes} scenes={scenes} fail={fail} say={say} ready={Boolean(s4)} /></div>
+          </div>
+        </>
+      )}
+
+      {tab === "legal" && isOwner && (
+        <>
+          <GatesCard project={p} gates={gates} onProject={onProject} ready={Boolean(s6)} onExport={() => { const t = buildEOPacket({ project: p, gates, clearance, cues, archival, legal, releases, people }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([t], { type: "text/markdown" })); a.download = `${p.code || "DOC"}_EO_packet.md`; a.click(); }} />
+          <div className="cprof-cols">
+            <div className="cprof-col">
+              <ClearanceCard project={p} rows={clearance} setRows={setClearance} scenes={scenes} fail={fail} say={say} ready={Boolean(s6)} />
+              <ArchivalCard project={p} rows={archival} setRows={setArchival} scenes={scenes} releases={releases} fail={fail} ready={Boolean(s6)} />
+            </div>
+            <div className="cprof-col">
+              <LegalRegisterCard project={p} rows={legal} setRows={setLegal} locations={locations} scenes={scenes} fail={fail} ready={Boolean(s6)} />
+              <MusicCard project={p} rows={cues} setRows={setCues} scenes={scenes} fail={fail} ready={Boolean(s6)} />
+            </div>
           </div>
         </>
       )}

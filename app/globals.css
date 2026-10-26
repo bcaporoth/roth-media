@@ -7075,3 +7075,35 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .review-msg { margin: .2rem 0 .6rem; opacity: .85; }
 .review-add { margin-top: .5rem; }
 .discovery textarea { min-height: 3.2rem; }
+
+/* Sprint 6 — legal layer */
+.gate-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin: .4rem 0 .6rem; }
+.gate-tab { display: grid; gap: .1rem; text-align: left; padding: .6rem .8rem; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: inherit; font: inherit; cursor: pointer; min-height: 56px; }
+.gate-tab strong { font-size: 1.2rem; }
+.gate-tab span { font-variant-numeric: tabular-nums; opacity: .85; }
+.gate-tab em { font-style: normal; font-size: .75rem; opacity: .6; }
+.gate-tab.is-on { border-color: var(--accent, #c8a24a); }
+.gate-tab.is-open { background: rgba(96,200,120,.12); border-color: rgba(96,200,120,.5); }
+.gate-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.gate-check { display: grid; grid-template-columns: 1.6rem 1fr auto; gap: .5rem; align-items: center; padding: .5rem .6rem; border-radius: 8px; background: rgba(255,255,255,.03); }
+.gate-check.is-ok { opacity: .75; }
+.gate-check.is-ok .gate-mark { color: rgba(96,200,120,.95); }
+.gate-check.is-ov .gate-mark { color: var(--accent, #c8a24a); }
+.gate-mark { font-size: 1.1rem; text-align: center; }
+.gate-main { display: grid; gap: .1rem; min-width: 0; }
+.gate-main em { font-style: normal; font-size: .8rem; opacity: .65; }
+.dot { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; vertical-align: middle; }
+.dot.g { background: #5fc878; } .dot.y { background: #c8a24a; } .dot.r { background: #e06060; }
+.clear-list { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .3rem; }
+.clear { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .5rem; align-items: center; padding: .45rem .6rem; border-radius: 8px; background: rgba(255,255,255,.03); }
+.dot-btn { width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 2px solid rgba(255,255,255,.2); cursor: pointer; min-width: 0; padding: 0; }
+.dot-btn.green { background: #5fc878; } .dot-btn.yellow { background: #c8a24a; } .dot-btn.red { background: #e06060; }
+.clear-main { display: grid; gap: .1rem; min-width: 0; }
+.clear-main em { font-style: normal; font-size: .8rem; opacity: .65; }
+.clear-doc, .cue-tc, .arch-reason { font-size: .8rem; padding: .3rem .45rem; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: inherit; }
+.clear-doc { width: 9rem; } .cue-tc { width: 4.5rem; }
+.arch-reason { display: block; width: 100%; margin-top: .3rem; }
+.cue.is-temp strong { color: #e06060; }
+.cue .achip select.achip { padding: .1rem .2rem; margin-left: .2rem; }
+.pbook-kinds .ifilter em { font-style: normal; opacity: .6; font-size: .75rem; margin-left: .2rem; }
+@media (max-width: 760px) { .gate-tabs { grid-template-columns: 1fr; } .gate-check, .clear { grid-template-columns: 1.6rem 1fr; } .gate-check .achip, .clear .gcard-actions { grid-column: 2; } }
