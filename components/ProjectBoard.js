@@ -15,6 +15,7 @@ import StoryArc from "./StoryArc";
 import { ScenesCard, LocationsCard, BudgetCard, ConventionsCard, ClientSideCard } from "./ProductionCards";
 import { PHASE_LABEL } from "../lib/production";
 import { CallSheetEditor, MediaCard } from "./DayMachine";
+import { ThesisCard, ChronologyCard, SourcesCard, QuestionsCard, EventsCard, StyleCard, EyelineMap, InterviewPlan } from "./StoryEngine";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -38,6 +39,11 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [tasks, setTasks] = useState(s1?.tasks || []);
   const [tab, setTab] = useState("story");
   const [media, setMedia] = useState(initial.sprint2 || { cards: [], drives: [], rolls: [] });
+  const s3 = initial.sprint3;
+  const [chronology, setChronology] = useState(s3?.chronology || []);
+  const [sources, setSources] = useState(s3?.sources || []);
+  const [questions, setQuestions] = useState(s3?.questions || []);
+  const [events, setEvents] = useState(s3?.events || []);
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -52,6 +58,15 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   async function patchProject(fields, msg = "Saved ✓") { try { const r = await P({ action: "project-update", id: p.id, ...fields }); setP(r.project); say(msg); } catch (e) { fail(e); } }
   // ProductionCards call onProject(fields) — or onProject(null, project) when they already have the fresh row.
   const onProject = (fields, fresh) => (fresh ? setP(fresh) : patchProject(fields));
+  async function planEvent(ev) {
+    try {
+      const r = await api("/api/admin/shoots", { action: "create", title: ev.title, date: ev.date, start_time: ev.time_text || "", kind: p.kind, project_id: p.id, client_name: p.client_name, client_email: p.client_email, notes: [ev.why, ev.restrictions, ev.plan].filter(Boolean).join("\n") });
+      setDays((l) => [...l, { id: r.shoot.id, title: r.shoot.title, kind: r.shoot.kind, status: r.shoot.status, date: r.shoot.date, start_time: r.shoot.start_time, address: r.shoot.address, crew_token: r.shoot.crew_token || null, total: 0, done: 0 }].sort((a, b) => (a.date || "9").localeCompare(b.date || "9")));
+      const u = await P({ action: "event-update", id: ev.id, shoot_id: r.shoot.id });
+      setEvents((l) => l.map((x) => (x.id === ev.id ? u.row : x)));
+      say("On the calendar");
+    } catch (e) { fail(e); }
+  }
   async function setDayVisible(d, visible) {
     try { await api("/api/admin/shoots", { action: "update", id: d.id, client_visible: visible }); setDays((l) => l.map((x) => (x.id === d.id ? { ...x, client_visible: visible } : x))); } catch (e) { fail(e); }
   }
@@ -105,12 +120,16 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
             <div className="cprof-cardhead"><h2>Story line — the hero&apos;s journey</h2><span className="gcard-meta">The whole film on one line. Highs are wins, lows are trouble. Fill the blanks.</span></div>
             <StoryArc arc={p.arc || {}} onSave={(arc) => patchProject({ arc }, "Beat saved")} />
           </section>
+          <ThesisCard project={p} onProject={onProject} ready={Boolean(s3)} />
           <div className="cprof-cols">
             <div className="cprof-col">
               <ScenesCard project={p} scenes={scenes} setScenes={setScenes} people={people} locations={locations} fail={fail} say={say} ready={Boolean(s1)} />
+              <ChronologyCard project={p} rows={chronology} setRows={setChronology} people={people} sources={sources} scenes={scenes} fail={fail} ready={Boolean(s3)} />
+              <SourcesCard project={p} rows={sources} setRows={setSources} fail={fail} ready={Boolean(s3)} />
             </div>
             <div className="cprof-col">
               <BeatsCard project={p} people={people} onSave={(beats) => patchProject({ beats }, "Beats saved")} />
+              <QuestionsCard project={p} rows={questions} setRows={setQuestions} people={people} fail={fail} ready={Boolean(s3)} />
               <ArchiveCard project={p} onSave={(archive) => patchProject({ archive }, "Archive saved")} />
             </div>
           </div>
@@ -120,7 +139,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       {tab === "people" && (
         <div className="cprof-cols">
           <div className="cprof-col">
-            <PeopleCard project={p} people={people} setPeople={setPeople} days={days} byPerson={byPerson} onSign={(person) => setSigning({ person })} onView={setViewing} fail={fail} say={say} />
+            <PeopleCard project={p} people={people} setPeople={setPeople} days={days} byPerson={byPerson} onSign={(person) => setSigning({ person })} onView={setViewing} fail={fail} say={say} questions={questions} ready3={Boolean(s3)} />
           </div>
           <div className="cprof-col">
             <ReleasesCard releases={releases} people={people} onView={setViewing} onSign={() => setSigning({})} />
@@ -134,6 +153,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
             <DaysCard project={p} days={days} setDays={setDays} people={people} locations={locations} scenes={scenes} team={initial.team || []} onSign={(shoot) => setSigning({ shoot })} fail={fail} say={say} isOwner={isOwner} />
           </div>
           <div className="cprof-col">
+            <EventsCard project={p} rows={events} setRows={setEvents} locations={locations} scenes={scenes} days={days} fail={fail} say={say} ready={Boolean(s3)} isOwner={isOwner} onPlanDay={planEvent} />
             <MediaCard project={p} media={media} setMedia={setMedia} days={days} fail={fail} say={say} ready={Boolean(initial.sprint2)} />
             <TeamCard project={p} team={initial.team} staffList={staffList} isOwner={isOwner} fail={fail} say={say} onDeal={(m) => setSigning({ preset: { kind: "deal", staffId: m.id, name: m.name, email: m.email, phone: m.phone, position: m.position || m.title || "", rate: m.project_rate_cents != null ? `$${m.project_rate_cents / 100} / ${m.rate_type || "day"}` : m.rate_cents ? `$${m.rate_cents / 100} / ${m.rate_type || "day"}` : "", kit: m.kit_fee_cents ? `$${m.kit_fee_cents / 100} / day` : "none" } })} onView={setViewing} releases={releases} />
           </div>
@@ -145,6 +165,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
           <div className="cprof-col">
             <LocationsCard project={p} locations={locations} setLocations={setLocations} fail={fail} ready={Boolean(s1)} isOwner={isOwner} />
             {isOwner && <ConventionsCard project={p} onProject={onProject} clients={clients} />}
+            <StyleCard project={p} onProject={onProject} ready={Boolean(s3)} />
           </div>
           <div className="cprof-col">
             {isOwner && <BudgetCard project={p} lines={lines} setLines={setLines} costs={costs} setCosts={setCosts} days={days} fail={fail} say={say} ready={Boolean(s1)} onProject={onProject} />}
@@ -239,7 +260,7 @@ function Editable({ label, value, rows = 2, placeholder, onSave }) {
 }
 
 // ── People: cast + sources ──
-function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView, fail, say }) {
+function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView, fail, say, questions = [], ready3 = false }) {
   const [adding, setAdding] = useState(people.length === 0);
   const [open, setOpen] = useState(null);
   const [filter, setFilter] = useState("all");
@@ -275,6 +296,7 @@ function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView
           <button type="submit" className="abtn">Add</button>
         </form>
       )}
+      {ready3 && <EyelineMap people={people} onPatch={(id, f) => patch(id, f)} />}
       {people.length === 0 && !adding && <p className="gcard-meta">Who&apos;s in the film and who gets you things: the priest, the parishioners, the parish historian, the county archive. Add them as you think of them — contact, status, which scenes, what to ask, what they said.</p>}
       <ul className="people-list">
         {shown.map((x) => (
@@ -287,7 +309,7 @@ function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView
                 {x.quotes?.length > 0 && <span className="itag">“ {x.quotes.length}</span>}
               </span>
             </button>
-            {open === x.id && <PersonDetail x={x} days={days} releases={byPerson[x.id] || []} onPatch={(f, m) => patch(x.id, f, m)} onRemove={() => remove(x)} onSign={() => onSign(x)} onView={onView} />}
+            {open === x.id && <PersonDetail x={x} days={days} releases={byPerson[x.id] || []} onPatch={(f, m) => patch(x.id, f, m)} onRemove={() => remove(x)} onSign={() => onSign(x)} onView={onView} questions={questions} ready3={ready3} />}
           </li>
         ))}
       </ul>
@@ -295,7 +317,7 @@ function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView
   );
 }
 
-function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView }) {
+function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView, questions = [], ready3 = false }) {
   const [edit, setEdit] = useState(false);
   const [quote, setQuote] = useState("");
   const [at, setAt] = useState("");
@@ -332,6 +354,7 @@ function PersonDetail({ x, days, releases, onPatch, onRemove, onSign, onView }) 
       {(x.phone || x.email) && <p className="gcard-meta">{[x.phone, x.email].filter(Boolean).join(" · ")}</p>}
       <Editable label="Questions to ask them" value={x.questions} rows={3} placeholder={"When did you first walk in here?\nWhat was the worst year?\nWhat would be lost if it closed?"} onSave={(v) => onPatch({ questions: v })} />
       <Editable label="Notes" value={x.notes} rows={2} placeholder="How you know them, what they're nervous about, best time to reach them" onSave={(v) => onPatch({ notes: v })} />
+      {ready3 && x.kind === "interview" && <InterviewPlan x={x} questions={questions} onPatch={(f) => onPatch(f, "Plan saved")} />}
       <div className="person-quotes">
         <span className="kick-sm">What they said{x.quotes?.length ? ` · ${x.quotes.length}` : ""}</span>
         <ul>

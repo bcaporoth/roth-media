@@ -1,0 +1,197 @@
+From aab9bb99c108adc15b88fe5f25aad24af9c26a8c Mon Sep 17 00:00:00 2001
+From: Brandon Roth <b.caporoth@gmail.com>
+Date: Wed, 21 Oct 2026 17:16:16 +0000
+Subject: [PATCH 1/2] Shoot prep lists: edit an item's text after it's added
+ (pencil / double-click, Enter saves, Esc cancels)
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01U4oDX1H7ERNxrdau8rNT6Y
+---
+ app/globals.css           |  4 ++++
+ components/ShootsBoard.js | 30 +++++++++++++++++++++++++++---
+ 2 files changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/app/globals.css b/app/globals.css
+index e26c8b2..6e8eadc 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -5942,6 +5942,10 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+ .prep-list .shoot-check label span { flex: 1; }
+ .prep-x { flex: none; width: 1.6rem; height: 1.6rem; border: 0; border-radius: 50%; background: transparent; color: var(--ink-soft); font: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: 0.55; margin-top: -0.1rem; }
+ .prep-x:hover { opacity: 1; background: rgba(0, 0, 0, 0.06); color: #c0392b; }
++.prep-pen { font-size: 0.95rem; }
++.prep-pen:hover { color: var(--ink); }
++.prep-edit { flex: 1; min-width: 0; font: inherit; font-size: 0.92rem; color: inherit; background: transparent; border: 1px solid var(--field-line); border-radius: 8px; padding: 0.2rem 0.45rem; }
++.admin-shell.is-dark .prep-edit { border-color: rgba(255, 255, 255, 0.25); }
+ .prep-empty { font-size: 0.85rem; color: var(--ink-soft); }
+ .prep-add { display: flex; gap: 0.4rem; align-items: center; }
+ .prep-add input { flex: 1; min-width: 0; font: inherit; font-size: 0.9rem; padding: 0.45rem 0.6rem; border: 1px solid var(--field-line); border-radius: 8px; background: transparent; color: inherit; }
+diff --git a/components/ShootsBoard.js b/components/ShootsBoard.js
+index 1025d40..bea0fab 100644
+--- a/components/ShootsBoard.js
++++ b/components/ShootsBoard.js
+@@ -456,6 +456,11 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
+   function setTime(item, time) {
+     commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, time } : c)); });
+   }
++  function renameItem(item, text) {
++    const t = (text || "").trim();
++    if (!t || t === item.text) return;
++    commit((list) => { const i = indexOfItem(list, item); return i < 0 ? list : list.map((c, j) => (j === i ? { ...c, text: t } : c)); });
++  }
+   // Pull a playbook list into this shoot: adds what isn't already there.
+   function loadList(list) {
+     const have = new Set(items.filter((c) => c.group === list.section).map((c) => c.text));
+@@ -538,7 +543,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
+             </div>
+             <div className="shoot-cols">
+               {GROUPS.map((g) => (
+-                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onLoad={loadList} onClear={clearGroup} onTime={setTime} />
++                <PrepList key={g} title={GROUP_LABEL[g]} group={g} kind={s.kind} items={items.filter((c) => c.group === g)} lists={playbook.filter((l) => l.section === g)} onToggle={toggleItem} onAdd={addItem} onRemove={removeItem} onRename={renameItem} onLoad={loadList} onClear={clearGroup} onTime={setTime} />
+               ))}
+             </div>
+           </div>
+@@ -588,9 +593,15 @@ function DeliveryDetail({ s, d, clock, onUpdate }) {
+ // pull in a list from the playbook. The flow carries a time per step and
+ // shows in time order once times are set.
+ const ADD_HINT = { gear: "Add gear…", shots: "Add a shot…", flow: "Add a step…", poses: "Add a pose or prompt…" };
+-function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove, onLoad, onClear, onTime }) {
++function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove, onRename, onLoad, onClear, onTime }) {
+   const [text, setText] = useState("");
+   const [time, setTime] = useState("");
++  const [editing, setEditing] = useState(null); // index into `shown` being edited
++  const [draft, setDraft] = useState("");
++  const cancelled = useRef(false);
++  function startEdit(i, c) { cancelled.current = false; setEditing(i); setDraft(c.text); }
++  function finishEdit(c) { if (editing === null) return; if (!cancelled.current) onRename(c, draft); cancelled.current = false; setEditing(null); }
++  function cancelEdit() { cancelled.current = true; setEditing(null); }
+   const isFlow = group === "flow";
+   const done = items.filter((c) => c.done).length;
+   const shown = isFlow ? [...items.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...items.filter((c) => !c.time)] : items;
+@@ -622,8 +633,21 @@ function PrepList({ title, group, kind, items, lists, onToggle, onAdd, onRemove,
+         {shown.map((c, i) => (
+           <li key={`${c.text}-${i}`} className={c.done ? "is-done" : ""}>
+             {isFlow && <input type="time" className="pbook-time" key={c.time || "none"} defaultValue={c.time || ""} aria-label={`Time for ${c.text}`} onBlur={(e) => e.target.value !== (c.time || "") && onTime(c, e.target.value)} />}
+-            <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span>{c.text}</span></label>
++            {editing === i ? (
++              <input
++                className="prep-edit"
++                autoFocus
++                value={draft}
++                aria-label={`Edit ${c.text}`}
++                onChange={(e) => setDraft(e.target.value)}
++                onBlur={() => finishEdit(c)}
++                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); finishEdit(c); } else if (e.key === "Escape") { cancelEdit(); } }}
++              />
++            ) : (
++              <label><input type="checkbox" checked={c.done} onChange={() => onToggle(c)} /> <span onDoubleClick={() => startEdit(i, c)} title="Double-click to edit">{c.text}</span></label>
++            )}
+             {c.img_url && <a className="pbook-thumb" href={c.img_url} target="_blank" rel="noreferrer" title="Open reference photo"><img src={c.img_url} alt="" loading="lazy" /></a>}
++            {editing !== i && <button type="button" className="prep-x prep-pen" aria-label={`Edit ${c.text}`} title="Edit" onClick={() => startEdit(i, c)}>✎</button>}
+             <button type="button" className="prep-x" aria-label={`Remove ${c.text}`} title="Remove" onClick={() => onRemove(c)}>×</button>
+           </li>
+         ))}
+-- 
+2.34.1
+
+
+From 9a6961b05351fc8cff4071a5ee4e11ddfa4bf3e0 Mon Sep 17 00:00:00 2001
+From: Brandon Roth <b.caporoth@gmail.com>
+Date: Wed, 21 Oct 2026 17:17:16 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?Shoots:=20hide=20sunset=20/=20golden=20hour?=
+ =?UTF-8?q?=20on=20Content=20Days=20(indoor)=20=E2=80=94=20board=20facts,?=
+ =?UTF-8?q?=20edit=20forms,=20prep=20sheet?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01U4oDX1H7ERNxrdau8rNT6Y
+---
+ components/ShootPrepSheet.js |  4 ++--
+ components/ShootsBoard.js    | 10 +++++-----
+ lib/shoot-guides.js          |  4 ++++
+ 3 files changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/components/ShootPrepSheet.js b/components/ShootPrepSheet.js
+index f7aae90..05e154c 100644
+--- a/components/ShootPrepSheet.js
++++ b/components/ShootPrepSheet.js
+@@ -3,7 +3,7 @@
+ // the data fetch. With no shoot it prints the blank guide for a type.
+ 
+ import { timing, fmt12 } from "../lib/sun";
+-import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL } from "../lib/shoot-guides";
++import { GEAR_BASE, GUIDES, groupOf, GROUP_LABEL, usesSun } from "../lib/shoot-guides";
+ import { OWNER_NAME, PHONE } from "../lib/site";
+ 
+ import { SHOOT_KIND_LABEL as KIND_LABEL } from "../lib/studio-labels";
+@@ -38,7 +38,7 @@ export default function ShootPrepSheet({ shoot = null, kind = "wedding" }) {
+       <section className="sprint-facts">
+         <Fact label="Start" value={t.start ? fmt12(t.start) : shoot?.time_note || "________"} note={shoot?.time_note && t.start && !shoot.start_time ? `from “${shoot.time_note}”` : ""} />
+         <Fact label="Leave home" value={t.leave ? fmt12(t.leave) : "________"} note={shoot?.drive_min ? `${shoot.drive_min} min drive + 20 to set up` : ""} />
+-        <Fact label="Sunset" value={t.sunset ? fmt12(t.sunset) : "________"} note={t.golden ? `golden hour from ${fmt12(t.golden)}` : ""} />
++        {usesSun(k) && <Fact label="Sunset" value={t.sunset ? fmt12(t.sunset) : "________"} note={t.golden ? `golden hour from ${fmt12(t.golden)}` : ""} />}
+         <Fact label="Distance" value={shoot?.miles != null ? `${shoot.miles} mi` : "________"} note={shoot?.place_label ? shoot.place_label.split(",").slice(0, 3).join(",") : ""} />
+       </section>
+ 
+diff --git a/components/ShootsBoard.js b/components/ShootsBoard.js
+index bea0fab..7ddcdd9 100644
+--- a/components/ShootsBoard.js
++++ b/components/ShootsBoard.js
+@@ -23,7 +23,7 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import { timing, fmt12 } from "../lib/sun";
+ import { mapsUrl, HOME } from "../lib/geo";
+-import { GROUPS, GROUP_LABEL, groupOf } from "../lib/shoot-guides";
++import { GROUPS, GROUP_LABEL, groupOf, usesSun } from "../lib/shoot-guides";
+ import { isNoEmail } from "../lib/no-email";
+ import { briefToShoot } from "../lib/intake";
+ import { deliveryState, owedList, promiseFor, todayEastern, addDays, easternDateOf } from "../lib/delivery";
+@@ -418,7 +418,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
+       <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
+       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
+       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
+-      <label>…or relative to sunset<input value={f.time_note} onChange={set("time_note")} placeholder="two hours before sunset" /></label>
++      {usesSun(kind) && <label>…or relative to sunset<input value={f.time_note} onChange={set("time_note")} placeholder="two hours before sunset" /></label>}
+       <label className="wide">Address / place<input value={f.address} onChange={set("address")} placeholder="Apples and Moore, Watkins Glen NY" /></label>
+       {!compact && <label>Client<input value={f.client_name} onChange={set("client_name")} /></label>}
+       {!compact && <label>Phone<input value={f.client_phone} onChange={set("client_phone")} /></label>}
+@@ -497,8 +497,8 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
+       {open && (
+         <div className="shoot-detail">
+           <div className="shoot-facts">
+-            <div><span className="kick-sm">Sunset there</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden hour from {t.golden ? fmt12(t.golden) : "—"}</em></div>
+-            <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : "TBD"}</strong><em>{t.resolved ? `from “${s.time_note}”` : s.time_note || "set a time or a sunset note"}</em></div>
++            {usesSun(s.kind) && <div><span className="kick-sm">Sunset there</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden hour from {t.golden ? fmt12(t.golden) : "—"}</em></div>}
++            <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : "TBD"}</strong><em>{t.resolved ? `from “${s.time_note}”` : s.time_note || (usesSun(s.kind) ? "set a time or a sunset note" : "set a time")}</em></div>
+             <div><span className="kick-sm">Leave home</span><strong>{t.leave ? fmt12(t.leave) : "—"}</strong><em>{s.drive_min ? `${s.drive_min} min drive + 20 to set up` : "needs an address"}</em></div>
+             <div><span className="kick-sm">Distance</span><strong>{s.miles != null ? `${s.miles} mi` : "—"}</strong><em>{s.place_label ? s.place_label.split(",").slice(0, 3).join(",") : "not located"}</em></div>
+           </div>
+@@ -521,7 +521,7 @@ export function ShootRow({ s, open, onToggle, onUpdate, onRemove, onRelocate, on
+               <label>Type<select name="kind" defaultValue={s.kind}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
+               <label>Date<input type="date" name="date" defaultValue={s.date || ""} /></label>
+               <label>Start time<input type="time" name="start_time" defaultValue={s.start_time} /></label>
+-              <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>
++              {usesSun(s.kind) && <label>…or relative to sunset<input name="time_note" defaultValue={s.time_note} placeholder="two hours before sunset" /></label>}
+               <label className="wide">Address / place<input name="address" defaultValue={s.address} /></label>
+               <label>Client<input name="client_name" defaultValue={s.client_name} /></label>
+               <label>Phone<input name="client_phone" defaultValue={s.client_phone} /></label>
+diff --git a/lib/shoot-guides.js b/lib/shoot-guides.js
+index 975dd25..dc8ade6 100644
+--- a/lib/shoot-guides.js
++++ b/lib/shoot-guides.js
+@@ -26,6 +26,10 @@ export const GEAR_BASE = [
+   "Water, snacks, layers",
+ ];
+ 
++// Shoots that live by the light. Content Days are indoors (a bakery, a shop)
++// — sunset and golden hour are noise there, so the UI hides them.
++export const usesSun = (kind) => kind !== "business";
++
+ export const GUIDES = {
+   wedding: {
+     label: "Wedding",
+-- 
+2.34.1
+

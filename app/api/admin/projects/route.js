@@ -5,7 +5,7 @@ import { r2Configured, putSignature, signedUrl } from "../../../../lib/r2";
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
 import { PROJECT_STATUSES, PERSON_STATUSES, PERSON_KINDS } from "../../../../lib/projects";
 import { ARC_KEYS } from "../../../../lib/story-arc";
-import { PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES } from "../../../../lib/production";
+import { ARC_ROLES, ERAS, SOURCE_KINDS, QUESTION_THEMES, PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES } from "../../../../lib/production";
 
 // Studio → Projects: the job above the dates. Projects, the people in them
 // (cast + sources), story beats, archive to-gets, and the releases signed on
@@ -16,7 +16,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -28,6 +28,8 @@ function cleanProject(b) {
   if (b.logline !== undefined) o.logline = clip(b.logline, 400);
   if (b.notes !== undefined) o.notes = clip(b.notes, 8000);
   if (b.beats !== undefined) o.beats = (Array.isArray(b.beats) ? b.beats : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), done: Boolean(x?.done), who: clip(x?.who, 120) })).filter((x) => x.text);
+  if (b.thesis !== undefined) o.thesis = (Array.isArray(b.thesis) ? b.thesis : []).slice(-40).map((t, i) => ({ v: Number(t?.v) || i + 1, date: clip(t?.date, 10), text: clip(t?.text, 1500), one_line: clip(t?.one_line, 300), changed: clip(t?.changed, 400) })).filter((t) => t.text || t.one_line);
+  if (b.style !== undefined && typeof b.style === "object") o.style = Object.fromEntries(Object.entries(b.style || {}).slice(0, 30).map(([k, v]) => [clip(k, 40), clip(v, 1200)]));
   if (b.production_phone !== undefined) o.production_phone = clip(b.production_phone, 40);
   if (b.code !== undefined) o.code = clip(b.code, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (b.phase !== undefined) o.phase = PHASES.includes(b.phase) ? b.phase : "development";
@@ -47,6 +49,17 @@ function cleanPerson(b) {
   if (b.status !== undefined) o.status = PERSON_STATUSES.includes(b.status) ? b.status : "to_reach";
   if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null;
   for (const k of ["scenes", "questions", "notes"]) if (b[k] !== undefined) o[k] = clip(b[k], 4000);
+  if (b.arc_role !== undefined) o.arc_role = ARC_ROLES.includes(b.arc_role) ? b.arc_role : "";
+  if (b.eyeline !== undefined) o.eyeline = ["L", "R"].includes(b.eyeline) ? b.eyeline : "";
+  if (b.plan !== undefined && typeof b.plan === "object") {
+    const pl = b.plan || {}; const o2 = {};
+    for (const k of ["setup", "look", "lens", "wardrobe", "mics", "must_gets", "warmup", "pre_notes", "sensitivities", "debrief", "stories"]) if (pl[k] !== undefined) o2[k] = clip(pl[k], 2000);
+    if (pl.duration_min !== undefined) o2.duration_min = Math.max(0, Math.min(600, Math.round(Number(pl.duration_min) || 0)));
+    if (pl.energy !== undefined) o2.energy = Math.max(0, Math.min(5, Math.round(Number(pl.energy) || 0)));
+    if (pl.pre_date !== undefined) o2.pre_date = clip(pl.pre_date, 10);
+    if (pl.best_takes !== undefined) o2.best_takes = (Array.isArray(pl.best_takes) ? pl.best_takes : []).slice(0, 60).map((t) => ({ at: clip(t?.at, 20), note: clip(t?.note, 400) })).filter((t) => t.note);
+    o.plan = o2;
+  }
   if (b.quotes !== undefined) o.quotes = (Array.isArray(b.quotes) ? b.quotes : []).slice(0, 200).map((q) => ({ text: clip(q?.text, 1200), at: clip(q?.at, 20), when: clip(q?.when, 10) })).filter((q) => q.text);
   if (b.sort !== undefined) o.sort = Number.isFinite(Number(b.sort)) ? Math.round(Number(b.sort)) : 0;
   return o;
@@ -70,6 +83,7 @@ export async function POST(request) {
     else if (body.action === "release-delete") pid = await projectOf(db, "releases", body.id);
     else if (/^scene-(update|delete)$/.test(body.action)) pid = await projectOf(db, "scenes", body.id);
     else if (/^location-(update|delete)$/.test(body.action)) pid = await projectOf(db, "locations", body.id);
+    else if (/^(chrono|source|question|event)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { chrono: "chronology", source: "sources", question: "questions", event: "events" }[body.action.split("-")[0]], body.id);
     else if (/^(card|drive)-(update|delete)$/.test(body.action)) pid = await projectOf(db, body.action.startsWith("card") ? "media_cards" : "drives", body.id);
     else if (/^roll-(update|delete)$/.test(body.action)) pid = await projectOf(db, "rolls", body.id);
     else if (/^(budget|cost|stakeholder|task)-/.test(body.action)) return deny(); // owner only: money + the client relationship
@@ -314,6 +328,30 @@ export async function POST(request) {
       const { error } = await db.from("client_tasks").delete().eq("id", body.id);
       if (error) return missing(error);
       return NextResponse.json({ ok: true });
+    }
+    // ── story engine: chronology · sources · questions · events (one CRUD shape) ──
+    const uuids = (v) => (Array.isArray(v) ? v : []).filter(isId).slice(0, 40);
+    const TABLES = {
+      chrono: { table: "chronology", clean: (b) => { const o = {}; if (b.date_text !== undefined) o.date_text = clip(b.date_text, 40); if (b.sort_date !== undefined) o.sort_date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.sort_date || "")) ? b.sort_date : (/^\d{4}$/.test(String(b.date_text || "").trim()) ? `${String(b.date_text).trim()}-07-01` : null); if (b.era !== undefined) o.era = ERAS.includes(b.era) ? b.era : ""; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.summary !== undefined) o.summary = clip(b.summary, 2000); if (b.significance !== undefined) o.significance = Math.max(1, Math.min(5, Math.round(Number(b.significance) || 3))); if (b.evidence !== undefined) o.evidence = ["documented", "single", "oral", "disputed"].includes(b.evidence) ? b.evidence : "single"; if (b.turning_point !== undefined) o.turning_point = Boolean(b.turning_point); if (b.people !== undefined) o.people = uuids(b.people); if (b.source_ids !== undefined) o.source_ids = uuids(b.source_ids); if (b.scene_id !== undefined) o.scene_id = isId(b.scene_id) ? b.scene_id : null; if (b.notes !== undefined) o.notes = clip(b.notes, 2000); return o; }, need: "title" },
+      source: { table: "sources", clean: (b) => { const o = {}; if (b.kind !== undefined) o.kind = SOURCE_KINDS.includes(b.kind) ? b.kind : "document"; if (b.title !== undefined) o.title = clip(b.title, 200); for (const k of ["holder", "date_text", "where_text"]) if (b[k] !== undefined) o[k] = clip(b[k], 300); if (b.reliability !== undefined) o.reliability = ["primary", "secondary", "hearsay"].includes(b.reliability) ? b.reliability : "secondary"; if (b.obtained !== undefined) o.obtained = Boolean(b.obtained); if (b.notes !== undefined) o.notes = clip(b.notes, 2000); return o; }, need: "title" },
+      question: { table: "questions", clean: (b) => { const o = {}; if (b.theme !== undefined) o.theme = clip(b.theme, 40) || "general"; if (b.text !== undefined) o.text = clip(b.text, 500); if (b.followups !== undefined) o.followups = clip(b.followups, 800); if (b.beat_index !== undefined) o.beat_index = b.beat_index === "" || b.beat_index === null ? null : Math.round(Number(b.beat_index)); if (b.people !== undefined) o.people = uuids(b.people); if (b.priority !== undefined) o.priority = [1, 2, 3].includes(Number(b.priority)) ? Number(b.priority) : 2; if (b.asked !== undefined && typeof b.asked === "object") o.asked = Object.fromEntries(Object.entries(b.asked || {}).filter(([k]) => isId(k)).slice(0, 60).map(([k, v]) => [k, { date: clip(v?.date, 10), quality: Math.max(0, Math.min(5, Math.round(Number(v?.quality) || 0))) }])); if (b.sort !== undefined) o.sort = Math.round(Number(b.sort) || 0); return o; }, need: "text" },
+      event: { table: "events", clean: (b) => { const o = {}; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; for (const k of ["time_text", "recurring", "why", "restrictions", "plan"]) if (b[k] !== undefined) o[k] = clip(b[k], k === "plan" ? 2000 : 400); if (b.location_id !== undefined) o.location_id = isId(b.location_id) ? b.location_id : null; if (b.scene_id !== undefined) o.scene_id = isId(b.scene_id) ? b.scene_id : null; if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null; if (b.access !== undefined) o.access = ["ask", "asked", "approved", "restricted"].includes(b.access) ? b.access : "ask"; if (b.status !== undefined) o.status = ["planned", "shot", "missed"].includes(b.status) ? b.status : "planned"; return o; }, need: "title" },
+    };
+    const m3 = /^(chrono|source|question|event)-(add|update|delete)$/.exec(body.action || "");
+    if (m3) {
+      const def = TABLES[m3[1]]; const op = m3[2];
+      if (op === "add") {
+        if (!isId(body.projectId)) return bad("Bad request");
+        const row = def.clean(body); if (!row[def.need]) return bad(`Needs a ${def.need}`);
+        const { data, error } = await db.from(def.table).insert({ project_id: body.projectId, ...row }).select("*").single();
+        if (error) return missing(error);
+        return NextResponse.json({ row: data });
+      }
+      if (!isId(body.id)) return bad("Bad request");
+      if (op === "delete") { const { error } = await db.from(def.table).delete().eq("id", body.id); if (error) return missing(error); return NextResponse.json({ ok: true }); }
+      const { data, error } = await db.from(def.table).update(def.clean(body)).eq("id", body.id).select("*").single();
+      if (error) return missing(error);
+      return NextResponse.json({ row: data });
     }
     // ── media chain: cards → rolls → drives ──
     if (body.action === "card-add" || body.action === "card-update") {
