@@ -6,7 +6,10 @@ import { parseName, parseSubs, parsePlain, fromAssembly, CUT_STAGES } from "../.
 import { RELEASE_KINDS, TEXT_VERSION, releaseBody } from "../../../../lib/releases";
 import { PROJECT_STATUSES, PERSON_STATUSES, PERSON_KINDS } from "../../../../lib/projects";
 import { ARC_KEYS } from "../../../../lib/story-arc";
-import { ARC_ROLES, ERAS, SOURCE_KINDS, QUESTION_THEMES, PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES } from "../../../../lib/production";
+import { ARC_ROLES, ERAS, SOURCE_KINDS, QUESTION_THEMES, PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES, DEFAULT_PAYMENTS, DISCOVERY_FIELDS } from "../../../../lib/production";
+import { draftUpdate } from "../../../../lib/client-machine";
+import { resendConfigured, sendBatch } from "../../../../lib/resend";
+import { wrapHtml } from "../../../../lib/client-email";
 
 // Studio → Projects: the job above the dates. Projects, the people in them
 // (cast + sources), story beats, archive to-gets, and the releases signed on
@@ -17,7 +20,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events|clips|transcripts|selects|cuts|screening_notes/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /clips|transcripts|selects|cuts|screening_notes/i.test(e.message) ? "Run supabase/sprint4.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events|clips|transcripts|selects|cuts|screening_notes|approvals|review_versions|review_notes|change_orders|payments|comms|updates|sensitivities|discovery|contract_cents/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /approvals|review_versions|review_notes|change_orders|payments|comms|updates|sensitivities|discovery|contract_cents/i.test(e.message) ? "Run supabase/sprint5.sql once in the Supabase SQL editor first" : /clips|transcripts|selects|cuts|screening_notes/i.test(e.message) ? "Run supabase/sprint4.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -37,6 +40,9 @@ function cleanProject(b) {
   if (b.client_id !== undefined) o.client_id = isId(b.client_id) ? b.client_id : null;
   if (b.conventions !== undefined && typeof b.conventions === "object") o.conventions = Object.fromEntries(Object.entries(b.conventions || {}).slice(0, 30).map(([k, v]) => [clip(k, 40), clip(v, 300)]));
   if (b.milestones !== undefined) o.milestones = (Array.isArray(b.milestones) ? b.milestones : []).slice(0, 30).map((m) => ({ key: clip(m?.key, 40), label: clip(m?.label, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(String(m?.date || "")) ? m.date : "", done: Boolean(m?.done), client_visible: m?.client_visible !== false })).filter((m) => m.label);
+  if (b.discovery !== undefined && typeof b.discovery === "object") o.discovery = Object.fromEntries(DISCOVERY_FIELDS.map(([k]) => [k, clip(b.discovery?.[k], 2000)]));
+  if (b.discovery_locked !== undefined) o.discovery_locked_at = b.discovery_locked ? new Date().toISOString() : null;
+  if (b.contract_cents !== undefined) o.contract_cents = Math.max(0, Math.round(Number(b.contract_cents) || 0));
   if (b.contingency_pct !== undefined) o.contingency_pct = Math.max(0, Math.min(50, Number(b.contingency_pct) || 0));
   if (b.arc !== undefined) o.arc = Object.fromEntries(ARC_KEYS.map((k) => [k, clip(b.arc?.[k], 2000)]).filter(([, v]) => v));
   if (b.archive !== undefined) o.archive = (Array.isArray(b.archive) ? b.archive : []).slice(0, 80).map((x) => ({ text: clip(x?.text, 300), source: clip(x?.source, 160), status: ["wanted", "requested", "in_hand"].includes(x?.status) ? x.status : "wanted" })).filter((x) => x.text);
@@ -89,7 +95,9 @@ export async function POST(request) {
     else if (/^roll-(update|delete)$/.test(body.action)) pid = await projectOf(db, "rolls", body.id);
     else if (/^(clip|select|cut|note)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { clip: "clips", select: "selects", cut: "cuts", note: "screening_notes" }[body.action.split("-")[0]], body.id);
     else if (/^(clip-proxy-sign|clip-proxy-done|clip-urls|transcript-get|transcript-upload|transcribe|transcript-poll)$/.test(body.action)) pid = await projectOf(db, "clips", body.id);
-    else if (/^(budget|cost|stakeholder|task)-/.test(body.action)) return deny(); // owner only: money + the client relationship
+    else if (/^(review|rnote|comm|sens)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { review: "review_versions", rnote: "review_notes", comm: "comms", sens: "sensitivities" }[body.action.split("-")[0]], body.id);
+    else if (body.action === "review-sign") pid = await projectOf(db, "review_versions", body.id);
+    else if (/^(budget|cost|stakeholder|task|payment|co|approval|update|discovery)-/.test(body.action) || /^payments-/.test(body.action)) return deny(); // owner only: money + the client relationship
     else if (body.action === "release-text") pid = null; // just text, nothing touched
     if (body.action !== "release-text" && !canProject(me, pid)) return deny();
   }
@@ -347,6 +355,77 @@ export async function POST(request) {
       cut: { table: "cuts", clean: (b) => { const o = {}; if (b.stage !== undefined) o.stage = CUT_STAGES.includes(b.stage) ? b.stage : "stringout"; if (b.version !== undefined) o.version = Math.round(num(b.version, 1, 999, 1)); if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; if (b.intent !== undefined) o.intent = clip(b.intent, 1500); if (b.thesis_v !== undefined) o.thesis_v = b.thesis_v === "" || b.thesis_v == null ? null : Math.round(num(b.thesis_v, 1, 999, 1)); if (b.scene_order !== undefined) o.scene_order = (Array.isArray(b.scene_order) ? b.scene_order : []).filter(isId).slice(0, 300); if (b.runtime_s !== undefined) o.runtime_s = Math.round(num(b.runtime_s, 0, 1e6, 0)); if (b.link !== undefined) o.link = clip(b.link, 500); if (b.notes !== undefined) o.notes = clip(b.notes, 4000); if (b.status !== undefined) o.status = ["open", "screened", "superseded"].includes(b.status) ? b.status : "open"; return o; }, need: "stage" },
       note: { table: "screening_notes", clean: (b) => { const o = {}; if (b.cut_id !== undefined) o.cut_id = isId(b.cut_id) ? b.cut_id : null; if (b.at_s !== undefined) o.at_s = b.at_s === "" || b.at_s == null ? null : num(b.at_s, 0, 1e6, 0); if (b.text !== undefined) o.text = clip(b.text, 1500); if (b.who !== undefined) o.who = clip(b.who, 60); if (b.verdict !== undefined) o.verdict = ["", "accept", "reject", "park"].includes(b.verdict) ? b.verdict : ""; if (b.scene_id !== undefined) o.scene_id = isId(b.scene_id) ? b.scene_id : null; if (b.done !== undefined) o.done = Boolean(b.done); return o; }, need: "text" },
     });
+    Object.assign(TABLES, {
+      approval: { table: "approvals", clean: (b) => { const o = {}; if (b.kind !== undefined) o.kind = ["milestone", "cut", "change_order", "deliverable", "other"].includes(b.kind) ? b.kind : "other"; if (b.ref_id !== undefined) o.ref_id = clip(b.ref_id, 60); if (b.label !== undefined) o.label = clip(b.label, 200); if (b.detail !== undefined) o.detail = clip(b.detail, 3000); if (b.status !== undefined) { o.status = ["pending", "approved", "changes"].includes(b.status) ? b.status : "pending"; if (o.status === "pending") { o.signed_name = ""; o.signed_at = null; o.ip = ""; } } if (b.note !== undefined) o.note = clip(b.note, 1500); return o; }, need: "label" },
+      review: { table: "review_versions", clean: (b) => { const o = {}; if (b.cut_id !== undefined) o.cut_id = isId(b.cut_id) ? b.cut_id : null; if (b.label !== undefined) o.label = clip(b.label, 120); if (b.link !== undefined) o.link = clip(b.link, 500); if (b.message !== undefined) o.message = clip(b.message, 2000); if (b.status !== undefined) o.status = ["open", "closed"].includes(b.status) ? b.status : "open"; if (b.client_visible !== undefined) o.client_visible = Boolean(b.client_visible); return o; }, need: "label" },
+      rnote: { table: "review_notes", clean: (b) => { const o = {}; if (b.review_id !== undefined) o.review_id = isId(b.review_id) ? b.review_id : null; if (b.at_s !== undefined) o.at_s = b.at_s === "" || b.at_s == null ? null : num(b.at_s, 0, 1e6, 0); if (b.text !== undefined) o.text = clip(b.text, 1500); if (b.who !== undefined) o.who = clip(b.who, 80); o.side = "us"; if (b.resolved !== undefined) o.resolved = Boolean(b.resolved); return o; }, need: "text" },
+      co: { table: "change_orders", clean: (b) => { const o = {}; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.description !== undefined) o.description = clip(b.description, 4000); if (b.amount_cents !== undefined) o.amount_cents = Math.round(num(b.amount_cents, -1e9, 1e9, 0)); if (b.expires !== undefined) o.expires = /^\d{4}-\d{2}-\d{2}$/.test(String(b.expires || "")) ? b.expires : null; if (b.status !== undefined) o.status = ["draft", "sent", "accepted", "declined", "expired"].includes(b.status) ? b.status : "draft"; return o; }, need: "title" },
+      payment: { table: "payments", clean: (b) => { const o = {}; if (b.label !== undefined) o.label = clip(b.label, 120); if (b.amount_cents !== undefined) o.amount_cents = Math.round(num(b.amount_cents, 0, 1e9, 0)); if (b.due !== undefined) o.due = /^\d{4}-\d{2}-\d{2}$/.test(String(b.due || "")) ? b.due : null; if (b.status !== undefined) { o.status = ["scheduled", "invoiced", "paid", "late", "waived"].includes(b.status) ? b.status : "scheduled"; if (o.status === "paid" && b.paid_at === undefined) o.paid_at = now().slice(0, 10); } if (b.paid_at !== undefined) o.paid_at = /^\d{4}-\d{2}-\d{2}$/.test(String(b.paid_at || "")) ? b.paid_at : null; for (const k of ["method", "note", "gates"]) if (b[k] !== undefined) o[k] = clip(b[k], 300); if (b.sort !== undefined) o.sort = Math.round(num(b.sort, 0, 1e6, 0)); return o; }, need: "label" },
+      comm: { table: "comms", clean: (b) => { const o = {}; if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : now().slice(0, 10); if (b.channel !== undefined) o.channel = ["call", "email", "text", "meeting", "portal", "other"].includes(b.channel) ? b.channel : "call"; if (b.who !== undefined) o.who = clip(b.who, 120); if (b.summary !== undefined) o.summary = clip(b.summary, 3000); if (b.decisions !== undefined) o.decisions = clip(b.decisions, 2000); if (b.client_visible !== undefined) o.client_visible = Boolean(b.client_visible); return o; }, need: "summary" },
+      update: { table: "updates", clean: (b) => { const o = {}; if (b.week_of !== undefined) o.week_of = /^\d{4}-\d{2}-\d{2}$/.test(String(b.week_of || "")) ? b.week_of : now().slice(0, 10); if (b.body !== undefined) o.body = clip(b.body, 8000); if (b.published !== undefined) o.published_at = b.published ? now() : null; return o; }, need: "week_of" },
+      sens: { table: "sensitivities", clean: (b) => { const o = {}; if (b.topic !== undefined) o.topic = clip(b.topic, 200); if (b.handling !== undefined) o.handling = ["public", "internal_only", "approve_before_use", "omit"].includes(b.handling) ? b.handling : "approve_before_use"; if (b.note !== undefined) o.note = clip(b.note, 1500); if (b.raised_by !== undefined) o.raised_by = clip(b.raised_by, 80); return o; }, need: "topic" },
+    });
+    // Change orders number themselves; a sent one gets an approval line for the portal.
+    if (body.action === "co-add" && isId(body.projectId)) {
+      const row = TABLES.co.clean(body); if (!row.title) return bad("Needs a title");
+      const { data: last } = await db.from("change_orders").select("number").eq("project_id", body.projectId).order("number", { ascending: false }).limit(1);
+      const { data, error } = await db.from("change_orders").insert({ project_id: body.projectId, number: (last?.[0]?.number || 0) + 1, ...row }).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
+    // Payment schedule from the contract total (30/30/20/20).
+    if (body.action === "payments-seed") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const total = Math.max(0, Math.round(Number(body.contract_cents) || 0)); if (!total) return bad("Set the contract total first");
+      const { count } = await db.from("payments").select("id", { count: "exact", head: true }).eq("project_id", body.projectId);
+      if (count) return bad("There's already a schedule — edit it instead");
+      const rows = DEFAULT_PAYMENTS.map(([label, pct, gates], i) => ({ project_id: body.projectId, label, amount_cents: Math.round(total * pct / 100), gates, sort: i }));
+      rows[rows.length - 1].amount_cents = total - rows.slice(0, -1).reduce((a, r) => a + r.amount_cents, 0);
+      await db.from("projects").update({ contract_cents: total }).eq("id", body.projectId);
+      const { data, error } = await db.from("payments").insert(rows).select("*"); if (error) return missing(error);
+      return NextResponse.json({ rows: data });
+    }
+    // Review video: presigned PUT to reviews/<pid>/<id>.mp4 (or a link).
+    if (body.action === "review-sign") {
+      if (!isId(body.id)) return bad("Bad request"); if (!r2Configured) return bad("R2 isn't configured", 500);
+      const { data: r } = await db.from("review_versions").select("id, project_id").eq("id", body.id).maybeSingle(); if (!r) return bad("No such review", 404);
+      const key = `reviews/${r.project_id}/${r.id}.mp4`;
+      return NextResponse.json({ key, url: await putUrl(key, "video/mp4") });
+    }
+    if (body.action === "review-done") {
+      if (!isId(body.id) || !/^reviews\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.mp4$/.test(body.key || "")) return bad("Bad request");
+      const { data, error } = await db.from("review_versions").update({ video_key: body.key }).eq("id", body.id).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data, url: await signedUrl(body.key) });
+    }
+    if (body.action === "review-url") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data: r } = await db.from("review_versions").select("video_key").eq("id", body.id).maybeSingle();
+      return NextResponse.json({ url: r?.video_key ? await signedUrl(r.video_key) : "" });
+    }
+    // Weekly update: drafted from the data, edited, published to the portal,
+    // optionally emailed to the stakeholders who have an address.
+    if (body.action === "update-draft") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const text = await draftUpdate(db, body.projectId);
+      return NextResponse.json({ body: text });
+    }
+    if (body.action === "update-publish") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data: u } = await db.from("updates").select("*").eq("id", body.id).maybeSingle(); if (!u) return bad("No such update", 404);
+      if (!u.body.trim()) return bad("Write it first");
+      let emailed = "";
+      if (body.email && resendConfigured) {
+        const { data: project } = await db.from("projects").select("title").eq("id", u.project_id).maybeSingle();
+        const { data: stake } = await db.from("project_stakeholders").select("name, email, portal_role, primary_contact").eq("project_id", u.project_id);
+        const to = (stake || []).filter((x) => x.email && (x.primary_contact || x.portal_role !== "viewer")).map((x) => x.email);
+        if (to.length) {
+          const html = wrapHtml({ body: u.body, cta: { label: "Open your project", href: `${process.env.NEXT_PUBLIC_SITE_URL || "https://rothmediaco.com"}/portal/projects/${u.project_id}` }, signoff: "— Brandon" });
+          await sendBatch(to.map((t) => ({ to: t, subject: `${project?.title || "Your film"} — update for the week of ${u.week_of}`, html, text: u.body })));
+          emailed = to.join(", ");
+        }
+      }
+      const { data, error } = await db.from("updates").update({ published_at: now(), emailed_to: emailed }).eq("id", u.id).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data, emailed });
+    }
     // A bite with a person on it is also a quote on that person — the edit
     // room and the People tab stay one list.
     if (body.action === "select-add" && isId(body.projectId)) {
@@ -455,7 +534,7 @@ export async function POST(request) {
       const { data: row } = await db.from("clips").update({ transcript_status: "processing" }).eq("id", c.id).select("*").single();
       return NextResponse.json({ row });
     }
-    const m3 = /^(chrono|source|question|event|clip|select|cut|note)-(add|update|delete)$/.exec(body.action || "");
+    const m3 = /^(chrono|source|question|event|clip|select|cut|note|approval|review|rnote|co|payment|comm|update|sens)-(add|update|delete)$/.exec(body.action || "");
     if (m3) {
       const def = TABLES[m3[1]]; const op = m3[2];
       if (op === "add") {

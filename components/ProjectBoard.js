@@ -17,6 +17,7 @@ import { PHASE_LABEL } from "../lib/production";
 import { CallSheetEditor, MediaCard } from "./DayMachine";
 import { ThesisCard, ChronologyCard, SourcesCard, QuestionsCard, EventsCard, StyleCard, EyelineMap, InterviewPlan } from "./StoryEngine";
 import { FootageCard, StringoutCard, CutsCard } from "./EditRoom";
+import { DiscoveryCard, ApprovalsCard, ReviewsCard, ChangeOrdersCard, PaymentsCard, CommsCard, UpdateCard, SensitivityCard } from "./ClientMachine";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -50,6 +51,15 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [selects, setSelects] = useState(s4?.selects || []);
   const [cuts, setCuts] = useState(s4?.cuts || []);
   const [notes, setNotes] = useState(s4?.notes || []);
+  const s5 = initial.sprint5;
+  const [approvals, setApprovals] = useState(s5?.approvals || []);
+  const [reviews, setReviews] = useState(s5?.reviews || []);
+  const [rnotes, setRnotes] = useState(s5?.rnotes || []);
+  const [cos, setCos] = useState(s5?.cos || []);
+  const [payments, setPayments] = useState(s5?.payments || []);
+  const [comms, setComms] = useState(s5?.comms || []);
+  const [updates, setUpdates] = useState(s5?.updates || []);
+  const [sens, setSens] = useState(s5?.sens || []);
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -191,7 +201,23 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       )}
 
       {tab === "client" && isOwner && (
-        <ClientSideCard project={p} stakeholders={stakeholders} setStakeholders={setStakeholders} tasks={tasks} setTasks={setTasks} days={days} onProject={onProject} onDayVisible={setDayVisible} fail={fail} say={say} ready={Boolean(s1)} />
+        <>
+          <div className="cprof-cols">
+            <div className="cprof-col">
+              <UpdateCard project={p} rows={updates} setRows={setUpdates} email={Boolean(s5?.email)} fail={fail} say={say} ready={Boolean(s5)} />
+              <ApprovalsCard project={p} rows={approvals} setRows={setApprovals} cuts={cuts} fail={fail} ready={Boolean(s5)} />
+              <ReviewsCard project={p} rows={reviews} setRows={setReviews} notes={rnotes} setNotes={setRnotes} cuts={cuts} fail={fail} say={say} ready={Boolean(s5)} />
+              <DiscoveryCard project={p} onProject={onProject} ready={Boolean(s5)} />
+            </div>
+            <div className="cprof-col">
+              <PaymentsCard project={p} rows={payments} setRows={setPayments} onProject={onProject} fail={fail} say={say} ready={Boolean(s5)} />
+              <ChangeOrdersCard project={p} rows={cos} setRows={setCos} fail={fail} ready={Boolean(s5)} />
+              <CommsCard project={p} rows={comms} setRows={setComms} fail={fail} ready={Boolean(s5)} />
+              <SensitivityCard project={p} rows={sens} setRows={setSens} fail={fail} ready={Boolean(s5)} />
+            </div>
+          </div>
+          <ClientSideCard project={p} stakeholders={stakeholders} setStakeholders={setStakeholders} tasks={tasks} setTasks={setTasks} days={days} onProject={onProject} onDayVisible={setDayVisible} fail={fail} say={say} ready={Boolean(s1)} />
+        </>
       )}
 
       {signing && <ReleaseSign project={p} person={signing.person || null} shoot={signing.shoot || null} preset={signing.preset || null} onSigned={(r) => { setReleases((l) => [r, ...l]); if (signing.person) setPeople((l) => l.map((x) => (x.id === signing.person.id ? x : x))); }} onClose={() => setSigning(null)} />}

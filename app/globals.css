@@ -7046,3 +7046,32 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
   .clip-tags { grid-column: 2; justify-content: flex-start; }
   .so-list li, .note, .sel-list li { grid-template-columns: 1fr; }
 }
+
+/* Sprint 5 — client machinery */
+.form-error { color: var(--err, #e06060); font-size: .9rem; margin: 0 0 .6rem; }
+.form-ok { color: rgba(96,200,120,.95); font-size: .9rem; margin: 0 0 .6rem; }
+.appr-note, .co-desc { display: block; font-style: normal; font-size: .88rem; opacity: .8; margin-top: .2rem; white-space: pre-wrap; }
+.appr.st-approved strong::before { content: "✓ "; color: rgba(96,200,120,.9); }
+.appr.st-changes strong::before { content: "↺ "; color: var(--accent, #c8a24a); }
+.pay.st-paid { opacity: .7; }
+.pay.st-late strong { color: #e06060; }
+.pay-due { font-size: .8rem; padding: .3rem .4rem; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: inherit; }
+.sens.h-omit strong { text-decoration: line-through; opacity: .7; }
+.sens.h-approve_before_use strong::before { content: "⚠ "; color: var(--accent, #c8a24a); }
+.upd-body { width: 100%; font: inherit; line-height: 1.5; padding: .7rem .8rem; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: inherit; margin-bottom: .5rem; }
+.upd-read p { margin: 0 0 .8rem; line-height: 1.55; }
+.cproj-todo { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.todo { display: grid; grid-template-columns: 2.6rem 1fr; gap: .6rem; align-items: start; padding: .7rem .8rem; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+.todo-tick { font-size: 1.4rem; line-height: 1; background: none; border: 0; color: inherit; cursor: pointer; min-height: 44px; min-width: 44px; text-align: center; }
+.todo-sign { border-color: rgba(200,162,74,.5); }
+.todo-body { display: grid; gap: .4rem; }
+.sign-box { display: grid; gap: .5rem; padding: .6rem .7rem; border-radius: 10px; background: rgba(0,0,0,.2); }
+.sign-box label { display: grid; gap: .25rem; font-size: .85rem; }
+.sign-box input, .sign-box textarea { font: inherit; padding: .55rem .65rem; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15); color: inherit; min-height: 44px; }
+.review { padding: .8rem 0; border-top: 1px solid rgba(255,255,255,.08); }
+.review:first-of-type { border-top: 0; padding-top: 0; }
+.review h3 { margin: 0; font-size: 1.05rem; }
+.review video { width: 100%; border-radius: 10px; background: #000; max-height: 70vh; }
+.review-msg { margin: .2rem 0 .6rem; opacity: .85; }
+.review-add { margin-top: .5rem; }
+.discovery textarea { min-height: 3.2rem; }
