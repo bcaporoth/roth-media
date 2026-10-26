@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { whoIs, canProject, projectOf } from "../../../../lib/staff-server";
+import { whoIs, canProject, projectOf, projectTeam } from "../../../../lib/staff-server";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, putSignature, signedUrl, putUrl, PROXY_KEY_RE } from "../../../../lib/r2";
 import { parseName, parseSubs, parsePlain, fromAssembly, CUT_STAGES } from "../../../../lib/edit";
@@ -9,6 +9,7 @@ import { ARC_KEYS } from "../../../../lib/story-arc";
 import { ARC_ROLES, ERAS, SOURCE_KINDS, QUESTION_THEMES, PHASES, SCENE_KINDS, SCENE_STATUSES, LOCATION_KINDS, BUDGET_SECTIONS, BUDGET_TOPSHEET, DEFAULT_MILESTONES, DEFAULT_PAYMENTS, DISCOVERY_FIELDS } from "../../../../lib/production";
 import { draftUpdate } from "../../../../lib/client-machine";
 import { LEGAL_KINDS } from "../../../../lib/legal";
+import { DEFAULT_DELIVERABLES, DELIVERABLE_KINDS, QC_CHECKS, defaultFollowups, invoiceLines } from "../../../../lib/finish";
 import { resendConfigured, sendBatch } from "../../../../lib/resend";
 import { wrapHtml } from "../../../../lib/client-email";
 
@@ -21,7 +22,7 @@ const deny = () => NextResponse.json({ error: "Not authorized" }, { status: 403 
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
 const clip = (v, n) => String(v ?? "").trim().slice(0, n);
 const isId = (v) => /^[0-9a-f-]{36}$/.test(String(v || ""));
-const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events|clips|transcripts|selects|cuts|screening_notes|approvals|review_versions|review_notes|change_orders|project_payments|comms|updates|sensitivities|discovery|contract_cents|clearance_items|music_cues|archival_items|legal_items|gate_overrides/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /clearance_items|music_cues|archival_items|legal_items|gate_overrides/i.test(e.message) ? "Run supabase/sprint6.sql once in the Supabase SQL editor first" : /approvals|review_versions|review_notes|change_orders|project_payments|comms|updates|sensitivities|discovery|contract_cents/i.test(e.message) ? "Run supabase/sprint5.sql once in the Supabase SQL editor first" : /clips|transcripts|selects|cuts|screening_notes/i.test(e.message) ? "Run supabase/sprint4.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
+const missing = (e) => bad(/projects|project_people|project_entries|releases|scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|media_cards|drives|rolls|chronology|sources|questions|events|clips|transcripts|selects|cuts|screening_notes|approvals|review_versions|review_notes|change_orders|project_payments|comms|updates|sensitivities|discovery|contract_cents|clearance_items|music_cues|archival_items|legal_items|gate_overrides|deliverables|followups|timesheets|crew_invoices|vendors|purchase_orders|travel|daily_reports|retention_until|usage_rights/i.test(e.message) && /does not exist|schema cache/i.test(e.message) ? (/project_entries/i.test(e.message) ? "Run supabase/journal.sql once in the Supabase SQL editor first" : /deliverables|followups|timesheets|crew_invoices|vendors|purchase_orders|travel|daily_reports|retention_until|usage_rights|premiere/i.test(e.message) ? "Run supabase/sprint7.sql once in the Supabase SQL editor first" : /clearance_items|music_cues|archival_items|legal_items|gate_overrides/i.test(e.message) ? "Run supabase/sprint6.sql once in the Supabase SQL editor first" : /approvals|review_versions|review_notes|change_orders|project_payments|comms|updates|sensitivities|discovery|contract_cents/i.test(e.message) ? "Run supabase/sprint5.sql once in the Supabase SQL editor first" : /clips|transcripts|selects|cuts|screening_notes/i.test(e.message) ? "Run supabase/sprint4.sql once in the Supabase SQL editor first" : /chronology|sources|questions|events|thesis|style|arc_role|eyeline|plan/i.test(e.message) ? "Run supabase/sprint3.sql once in the Supabase SQL editor first" : /media_cards|drives|rolls|callsheet|scene_ids/i.test(e.message) ? "Run supabase/sprint2.sql once in the Supabase SQL editor first" : /scenes|locations|budget_lines|cost_entries|project_stakeholders|client_tasks|column/i.test(e.message) ? "Run supabase/sprint1.sql once in the Supabase SQL editor first" : "Run supabase/projects.sql once in the Supabase SQL editor first") : e.message, 500);
 
 
 function cleanProject(b) {
@@ -43,6 +44,11 @@ function cleanProject(b) {
   if (b.milestones !== undefined) o.milestones = (Array.isArray(b.milestones) ? b.milestones : []).slice(0, 30).map((m) => ({ key: clip(m?.key, 40), label: clip(m?.label, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(String(m?.date || "")) ? m.date : "", done: Boolean(m?.done), client_visible: m?.client_visible !== false })).filter((m) => m.label);
   if (b.discovery !== undefined && typeof b.discovery === "object") o.discovery = Object.fromEntries(DISCOVERY_FIELDS.map(([k]) => [k, clip(b.discovery?.[k], 2000)]));
   if (b.discovery_locked !== undefined) o.discovery_locked_at = b.discovery_locked ? new Date().toISOString() : null;
+  if (b.delivered_at !== undefined) o.delivered_at = /^\d{4}-\d{2}-\d{2}$/.test(String(b.delivered_at || "")) ? b.delivered_at : null;
+  if (b.retention_until !== undefined) o.retention_until = /^\d{4}-\d{2}-\d{2}$/.test(String(b.retention_until || "")) ? b.retention_until : null;
+  if (b.usage_rights !== undefined) o.usage_rights = clip(b.usage_rights, 4000);
+  if (b.premiere !== undefined && typeof b.premiere === "object") o.premiere = Object.fromEntries(Object.entries(b.premiere || {}).slice(0, 20).map(([k, v]) => [clip(k, 30), clip(v, 3000)]));
+  if (b.archive !== undefined && typeof b.archive === "object") o.archive = Object.fromEntries(Object.entries(b.archive || {}).slice(0, 20).map(([k, v]) => [clip(k, 30), clip(v, 6000)]));
   if (b.gate_overrides !== undefined && typeof b.gate_overrides === "object") o.gate_overrides = Object.fromEntries(Object.entries(b.gate_overrides || {}).slice(0, 60).filter(([k, v]) => /^[abc]\.[a-z_]+$/.test(k) && v && typeof v === "object").map(([k, v]) => [k, { reason: clip(v.reason, 300), at: clip(v.at, 10) }]));
   if (b.contract_cents !== undefined) o.contract_cents = Math.max(0, Math.round(Number(b.contract_cents) || 0));
   if (b.contingency_pct !== undefined) o.contingency_pct = Math.max(0, Math.min(50, Number(b.contingency_pct) || 0));
@@ -99,7 +105,8 @@ export async function POST(request) {
     else if (/^(clip-proxy-sign|clip-proxy-done|clip-urls|transcript-get|transcript-upload|transcribe|transcript-poll)$/.test(body.action)) pid = await projectOf(db, "clips", body.id);
     else if (/^(review|rnote|comm|sens)-(update|delete)$/.test(body.action)) pid = await projectOf(db, { review: "review_versions", rnote: "review_notes", comm: "comms", sens: "sensitivities" }[body.action.split("-")[0]], body.id);
     else if (body.action === "review-sign") pid = await projectOf(db, "review_versions", body.id);
-    else if (/^(budget|cost|stakeholder|task|payment|co|approval|update|discovery|clearance|cue|arch|legal)-/.test(body.action) || /^payments-/.test(body.action)) return deny(); // owner only: money + the client relationship
+    else if (/^(report|timesheet)-(update|delete)$/.test(body.action)) pid = await projectOf(db, body.action.startsWith("report") ? "daily_reports" : "timesheets", body.id);
+    else if (/^(budget|cost|stakeholder|task|payment|co|approval|update|discovery|clearance|cue|arch|legal|deliverable|followup|cinv|vendor|po|travel|invoice)-/.test(body.action) || /^(payments|deliverables|project-deliver)/.test(body.action)) return deny(); // owner only: money + the client relationship
     else if (body.action === "release-text") pid = null; // just text, nothing touched
     if (body.action !== "release-text" && !canProject(me, pid)) return deny();
   }
@@ -373,6 +380,84 @@ export async function POST(request) {
       arch: { table: "archival_items", clean: (b) => { const o = {}; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.kind !== undefined) o.kind = ["photo", "film", "document", "audio", "newspaper", "map", "other"].includes(b.kind) ? b.kind : "other"; for (const k of ["lender", "rights_holder"]) if (b[k] !== undefined) o[k] = clip(b[k], 200); if (b.basis !== undefined) o.basis = ["unknown", "license", "public_domain", "fair_use", "materials_release", "owned"].includes(b.basis) ? b.basis : "unknown"; if (b.reasoning !== undefined) o.reasoning = clip(b.reasoning, 2000); if (b.fee_cents !== undefined) o.fee_cents = Math.round(num(b.fee_cents, 0, 1e9, 0)); for (const k of ["release_id", "scene_id", "source_id"]) if (b[k] !== undefined) o[k] = isId(b[k]) ? b[k] : null; if (b.status !== undefined) o.status = ["wanted", "in_hand", "cleared", "rejected"].includes(b.status) ? b.status : "wanted"; if (b.notes !== undefined) o.notes = clip(b.notes, 1500); return o; }, need: "title" },
       legal: { table: "legal_items", clean: (b) => { const o = {}; if (b.kind !== undefined) o.kind = LEGAL_KINDS[b.kind] ? b.kind : "contract"; if (b.title !== undefined) o.title = clip(b.title, 200); if (b.party !== undefined) o.party = clip(b.party, 200); if (b.status !== undefined) o.status = clip(b.status, 20); for (const k of ["date", "expires"]) if (b[k] !== undefined) o[k] = /^\d{4}-\d{2}-\d{2}$/.test(String(b[k] || "")) ? b[k] : null; if (b.link !== undefined) o.link = clip(b.link, 500); for (const k of ["ref_id", "scene_id", "location_id"]) if (b[k] !== undefined) o[k] = isId(b[k]) ? b[k] : null; if (b.notes !== undefined) o.notes = clip(b.notes, 2000); if (b.data !== undefined && typeof b.data === "object") o.data = Object.fromEntries(Object.entries(b.data || {}).slice(0, 20).map(([k, v]) => [clip(k, 30), clip(v, 600)])); if (b.sort !== undefined) o.sort = Math.round(num(b.sort, 0, 1e6, 0)); return o; }, need: "title" },
     });
+    Object.assign(TABLES, {
+      deliverable: { table: "deliverables", clean: (b) => { const o = {}; if (b.name !== undefined) o.name = clip(b.name, 160); if (b.kind !== undefined) o.kind = DELIVERABLE_KINDS[b.kind] ? b.kind : "other"; if (b.spec !== undefined) o.spec = clip(b.spec, 1000); if (b.status !== undefined) { o.status = ["todo", "rendering", "qc", "delivered", "acknowledged"].includes(b.status) ? b.status : "todo"; if (o.status === "delivered") o.delivered_at = now(); } if (b.link !== undefined) o.link = clip(b.link, 600); if (b.size_bytes !== undefined) o.size_bytes = Math.round(num(b.size_bytes, 0, 1e14, 0)); if (b.checksum !== undefined) o.checksum = clip(b.checksum, 128); if (b.qc !== undefined && typeof b.qc === "object") o.qc = { checks: Object.fromEntries(QC_CHECKS.map(([k]) => [k, Boolean(b.qc?.checks?.[k])])), notes: clip(b.qc?.notes, 1500), by: clip(b.qc?.by, 80), at: clip(b.qc?.at, 10) }; if (b.client_visible !== undefined) o.client_visible = Boolean(b.client_visible); if (b.sort !== undefined) o.sort = Math.round(num(b.sort, 0, 1e6, 0)); return o; }, need: "name" },
+      followup: { table: "followups", clean: (b) => { const o = {}; if (b.kind !== undefined) o.kind = ["testimonial", "referral", "anniversary", "purge_notice", "premiere_reminder", "custom"].includes(b.kind) ? b.kind : "custom"; if (b.label !== undefined) o.label = clip(b.label, 300); if (b.due !== undefined) o.due = /^\d{4}-\d{2}-\d{2}$/.test(String(b.due || "")) ? b.due : now().slice(0, 10); if (b.status !== undefined) { o.status = ["scheduled", "done", "skipped"].includes(b.status) ? b.status : "scheduled"; o.done_at = o.status === "scheduled" ? null : now(); } if (b.note !== undefined) o.note = clip(b.note, 1000); return o; }, need: "label" },
+      timesheet: { table: "timesheets", clean: (b) => { const o = {}; if (b.staff_id !== undefined) o.staff_id = isId(b.staff_id) ? b.staff_id : null; if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null; if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : now().slice(0, 10); for (const k of ["call_time", "wrap_time"]) if (b[k] !== undefined) o[k] = clip(b[k], 10); for (const k of ["hours", "ot_hours", "miles"]) if (b[k] !== undefined) o[k] = num(b[k], 0, 1000, 0); if (b.kit !== undefined) o.kit = Boolean(b.kit); if (b.per_diem_cents !== undefined) o.per_diem_cents = Math.round(num(b.per_diem_cents, 0, 1e6, 0)); if (b.notes !== undefined) o.notes = clip(b.notes, 400); if (b.approved !== undefined) o.approved = Boolean(b.approved); return o; }, need: "staff_id" },
+      cinv: { table: "crew_invoices", clean: (b) => { const o = {}; if (b.status !== undefined) { o.status = ["draft", "sent", "approved", "paid"].includes(b.status) ? b.status : "draft"; if (o.status === "paid" && b.paid_at === undefined) o.paid_at = now().slice(0, 10); } if (b.paid_at !== undefined) o.paid_at = /^\d{4}-\d{2}-\d{2}$/.test(String(b.paid_at || "")) ? b.paid_at : null; if (b.method !== undefined) o.method = clip(b.method, 40); if (b.notes !== undefined) o.notes = clip(b.notes, 1000); if (b.amount_cents !== undefined) o.amount_cents = Math.round(num(b.amount_cents, 0, 1e9, 0)); if (b.number !== undefined) o.number = clip(b.number, 30); return o; }, need: "status" },
+      vendor: { table: "vendors", clean: (b) => { const o = {}; if (b.name !== undefined) o.name = clip(b.name, 160); for (const k of ["service", "contact", "email", "phone"]) if (b[k] !== undefined) o[k] = clip(b[k], 160); for (const k of ["w9", "coi"]) if (b[k] !== undefined) o[k] = Boolean(b[k]); if (b.notes !== undefined) o.notes = clip(b.notes, 1000); return o; }, need: "name", global: true },
+      po: { table: "purchase_orders", clean: (b) => { const o = {}; if (b.vendor_id !== undefined) o.vendor_id = isId(b.vendor_id) ? b.vendor_id : null; if (b.description !== undefined) o.description = clip(b.description, 600); if (b.amount_cents !== undefined) o.amount_cents = Math.round(num(b.amount_cents, 0, 1e9, 0)); if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; if (b.status !== undefined) o.status = ["draft", "sent", "received", "paid"].includes(b.status) ? b.status : "draft"; if (b.link !== undefined) o.link = clip(b.link, 500); if (b.budget_line_id !== undefined) o.budget_line_id = isId(b.budget_line_id) ? b.budget_line_id : null; if (b.notes !== undefined) o.notes = clip(b.notes, 1000); return o; }, need: "description" },
+      travel: { table: "travel", clean: (b) => { const o = {}; if (b.kind !== undefined) o.kind = ["mileage", "lodging", "meal", "trip", "other"].includes(b.kind) ? b.kind : "other"; if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; if (b.who !== undefined) o.who = clip(b.who, 80); if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null; if (b.from_to !== undefined) o.from_to = clip(b.from_to, 200); if (b.miles !== undefined) o.miles = num(b.miles, 0, 10000, 0); if (b.amount_cents !== undefined) o.amount_cents = Math.round(num(b.amount_cents, 0, 1e8, 0)); if (b.notes !== undefined) o.notes = clip(b.notes, 400); return o; }, need: "kind" },
+      report: { table: "daily_reports", clean: (b) => { const o = {}; if (b.shoot_id !== undefined) o.shoot_id = isId(b.shoot_id) ? b.shoot_id : null; if (b.date !== undefined) o.date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date || "")) ? b.date : null; for (const k of ["crew_present", "call_actual", "first_shot", "wrap_actual", "scenes_shot", "rolls", "camera_notes", "sound_notes", "issues", "weather", "meals", "next_day", "signed_by"]) if (b[k] !== undefined) o[k] = clip(b[k], 1500); if (b.setups !== undefined) o.setups = Math.round(num(b.setups, 0, 999, 0)); return o; }, need: "shoot_id" },
+    });
+    if (body.action === "deliverables-seed") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const { count } = await db.from("deliverables").select("id", { count: "exact", head: true }).eq("project_id", body.projectId);
+      if (count) return bad("There's already a package — add lines instead");
+      const rows = DEFAULT_DELIVERABLES.map(([kind, name, spec], i) => ({ project_id: body.projectId, kind, name, spec, sort: i }));
+      const { data, error } = await db.from("deliverables").insert(rows).select("*"); if (error) return missing(error);
+      return NextResponse.json({ rows: data });
+    }
+    if (body.action === "deliverable-sign") {
+      if (!isId(body.id)) return bad("Bad request"); if (!r2Configured) return bad("R2 isn't configured", 500);
+      const { data: d } = await db.from("deliverables").select("id, project_id").eq("id", body.id).maybeSingle(); if (!d) return bad("No such deliverable", 404);
+      const safe = clip(body.filename, 120).replace(/[^\w.\- ]/g, "_") || "file";
+      const key = `deliverables/${d.project_id}/${d.id}/${safe}`;
+      return NextResponse.json({ key, url: await putUrl(key, clip(body.contentType, 80) || "application/octet-stream") });
+    }
+    if (body.action === "deliverable-done") {
+      if (!isId(body.id) || !/^deliverables\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[^/]+$/.test(body.key || "")) return bad("Bad request");
+      const { data, error } = await db.from("deliverables").update({ file_key: body.key, size_bytes: Math.round(Number(body.size_bytes) || 0), checksum: clip(body.checksum, 128), status: "qc" }).eq("id", body.id).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
+    if (body.action === "deliverable-url") {
+      if (!isId(body.id)) return bad("Bad request");
+      const { data: d } = await db.from("deliverables").select("file_key").eq("id", body.id).maybeSingle();
+      return NextResponse.json({ url: d?.file_key ? await signedUrl(d.file_key, { download: d.file_key.split("/").pop() }) : "" });
+    }
+    // Mark the project delivered: stamps the date, sets retention (3y),
+    // schedules the follow-ups, moves the phase.
+    if (body.action === "project-deliver") {
+      if (!isId(body.projectId)) return bad("Bad request");
+      const d = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || "")) ? body.date : now().slice(0, 10);
+      const ret = new Date(new Date(`${d}T12:00:00`).getTime() + 3 * 365 * 864e5).toLocaleDateString("en-CA");
+      const { data: project, error } = await db.from("projects").update({ delivered_at: d, retention_until: ret, phase: "delivery", status: "delivered" }).eq("id", body.projectId).select("*").single(); if (error) return missing(error);
+      const { data: have } = await db.from("followups").select("kind").eq("project_id", body.projectId);
+      const seen = new Set((have || []).map((x) => x.kind));
+      const rows = defaultFollowups(d, ret).filter((f) => !seen.has(f.kind)).map((f) => ({ project_id: body.projectId, ...f }));
+      const { data: fu } = rows.length ? await db.from("followups").insert(rows).select("*") : { data: [] };
+      return NextResponse.json({ project, followups: fu || [] });
+    }
+    // Build a crew invoice from approved, un-invoiced timesheets.
+    if (body.action === "invoice-build") {
+      if (!isId(body.projectId) || !isId(body.staff_id)) return bad("Bad request");
+      const team = await projectTeam(db, body.projectId); const member = team.find((m) => m.id === body.staff_id); if (!member) return bad("Not on this project");
+      const { data: sheets } = await db.from("timesheets").select("*").eq("project_id", body.projectId).eq("staff_id", body.staff_id).eq("approved", true).is("invoice_id", null).order("date", { ascending: true });
+      if (!sheets?.length) return bad("No approved, un-invoiced days for them");
+      const lines = invoiceLines(sheets, member); const amount_cents = lines.reduce((a, l) => a + l.cents, 0);
+      const { count } = await db.from("crew_invoices").select("id", { count: "exact", head: true }).eq("project_id", body.projectId);
+      const number = `${(await db.from("projects").select("code").eq("id", body.projectId).maybeSingle()).data?.code || "INV"}-${String((count || 0) + 1).padStart(3, "0")}`;
+      const { data: inv, error } = await db.from("crew_invoices").insert({ project_id: body.projectId, staff_id: body.staff_id, number, period_from: sheets[0].date, period_to: sheets.at(-1).date, lines, amount_cents }).select("*").single(); if (error) return missing(error);
+      await db.from("timesheets").update({ invoice_id: inv.id }).in("id", sheets.map((x) => x.id));
+      return NextResponse.json({ row: inv, sheets: sheets.map((x) => ({ ...x, invoice_id: inv.id })) });
+    }
+    if (body.action === "po-add" && isId(body.projectId)) {
+      const row = TABLES.po.clean(body); if (!row.description) return bad("What is it for?");
+      const { data: last } = await db.from("purchase_orders").select("number").eq("project_id", body.projectId).order("number", { ascending: false }).limit(1);
+      const { data, error } = await db.from("purchase_orders").insert({ project_id: body.projectId, number: (last?.[0]?.number || 0) + 1, ...row }).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
+    if (body.action === "report-upsert") {
+      if (!isId(body.projectId) || !isId(body.shoot_id)) return bad("Bad request");
+      const row = TABLES.report.clean(body);
+      const { data, error } = await db.from("daily_reports").upsert({ project_id: body.projectId, ...row }, { onConflict: "shoot_id" }).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
+    if (body.action === "vendor-add") {
+      const row = TABLES.vendor.clean(body); if (!row.name) return bad("Vendor name?");
+      const { data, error } = await db.from("vendors").insert(row).select("*").single(); if (error) return missing(error);
+      return NextResponse.json({ row: data });
+    }
     // Seed the clearance pass from what's already in the project: every
     // interviewee, archival item, music cue and location gets a line.
     if (body.action === "clearance-seed") {
@@ -562,7 +647,7 @@ export async function POST(request) {
       const { data: row } = await db.from("clips").update({ transcript_status: "processing" }).eq("id", c.id).select("*").single();
       return NextResponse.json({ row });
     }
-    const m3 = /^(chrono|source|question|event|clip|select|cut|note|approval|review|rnote|co|payment|comm|update|sens|clearance|cue|arch|legal)-(add|update|delete)$/.exec(body.action || "");
+    const m3 = /^(chrono|source|question|event|clip|select|cut|note|approval|review|rnote|co|payment|comm|update|sens|clearance|cue|arch|legal|deliverable|followup|timesheet|cinv|vendor|po|travel|report)-(add|update|delete)$/.exec(body.action || "");
     if (m3) {
       const def = TABLES[m3[1]]; const op = m3[2];
       if (op === "add") {

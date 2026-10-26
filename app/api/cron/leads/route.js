@@ -84,7 +84,10 @@ export async function GET(request) {
   const notes = (await unreadForBrandon(db).catch(() => [])) || [];
   const noteLines = notes.map((n) => `${n.name}${n.count > 1 ? ` (${n.count} notes)` : ""}: "${String(n.latest).slice(0, 160)}"\nReply: https://rothmediaco.com/portal/admin/clients/${n.id}#notes`);
   const afterCount = (await afterDeliveryList(db).catch(() => [])).length;
-  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length && !afterCount) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
+  // Project follow-ups (documentary work): testimonial, referral, anniversary, purge notice — due today or earlier.
+  const pfu = await db.from("followups").select("id, project_id, kind, label, due").eq("status", "scheduled").lte("due", todayKey).order("due", { ascending: true }).limit(12).then(async (r) => { if (r.error || !r.data?.length) return []; const ids = [...new Set(r.data.map((x) => x.project_id))]; const { data: ps } = await db.from("projects").select("id, title, client_name").in("id", ids); const t = Object.fromEntries((ps || []).map((x) => [x.id, x])); return r.data.map((x) => ({ ...x, project: t[x.project_id] })); }, () => []);
+  const pfuLine = (x) => `${x.project?.title || "Project"}${x.project?.client_name ? ` (${x.project.client_name})` : ""} — ${x.label}${x.due < todayKey ? ` · was due ${x.due}` : ""}\nMark done: https://rothmediaco.com/portal/admin/projects/${x.project_id}`;
+  if (!open.length && !bal.due.length && !bal.unclear.length && !reviews.length && !gbpNudge.length && !owed.length && !notes.length && !afterCount && !pfu.length) return NextResponse.json({ ok: true, open: 0, balances: 0, sent: false });
 
   const line = (l) => `${l.overdue ? "OVERDUE · " : ""}${l.name}${l.summary ? ` (${l.summary})` : ""}\n→ ${l.next.text}`;
   const after = (await afterDeliveryList(db).catch(() => [])).slice(0, 12);
@@ -94,6 +97,7 @@ export async function GET(request) {
     ...(notes.length ? [`CLIENT NOTES WAITING ON YOU (${notes.length}):`, ...noteLines] : []),
     ...(fus.length ? [`FOLLOW-UPS YOU SET (${fus.length}):`, ...fus.map(fuLine)] : []),
     ...(after.length ? [`AFTER DELIVERY (${after.length}) — review asks, friend codes, rebooks. Each one is a text from you:`, ...after.map(afterDeliveryLine)] : []),
+    ...(pfu.length ? [`PROJECT FOLLOW-UPS (${pfu.length}) — a text or call from you, then mark it done:`, ...pfu.map(pfuLine)] : []),
     ...gbpNudge,
     ...(reviews.length ? [`PARTNER REVIEW (${reviews.length}):`, ...reviews] : []),
     ...(bal.due.length ? [`WEDDING BALANCES TO SEND (${bal.due.length}). Text or email each couple their link:`, ...bal.due.map(balanceLine)] : []),

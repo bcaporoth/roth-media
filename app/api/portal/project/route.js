@@ -68,6 +68,13 @@ export async function POST(request) {
       if (error) return bad(error.message, 500);
       return NextResponse.json({ discovery: data.discovery });
     }
+    if (body.action === "deliverable-ack") {
+      const d = await own("deliverables", body.id); if (!d || !d.client_visible || d.status !== "delivered") return bad("Nothing to acknowledge");
+      if (!clip(body.name, 80)) return bad("Type your full name");
+      const { data } = await db.from("deliverables").update({ status: "acknowledged", ack_name: clip(body.name, 80), ack_at: now, ip }).eq("id", d.id).select("id, name, kind, spec, status, link, size_bytes, delivered_at, ack_name, ack_at").single();
+      await db.from("comms").insert({ project_id: project.id, date: now.slice(0, 10), channel: "portal", who, summary: `Received: ${d.name}`, client_visible: true }).then(() => {}, () => {});
+      return NextResponse.json({ deliverable: data });
+    }
     return bad("Unknown action");
   } catch (e) { return bad(e.message, 500); }
 }

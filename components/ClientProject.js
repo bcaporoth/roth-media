@@ -25,6 +25,7 @@ export default function ClientProject({ data, me }) {
   const [cos, setCos] = useState(m?.cos || []);
   const [rnotes, setRnotes] = useState(m?.rnotes || []);
   const [discovery, setDiscovery] = useState(project.discovery || {});
+  const [delivs, setDelivs] = useState(m?.deliverables || []);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const say = (t) => { setFlash(t); setTimeout(() => setFlash(""), 2500); };
@@ -61,6 +62,23 @@ export default function ClientProject({ data, me }) {
             {tasks.map((t) => <li key={t.id} className="todo"><button type="button" className="todo-tick" onClick={() => tick(t)} aria-label="Mark done">☐</button><span><strong>{t.title}</strong>{t.due ? ` — by ${fmtDate(t.due)}` : ""} <em className="gcard-meta">· {TASK_CATEGORY_LABEL[t.category]}</em><br /><em className="gcard-meta">Tap the box when it&apos;s done.</em></span></li>)}
             {due.map((p) => <li key={p.id} className="todo"><span className="todo-tick">$</span><span><strong>{p.label}</strong> — {money(p.amount_cents)}{p.due ? `, due ${fmtDate(p.due)}` : ""}{p.status === "late" ? " · past due" : ""}<br /><em className="gcard-meta">{p.gates}</em></span></li>)}
           </ul>
+        </section>
+      )}
+
+      {delivs.length > 0 && (
+        <section className="cprof-card deliv">
+          <div className="cprof-cardhead"><h2>Your film — delivered</h2><span className="gcard-meta">{project.delivered_at ? fmtDate(project.delivered_at) : ""}</span></div>
+          {project.usage_rights && <div className="upd-read"><p><strong>What you can do with it.</strong> {project.usage_rights}</p></div>}
+          <ul className="cprof-list deliv-list">{delivs.map((d) => <Deliverable key={d.id} d={d} project={project} me={me} onAck={(r) => { setDelivs((l) => l.map((x) => (x.id === r.id ? { ...x, ...r } : x))); say("Thank you — noted"); }} fail={fail} />)}</ul>
+          {project.retention_until && <p className="gcard-meta">Camera originals and project files are kept until {fmtDate(project.retention_until)}. Ask Brandon about the archive drive if you want them for the parish.</p>}
+        </section>
+      )}
+
+      {project.premiere?.date && (
+        <section className="cprof-card">
+          <div className="cprof-cardhead"><h2>Premiere</h2></div>
+          <p><strong>{fmtDate(project.premiere.date)}{project.premiere.time ? ` · ${project.premiere.time}` : ""}</strong>{project.premiere.venue ? ` · ${project.premiere.venue}` : ""}</p>
+          {project.premiere.run && <div className="upd-read">{project.premiere.run.split("\n").map((l, i) => <p key={i} style={{ margin: 0 }}>{l}</p>)}</div>}
         </section>
       )}
 
@@ -108,6 +126,21 @@ export default function ClientProject({ data, me }) {
   );
 }
 
+function Deliverable({ d, project, me, onAck, fail }) {
+  const [name, setName] = useState("");
+  const [open, setOpen] = useState(false);
+  async function ack() { try { const r = await api({ action: "deliverable-ack", projectId: project.id, id: d.id, name }); onAck(r.deliverable); setOpen(false); } catch (e) { fail(e); } }
+  const size = d.size_bytes ? ` · ${(d.size_bytes / 1e9).toFixed(d.size_bytes > 1e10 ? 0 : 2)} GB` : "";
+  return (
+    <li>
+      <span><strong>{d.name}</strong> <span className="gcard-meta">· {d.spec}{size}{d.ack_name ? ` · received by ${d.ack_name}` : ""}</span></span>
+      <span className="gcard-actions">
+        {d.gated ? <span className="itag">released when the final payment clears</span> : d.url ? <a className="achip achip-primary" href={d.url}>Download</a> : d.link ? <a className="achip achip-primary" href={d.link} target="_blank" rel="noreferrer">Open ↗</a> : null}
+        {d.status === "delivered" && !d.gated && (open ? <span className="sign-box"><label>Type your full name to confirm you received it<input value={name} onChange={(e) => setName(e.target.value)} placeholder={me.name || ""} autoFocus /></label><span className="gcard-actions"><button type="button" className="achip achip-primary" disabled={!name.trim()} onClick={ack}>Received</button><button type="button" className="achip" onClick={() => setOpen(false)}>Not now</button></span></span> : <button type="button" className="achip" onClick={() => setOpen(true)}>Confirm receipt</button>)}
+      </span>
+    </li>
+  );
+}
 function Approval({ a, project, me, onDone, fail }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");

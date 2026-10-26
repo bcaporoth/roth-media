@@ -19,6 +19,7 @@ import { ThesisCard, ChronologyCard, SourcesCard, QuestionsCard, EventsCard, Sty
 import { FootageCard, StringoutCard, CutsCard } from "./EditRoom";
 import { DiscoveryCard, ApprovalsCard, ReviewsCard, ChangeOrdersCard, PaymentsCard, CommsCard, UpdateCard, SensitivityCard } from "./ClientMachine";
 import { GatesCard, ClearanceCard, MusicCard, ArchivalCard, LegalRegisterCard } from "./LegalRoom";
+import { PostDashboard, DeliverablesCard, FollowupsCard, PremiereCard, CrewPayCard, VendorsCard, TravelCard, ReportsCard } from "./FinishRoom";
 import { computeGates, buildEOPacket } from "../lib/legal";
 
 async function api(path, payload) {
@@ -67,6 +68,15 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
   const [cues, setCues] = useState(s6?.cues || []);
   const [archival, setArchival] = useState(s6?.archival || []);
   const [legal, setLegal] = useState(s6?.legal || []);
+  const s7 = initial.sprint7;
+  const [deliverables, setDeliverables] = useState(s7?.deliverables || []);
+  const [followups, setFollowups] = useState(s7?.followups || []);
+  const [sheets, setSheets] = useState(s7?.timesheets || []);
+  const [invoices, setInvoices] = useState(s7?.invoices || []);
+  const [vendors, setVendors] = useState(s7?.vendors || []);
+  const [pos, setPos] = useState(s7?.pos || []);
+  const [travel, setTravel] = useState(s7?.travel || []);
+  const [reports, setReports] = useState(s7?.reports || []);
   const [p, setP] = useState(initial.project);
   const [people, setPeople] = useState(initial.people);
   const [days, setDays] = useState(initial.days);
@@ -133,7 +143,7 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
       </section>
 
       <div className="pbook-kinds proj-tabs" role="tablist" aria-label="Project sections">
-        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ["edit", "Edit"], ...(isOwner ? [["client", "Client side"], ["legal", "Legal"]] : [])].map(([k, l]) => (
+        {[["story", "Story"], ["people", "People"], ["days", "Days & crew"], ["production", "Production"], ["edit", "Edit"], ...(isOwner ? [["client", "Client side"], ["legal", "Legal"], ["finish", "Finish"]] : [])].map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{l}</button>
         ))}
         <span className="gcard-meta proj-phase">{PHASE_LABEL[p.phase] || "Development"}{p.code ? ` · ${p.code}` : ""}</span>
@@ -220,6 +230,25 @@ export default function ProjectBoard({ initial, role = "brandon", staffList = nu
             <div className="cprof-col">
               <LegalRegisterCard project={p} rows={legal} setRows={setLegal} locations={locations} scenes={scenes} fail={fail} ready={Boolean(s6)} />
               <MusicCard project={p} rows={cues} setRows={setCues} scenes={scenes} fail={fail} ready={Boolean(s6)} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "finish" && isOwner && (
+        <>
+          <PostDashboard clips={clips} selects={selects} cuts={cuts} clearance={clearance} deliverables={deliverables} gates={gates} payments={payments} ready={Boolean(s7)} />
+          <DeliverablesCard project={p} rows={deliverables} setRows={setDeliverables} onProject={onProject} payments={payments} fail={fail} say={say} ready={Boolean(s7)} />
+          <div className="cprof-cols">
+            <div className="cprof-col">
+              <ReportsCard project={p} days={days} reports={reports} setReports={setReports} rolls={media.rolls || []} scenes={scenes} fail={fail} say={say} ready={Boolean(s7)} />
+              <CrewPayCard project={p} team={initial.team || []} days={days} sheets={sheets} setSheets={setSheets} invoices={invoices} setInvoices={setInvoices} fail={fail} say={say} ready={Boolean(s7)} />
+              <TravelCard project={p} rows={travel} setRows={setTravel} days={days} fail={fail} ready={Boolean(s7)} />
+            </div>
+            <div className="cprof-col">
+              <FollowupsCard project={p} rows={followups} setRows={setFollowups} fail={fail} ready={Boolean(s7)} />
+              <PremiereCard project={p} onProject={onProject} ready={Boolean(s7)} />
+              <VendorsCard project={p} vendors={vendors} setVendors={setVendors} pos={pos} setPos={setPos} lines={lines} fail={fail} ready={Boolean(s7)} />
             </div>
           </div>
         </>
