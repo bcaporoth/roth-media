@@ -7121,3 +7121,10 @@ body:not(:has(.admin-shell, .sprint-page, .bprint)) { font-weight: 400; }
 .deliv-list li { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: center; }
 .deliv-list .sign-box { min-width: 16rem; }
 @media (max-width: 760px) { .deliv-list li { grid-template-columns: 1fr; } }
+
+/* Textareas: grow with content (no drag corner on phones). field-sizing covers
+   Chrome/Android; the .grow JS handles Safari. */
+.admin-shell textarea, .cproj textarea { min-height: 3.4rem; resize: vertical; }
+@supports (field-sizing: content) { .admin-shell textarea, .cproj textarea { field-sizing: content; overflow: hidden; } }
+textarea.grow { overflow: hidden; }
+@media (pointer: coarse) { .admin-shell textarea, .cproj textarea { min-height: 5.5rem; font-size: 16px; } }

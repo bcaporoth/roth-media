@@ -346,11 +346,13 @@ function JournalCard({ project, entries, setEntries, fail, say }) {
 const sortEntries = (a, b) => (b.pinned - a.pinned) || (b.entry_date || "").localeCompare(a.entry_date || "") || (b.created_at || "").localeCompare(a.created_at || "");
 
 // A textarea that saves when you tap away.
+// Textareas grow with their text — phones don't offer the drag corner.
+export const grow = (el) => { if (!el) return; el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; };
 function Editable({ label, value, rows = 2, placeholder, onSave }) {
   const [v, setV] = useState(value || "");
   return (
     <label className="proj-field"><span className="kick-sm">{label}</span>
-      <textarea rows={rows} value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== (value || "") && onSave(v)} placeholder={placeholder} />
+      <textarea className="grow" rows={rows} ref={grow} value={v} onChange={(e) => { setV(e.target.value); grow(e.target); }} onFocus={(e) => grow(e.target)} onBlur={() => v !== (value || "") && onSave(v)} placeholder={placeholder} />
     </label>
   );
 }
