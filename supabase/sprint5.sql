@@ -65,7 +65,7 @@ create table if not exists public.change_orders (
 );
 create index if not exists change_orders_project_idx on public.change_orders(project_id, number);
 
-create table if not exists public.payments (
+create table if not exists public.project_payments (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -79,7 +79,7 @@ create table if not exists public.payments (
   gates text not null default '',
   sort integer not null default 0
 );
-create index if not exists payments_project_idx on public.payments(project_id, sort);
+create index if not exists project_payments_idx on public.project_payments(project_id, sort);
 
 create table if not exists public.comms (
   id uuid primary key default gen_random_uuid(),
@@ -120,7 +120,7 @@ alter table public.approvals enable row level security;
 alter table public.review_versions enable row level security;
 alter table public.review_notes enable row level security;
 alter table public.change_orders enable row level security;
-alter table public.payments enable row level security;
+alter table public.project_payments enable row level security;
 alter table public.comms enable row level security;
 alter table public.updates enable row level security;
 alter table public.sensitivities enable row level security;

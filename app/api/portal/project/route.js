@@ -48,7 +48,7 @@ export async function POST(request) {
       const accept = body.decision === "accept";
       if (accept && !clip(body.name, 80)) return bad("Type your full name to accept");
       const { data } = await db.from("change_orders").update({ status: accept ? "accepted" : "declined", accepted_name: accept ? clip(body.name, 80) : "", accepted_at: accept ? now : null, ip: accept ? ip : "" }).eq("id", co.id).select("*").single();
-      if (accept && co.amount_cents) await db.from("payments").insert({ project_id: project.id, label: `CO-${String(co.number).padStart(3, "0")} ${co.title}`, amount_cents: co.amount_cents, status: "scheduled", gates: "Added by the accepted change order", sort: 900 + co.number }).then(() => {}, () => {});
+      if (accept && co.amount_cents) await db.from("project_payments").insert({ project_id: project.id, label: `CO-${String(co.number).padStart(3, "0")} ${co.title}`, amount_cents: co.amount_cents, status: "scheduled", gates: "Added by the accepted change order", sort: 900 + co.number }).then(() => {}, () => {});
       await db.from("comms").insert({ project_id: project.id, date: now.slice(0, 10), channel: "portal", who, summary: `Change order CO-${String(co.number).padStart(3, "0")} ${accept ? "accepted" : "declined"}: ${co.title}`, client_visible: true }).then(() => {}, () => {});
       return NextResponse.json({ co: data });
     }
