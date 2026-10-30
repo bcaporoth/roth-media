@@ -177,6 +177,9 @@ create table if not exists public.gallery_activity (
 create index if not exists gallery_activity_gallery_idx on public.gallery_activity(gallery_id, created_at desc);
 alter table public.galleries add column if not exists review_requested_at timestamptz;
 alter table public.galleries add column if not exists ready_sent_at timestamptz;
+alter table public.galleries add column if not exists ready_scheduled_at timestamptz; -- "Send it later" (ready-later.sql)
+alter table public.galleries add column if not exists ready_scheduled_note text;
+create index if not exists galleries_ready_scheduled_idx on public.galleries (ready_scheduled_at) where ready_scheduled_at is not null;
 alter table public.submissions enable row level security;
 alter table public.site_events enable row level security;
 alter table public.gallery_activity enable row level security;

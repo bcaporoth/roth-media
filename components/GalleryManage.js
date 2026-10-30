@@ -4,7 +4,8 @@
 // that used to be its own expander (Edit gallery, Set cover, Design, Premiere,
 // Ask for a review) lives here as a tab, plus: add photos (into a chosen
 // album), Photos & albums (see the gallery as the client does, select photos,
-// move them between albums or remove them), delete the gallery.
+// move them between albums or remove them), It's ready (send now), Send it
+// later (same email at a time Brandon picks), delete the gallery.
 
 import { useEffect, useRef, useState } from "react";
 import AdminUploader from "./AdminUploader";
@@ -37,6 +38,7 @@ const TABS = [
   { key: "add", label: "+ Add photos" },
   { key: "photos", label: "Photos & albums" },
   { key: "ready", label: "It's ready ✉" },
+  { key: "later", label: "Send it later 🕓" },
   { key: "delete", label: "Delete", danger: true },
 ];
 
@@ -151,6 +153,131 @@ function GalleryReady({ gallery, onChanged }) {
           )}
         </>
       )}
+      {msg && <p className="cover-picker-hint gfiles-msg" role="status">{msg}</p>}
+    </div>
+  );
+}
+
+// "Send it later": the same email as It's ready, written now, sent at the
+// moment Brandon picks. Stored on the gallery; /api/cron/ready sends it
+// (checks every 5 minutes, so it lands within a few minutes of the time).
+const whenFull = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");
+// <input type="datetime-local"> wants local wall time, "YYYY-MM-DDTHH:MM".
+function toLocalInput(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function defaultLater() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0); // tomorrow, 9:00 AM
+  return toLocalInput(d);
+}
+function GalleryLater({ gallery, onChanged }) {
+  const [data, setData] = useState(null);
+  const [at, setAt] = useState(defaultLater);
+  const [note, setNote] = useState(gallery.readyScheduledNote || "");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [scheduled, setScheduled] = useState(gallery.readyScheduledAt || null);
+  const [scheduledNote, setScheduledNote] = useState(gallery.readyScheduledNote || "");
+
+  useEffect(() => {
+    api({ action: "detail", galleryId: gallery.id })
+      .then(setData)
+      .catch((e) => setMsg(e.message));
+  }, [gallery.id]);
+
+  if (!data) return <p className="cover-picker-hint">{msg || "Loading…"}</p>;
+
+  const seen = new Set();
+  const people = [{ name: data.gallery.ownerName, email: data.gallery.ownerEmail }, ...data.members]
+    .map((p) => ({ name: p.name || "", email: String(p.email || "").trim().toLowerCase() }))
+    .filter((p) => p.email && !isNoEmail(p.email) && !seen.has(p.email) && seen.add(p.email));
+  const first = people[0];
+  const preview = first
+    ? readyEmail({ name: first.name, email: first.email, gallery: { id: gallery.id, title: gallery.title, share_token: gallery.share_token }, hasLogin: true, note })
+    : null;
+  const picked = at ? new Date(at) : null;
+  const tooSoon = !picked || Number.isNaN(picked.getTime()) || picked.getTime() < Date.now() + 60_000;
+
+  async function schedule() {
+    setBusy(true);
+    setMsg("");
+    try {
+      const r = await api({ action: "schedule-ready", galleryId: gallery.id, at: picked.toISOString(), note });
+      setScheduled(r.scheduledAt);
+      setScheduledNote(r.note || "");
+      onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function cancel() {
+    setBusy(true);
+    setMsg("");
+    try {
+      await api({ action: "cancel-ready", galleryId: gallery.id });
+      setScheduled(null);
+      setScheduledNote("");
+      onChanged?.();
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (people.length === 0)
+    return <p className="cover-picker-hint">Nobody on this gallery has an email yet — add one under Edit first.</p>;
+
+  return (
+    <div className="gready glater">
+      {scheduled ? (
+        <div className="glater-set" role="status">
+          <p className="glater-when">
+            <span className="glater-dot" aria-hidden="true" />
+            Going out <strong>{whenFull(scheduled)}</strong> to {people.length === 1 ? (people[0].name || people[0].email) : `${people.length} people`}.
+          </p>
+          {scheduledNote ? <p className="glater-note">“{scheduledNote}”</p> : <p className="cover-picker-hint">No extra line — just “Your album is ready.”</p>}
+          <p className="cover-picker-hint">Sends within about 5 minutes of that time. Set a new time below to replace it, or cancel.</p>
+          <div className="gfiles-bar gready-bar">
+            <button type="button" className="achip" disabled={busy} onClick={cancel}>{busy ? "…" : "Cancel the send"}</button>
+          </div>
+        </div>
+      ) : (
+        <p className="cover-picker-hint">
+          Same email as It&apos;s ready — write it now, pick the moment, and it goes out then. Good for landing in their inbox at 9 AM instead of 1 AM.
+        </p>
+      )}
+      <ul className="gready-to">
+        {people.map((p) => (
+          <li key={p.email}><strong>{p.name || p.email}</strong>{p.name ? <em> · {p.email}</em> : null}</li>
+        ))}
+      </ul>
+      <label className="gready-note glater-at">
+        <span>Send on</span>
+        <input type="datetime-local" value={at} min={toLocalInput(new Date())} onChange={(e) => setAt(e.target.value)} />
+        {picked && !Number.isNaN(picked.getTime()) && <small>{whenFull(picked.toISOString())} — your time</small>}
+      </label>
+      <label className="gready-note">
+        <span>Add a line, in your words (optional)</span>
+        <textarea rows={2} maxLength={600} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Goes right under “Your album is ready.”" />
+      </label>
+      {preview && (
+        <details className="gready-preview">
+          <summary>Preview the email</summary>
+          <p className="gready-subject"><strong>Subject:</strong> {preview.subject}</p>
+          <pre>{preview.text}</pre>
+        </details>
+      )}
+      <div className="gfiles-bar gready-bar">
+        <button type="button" className="abtn" disabled={busy || tooSoon} title={tooSoon ? "Pick a time at least a minute from now" : ""} onClick={schedule}>
+          {busy ? "Saving…" : scheduled ? "Replace with this time" : `Schedule for ${people.length} ${people.length === 1 ? "person" : "people"}`}
+        </button>
+      </div>
       {msg && <p className="cover-picker-hint gfiles-msg" role="status">{msg}</p>}
     </div>
   );
@@ -303,6 +430,7 @@ export default function GalleryManage({ gallery, open, onChanged, askDelete }) {
           />
         )}
         {pane("ready", <GalleryReady gallery={g} onChanged={onChanged} />)}
+        {pane("later", <GalleryLater gallery={g} onChanged={onChanged} />)}
         {pane("delete", <GalleryDelete gallery={g} onDeleted={onChanged} />)}
       </div>
     </div>

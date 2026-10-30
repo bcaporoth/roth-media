@@ -369,6 +369,15 @@ a.trow:hover strong { color: var(--clay); }
 .gready-results .is-failed { color: #b3402e; }
 .admin-shell.is-dark .gready-results .is-failed { color: #ec8a78; }
 
+/* Send it later tab */
+.glater-at input { width: 100%; max-width: 20rem; box-sizing: border-box; padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-size: 0.92rem; min-height: 44px; }
+.glater-at small { color: var(--ink-soft); font-size: 0.78rem; }
+.glater-set { display: grid; gap: 0.45rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 12px; background: var(--bone); }
+.glater-when { margin: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: 0.92rem; }
+.glater-dot { width: 9px; height: 9px; border-radius: 50%; background: #2f8f5b; box-shadow: 0 0 0 3px rgba(47, 143, 91, 0.18); flex: none; }
+.glater-note { margin: 0; font-size: 0.9rem; color: var(--ink); font-style: italic; overflow-wrap: anywhere; }
+.glater-set .achip { min-height: 44px; display: inline-flex; align-items: center; }
+
 /* Delete tab */
 .gdelete { display: grid; gap: 0.8rem; }
 .gdelete-warn { margin: 0; padding: 0.75rem 0.9rem; border: 1px solid #b3402e; border-radius: 12px; font-size: 0.86rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }

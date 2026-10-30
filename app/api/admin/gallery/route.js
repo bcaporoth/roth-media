@@ -17,10 +17,8 @@ import { R2_BUCKET, r2Configured, photoKey, signedUrl, getDims, putDims } from "
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
-import { setOwner, sendAccessInvite, cleanEmail, EMAIL_RE } from "../../../../lib/album-access";
-import { canSignIn } from "../../../../lib/auth-users";
-import { readyEmail } from "../../../../lib/ready-email";
-import { isNoEmail } from "../../../../lib/no-email";
+import { setOwner, sendAccessInvite } from "../../../../lib/album-access";
+import { sendReady, readyRecipients } from "../../../../lib/ready-send";
 import {
   isUuid,
   galleryPrefix,
@@ -150,48 +148,42 @@ export async function POST(request) {
   // button lands on the gallery — through sign-in if they have a login,
   // through one-time-code setup if they don't. Records ready_sent_at
   // (supabase/ready.sql); without that column the send still goes out.
+  // The sending itself lives in lib/ready-send.js, shared with the cron.
   if (body.action === "send-ready") {
     const { galleryId } = body;
-    const note = String(body.note || "").trim().slice(0, 600);
     if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const r = await sendReady(db, galleryId, body.note);
+    if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status || 500 });
+    return NextResponse.json(r);
+  }
+
+  // "Send it later": pick the moment, write the line now, the cron sends it
+  // then (supabase/ready-later.sql). Setting it again replaces the old one.
+  if (body.action === "schedule-ready") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const at = new Date(String(body.at || ""));
+    if (Number.isNaN(at.getTime())) return NextResponse.json({ error: "Pick a date and time" }, { status: 422 });
+    if (at.getTime() < Date.now() + 60_000) return NextResponse.json({ error: "That time has already passed — pick one at least a minute out, or use It's ready to send now." }, { status: 422 });
+    if (at.getTime() > Date.now() + 366 * 86400000) return NextResponse.json({ error: "That's more than a year out" }, { status: 422 });
     if (!resendConfigured) return NextResponse.json({ error: "Email isn't set up on this server (RESEND_API_KEY)." }, { status: 500 });
-    const { data: g } = await db.from("galleries").select("id, title, share_token, client_id, clients!client_id(name, email)").eq("id", galleryId).maybeSingle();
-    if (!g) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
-    const people = [{ name: g.clients?.name || "", email: cleanEmail(g.clients?.email) }];
-    try {
-      const { data } = await db.from("gallery_members").select("client_id, clients(name, email)").eq("gallery_id", galleryId);
-      for (const m of data || []) people.push({ name: m.clients?.name || "", email: cleanEmail(m.clients?.email) });
-    } catch {}
-    const seen = new Set();
-    const recipients = people.filter((p) => EMAIL_RE.test(p.email) && !isNoEmail(p.email) && p.email !== ADMIN_EMAIL && !seen.has(p.email) && seen.add(p.email));
+    const { recipients } = await readyRecipients(db, galleryId);
     if (!recipients.length) return NextResponse.json({ error: "Nobody on this gallery has an email yet — add one under Edit first." }, { status: 422 });
-    // Who can already sign in with a password (Supabase auth pages; a roster this size fits in a page or two).
-    // A login with no password (setup asked for, never finished) still gets the setup link.
-    const logins = new Set();
-    for (let page = 1; page <= 20; page++) {
-      const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
-      for (const u of data?.users || []) if (canSignIn(u)) logins.add((u.email || "").toLowerCase());
-      if ((data?.users || []).length < 200) break;
+    const note = String(body.note || "").trim().slice(0, 600);
+    const { error } = await db.from("galleries").update({ ready_scheduled_at: at.toISOString(), ready_scheduled_note: note || null }).eq("id", galleryId);
+    if (error) {
+      if (/ready_scheduled/.test(error.message)) return NextResponse.json({ error: "Run supabase/ready-later.sql once in the Supabase SQL editor, then this works.", needsSql: true }, { status: 409 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    const results = [];
-    for (const p of recipients) {
-      const hasLogin = logins.has(p.email);
-      const mail = readyEmail({ name: p.name, email: p.email, gallery: g, hasLogin, note });
-      try {
-        // Brandon gets a copy of every one, so his inbox shows what each client saw.
-        await sendEmail({ to: p.email, cc: [ADMIN_EMAIL], subject: mail.subject, text: mail.text, html: mail.html });
-        results.push({ to: p.email, name: p.name, hasLogin, sent: true });
-      } catch (err) {
-        results.push({ to: p.email, name: p.name, hasLogin, sent: false, error: err.message });
-      }
-    }
-    const sentAt = new Date().toISOString();
-    let recorded = false;
-    if (results.some((r) => r.sent)) {
-      const { error } = await db.from("galleries").update({ ready_sent_at: sentAt }).eq("id", galleryId);
-      recorded = !error;
-    }
-    return NextResponse.json({ ok: true, sentAt, recorded, results });
+    return NextResponse.json({ ok: true, scheduledAt: at.toISOString(), note, recipients: recipients.length });
+  }
+
+  if (body.action === "cancel-ready") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { error } = await db.from("galleries").update({ ready_scheduled_at: null, ready_scheduled_note: null }).eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
   }
 
   // Edit title / date / owner. A new owner email is added to the roster.

@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/tomorrow",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/ready",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
