@@ -413,6 +413,18 @@ a.trow:hover strong { color: var(--clay); }
 .admin-upload .au-foldermode { display: flex; text-transform: none; letter-spacing: 0; align-items: flex-start; gap: 0.6rem; color: var(--ink-soft); font-size: 0.84rem; font-weight: 400; }
 .admin-upload .au-foldermode input { width: auto; flex: none; min-height: 0; margin: 0.2rem 0 0; }
 .admin-upload .au-foldermode span { flex: 1; min-width: 0; }
+/* Photo picker as buttons (phones: a thumb-sized target + camera; the native
+   "Choose Files" control is invisible underneath) */
+.admin-upload .au-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.admin-upload .au-pick input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); pointer-events: none; }
+.admin-upload label.au-pickbtn { min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; text-transform: none; letter-spacing: 0; font-size: 0.92rem; font-weight: 600; margin: 0; }
+.admin-upload label.au-pickbtn.abtn { color: var(--bone); }
+.admin-upload .au-pick input[type="file"] { width: 1px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; margin: 0 !important; }
+.admin-upload .au-pick input[type="file"]:focus-visible + .au-pickbtn, .admin-upload .au-pick .au-pickbtn:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.admin-upload .au-picked { color: var(--ink-soft); font-size: 0.84rem; text-transform: none; letter-spacing: 0; font-weight: 400; }
+@media (max-width: 480px) {
+  .admin-upload .au-pick .au-pickbtn.abtn { flex: 1 1 100%; justify-content: center; }
+}
 .guest-admin-form label { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .guest-admin-slug { min-width: 0; flex-wrap: wrap; }
 .guest-admin-slug input { flex: 1 1 8rem; }
