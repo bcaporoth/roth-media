@@ -26,7 +26,10 @@ import { allocateName, jpgName, safeName, stemKey } from "../lib/upload-names";
 //    key the viewers already read (fails soft when the codec won't decode).
 //  - Pass `gallery` to add files to an existing gallery instead of creating one.
 
-const PHOTO_EXT = /\.(jpe?g|png|webp)$/i;
+const PHOTO_EXT = /\.(jpe?g|png|webp|heic|heif)$/i;
+// iPhone/Android originals. Safari decodes them (and iOS converts to JPEG on
+// its own when picked from Photos); Chrome can't read them — fails soft.
+const HEIC_EXT = /\.(heic|heif)$/i;
 const VIDEO_EXT = /\.(mp4|mov|m4v|webm)$/i;
 const CONCURRENCY = 4;
 const MAX_ATTEMPTS = 4;
@@ -366,6 +369,19 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
   const [folderMode, setFolderMode] = useState(false);
+  // Phone: a touch screen. No folder picking there, a camera button instead,
+  // fewer photos in flight at once (memory), and a "keep this open" hint.
+  const [phone, setPhone] = useState(false);
+  const [picked, setPicked] = useState(null); // {count, bytes} of what's chosen
+  useEffect(() => {
+    try {
+      setPhone(window.matchMedia("(pointer: coarse)").matches);
+    } catch {}
+  }, []);
+  const countPicked = (form) => {
+    const fs = [...new FormData(form).getAll("files")].filter((f) => f && f.size > 0);
+    setPicked(fs.length ? { count: fs.length, bytes: fs.reduce((a, f) => a + f.size, 0) } : null);
+  };
   // Where the files go. Picked from the gallery's existing albums, a new
   // name, or none (top of the gallery). Folder mode ignores this: there the
   // subfolders decide.
@@ -639,7 +655,18 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           };
         }
 
-        const size = await imageSize(file);
+        const isHeic = HEIC_EXT.test(file.name);
+        let size;
+        try {
+          size = await imageSize(file);
+        } catch (err) {
+          if (isHeic) throw new Error("HEIC — this browser can't read it. On iPhone pick it from Photos (not Files) and it converts itself; otherwise convert to JPEG first.");
+          throw err;
+        }
+        // HEIC: nothing outside Apple can show it, so the stored original is a
+        // full-size JPEG and the name says .jpg — clients download what opens.
+        const origName = isHeic ? jpgName(name) : name;
+        const origBlob = isHeic ? await shrink(file, size, Math.max(size.width, size.height), 0.92) : file;
         const [web, thumb] = [
           await shrink(file, size, 2200, 0.82),
           await shrink(file, size, 900, 0.78),
@@ -648,20 +675,20 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           action: "sign",
           galleryId,
           files: [
-            { size: "orig", filename: name, contentType: file.type || "image/jpeg" },
+            { size: "orig", filename: origName, contentType: isHeic ? "image/jpeg" : file.type || "image/jpeg" },
             { size: "web", filename: jpgName(name), contentType: "image/jpeg" },
             { size: "thumb", filename: jpgName(name), contentType: "image/jpeg" },
           ],
         });
         const bySize = Object.fromEntries(signed.urls.map((u) => [u.size, u]));
         await Promise.all([
-          putWithRetry(bySize.orig.url, file, retry),
+          putWithRetry(bySize.orig.url, origBlob, retry),
           putWithRetry(bySize.web.url, web, retry),
           putWithRetry(bySize.thumb.url, thumb, retry),
         ]);
         return {
           p: relPath(file),
-          f: bySize.orig.filename || name,
+          f: bySize.orig.filename || origName,
           k: "photo",
           s: albumFor(file),
           w: size.width,
@@ -691,7 +718,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
 
       if (files.length > 0) {
         setStage("Uploading");
-        await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+        await Promise.all(Array.from({ length: phone ? 2 : CONCURRENCY }, worker));
       }
 
       // The gallery in path order. Files from an earlier attempt are already in
@@ -879,26 +906,57 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
         <label htmlFor={filesId}>
           {folderMode ? (append ? "Folder *" : "Gallery folder *") : "Photos & videos *"}
         </label>
-        <input
-          id={filesId}
-          name="files"
-          type="file"
-          multiple
-          accept={folderMode ? undefined : "image/*,video/mp4,video/quicktime,video/webm"}
-          {...(folderMode ? { webkitdirectory: "", directory: "" } : {})}
-        />
-        <label className="au-foldermode">
+        {/* The real inputs are invisible; the buttons are their labels, so a
+            thumb has something 44px tall to hit. Both inputs are name="files"
+            and the form reads them together. */}
+        <div className="au-pick">
+          <label className={"abtn au-pickbtn" + (folderMode ? " is-folder" : "")} htmlFor={filesId}>
+            {folderMode ? "Choose a folder" : phone ? "Pick from your photos" : "Choose photos & videos"}
+          </label>
           <input
-            type="checkbox"
-            checked={folderMode}
-            onChange={(e) => setFolderMode(e.target.checked)}
+            id={filesId}
+            name="files"
+            type="file"
+            multiple
+            accept={folderMode ? undefined : "image/*,video/mp4,video/quicktime,video/webm"}
+            {...(folderMode ? { webkitdirectory: "", directory: "" } : {})}
+            onChange={(e) => countPicked(e.target.form)}
           />
-          <span>
-            Upload a whole folder — each subfolder becomes an <strong>album</strong>
-            (&ldquo;01 Getting Ready&rdquo;, &ldquo;02 Ceremony&rdquo;… numbers set the
-            order and are hidden from clients).
+          {phone && !folderMode && (
+            <>
+              <label className="achip au-pickbtn" htmlFor={`${filesId}-cam`}>Use the camera</label>
+              <input
+                id={`${filesId}-cam`}
+                name="files"
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                onChange={(e) => countPicked(e.target.form)}
+              />
+            </>
+          )}
+          <span className="au-picked" aria-live="polite">
+            {picked ? `${picked.count} file${picked.count === 1 ? "" : "s"} · ${fmtBytes(picked.bytes)}` : "Nothing picked yet"}
           </span>
-        </label>
+        </div>
+        {phone ? (
+          <p className="au-client-hint">
+            Keep this screen open until it finishes — switching apps pauses the upload. If it dies, come back, pick the same photos again, and it carries on where it stopped.
+          </p>
+        ) : (
+          <label className="au-foldermode">
+            <input
+              type="checkbox"
+              checked={folderMode}
+              onChange={(e) => setFolderMode(e.target.checked)}
+            />
+            <span>
+              Upload a whole folder — each subfolder becomes an <strong>album</strong>
+              (&ldquo;01 Getting Ready&rdquo;, &ldquo;02 Ceremony&rdquo;… numbers set the
+              order and are hidden from clients).
+            </span>
+          </label>
+        )}
       </div>
 
       <div className="au-album">
