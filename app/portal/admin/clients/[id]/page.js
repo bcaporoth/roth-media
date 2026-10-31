@@ -3,6 +3,7 @@ import PortalNav from "../../../../../components/PortalNav";
 import StudioShell from "../../../../../components/StudioShell";
 import StudioFooter from "../../../../../components/StudioFooter";
 import ClientProfile from "../../../../../components/ClientProfile";
+import ClientCalendar from "../../../../../components/ClientCalendar";
 import { requireAdminPage } from "../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
 import { ensureReferralCode, listReferrals } from "../../../../../lib/referrals";
@@ -100,6 +101,11 @@ export default async function ClientPage({ params }) {
       <PortalNav email={user.email} isAdmin active="admin" />
       <StudioShell active="clients" newCount={newCount} kick="Studio · Clients" title={client.name || client.email}>
         <ClientProfile initial={data} emailReady={resendConfigured} />
+        <section className="psection" id="calendar">
+          <h2>Their calendar</h2>
+          <p className="inbox-hint">What they put on /portal/calendar (sales, launches, events) plus anything you add. Pick a day → <b>Follow up on this</b> opens Google Calendar prefilled; one tap saves it to your phone. Needs <code>supabase/client-events.sql</code> run once.</p>
+          <ClientCalendar mode="studio" clientId={client.id} clientName={client.name || client.email} clientPhone={client.phone || ""} />
+        </section>
       </StudioShell>
       <StudioFooter />
     </>

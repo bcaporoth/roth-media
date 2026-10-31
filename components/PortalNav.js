@@ -51,6 +51,13 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
             </Link>
           </li>
         )}
+        {!isAdmin && !isStaff && (
+          <li className="pnav-tab">
+            <Link className={cls("calendar")} href="/portal/calendar" title="What's coming up at your business — I plan content around it" aria-current={active === "calendar" ? "page" : undefined}>
+              Your calendar
+            </Link>
+          </li>
+        )}
         {isAdmin && (
           <li className="pnav-tab">
             <Link className={cls("admin")} href="/portal/admin/inbox">

@@ -7154,3 +7154,27 @@ textarea.grow { overflow: hidden; }
 .agsend-text code { font-size: 0.8em; }
 .agsend-text textarea { width: 100%; font: 0.9rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); resize: vertical; }
 .agsend-made { padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); display: grid; gap: 0.6rem; }
+
+/* ── Client calendar (components/ClientCalendar.js) — portal + Studio ── */
+.ccal { display: grid; gap: 1rem; }
+.ccal-grid .scal-cell { cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.ccal-cell.is-picked { background: rgba(196, 120, 74, 0.12); border-color: var(--clay); box-shadow: inset 0 0 0 1px var(--clay); }
+.ccal-grid .scal-ev.is-followed { outline: 2px solid #4a7c59; outline-offset: -2px; }
+.ccal-day { border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; background: var(--paper); display: grid; gap: 0.8rem; }
+.ccal-day h4, .ccal-upcoming h4 { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-size: 1.1rem; }
+.ccal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.ccal-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem; align-items: center; padding: 0.6rem 0; border-top: 1px solid var(--line); }
+.ccal-list li:first-child { border-top: 0; padding-top: 0; }
+.ccal-list strong { font-size: 1rem; } .ccal-time { color: var(--ink-soft); }
+.ccal-list em { display: block; font-style: normal; font-size: 0.88rem; color: var(--ink-soft); margin-top: 0.15rem; }
+.ccal-list small { display: block; font-size: 0.74rem; color: var(--ink-soft); margin-top: 0.2rem; }
+.ccal-acts { display: flex; gap: 0.5rem; align-items: center; }
+.ccal-add { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: end; border-top: 1px dashed var(--line); padding-top: 0.8rem; }
+.ccal-add label { display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--ink-soft); min-width: 0; }
+.ccal-add label.wide { grid-column: 1 / -1; }
+.ccal-add label small { font-weight: 400; }
+.ccal-add input { font: inherit; padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); min-width: 0; width: 100%; }
+.ccal-add .abtn { grid-column: 1 / -1; justify-self: start; }
+.ccal-add .cform-error { grid-column: 1 / -1; }
+.pt-ccal-wrap { max-width: 900px; }
+@media (max-width: 640px) { .ccal-add { grid-template-columns: 1fr; } .ccal-list li { flex-direction: column; align-items: flex-start; } }
