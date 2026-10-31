@@ -181,6 +181,7 @@ export default function ClientProfile({ initial, emailReady }) {
             {d.intakes.map((it, i) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} brief · ${fmt(it.updated_at || it.created_at)}${i > 0 ? " (older)" : ""}`} closed={i > 0} />)}
           </section>
 
+          <InspoCard client={c} save={saveClient} />
           <BrandCard client={c} initial={d.brand} emailReady={emailReady} say={say} fail={fail} copy={copy} />
           <PlanCard client={c} brand={d.brand} />
         </div>
@@ -458,6 +459,58 @@ function PlanCard({ client: c, brand }) {
           ? "Month by month: the lineup, its status, the price and the pay link — on their portal. Or a one-off plan."
           : <><strong>{p.items} item{p.items === 1 ? "" : "s"}</strong>{p.published ? ` · on their portal since ${fmt(p.published_at)}` : " · draft, not on their portal yet"}</>}
       </p>
+    </section>
+  );
+}
+
+// Inspo: reference links (reels, videos, sites) and a scratch note for this
+// client. Private — nothing here reaches their portal. Saved on the client
+// row as jsonb so it travels with the profile.
+function InspoCard({ client: c, save }) {
+  const init = c.inspo && typeof c.inspo === "object" ? c.inspo : {};
+  const [links, setLinks] = useState(Array.isArray(init.links) ? init.links : []);
+  const [notes, setNotes] = useState(init.notes || "");
+  const [draft, setDraft] = useState({ url: "", note: "" });
+  const [dirty, setDirty] = useState(false);
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
+  const persist = async (next) => { await save({ inspo: next }); setDirty(false); };
+  const addLink = async (e) => {
+    e.preventDefault();
+    const url = draft.url.trim();
+    if (!url && !draft.note.trim()) return;
+    const l = { url, label: url ? host(url) : "", note: draft.note.trim() };
+    const next = { links: [l, ...links], notes };
+    setLinks(next.links); setDraft({ url: "", note: "" });
+    await persist(next);
+  };
+  const removeLink = async (i) => {
+    const next = { links: links.filter((_, j) => j !== i), notes };
+    setLinks(next.links);
+    await persist(next);
+  };
+  return (
+    <section className="cprof-card" id="inspo">
+      <div className="cprof-cardhead"><h2>Inspo{links.length > 0 && <em className="cprof-count">{links.length}</em>}</h2><span className="gcard-meta">Only you see this · reels, videos, sites, ideas</span></div>
+      <form onSubmit={addLink} className="cprof-inspo-add">
+        <input type="url" inputMode="url" placeholder="Paste a link (reel, YouTube, site)…" value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} />
+        <input type="text" placeholder="Why it's good / what to steal" value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
+        <button type="submit" className="abtn" disabled={!draft.url.trim() && !draft.note.trim()}>Add</button>
+      </form>
+      {links.length > 0 && (
+        <ul className="cprof-inspo-list">
+          {links.map((l, i) => (
+            <li key={`${l.url}-${i}`}>
+              {l.url ? <a href={l.url} target="_blank" rel="noopener noreferrer">{l.label || host(l.url)}</a> : <span>Note</span>}
+              {l.note && <span className="gcard-meta"> — {l.note}</span>}
+              <button type="button" className="achip" aria-label="Remove" onClick={() => removeLink(i)}>×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <label className="client-notes">Ideas &amp; notes
+        <textarea rows={3} value={notes} placeholder="Shot ideas, angles, hooks, things they said they liked…" onChange={(e) => { setNotes(e.target.value); setDirty(true); }} />
+      </label>
+      {dirty && <div><button type="button" className="abtn" onClick={() => persist({ links, notes })}>Save notes</button></div>}
     </section>
   );
 }

@@ -27,7 +27,8 @@ export default async function ClientPage({ params }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const db = supabaseAdmin();
-  let { data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at, referral_code").eq("id", id).maybeSingle();
+  let { data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at, referral_code, inspo").eq("id", id).maybeSingle();
+  if (error) ({ data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at, referral_code").eq("id", id).maybeSingle());
   if (error) ({ data: client, error } = await db.from("clients").select("id, email, name, phone, notes, created_at").eq("id", id).maybeSingle());
   if (error) ({ data: client } = await db.from("clients").select("id, email, name, created_at").eq("id", id).maybeSingle());
   if (!client) notFound();

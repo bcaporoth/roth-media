@@ -110,6 +110,15 @@ export async function POST(request) {
     if (body.name !== undefined) patch.name = String(body.name).trim().slice(0, 80);
     if (body.phone !== undefined) patch.phone = String(body.phone).trim().slice(0, 40);
     if (body.notes !== undefined) patch.notes = String(body.notes).slice(0, 4000);
+    if (body.inspo !== undefined) {
+      const raw = body.inspo && typeof body.inspo === "object" ? body.inspo : {};
+      const links = (Array.isArray(raw.links) ? raw.links : []).slice(0, 60).map((l) => ({
+        url: String(l?.url || "").trim().slice(0, 500),
+        label: String(l?.label || "").trim().slice(0, 120),
+        note: String(l?.note || "").trim().slice(0, 600),
+      })).filter((l) => l.url || l.note);
+      patch.inspo = { links, notes: String(raw.notes || "").slice(0, 8000) };
+    }
     if (body.email !== undefined) {
       const email = cleanEmail(body.email);
       if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
