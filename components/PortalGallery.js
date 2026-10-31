@@ -389,7 +389,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
             g.entries.find(([it]) => it.thumbUrl)?.[0] ||
             null;
           const cover = coverItem
-            ? coverItem.kind === "video" ? videoPoster || coverItem.thumbUrl : coverItem.thumbUrl
+            ? coverItem.kind === "video" ? coverItem.thumbUrl || videoPoster : coverItem.thumbUrl
             : null;
           const meta = [
             photos ? `${photos} photo${photos === 1 ? "" : "s"}` : "",
@@ -429,7 +429,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
 
   const tile = (item, i) => {
     const tileSrc =
-      item.kind === "video" ? videoPoster || item.thumbUrl : item.thumbUrl;
+      item.kind === "video" ? item.thumbUrl || videoPoster : item.thumbUrl;
     const selectable = selectMode && item.kind !== "video";
     const isSel = selectable && selected.has(item.filename);
     return (
@@ -634,7 +634,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
             <video
               className="pgal-lightbox-video"
               src={current.webUrl}
-              poster={videoPoster || current.thumbUrl || undefined}
+              poster={current.thumbUrl || videoPoster || undefined}
               controls
               autoPlay
               playsInline

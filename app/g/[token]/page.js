@@ -141,7 +141,8 @@ export default async function SharedGalleryPage({ params }) {
 
   const guestLink = await guestLinkForGallery(db, gallery.id);
 
-  // Film-only galleries: the chosen cover doubles as the film's poster,
+  // Film-only galleries: the chosen cover is the FALLBACK poster for a film
+  // that has no frame of its own (PortalGallery prefers each film's own frame),
   // so "Set cover" updates the tile below the hero too.
   const allVideos = items.length > 0 && items.every((i) => i.kind === "video");
   const videoPoster =
