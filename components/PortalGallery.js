@@ -38,26 +38,53 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   }, []);
 
   // Fetch the original and open the OS share sheet — on iOS/Android that
-  // includes "Save Image", which drops it straight into the photo library
-  // (a plain download link can only reach the Files app). Any failure
-  // (CORS not set up yet, share refused, slow network killed the gesture)
-  // falls back to the normal download.
+  // includes "Save Image" / "Save Video", which drops it straight into the
+  // photo library (a plain download link can only reach the Files app).
+  // Photos AND videos go through here. Large files can outlive the tap's
+  // user-activation window (Safari then throws NotAllowedError), so the
+  // fetched file is held and the button becomes a one-tap "Save" — the
+  // second tap shares instantly. Only a real failure (CORS not set up,
+  // file type the sheet refuses) falls back to the normal download.
+  const [heldItem, setHeldItem] = useState(null); // filename awaiting one more tap
+  const heldRef = useRef(null); // { filename, file }
+
   const saveItem = async (e, item) => {
-    if (!touchShare || item.kind === "video" || saving) return;
+    if (!touchShare || saving) return;
     e.preventDefault();
+
+    const held = heldRef.current;
+    if (held && held.filename === item.filename) {
+      heldRef.current = null;
+      setHeldItem(null);
+      try {
+        await navigator.share({ files: [held.file] });
+      } catch {
+        /* sheet closed — nothing to undo */
+      }
+      return;
+    }
+    heldRef.current = null;
+    setHeldItem(null);
+
     setSaving(item.filename);
+    let file = null;
     try {
       const res = await fetch(item.downloadUrl);
       if (!res.ok) throw new Error(`fetch ${res.status}`);
       const blob = await res.blob();
-      const file = new File([blob], item.filename, {
-        type: blob.type || "image/jpeg",
-      });
+      const fallbackType = item.kind === "video" ? "video/mp4" : "image/jpeg";
+      file = new File([blob], item.filename, { type: blob.type || fallbackType });
       if (!navigator.canShare({ files: [file] })) throw new Error("no file share");
       await navigator.share({ files: [file] });
     } catch (err) {
       // AbortError = the client closed the share sheet — not a failure.
-      if (err?.name !== "AbortError") window.location.href = item.downloadUrl;
+      if (err?.name === "AbortError") return;
+      if (err?.name === "NotAllowedError" && file) {
+        heldRef.current = { filename: item.filename, file };
+        setHeldItem(item.filename);
+        return;
+      }
+      window.location.href = item.downloadUrl;
     } finally {
       setSaving(null);
     }
@@ -437,9 +464,9 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
             onClick={(e) => saveItem(e, item)}
             aria-label={`Save ${item.kind} ${i + 1}`}
             aria-busy={saving === item.filename}
-            title={`Save this ${item.kind}`}
+            title={heldItem === item.filename ? "Tap again to save" : `Save this ${item.kind}`}
           >
-            {saving === item.filename ? "…" : "↓"}
+            {saving === item.filename ? "…" : heldItem === item.filename ? "Tap to save" : "↓"}
           </a>
         )}
       </div>
@@ -594,9 +621,11 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           >
             {saving === current.filename
               ? "Saving…"
-              : touchShare && current.kind !== "video"
-                ? "Save photo ↓"
-                : "Download ↓"}
+              : heldItem === current.filename
+                ? "Tap to save ↓"
+                : touchShare
+                  ? `Save ${current.kind} ↓`
+                  : "Download ↓"}
           </a>
           <button
             className="arrow next"
