@@ -670,3 +670,42 @@
 .rm-cinema .cin-google-list cite { font-style: normal; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.72; }
 .rm-cinema .cin-google-link { margin: 0; }
 .rm-cinema .cin-google-link a { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 0.15rem; }
+
+/* ── Homepage lead form (components/home/HomeLead.js) ── */
+.rm-cinema .cin-hero-grid { display: grid; gap: 0.4rem; }
+.rm-cinema .cin-honey { position: absolute; left: -9999px; opacity: 0; }
+.rm-cinema .cin-lead {
+  margin: 0 var(--gut) 1.4rem; padding: 1.2rem 1.1rem 1.3rem; display: grid; gap: 0.85rem;
+  border: 1px solid rgba(220, 189, 122, 0.45); border-radius: 2px; background: rgba(20, 18, 16, 0.92); backdrop-filter: blur(10px);
+}
+.rm-cinema .cin-lead-kick { font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.rm-cinema .cin-lead h2 { font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1.1; }
+.rm-cinema .cin-lead-sub { font-size: 0.9rem; line-height: 1.5; color: var(--dim); margin-top: -0.3rem; }
+.rm-cinema .cin-lead fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.rm-cinema .cin-lead legend, .rm-cinema .cin-lead-field > span { display: block; margin-bottom: 0.4rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--dim); }
+.rm-cinema .cin-lead-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.rm-cinema .cin-lead-pill {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 0.8rem; border: 1px solid rgba(246, 241, 232, 0.4); border-radius: 2px; background: transparent; color: var(--fg); cursor: pointer;
+  font-family: var(--font-display), sans-serif; font-weight: 600; font-size: 0.92rem; transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.rm-cinema .cin-lead-pill.is-on, .rm-cinema .cin-lead-pill:hover { background: var(--fg); color: #14110e; border-color: var(--fg); }
+.rm-cinema .cin-lead-field { display: block; min-width: 0; }
+.rm-cinema .cin-lead input, .rm-cinema .cin-lead textarea {
+  width: 100%; min-height: 48px; padding: 0.7rem 0.8rem; background: var(--bg); color: var(--fg); color-scheme: dark;
+  border: 1px solid rgba(246, 241, 232, 0.4); border-radius: 2px; font: 500 1rem var(--font-body), sans-serif; line-height: 1.4; resize: vertical;
+}
+.rm-cinema .cin-lead input:focus-visible, .rm-cinema .cin-lead textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-color: var(--gold); }
+.rm-cinema .cin-lead textarea::placeholder, .rm-cinema .cin-lead input::placeholder { color: rgba(246, 241, 232, 0.4); }
+.rm-cinema .cin-lead-grid { display: grid; gap: 0.75rem; }
+.rm-cinema .cin-lead-go { width: 100%; }
+.rm-cinema .cin-lead-fine { font-size: 0.78rem; color: var(--dim); text-align: center; margin-top: -0.3rem; }
+.rm-cinema .cin-lead-err { font-size: 0.9rem; color: #f0a8a0; }
+.rm-cinema .cin-lead--done h2 { font-size: 1.7rem; }
+.rm-cinema .cin-lead-next { width: 100%; white-space: normal; text-align: center; }
+@media (min-width: 800px) {
+  .rm-cinema .cin-hero-grid { grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 30rem); align-items: end; column-gap: 2.5rem; padding-right: var(--gut); }
+  .rm-cinema .cin-lead { margin: 0 0 2rem; padding: 1.6rem 1.5rem 1.7rem; }
+  .rm-cinema .cin-lead h2 { font-size: 1.8rem; }
+  .rm-cinema .cin-lead-grid { grid-template-columns: 1fr 1fr; }
+  .rm-cinema .cin-lead-pref { grid-column: 1 / -1; }
+}

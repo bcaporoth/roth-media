@@ -15,6 +15,9 @@ export const metadata = {
 export default async function IntakePage({ searchParams }) {
   const sp = await searchParams;
   const tel = PHONE.replace(/\D/g, "");
+  // From the homepage form: carry what they already told me into "Anything else".
+  const carried = [sp?.struggle ? `Struggling with: ${String(sp.struggle).slice(0, 400)}` : "", sp?.goal ? `A win looks like: ${String(sp.goal).slice(0, 400)}` : ""].filter(Boolean).join("\n");
+  const initial = carried ? { "Anything else": carried } : {};
   return (
     <>
       <SiteNav cta={{ href: `sms:+1${tel}`, label: `Text ${PHONE}` }} />
@@ -28,7 +31,7 @@ export default async function IntakePage({ searchParams }) {
         </header>
         <section className="cx-section cx-section--tight">
           <div className="cx-wrap cx-wrap--narrow">
-            <IntakeForm email={String(sp?.email || "")} name={String(sp?.name || "")} type={String(sp?.type || "")} />
+            <IntakeForm email={String(sp?.email || "")} name={String(sp?.name || "")} phone={String(sp?.phone || "")} type={String(sp?.type || "")} initial={initial} />
           </div>
         </section>
       </main>

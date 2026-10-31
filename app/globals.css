@@ -7142,3 +7142,12 @@ textarea.grow { overflow: hidden; }
 .cprof-inspo-list li a { font-weight: 600; word-break: break-all; }
 .cprof-inspo-list li .achip { margin-left: auto; min-height: 32px; }
 @media (max-width: 640px) { .cprof-inspo-add { grid-template-columns: 1fr; } }
+
+/* ── Studio → Payments → Send an agreement (components/AgreementSender.js) ── */
+.agsend { display: grid; gap: 0.9rem; }
+.agsend-form { display: grid; gap: 0.7rem; }
+.agsend-kinds { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.agsend-kinds .achip { font-size: 0.92rem; padding: 0.5rem 0.9rem; }
+.agsend-kinds .achip.is-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.agsend-check { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.9rem; color: var(--ink); }
+.agsend-made { padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); display: grid; gap: 0.6rem; }

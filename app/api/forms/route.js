@@ -9,7 +9,7 @@ import { TYPE_LABEL } from "../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
-const KINDS = new Set(["quote", "promo", "card", "contact", "intake"]);
+const KINDS = new Set(["quote", "promo", "card", "contact", "intake", "home"]);
 
 // Every site form posts here: the submission is saved to the Studio inbox
 // and Brandon gets an instant alert. The response says whether the alert

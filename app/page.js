@@ -6,6 +6,7 @@ import "./home.css";
 import BrandMark from "../components/BrandMark";
 import CinemaMotion from "../components/home/CinemaMotion";
 import Player from "../components/home/Player";
+import HomeLead from "../components/home/HomeLead";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME, GOOGLE_PAGE_URL } from "../lib/site";
 import { REVIEWS, GOOGLE_RATING } from "../lib/reviews";
 import { PACKAGES, ADDONS, TRAVEL, listedAddons, money } from "../lib/packages";
@@ -226,6 +227,7 @@ export default function CinemaHome() {
           </div>
           <div className="cin-hero-shade" aria-hidden="true" />
 
+          <div className="cin-hero-grid">
           <div className="cin-hero-title">
             <p className="cin-kick">Wedding films · Photography · Business content</p>
             <h1>
@@ -236,6 +238,8 @@ export default function CinemaHome() {
               {OWNER_NAME}, Waverly NY — filming across the <strong>Twin Tiers &amp; Finger Lakes</strong>:
               Sayre, Elmira, Corning, Ithaca.
             </p>
+          </div>
+          <HomeLead />
           </div>
 
           <ul className="cin-doors" aria-label="What are you here for?">

@@ -11,6 +11,7 @@ import BalanceList from "../../../../components/BalanceList";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { BOOKING_COLS, splitBookings, usd } from "../../../../lib/money-view";
 import { listReferrals } from "../../../../lib/referrals";
+import AgreementSender from "../../../../components/AgreementSender";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,12 @@ export default async function PayAdminPage() {
   } catch { bookingsOk = false; }
   const { owing, settled, owedCents } = splitBookings(bookingRows);
   const referrals = await listReferrals(db);
+  // Agreements + custom invoices sent one client at a time (lib/agreements.js).
+  let agreements = []; let agreementsOk = true;
+  try {
+    const { data, error } = await db.from("agreements").select("id, created_at, token, kind, client_name, client_email, business, amount_cents, period, status").order("created_at", { ascending: false }).limit(50);
+    if (error) agreementsOk = false; else agreements = (data || []).map((r) => ({ ...r, url: `https://rothmediaco.com/sign/${r.token}` }));
+  } catch { agreementsOk = false; }
   const shortDay = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   // Link each one to its client profile when they're on the roster.
   const profiles = {};
@@ -87,6 +94,16 @@ export default async function PayAdminPage() {
                 <BalanceList rows={settled.slice(0, 100)} profiles={profiles} />
               </div>
             </details>
+          )}
+        </section>
+
+        <section className="psection">
+          <h2>Send an agreement</h2>
+          <p className="inbox-hint">Website upkeep or a one-off invoice, for one client, with your amount. You get a private link — she reads, types her name to sign, and pays on the same page. Next month: tick &ldquo;already signed&rdquo; and send a fresh link with that month&apos;s amount.</p>
+          {!agreementsOk ? (
+            <p className="sm-sqlhint">Run <code>supabase/agreements.sql</code> once in the Supabase SQL editor and this switches on.</p>
+          ) : (
+            <AgreementSender recent={agreements} />
           )}
         </section>
 
