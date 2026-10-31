@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import CopyChip from "./CopyChip";
-import { AGREEMENT_KINDS, money } from "../lib/agreements";
+import { AGREEMENT_KINDS, agreementText, money } from "../lib/agreements";
 
 const STATUS = { sent: "Sent — not signed", signed: "Signed — not paid", paid: "Paid", void: "Voided" };
 
@@ -17,13 +17,20 @@ export default function AgreementSender({ recent = [] }) {
   const [made, setMade] = useState(null);
   const [rows, setRows] = useState(recent);
   const month = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  // The agreement text: built live from the form, or whatever Brandon edited.
+  const [vars, setVars] = useState({ period: month });
+  const [custom, setCustom] = useState(null);
+  const template = agreementText(kind, { client_name: vars.name, business: vars.business, site_url: vars.site, amount_cents: Math.round(Number(vars.amount || 0) * 100), period: vars.period, note: vars.note });
+  const text = custom ?? template;
+  const showText = kind === "upkeep" && !invoiceOnly;
+  function onChange(e) { const d = Object.fromEntries(new FormData(e.currentTarget).entries()); setVars(d); }
 
   async function onSubmit(e) {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.currentTarget).entries());
     setStatus("going"); setErr("");
     try {
-      const res = await fetch("/api/admin/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...d, kind, invoiceOnly }) });
+      const res = await fetch("/api/admin/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...d, kind, invoiceOnly, text: showText && custom !== null ? custom : "" }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't make the link");
       setMade({ ...j, name: d.name, email: d.email, phone: d.phone, amount: d.amount });
@@ -43,7 +50,7 @@ export default function AgreementSender({ recent = [] }) {
 
   return (
     <div className="agsend">
-      <form className="agsend-form" onSubmit={onSubmit}>
+      <form className="agsend-form" onSubmit={onSubmit} onChange={onChange}>
         <div className="agsend-kinds" role="radiogroup" aria-label="What are you sending?">
           {Object.entries(AGREEMENT_KINDS).map(([id, k]) => (
             <button key={id} type="button" className={"achip" + (kind === id ? " is-on" : "")} aria-pressed={kind === id} onClick={() => setKind(id)} title={k.short}>☐ {k.label}</button>
@@ -66,6 +73,15 @@ export default function AgreementSender({ recent = [] }) {
         </div>
         {kind === "upkeep" && (
           <label className="agsend-check"><input type="checkbox" checked={invoiceOnly} onChange={(e) => setInvoiceOnly(e.target.checked)} /> <span>She already signed — this is just this month&apos;s payment (skip the signature).</span></label>
+        )}
+        {showText && (
+          <div className="agsend-text">
+            <div className="pcharge-row" style={{ justifyContent: "space-between" }}>
+              <span><b>The agreement she&apos;ll sign</b> — edit anything right here. Lines starting with <code>## </code> are headings, <code>- </code> are bullets.{custom !== null ? " Edited — your name, amount and month are frozen in the text now; Reset to pull in field changes." : " Fills in from the fields above as you type."}</span>
+              {custom !== null && <button type="button" className="achip" onClick={() => setCustom(null)}>Reset to template</button>}
+            </div>
+            <textarea value={text} onChange={(e) => setCustom(e.target.value)} rows={22} spellCheck={false} />
+          </div>
         )}
         <div className="pcharge-row">
           <button type="submit" className="abtn" disabled={status === "going"}>{status === "going" ? "Making the link…" : "Make the link"}</button>

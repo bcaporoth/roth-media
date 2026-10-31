@@ -29,7 +29,10 @@ export async function POST(request) {
     business: clip(b.business, 160), site_url: clip(b.site, 200), amount_cents,
     period: clip(b.period, 60), note: clip(b.note, 600),
     sign_required: kind === "upkeep" && !b.invoiceOnly,
-    text_version: TEXT_VERSION, status: "sent",
+    // An edited agreement is frozen at creation; otherwise the template is
+    // snapshotted when she signs (api/sign).
+    agreement_text: kind === "upkeep" && !b.invoiceOnly ? clip(b.text, 20000) : "",
+    text_version: TEXT_VERSION + (clip(b.text, 1) ? "-custom" : ""), status: "sent",
   };
   const { data, error } = await supabaseAdmin().from("agreements").insert(row).select("*").single();
   if (error) return bad(/relation .*agreements/i.test(error.message) ? "Run supabase/agreements.sql once in Supabase first." : error.message, 500);

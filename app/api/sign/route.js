@@ -28,7 +28,7 @@ export async function POST(request) {
       status: "signed", signed_name: signature, signed_at: new Date().toISOString(),
       signed_ip: (request.headers.get("x-forwarded-for") || "").split(",")[0].trim(),
       signed_ua: clip(request.headers.get("user-agent"), 200),
-      agreement_text: agreementText(row.kind, row),
+      agreement_text: row.agreement_text || agreementText(row.kind, row),
     };
     const { error } = await db.from("agreements").update(patch).eq("id", row.id);
     if (error) return bad("Couldn't save your signature — try again or text Brandon.", 500);
