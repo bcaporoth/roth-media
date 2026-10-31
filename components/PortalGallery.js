@@ -90,6 +90,26 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
     }
   };
 
+  // Select mode: one tap selects (or clears) every photo in an album, so a
+  // client scrolled down to album 3 doesn't have to tap 40 tiles.
+  const albumPhotos = (group) =>
+    group.entries.map(([it]) => it).filter((it) => it.kind !== "video");
+  const albumAllSelected = (group) => {
+    const ph = albumPhotos(group);
+    return ph.length > 0 && ph.every((it) => selected.has(it.filename));
+  };
+  const toggleAlbum = (group) => {
+    setPendingCount(0);
+    pendingRef.current = null;
+    const ph = albumPhotos(group);
+    const all = albumAllSelected(group);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      ph.forEach((it) => (all ? next.delete(it.filename) : next.add(it.filename)));
+      return next;
+    });
+  };
+
   const exitSelect = useCallback(() => {
     setSelectMode(false);
     setSelected(new Set());
@@ -551,6 +571,17 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
                 <span className="pgal-section-count">
                   {group.entries.length}
                 </span>
+                {selectMode && albumPhotos(group).length > 0 && (
+                  <button
+                    type="button"
+                    className="pgal-tool-btn pgal-section-save"
+                    onClick={() => toggleAlbum(group)}
+                    aria-pressed={albumAllSelected(group)}
+                    aria-label={`${albumAllSelected(group) ? "Clear" : "Select all"} photos in ${group.title}`}
+                  >
+                    {albumAllSelected(group) ? "Clear" : `Select all ${albumPhotos(group).length}`}
+                  </button>
+                )}
                 {!selectMode && group.entries.some(([it]) => it.kind !== "video") && (
                   <button
                     type="button"
