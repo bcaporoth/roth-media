@@ -6,6 +6,9 @@ import { clip, visitorId } from "../../../lib/visitor";
 import { priceQuote } from "../../../lib/booking";
 import { cartUrl } from "../../../lib/cart";
 import { TYPE_LABEL } from "../../../lib/intake";
+import { CALENDLY } from "../../../lib/site";
+import { firstName } from "../../../lib/client-email";
+import { money } from "../../../lib/packages";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +31,12 @@ export async function POST(request) {
 
   // A quote's cart (package + add-ons) is saved as pay links Brandon can send.
   const cq = body.cart && priceQuote({ category: body.cart.category, packageId: body.cart.packageId, addons: body.cart.addons, code: body.cart.code });
+  let clientPayLink = "";
   if (cq) {
     const code = cq.deal?.code || "";
     const base = { category: cq.cat.id, packageId: cq.pkg.id, addons: cq.chosen.map((a) => a.id), name: clip(body.name, 120), email: clip(body.email, 160).toLowerCase(), phone: clip(body.phone, 40), code };
-    fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", cartUrl(base)]);
+    clientPayLink = cartUrl(base);
+    fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", clientPayLink]);
     if (cq.mode === "retainer") fields.push(["pay link — balance (send 14 days before)", cartUrl({ ...base, pay: "balance", code: "" })]);
     if (cq.deal) fields.push(["deal", `${cq.deal.label} — ${cq.deal.pct}% off, ends ${cq.deal.endsLabel}${cq.deal.auto ? "" : ` (code ${cq.deal.code})`}`]);
     if (cq.free) fields.push(["included", `${cq.chosen.find((a) => a.id === cq.free.addon)?.name || "add-on"} — ${cq.free.label}${cq.free.code ? ` (code ${cq.free.code})` : ""}`]);
@@ -80,6 +85,23 @@ export async function POST(request) {
     if (LEAD_SMS_TO) {
       try {
         await sendEmail({ to: LEAD_SMS_TO, subject: "New lead", text: leadSmsText(sub) });
+      } catch {}
+    }
+    // The inquirer gets their quote back right away: what it is, what it costs, a link to pay
+    // when they're ready (their exact cart), and a link to grab a call so we plan the shoot.
+    if (sub.kind === "quote" && cq && sub.email) {
+      try {
+        const fn = firstName(sub.name, sub.email);
+        const get = [...(cq.pkg.get || []), ...cq.chosen.map((a) => a.get)].filter(Boolean);
+        const dueLine = cq.mode === "retainer" ? `${money(cq.dueToday)} holds the date; the balance is due 14 days before.` : `${money(cq.total)}${cq.pkg.per || ""}. Nothing's charged until we lock your date.`;
+        const next = cq.cat.id === "business"
+          ? "Next step: grab 20 minutes with me. We'll go through what's worth pushing, who's on camera, and lock a shoot date. You'll leave the call with a date and a plan."
+          : "Next step: grab 20 minutes with me and we'll plan it out, then lock the date.";
+        await sendEmail({
+          to: sub.email,
+          subject: `Your quote: ${cq.pkg.name} — ${money(cq.total)}${cq.pkg.per || ""}`,
+          text: `Hi ${fn},\n\nHere's your quote for ${cq.pkg.name}${cq.chosen.length ? ` with ${cq.chosen.map((a) => a.name.toLowerCase()).join(", ")}` : ""}.\n\nYou get:\n${get.map((g) => `• ${g}`).join("\n")}\n\n${dueLine}\n\n${next}\n\nBook the call: ${CALENDLY}\n\nYour pay link — hang onto this email, it's yours for good. We'll use it when we lock the date on the call or right before the shoot:\n${clientPayLink}\n\nOr just text me back — this came straight to my phone too.\n\nBrandon\nRoth Media · rothmediaco.com`,
+        });
       } catch {}
     }
   }

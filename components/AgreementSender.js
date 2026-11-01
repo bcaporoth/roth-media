@@ -22,7 +22,7 @@ export default function AgreementSender({ recent = [] }) {
   const [custom, setCustom] = useState(null);
   const template = agreementText(kind, { client_name: vars.name, business: vars.business, site_url: vars.site, amount_cents: Math.round(Number(vars.amount || 0) * 100), period: vars.period, note: vars.note });
   const text = custom ?? template;
-  const showText = kind === "upkeep" && !invoiceOnly;
+  const showText = kind !== "invoice" && !invoiceOnly;
   function onChange(e) { const d = Object.fromEntries(new FormData(e.currentTarget).entries()); setVars(d); }
 
   async function onSubmit(e) {
@@ -68,8 +68,8 @@ export default function AgreementSender({ recent = [] }) {
         </div>
         <div className="pcharge-row">
           <label><span>Amount ($)</span><input name="amount" inputMode="decimal" required placeholder="150" /></label>
-          <label><span>For (month)</span><input name="period" defaultValue={month} /></label>
-          <label className="grow"><span>{kind === "invoice" ? "What it's for" : "Note on this month's work (optional)"}</span><input name="note" placeholder={kind === "invoice" ? "Landing page for the spring sale" : "Covers the new hours + the Mother's Day landing page"} /></label>
+          <label><span>{kind === "shoot" ? "Shoot date" : "For (month)"}</span><input name="period" defaultValue={kind === "shoot" ? "" : month} placeholder={kind === "shoot" ? "Sat Nov 15, 10am" : ""} /></label>
+          <label className="grow"><span>{kind === "shoot" ? "Package + what they get" : kind === "invoice" ? "What it's for" : "Note on this month's work (optional)"}</span><input name="note" placeholder={kind === "shoot" ? "The Month — 8 vertical reels, 10–20 edited photos; pushing the holiday menu + hiring" : kind === "invoice" ? "Landing page for the spring sale" : "Covers the new hours + the Mother's Day landing page"} /></label>
         </div>
         {kind === "upkeep" && (
           <label className="agsend-check"><input type="checkbox" checked={invoiceOnly} onChange={(e) => setInvoiceOnly(e.target.checked)} /> <span>She already signed — this is just this month&apos;s payment (skip the signature).</span></label>

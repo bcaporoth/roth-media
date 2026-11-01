@@ -209,9 +209,9 @@ const FAQS = {
     ["What areas do you serve?", `I’m local to the Valley — Sayre, Athens, and Waverly — and film weddings across the Twin Tiers, including Elmira, Corning, Towanda, and the surrounding area. ${TRAVEL.line}`],
   ],
   business: [
-    ["What does a Content Day cost, and what do I get?", `A Full Content Day is ${money(biz("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(biz("mini").price)}: 8 reels and 10–20 photos.`],
+    ["What does a Content Day cost, and what do I get?", `A The Quarter is ${money(biz("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Month is ${money(biz("mini").price)}: 8 reels and 10–20 photos.`],
     ["How fast do I get my content?", `Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) is ${money(bAddon("rush").price)}; an extra revision round is ${money(bAddon("revision").price)}.`],
-    ["Can I get more content from the same shoot?", `Yes — a second promo video is ${money(bAddon("promo2").price)}, 8 more reels ${money(bAddon("reels").price)}, 20 more photos ${money(bAddon("photos").price)}, team headshots ${money(bAddon("headshots").price)}, and an extra hour or a second location ${money(bAddon("hour").price)}. Adding a promo to a Mini Content Day is ${money(bAddon("promo").price)}.`],
+    ["Can I get more content from the same shoot?", `Yes — a second promo video is ${money(bAddon("promo2").price)}, 8 more reels ${money(bAddon("reels").price)}, 20 more photos ${money(bAddon("photos").price)}, team headshots ${money(bAddon("headshots").price)}, and an extra hour or a second location ${money(bAddon("hour").price)}. Adding a promo to a The Month is ${money(bAddon("promo").price)}.`],
     ["Do you cover events?", `Yes — Event Coverage is ${money(biz("event").price)}: up to 3 hours of coverage, a 45–90 second highlight short, and a gallery of 50+ edited photos.`],
     ["Can you run ads with the videos?", `Yes — Facebook ads + lead generation is a ${money(bAddon("ads").price)} add-on: ads built from your videos, aimed at local customers, with leads sent straight to you.`],
     ["Can I use the videos in paid ads?", "Yes. All music is licensed through Epidemic Sound and your finished videos are cleared for your website, socials, and online advertising."],
@@ -489,7 +489,7 @@ export default function CloserHome() {
             <div className="clo-start-main">
               <p className="clo-start-k">Start here</p>
               <h2 className="clo-h3">Fifteen minutes, no pitch deck.</h2>
-              <p className="clo-start-p">The prices are on this page: a Mini Content Day is {money(biz("mini").price)}, a Full Content Day {money(biz("day").price)}, an event {money(biz("event").price)}. Call or text and I’ll tell you what I’d shoot at your place.</p>
+              <p className="clo-start-p">The prices are on this page: a The Month is {money(biz("mini").price)}, a The Quarter {money(biz("day").price)}, an event {money(biz("event").price)}. Call or text and I’ll tell you what I’d shoot at your place.</p>
               <div className="clo-btnrow">
                 <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="clo-btn clo-btn--acc">Book a 15-minute call <Arrow /></a>
                 <a href={smsWith("Hi Brandon — I’d like to talk about a Content Day for my business.")} className="clo-btn clo-btn--line">Text {PHONE}</a>

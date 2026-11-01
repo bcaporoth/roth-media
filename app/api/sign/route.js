@@ -38,8 +38,8 @@ export async function POST(request) {
   const origin = new URL(request.url).origin;
   const site = /(^|\.)rothmediaco\.com$/.test(new URL(origin).hostname) || /localhost/.test(origin) ? origin : "https://rothmediaco.com";
   const k = AGREEMENT_KINDS[row.kind] || AGREEMENT_KINDS.upkeep;
-  const name = row.kind === "invoice" ? `Invoice${row.period ? ` — ${row.period}` : ""}` : `Website upkeep${row.period ? ` — ${row.period}` : ""}`;
-  const description = clip(row.note || (row.kind === "invoice" ? "" : `Two update sessions this month for ${row.business || row.client_name}.`), 300) || undefined;
+  const name = row.kind === "shoot" ? `Content Day — ${row.business || row.client_name}${row.period ? ` · ${row.period}` : ""}` : row.kind === "invoice" ? `Invoice${row.period ? ` — ${row.period}` : ""}` : `Website upkeep${row.period ? ` — ${row.period}` : ""}`;
+  const description = clip(row.note || (row.kind === "invoice" ? "" : row.kind === "shoot" ? `One Content Day shoot at ${row.business || "your business"} — licensed for your business, forever.` : `Two update sessions this month for ${row.business || row.client_name}.`), 300) || undefined;
   const metadata = { kind: "agreement", agreement: String(row.id), token, agreement_kind: row.kind, name: row.client_name, business: row.business, phone: row.client_phone };
   try {
     const session = await stripe("POST", "/checkout/sessions", {
@@ -50,7 +50,7 @@ export async function POST(request) {
       payment_intent_data: { description: `${k.title} — ${row.business || row.client_name}`, metadata },
       success_url: `${site}/sign/${token}?s={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/sign/${token}`,
-      custom_text: { submit: { message: row.kind === "invoice" ? "Thank you! A receipt lands in your email." : `That's ${money(row.amount_cents)} for this month's website upkeep. Receipt by email; next month I'll send a fresh link.` } },
+      custom_text: { submit: { message: row.kind === "shoot" ? `That's ${money(row.amount_cents)} for your Content Day — the date's locked. Receipt by email; I'll text you before the shoot to confirm the plan.` : row.kind === "invoice" ? "Thank you! A receipt lands in your email." : `That's ${money(row.amount_cents)} for this month's website upkeep. Receipt by email; next month I'll send a fresh link.` } },
     });
     return NextResponse.json({ signed: true, url: session.url });
   } catch (err) {

@@ -28,10 +28,10 @@ export async function POST(request) {
     token: crypto.randomBytes(9).toString("base64url"), kind, client_name, client_email, client_phone,
     business: clip(b.business, 160), site_url: clip(b.site, 200), amount_cents,
     period: clip(b.period, 60), note: clip(b.note, 600),
-    sign_required: kind === "upkeep" && !b.invoiceOnly,
+    sign_required: kind !== "invoice" && !b.invoiceOnly,
     // An edited agreement is frozen at creation; otherwise the template is
     // snapshotted when she signs (api/sign).
-    agreement_text: kind === "upkeep" && !b.invoiceOnly ? clip(b.text, 20000) : "",
+    agreement_text: kind !== "invoice" && !b.invoiceOnly ? clip(b.text, 20000) : "",
     text_version: TEXT_VERSION + (clip(b.text, 1) ? "-custom" : ""), status: "sent",
   };
   const { data, error } = await supabaseAdmin().from("agreements").insert(row).select("*").single();

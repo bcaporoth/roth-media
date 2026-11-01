@@ -48,7 +48,7 @@ function Arrow() {
 const FAQS = [
   {
     q: "What does a Content Day cost, and what do I get?",
-    a: `A Full Content Day is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Mini Content Day is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
+    a: `A The Quarter is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Month is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
   },
   {
     q: "How fast do I get my content?",
@@ -56,7 +56,7 @@ const FAQS = [
   },
   {
     q: "Can I get more content from the same shoot?",
-    a: `Yes — the camera's already up, so it's edit time, not a second trip. A second promo video is ${money(addon("promo2").price)}, 8 more reels ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}. Adding a promo to a Mini Content Day is ${money(addon("promo").price)}.`,
+    a: `Yes — the camera's already up, so it's edit time, not a second trip. A second promo video is ${money(addon("promo2").price)}, 8 more reels ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}. Adding a promo to a The Month is ${money(addon("promo").price)}.`,
   },
   {
     q: "Do you cover events?",

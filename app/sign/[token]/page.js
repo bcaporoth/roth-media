@@ -41,17 +41,17 @@ export default async function SignPage({ params, searchParams }) {
       <LegalPage kick={k.title} title={`${first}, you're all set.`} updated="" plain>
         <div className="mx-done" role="status">
           <p className="mx-done-title">{money(row.paid_cents || row.amount_cents)} paid{row.period ? ` for ${row.period}` : ""}. Thank you!</p>
-          <p>A receipt is on its way to {row.client_email}. {row.kind === "invoice" ? "" : "Send your changes any time — text or email, one batch at a time, with the final words and files."}</p>
+          <p>A receipt is on its way to {row.client_email}. {row.kind === "shoot" ? "Your date is locked. I'll text before the shoot to confirm the plan — have the people and the space ready at the start time and we're golden." : row.kind === "invoice" ? "" : "Send your changes any time — text or email, one batch at a time, with the final words and files."}</p>
         </div>
       </LegalPage>
     );
   }
 
-  const title = row.kind === "invoice" ? `${first}, here's your invoice.` : `${first}, here's your website upkeep agreement.`;
+  const title = row.kind === "shoot" ? `${first}, here's your Content Day agreement.` : row.kind === "invoice" ? `${first}, here's your invoice.` : `${first}, here's your website upkeep agreement.`;
   const intro = row.kind === "invoice"
     ? `One amount, one button. Pay by card, Apple Pay or Google Pay.`
     : row.sign_required && row.status !== "signed"
-    ? `Read it (two minutes), type your name to sign, and pay this month's amount — all on this page.`
+    ? row.kind === "shoot" ? `Read it (three minutes), type your name to sign, and pay the package — that locks your date.` : `Read it (two minutes), type your name to sign, and pay this month's amount — all on this page.`
     : `You've already signed — this is this month's payment.`;
 
   return (
