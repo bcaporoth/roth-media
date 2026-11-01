@@ -5,7 +5,7 @@ import { SharedAlbum, SharedPremiereWait } from "../../../components/ShareViews"
 import { designSkin } from "../../../lib/design";
 import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
-import { r2Configured, signedUrl, photoKey, getDims } from "../../../lib/r2";
+import { r2Configured, signedUrl, photoKey, getDims, keyExists } from "../../../lib/r2";
 import { guestLinkForGallery } from "../../../lib/guest";
 
 export const dynamic = "force-dynamic";
@@ -115,8 +115,11 @@ export default async function SharedGalleryPage({ params }) {
         m.kind === "video"
           ? photoKey(gallery.id, "orig", m.filename)
           : photoKey(gallery.id, "web", jpgName(m.filename));
+      // Films only get a thumbUrl when their poster frame is really there
+      // (older films have none) — the viewer then falls back to the cover.
+      const thumbOk = m.kind === "video" ? await keyExists(thumb) : true;
       const [thumbUrl, webUrl, downloadUrl] = await Promise.all([
-        signedUrl(thumb).catch(() => null),
+        thumbOk ? signedUrl(thumb).catch(() => null) : Promise.resolve(null),
         signedUrl(web),
         signedUrl(photoKey(gallery.id, "orig", m.filename), {
           download: m.filename,
