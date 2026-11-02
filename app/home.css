@@ -183,6 +183,32 @@
 .rm-cinema .cin-hero h1 { font-size: clamp(1.9rem, 8.7vw, 2.7rem); line-height: 1.03; letter-spacing: -0.03em; text-shadow: 0 2px 30px rgba(0, 0, 0, 0.55); }
 .rm-cinema .cin-hero-where { margin-top: 0.65rem; font-size: 0.9rem; line-height: 1.45; color: var(--dim); max-width: 34rem; }
 .rm-cinema .cin-hero-where strong { color: var(--fg); font-weight: 700; }
+/* The business pitch, its two buttons and the plan prices — the opening sells the Content Day */
+.rm-cinema .cin-hero-pitch { margin-top: 0.75rem; font-size: 0.98rem; line-height: 1.5; color: rgba(246, 241, 232, 0.92); max-width: 36rem; }
+.rm-cinema .cin-hero-cta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.1rem; }
+.rm-cinema .cin-hero-cta .cin-btn { flex: 1 1 auto; justify-content: center; }
+/* The plan card beside the pitch: tap a plan, land on the instant quote with it picked */
+.rm-cinema .cin-hero-offer {
+  margin: 0 var(--gut) 1.4rem; padding: 1.1rem 1.1rem 0.6rem; display: grid; gap: 0.7rem;
+  border: 1px solid rgba(220, 189, 122, 0.45); border-radius: 2px; background: rgba(20, 18, 16, 0.92); backdrop-filter: blur(10px);
+}
+.rm-cinema .cin-hero-planlist { display: grid; gap: 0.5rem; }
+.rm-cinema .cin-plan {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.8rem; min-height: 64px; padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(246, 241, 232, 0.28); border-radius: 2px; transition: border-color 0.2s, background 0.2s;
+}
+.rm-cinema .cin-plan:hover { border-color: var(--fg); background: rgba(246, 241, 232, 0.05); }
+.rm-cinema .cin-plan.is-popular { border-color: var(--gold); background: rgba(220, 189, 122, 0.08); }
+.rm-cinema .cin-plan-what { display: grid; gap: 0.2rem; min-width: 0; }
+.rm-cinema .cin-plan-what strong { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: var(--font-display), sans-serif; font-size: 1.12rem; font-weight: 600; }
+.rm-cinema .cin-plan-what > span { font-size: 0.8rem; line-height: 1.35; color: var(--dim); }
+.rm-cinema .cin-plan-price { font-family: var(--font-display), sans-serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+.rm-cinema .cin-plan-price small { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--dim); margin-left: 0.1rem; }
+.rm-cinema .cin-hero-seework { justify-self: start; min-height: 44px; }
+.rm-cinema .cin-quote-lead { margin-top: 2rem; }
+.rm-cinema .cin-quote-lead .cin-lead { margin: 0; max-width: 34rem; }
+.rm-cinema .cin-hero-img--biz { filter: brightness(0.8); }
+.rm-cinema .cin-hero-seework { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 44px; color: var(--gold); }
 
 /* Three doors: the row jumps to that chapter, the button does the thing. */
 .rm-cinema .cin-doors { border-top: 1px solid var(--line); }
@@ -214,7 +240,7 @@
   .rm-cinema .cin-hero-media img { animation: cin-push 14s var(--ease) both; }
   .rm-cinema .cin-hero h1 .cin-mask > span { animation: cin-up 0.95s var(--ease) both 0.2s; }
   .rm-cinema .cin-hero h1 .cin-mask:nth-child(2) > span { animation-delay: 0.3s; }
-  .rm-cinema .cin-hero-title .cin-kick, .rm-cinema .cin-hero-where { animation: cin-fade 0.8s ease both 0.5s; }
+  .rm-cinema .cin-hero-title .cin-kick, .rm-cinema .cin-hero-where, .rm-cinema .cin-hero-pitch, .rm-cinema .cin-hero-cta, .rm-cinema .cin-hero-offer { animation: cin-fade 0.8s ease both 0.5s; }
   .rm-cinema .cin-doors > li { animation: cin-fade 0.7s ease both 0.6s; }
   .rm-cinema .cin-doors > li:nth-child(2) { animation-delay: 0.7s; }
   .rm-cinema .cin-doors > li:nth-child(3) { animation-delay: 0.8s; }
@@ -495,6 +521,9 @@
   .rm-cinema .cin-hero { min-height: 100vh; min-height: 100svh; padding-top: 30vh; }
   .rm-cinema .cin-hero-media { inset: 0; height: auto; }
   .rm-cinema .cin-hero-media img { object-position: 50% 22%; }
+  .rm-cinema .cin-hero-media img.cin-hero-img--biz { object-position: 30% 8%; filter: brightness(0.62) contrast(1.08); }
+  .rm-cinema .cin-hero-pitch { font-size: 1.15rem; margin-top: 1.1rem; }
+  .rm-cinema .cin-hero-cta .cin-btn { flex: 0 0 auto; }
   .rm-cinema .cin-hero-shade {
     background:
       linear-gradient(rgba(11, 10, 9, 0.5), rgba(11, 10, 9, 0) 22%),
@@ -703,9 +732,23 @@
 .rm-cinema .cin-lead--done h2 { font-size: 1.7rem; }
 .rm-cinema .cin-lead-next { width: 100%; white-space: normal; text-align: center; }
 @media (min-width: 800px) {
-  .rm-cinema .cin-hero-grid { grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 30rem); align-items: end; column-gap: 2.5rem; padding-right: var(--gut); }
-  .rm-cinema .cin-lead { margin: 0 0 2rem; padding: 1.6rem 1.5rem 1.7rem; }
+  /* Pitch + buttons above the fold on a laptop: start the opening higher */
+  .rm-cinema .cin-hero:has(.cin-hero-cta) { padding-top: 17vh; }
+  .rm-cinema .cin-lead { padding: 1.6rem 1.5rem 1.7rem; }
   .rm-cinema .cin-lead h2 { font-size: 1.8rem; }
   .rm-cinema .cin-lead-grid { grid-template-columns: 1fr 1fr; }
   .rm-cinema .cin-lead-pref { grid-column: 1 / -1; }
+}
+/* Pitch and form side by side only once there's room for both */
+@media (min-width: 1100px) {
+  .rm-cinema .cin-hero-grid { grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 30rem); align-items: start; column-gap: 2.5rem; padding-right: var(--gut); }
+  .rm-cinema .cin-hero-grid .cin-hero-title { padding-top: 2.2rem; }
+  .rm-cinema .cin-hero-offer { margin: 0 0 2rem; padding: 1.5rem 1.4rem 0.8rem; }
+}
+
+/* Tablet: three doors side by side are too tight for name + price on one row — price drops under the name */
+@media (min-width: 800px) and (max-width: 1099px) {
+  .rm-cinema .cin-doors { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rm-cinema .cin-door-price { grid-column: 2; grid-row: 3; text-align: left; font-size: 1.5rem; margin-top: 0.5rem; }
+  .rm-cinema .cin-door-jump { grid-row: 4; }
 }

@@ -23,7 +23,7 @@ export const metadata = {
 const JSON_LD = businessLd({
   url: "https://rothmediaco.com",
   description:
-    "Photographer and videographer in Waverly, NY — cinematic wedding films and candid photography for the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Brand video for local businesses, events, and portraits. Public prices.",
+    "Videographer and photographer in Waverly, NY — promos, reels, and photos for local businesses, shot at your place, plus cinematic wedding films and portraits across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Public prices.",
 });
 
 // The offer line reads the clock at render — refresh hourly.
@@ -36,16 +36,20 @@ const [W_PHOTO, W_FILM] = PACKAGES.wedding;
 const BIZ = PACKAGES.business;
 const PORTRAIT = PACKAGES.family[0];
 const bizFrom = Math.min(...BIZ.map((p) => p.price));
+// The business ad landing: pick a plan, the quote lands in their inbox instantly.
+const BIZ_QUOTE = "/go/business";
+// The three Content Day plans, in the instant-quote page's order (?pkg= pre-selects one there)
+const BIZ_PLANS = ["mini", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
 
 const DOORS = [
   {
-    n: "01", id: "weddings", name: "Weddings", sub: `Film ${money(W_FILM.price)} · Photography ${money(W_PHOTO.price)}`,
-    from: wedFrom, cta: "Check my date", href: "#date", primary: true, jump: "Jump to weddings",
+    n: "01", id: "business", name: "Your business", sub: "Reels, photos & a promo, shot at your place",
+    from: bizFrom, cta: "Get my instant quote", href: BIZ_QUOTE, primary: true, jump: "See the work & plans",
   },
   {
-    n: "02", id: "business", name: "Business", sub: "Promo, reels & photos, shot at your place",
-    from: bizFrom, cta: "Book a 15-min call", href: CALENDLY, external: true, jump: "Skip to business",
+    n: "02", id: "weddings", name: "Weddings", sub: `Film ${money(W_FILM.price)} · Photography ${money(W_PHOTO.price)}`,
+    from: wedFrom, cta: "Check my date", href: "#date", jump: "Skip to weddings",
   },
   {
     n: "03", id: "families", name: "Families", sub: "Seniors & couples too · 1 hour, 30+ photos",
@@ -55,10 +59,10 @@ const DOORS = [
 
 const CHAPTERS = [
   { id: "top", label: "Opening" },
+  { id: "business", label: "Business" },
   { id: "weddings", label: "Weddings" },
   { id: "promises", label: "Promises" },
   { id: "wedding-prices", label: "Wedding prices" },
-  { id: "business", label: "Business" },
   { id: "families", label: "Portraits" },
   { id: "quote", label: "Your number" },
   { id: "about", label: "Brandon" },
@@ -186,8 +190,8 @@ export default function CinemaHome() {
           <span className="cin-rec" /> <span className="cin-tc">00:00:00:00</span> <span className="cin-ch-name">Opening</span>
         </p>
         <nav className="cin-nav-links" aria-label="Main navigation">
-          <Link href="/weddings">Weddings</Link>
           <Link href="/business">Business</Link>
+          <Link href="/weddings">Weddings</Link>
           <a href="#families">Portraits</a>
           <a href={PHONE_HREF} className="cin-nav-phone">{PHONE}</a>
           <Link href="/portal" className="cin-nav-login">Client login</Link>
@@ -196,8 +200,9 @@ export default function CinemaHome() {
         <details className="cin-menu">
           <summary aria-label="Menu"><span aria-hidden="true" /><span aria-hidden="true" /></summary>
           <nav className="cin-menu-panel" aria-label="Menu">
-            <Link href="/weddings">Weddings <em>from {money(wedFrom)}</em></Link>
             <Link href="/business">Business <em>from {money(bizFrom)}</em></Link>
+            <Link href={BIZ_QUOTE}>Instant business quote <em>pick a plan</em></Link>
+            <Link href="/weddings">Weddings <em>from {money(wedFrom)}</em></Link>
             <a href="#families">Family &amp; portraits <em>from {money(PORTRAIT.price)}</em></a>
             <a href="#date">Check a wedding date <em>open Saturdays</em></a>
             <Link href="/quote">Get a quote <em>2 minutes</em></Link>
@@ -223,23 +228,49 @@ export default function CinemaHome() {
         <section className="cin-hero" id="top" data-ch="Opening">
           <div className="cin-hero-media">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/photos/40-wedding-just-married-mid-laugh.jpg" alt="Just married, mid laugh — a couple hand in hand on a country road" fetchPriority="high" />
+            <img src="/photos/41-gym-mid-set-laughter.jpg" alt="A lifter laughing mid-set at the squat rack, black and white" fetchPriority="high" className="cin-hero-img--biz" />
           </div>
           <div className="cin-hero-shade" aria-hidden="true" />
 
           <div className="cin-hero-grid">
           <div className="cin-hero-title">
-            <p className="cin-kick">Wedding films · Photography · Business content</p>
+            <p className="cin-kick">Content for local businesses · Twin Tiers</p>
             <h1>
-              <span className="cin-mask"><span>Films &amp; photographs</span></span>
-              <span className="cin-mask"><span>of the real thing.</span></span>
+              <span className="cin-mask"><span>One shoot.</span></span>
+              <span className="cin-mask"><span>A month of posts.</span></span>
             </h1>
+            <p className="cin-hero-pitch">
+              I come to your place and film you doing what you already do. You get the
+              reels, photos and the three pinned posts that turn your Instagram into a
+              front door — delivered in two weeks, sized to post. You never touch a camera.
+            </p>
+            <div className="cin-hero-cta">
+              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Get my instant quote <Arrow /></Link>
+              <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--ghost cin-btn--lg">Book a 15-min call</a>
+            </div>
             <p className="cin-hero-where">
-              {OWNER_NAME}, Waverly NY — filming across the <strong>Twin Tiers &amp; Finger Lakes</strong>:
-              Sayre, Elmira, Corning, Ithaca.
+              {OWNER_NAME}, Waverly NY — shops, gyms, restaurants, builders and makers across the{" "}
+              <strong>Twin Tiers &amp; Finger Lakes</strong>. Weddings &amp; portraits too.
             </p>
           </div>
-          <HomeLead />
+          {/* The plans, right in the opening — each one lands on the instant quote with that plan picked */}
+          <div className="cin-hero-offer">
+            <p className="cin-lead-kick">Pick a plan · real prices</p>
+            <ul className="cin-hero-planlist">
+              {BIZ_PLANS.map((p) => (
+                <li key={p.id}>
+                  <Link href={`${BIZ_QUOTE}?pkg=${p.id}`} className={p.popular ? "cin-plan is-popular" : "cin-plan"}>
+                    <span className="cin-plan-what">
+                      <strong>{p.name}{p.popular && <span className="cin-flag">Most booked</span>}</strong>
+                      <span>{p.scope}</span>
+                    </span>
+                    <span className="cin-plan-price">{money(p.price)}{p.id === "always" && <small>/mo</small>}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <a href="#business" className="cin-link cin-hero-seework">See the work first <ArrowDown /></a>
+          </div>
           </div>
 
           <ul className="cin-doors" aria-label="What are you here for?">
@@ -266,204 +297,10 @@ export default function CinemaHome() {
           </ul>
         </section>
 
-        {/* ── Chapter 01 · Weddings ── */}
-        <section className="cin-chapter cin-wed" id="weddings" data-ch="Weddings">
-          <div className="cin-card cin-card--split">
-            <div className="cin-card-lead">
-              <Slate n="01" name="Weddings" note="Film · Photography" />
-              <h2 className="cin-card-title cin-card-title--long">
-                <span className="cin-mask"><span>Your day,</span></span>
-                <span className="cin-mask"><span>told the way</span></span>
-                <span className="cin-mask"><span>it felt.</span></span>
-              </h2>
-              <p className="cin-lede cin-rise">
-                I don’t like putting anyone outside of what they normally feel
-                comfortable with. I work with your DJ, your planner and your
-                venue.
-              </p>
-              <p className="cin-say cin-rise">
-                A cinematic wedding film with your real vows and ceremony
-                audio, or full-day photography. You relax and have a good
-                time. I’ll be having one too.
-              </p>
-              <p className="cin-fromline cin-rise">
-                <span>Film <b>{money(W_FILM.price)}</b></span>
-                <span>Photography <b>{money(W_PHOTO.price)}</b></span>
-              </p>
-              <Skip label="Not planning a wedding?" links={[{ href: "#business", text: "Business" }, { href: "#families", text: "Family & portraits" }]} />
-            </div>
-
-            {/* Date check — the first thing a couple asks */}
-            <div className="cin-date cin-rise" id="date">
-              <h3>Is your date open?</h3>
-              <p className="cin-date-label">2026 Saturdays still open — tap one</p>
-              <p className="cin-dates">
-                {CAMPAIGN.openDates2026.map((d) => (
-                  <Link key={d} href={dateHref(`${d}, 2026`)}>{d.replace(/^Sat /, "")}</Link>
-                ))}
-              </p>
-              <form className="cin-datecheck" action="/quote" method="get">
-                <input type="hidden" name="for" value="wedding" />
-                <label htmlFor="cin-date-input">Any other date, 2026 or 2027</label>
-                <div>
-                  <input id="cin-date-input" type="date" name="date" min={today} required />
-                  <button type="submit" className="cin-btn cin-btn--light">Check my date <Arrow /></button>
-                </div>
-              </form>
-              <ul className="cin-date-terms">
-                <li>Your date carries straight into your quote — no retyping, no call needed.</li>
-                <li>A 50% retainer holds it; the balance is due 14 days before.</li>
-                <li>Wedding coming up fast? <a href={SMS_HREF}>Text me the date</a> — that’s the quickest answer.</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* The film comes first */}
-          <div className="cin-films" id="work">
-            <span id="films" className="cin-anchor" aria-hidden="true" />
-            <div className="cin-films-head">
-              <h2 className="cin-h2 cin-card-title">
-                <span className="cin-mask"><span>Made to be watched.</span></span>
-              </h2>
-              <p className="cin-rise">Tap to play, sound on. This is Matt &amp; April’s sneak peek — the film they had within 48 hours.</p>
-            </div>
-            <div className="cin-screen">
-              <Player
-                feature
-                src={videoUrl("/matt-april-wedding.mp4")}
-                poster="/matt-april-cover.jpg"
-                alt="April laughing with her wedding party on the lawn"
-                title="Matt & April"
-                sub="Wedding film · sneak peek · September 2026"
-                runtime="Play the film"
-              />
-            </div>
-            <ul className="cin-facts">
-              {FILM_FACTS.map((f) => <li key={f.k} className="cin-rise"><strong>{f.k}</strong><span>{f.v}</span></li>)}
-              <li className="cin-rise cin-facts-price">
-                <strong>{money(W_FILM.price)}</strong>
-                <span>{W_FILM.name} · full day</span>
-                <Link href="/quote?for=wedding&pkg=film" className="cin-link">Build a film quote <Arrow /></Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="cin-reel" aria-label="Wedding photographs">
-            {REEL.map((f, i) => (
-              <figure className="cin-frame" key={f.wide.src}>
-                <div className="cin-frame-media">
-                  <picture>
-                    <source media="(min-width: 800px)" srcSet={f.wide.src} />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={f.tall.src}
-                      alt={f.tall.cap}
-                      loading={i === 0 ? "eager" : "lazy"}
-                      style={{ "--pos-tall": f.tall.pos, "--pos-wide": f.wide.pos }}
-                    />
-                  </picture>
-                </div>
-                <figcaption className="cin-frame-cap">
-                  <span className="cin-frame-n">Photography · {String(i + 1).padStart(2, "0")} / {String(REEL.length).padStart(2, "0")}</span>
-                  <span className="cin-sub">
-                    <span className="cin-only-tall">{f.tall.cap}</span>
-                    <span className="cin-only-wide">{f.wide.cap}</span>
-                  </span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Promises — the proof that can be checked, above the price list ── */}
-        <section className="cin-chapter cin-proof" id="promises" data-ch="Promises">
-          <div className="cin-loop" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/nolan-kennedy-wedding-poster.jpg" alt="" loading="lazy" data-drift />
-            <video muted loop playsInline preload="none" poster="/nolan-kennedy-wedding-poster.jpg" data-loop-src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
-          </div>
-          <div className="cin-proof-inner">
-            <Slate n="02" name="Before the price list" note="What you can hold me to" />
-            <h2 className="cin-card-title">
-              <span className="cin-mask"><span>Promises you</span></span>
-              <span className="cin-mask"><span>can hold me to.</span></span>
-            </h2>
-
-            <ul className="cin-promises">
-              {PROMISES.map((p) => (
-                <li key={p.k} className="cin-rise"><strong>{p.k}</strong><span>{p.v}</span></li>
-              ))}
-            </ul>
-
-            {VENUES.length > 0 && (
-              <p className="cin-venues cin-rise"><span>Filmed at</span> {VENUES.join(" · ")}</p>
-            )}
-          </div>
-        </section>
-
-        {/* ── Wedding price list ── */}
-        <section className="cin-chapter cin-prices" id="wedding-prices" data-ch="Wedding prices">
-          <div className="cin-prices-head">
-            <p className="cin-kick cin-rise">Weddings · the price list</p>
-            <h2 className="cin-h2 cin-card-title">
-              <span className="cin-mask"><span>Two packages.</span></span>
-              <span className="cin-mask"><span>Real prices.</span></span>
-            </h2>
-          </div>
-          <div className="cin-tickets">
-            {weddings.map((p) => (
-              <article key={p.id} className={`cin-ticket cin-rise${p.popular ? " is-popular" : ""}`}>
-                <header>
-                  <div>
-                    {p.popular && <span className="cin-flag">Most booked</span>}
-                    <h3>{p.name}</h3>
-                    <p>{p.scope}</p>
-                  </div>
-                  <p className="cin-price">{money(p.price)}</p>
-                </header>
-                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-                <Link href={`/quote?for=wedding&pkg=${p.id}`} className="cin-link">Start with {p.id === "film" ? "the film" : "photography"} <Arrow /></Link>
-              </article>
-            ))}
-          </div>
-          <div className="cin-extras cin-rise">
-            <div>
-              <h3>Add what fits</h3>
-              <ul className="cin-addons">
-                {weddingAddons.map((a) => (
-                  <li key={a.id}><span><strong>{a.name}</strong>{a.id === "guest" ? "QR card on every table, no app" : a.get}</span><b>{a.price === 0 ? "free" : `+${money(a.price)}`}</b></li>
-                ))}
-              </ul>
-            </div>
-            <div className="cin-extras-side">
-              <h3>Travel</h3>
-              <p className="cin-fine">{TRAVEL.line}</p>
-              <h3>Booking</h3>
-              <p className="cin-fine">A 50% retainer holds your date. The balance is due 14 days before the wedding, and the price is confirmed in writing.</p>
-              {deal ? (
-                <p className="cin-offer">
-                  <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —
-                  film {money(applyDeal(W_FILM.price, deal))}, photography {money(applyDeal(W_PHOTO.price, deal))}. Applied to your quote automatically.
-                </p>
-              ) : bonus ? (
-                <p className="cin-offer">
-                  <strong>{bonus.label}:</strong> the guest photo library ({money(GUEST_ADDON.price)}) is included. Pay in full at booking and it&apos;s included any time. The engagement session is always free with your wedding.
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <div className="cin-cta-row cin-rise">
-            <a href="#date" className="cin-btn cin-btn--light cin-btn--lg">Check my date <Arrow /></a>
-            <Link href="/quote?for=wedding" className="cin-btn cin-btn--ghost cin-btn--lg">Build my wedding quote</Link>
-            <a href={SMS_HREF} className="cin-link">or text Brandon <Arrow /></a>
-          </div>
-          <Skip label="That’s the wedding chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#about", text: "Meet Brandon" }]} />
-        </section>
-
-        {/* ── Chapter 03 · Business ── */}
+        {/* ── Chapter 01 · Business ── */}
         <section className="cin-chapter cin-biz" id="business" data-ch="Business">
           <div className="cin-card">
-            <Slate n="03" name="Business" note="Content Days · Events" />
+            <Slate n="01" name="Business" note="Content Days · Events" />
             <h2 className="cin-card-title">
               <span className="cin-mask"><span>Hate being on camera?</span></span>
               <span className="cin-mask"><span>Most owners do.</span></span>
@@ -561,7 +398,201 @@ export default function CinemaHome() {
             <a href={SMS_HREF} className="cin-btn cin-btn--ghost cin-btn--lg">Text Brandon</a>
             <Link href="/quote?for=business" className="cin-link">or build a business quote <Arrow /></Link>
           </div>
-          <Skip label="That’s the business chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#families", text: "Next: portraits" }]} />
+          <Skip label="That’s the business chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#weddings", text: "Next: weddings" }]} />
+        </section>
+
+        {/* ── Chapter 02 · Weddings ── */}
+        <section className="cin-chapter cin-wed" id="weddings" data-ch="Weddings">
+          <div className="cin-card cin-card--split">
+            <div className="cin-card-lead">
+              <Slate n="02" name="Weddings" note="Film · Photography" />
+              <h2 className="cin-card-title cin-card-title--long">
+                <span className="cin-mask"><span>Your day,</span></span>
+                <span className="cin-mask"><span>told the way</span></span>
+                <span className="cin-mask"><span>it felt.</span></span>
+              </h2>
+              <p className="cin-lede cin-rise">
+                I don’t like putting anyone outside of what they normally feel
+                comfortable with. I work with your DJ, your planner and your
+                venue.
+              </p>
+              <p className="cin-say cin-rise">
+                A cinematic wedding film with your real vows and ceremony
+                audio, or full-day photography. You relax and have a good
+                time. I’ll be having one too.
+              </p>
+              <p className="cin-fromline cin-rise">
+                <span>Film <b>{money(W_FILM.price)}</b></span>
+                <span>Photography <b>{money(W_PHOTO.price)}</b></span>
+              </p>
+              <Skip label="Not planning a wedding?" links={[{ href: "#families", text: "Family & portraits" }, { href: "#quote", text: "Your number" }]} />
+            </div>
+
+            {/* Date check — the first thing a couple asks */}
+            <div className="cin-date cin-rise" id="date">
+              <h3>Is your date open?</h3>
+              <p className="cin-date-label">2026 Saturdays still open — tap one</p>
+              <p className="cin-dates">
+                {CAMPAIGN.openDates2026.map((d) => (
+                  <Link key={d} href={dateHref(`${d}, 2026`)}>{d.replace(/^Sat /, "")}</Link>
+                ))}
+              </p>
+              <form className="cin-datecheck" action="/quote" method="get">
+                <input type="hidden" name="for" value="wedding" />
+                <label htmlFor="cin-date-input">Any other date, 2026 or 2027</label>
+                <div>
+                  <input id="cin-date-input" type="date" name="date" min={today} required />
+                  <button type="submit" className="cin-btn cin-btn--light">Check my date <Arrow /></button>
+                </div>
+              </form>
+              <ul className="cin-date-terms">
+                <li>Your date carries straight into your quote — no retyping, no call needed.</li>
+                <li>A 50% retainer holds it; the balance is due 14 days before.</li>
+                <li>Wedding coming up fast? <a href={SMS_HREF}>Text me the date</a> — that’s the quickest answer.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* The film comes first */}
+          <div className="cin-films" id="work">
+            <span id="films" className="cin-anchor" aria-hidden="true" />
+            <div className="cin-films-head">
+              <h2 className="cin-h2 cin-card-title">
+                <span className="cin-mask"><span>Made to be watched.</span></span>
+              </h2>
+              <p className="cin-rise">Tap to play, sound on. This is Matt &amp; April’s sneak peek — the film they had within 48 hours.</p>
+            </div>
+            <div className="cin-screen">
+              <Player
+                feature
+                src={videoUrl("/matt-april-wedding.mp4")}
+                poster="/matt-april-cover.jpg"
+                alt="April laughing with her wedding party on the lawn"
+                title="Matt & April"
+                sub="Wedding film · sneak peek · September 2026"
+                runtime="Play the film"
+              />
+            </div>
+            <ul className="cin-facts">
+              {FILM_FACTS.map((f) => <li key={f.k} className="cin-rise"><strong>{f.k}</strong><span>{f.v}</span></li>)}
+              <li className="cin-rise cin-facts-price">
+                <strong>{money(W_FILM.price)}</strong>
+                <span>{W_FILM.name} · full day</span>
+                <Link href="/quote?for=wedding&pkg=film" className="cin-link">Build a film quote <Arrow /></Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="cin-reel" aria-label="Wedding photographs">
+            {REEL.map((f, i) => (
+              <figure className="cin-frame" key={f.wide.src}>
+                <div className="cin-frame-media">
+                  <picture>
+                    <source media="(min-width: 800px)" srcSet={f.wide.src} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={f.tall.src}
+                      alt={f.tall.cap}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      style={{ "--pos-tall": f.tall.pos, "--pos-wide": f.wide.pos }}
+                    />
+                  </picture>
+                </div>
+                <figcaption className="cin-frame-cap">
+                  <span className="cin-frame-n">Photography · {String(i + 1).padStart(2, "0")} / {String(REEL.length).padStart(2, "0")}</span>
+                  <span className="cin-sub">
+                    <span className="cin-only-tall">{f.tall.cap}</span>
+                    <span className="cin-only-wide">{f.wide.cap}</span>
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Promises — the proof that can be checked, above the price list ── */}
+        <section className="cin-chapter cin-proof" id="promises" data-ch="Promises">
+          <div className="cin-loop" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/nolan-kennedy-wedding-poster.jpg" alt="" loading="lazy" data-drift />
+            <video muted loop playsInline preload="none" poster="/nolan-kennedy-wedding-poster.jpg" data-loop-src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
+          </div>
+          <div className="cin-proof-inner">
+            <Slate n="03" name="Before the price list" note="What you can hold me to" />
+            <h2 className="cin-card-title">
+              <span className="cin-mask"><span>Promises you</span></span>
+              <span className="cin-mask"><span>can hold me to.</span></span>
+            </h2>
+
+            <ul className="cin-promises">
+              {PROMISES.map((p) => (
+                <li key={p.k} className="cin-rise"><strong>{p.k}</strong><span>{p.v}</span></li>
+              ))}
+            </ul>
+
+            {VENUES.length > 0 && (
+              <p className="cin-venues cin-rise"><span>Filmed at</span> {VENUES.join(" · ")}</p>
+            )}
+          </div>
+        </section>
+
+        {/* ── Wedding price list ── */}
+        <section className="cin-chapter cin-prices" id="wedding-prices" data-ch="Wedding prices">
+          <div className="cin-prices-head">
+            <p className="cin-kick cin-rise">Weddings · the price list</p>
+            <h2 className="cin-h2 cin-card-title">
+              <span className="cin-mask"><span>Two packages.</span></span>
+              <span className="cin-mask"><span>Real prices.</span></span>
+            </h2>
+          </div>
+          <div className="cin-tickets">
+            {weddings.map((p) => (
+              <article key={p.id} className={`cin-ticket cin-rise${p.popular ? " is-popular" : ""}`}>
+                <header>
+                  <div>
+                    {p.popular && <span className="cin-flag">Most booked</span>}
+                    <h3>{p.name}</h3>
+                    <p>{p.scope}</p>
+                  </div>
+                  <p className="cin-price">{money(p.price)}</p>
+                </header>
+                <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
+                <Link href={`/quote?for=wedding&pkg=${p.id}`} className="cin-link">Start with {p.id === "film" ? "the film" : "photography"} <Arrow /></Link>
+              </article>
+            ))}
+          </div>
+          <div className="cin-extras cin-rise">
+            <div>
+              <h3>Add what fits</h3>
+              <ul className="cin-addons">
+                {weddingAddons.map((a) => (
+                  <li key={a.id}><span><strong>{a.name}</strong>{a.id === "guest" ? "QR card on every table, no app" : a.get}</span><b>{a.price === 0 ? "free" : `+${money(a.price)}`}</b></li>
+                ))}
+              </ul>
+            </div>
+            <div className="cin-extras-side">
+              <h3>Travel</h3>
+              <p className="cin-fine">{TRAVEL.line}</p>
+              <h3>Booking</h3>
+              <p className="cin-fine">A 50% retainer holds your date. The balance is due 14 days before the wedding, and the price is confirmed in writing.</p>
+              {deal ? (
+                <p className="cin-offer">
+                  <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —
+                  film {money(applyDeal(W_FILM.price, deal))}, photography {money(applyDeal(W_PHOTO.price, deal))}. Applied to your quote automatically.
+                </p>
+              ) : bonus ? (
+                <p className="cin-offer">
+                  <strong>{bonus.label}:</strong> the guest photo library ({money(GUEST_ADDON.price)}) is included. Pay in full at booking and it&apos;s included any time. The engagement session is always free with your wedding.
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <div className="cin-cta-row cin-rise">
+            <a href="#date" className="cin-btn cin-btn--light cin-btn--lg">Check my date <Arrow /></a>
+            <Link href="/quote?for=wedding" className="cin-btn cin-btn--ghost cin-btn--lg">Build my wedding quote</Link>
+            <a href={SMS_HREF} className="cin-link">or text Brandon <Arrow /></a>
+          </div>
+          <Skip label="That’s the wedding chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#about", text: "Meet Brandon" }]} />
         </section>
 
         {/* ── Chapter 04 · Family & portraits ── */}
@@ -663,6 +694,9 @@ export default function CinemaHome() {
             <p className="cin-say cin-rise">
               No pressure, no surprises. You see the real number first.
             </p>
+            <div className="cin-quote-lead">
+              <HomeLead />
+            </div>
           </div>
           <div className="cin-quote-bg" aria-hidden="true">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -714,8 +748,8 @@ export default function CinemaHome() {
         </div>
         <div className="cin-footer-row">
           <Link href="/" className="cin-brand"><BrandMark /><span>Roth Media</span></Link>
-          <Link href="/weddings">Weddings</Link>
           <Link href="/business">Business</Link>
+          <Link href="/weddings">Weddings</Link>
           <Link href="/quote">Get a quote</Link>
           {SOCIAL.map((s) => <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>)}
           <Link href="/portal">Client login</Link>
@@ -725,12 +759,12 @@ export default function CinemaHome() {
         </div>
       </footer>
 
-      {/* Phone dock: check my date / text / call, always reachable, sits below the content */}
+      {/* Phone dock: instant business quote / text / call, always reachable, sits below the content */}
       <div className="cin-dock">
-        <a href="#date" className="cin-dock-main">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M8 3v5M16 3v5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" /></svg>
-          Check my date
-        </a>
+        <Link href={BIZ_QUOTE} className="cin-dock-main">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v11H3zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
+          Instant quote
+        </Link>
         <a href={SMS_HREF} aria-label="Text Brandon">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
           Text

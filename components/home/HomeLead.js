@@ -4,7 +4,7 @@ import { useState } from "react";
 import { submitLead } from "../../lib/submit-lead";
 import { track } from "../../lib/track";
 
-const FOR = [["wedding", "A wedding"], ["business", "My business"], ["family", "Family photos"], ["", "Not sure yet"]];
+const FOR = [["business", "My business"], ["wedding", "A wedding"], ["family", "Family photos"], ["", "Not sure yet"]];
 const CONTACT = [["text", "Text"], ["call", "Call"], ["email", "Email"]];
 
 // The homepage lead form: what they're struggling with, what they want,
