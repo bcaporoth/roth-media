@@ -33,7 +33,8 @@ export async function POST(request) {
   const cq = body.cart && priceQuote({ category: body.cart.category, packageId: body.cart.packageId, addons: body.cart.addons, code: body.cart.code });
   let clientPayLink = "";
   if (cq) {
-    const code = cq.deal?.code || "";
+    // A friend code rides on the pay link too — /pay/cart looks it up and takes the $100 off.
+    const code = cq.deal?.code || (/^(FRIEND|THANKS)-/i.test(String(body.cart.code || "")) ? String(body.cart.code).toUpperCase() : "");
     const base = { category: cq.cat.id, packageId: cq.pkg.id, addons: cq.chosen.map((a) => a.id), name: clip(body.name, 120), email: clip(body.email, 160).toLowerCase(), phone: clip(body.phone, 40), code };
     clientPayLink = cartUrl(base);
     fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", clientPayLink]);
