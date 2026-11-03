@@ -93,14 +93,16 @@ export async function POST(request) {
       try {
         const fn = firstName(sub.name, sub.email);
         const get = [...(cq.pkg.get || []), ...cq.chosen.map((a) => a.get)].filter(Boolean);
-        const dueLine = cq.mode === "retainer" ? `${money(cq.dueToday)} holds the date; the balance is due 14 days before.` : `${money(cq.total)}${cq.pkg.per || ""}. Nothing's charged until we lock your date.`;
+        const dueLine = cq.mode === "retainer" ? `${money(cq.dueToday)} holds the date; the balance is due 14 days before.` : `${money(cq.total)}${cq.pkg.per || ""} — one payment, paid in full through your link when we lock the date. Nothing else later.`;
+        const friendOff = /^FRIEND-/i.test(String(body.cart.code || "")) && cq.pkg.price >= 450 ? `\n\nYour friend's $100 is built into your pay link — ${money(Math.max(0, cq.total - 100))} at checkout.` : "";
+        const giveLine = cq.cat.id === "business" ? `\n\nOnce you're booked you'll get your own link to hand to another owner: $100 off their first shoot, $100 back to you.` : "";
         const next = cq.cat.id === "business"
           ? "Next step: grab 20 minutes with me. We'll go through what's worth pushing, who's on camera, and lock a shoot date. You'll leave the call with a date and a plan."
           : "Next step: grab 20 minutes with me and we'll plan it out, then lock the date.";
         await sendEmail({
           to: sub.email,
           subject: `Your quote: ${cq.pkg.name} — ${money(cq.total)}${cq.pkg.per || ""}`,
-          text: `Hi ${fn},\n\nHere's your quote for ${cq.pkg.name}${cq.chosen.length ? ` with ${cq.chosen.map((a) => a.name.toLowerCase()).join(", ")}` : ""}.\n\nYou get:\n${get.map((g) => `• ${g}`).join("\n")}\n\n${dueLine}\n\n${next}\n\nBook the call: ${CALENDLY}\n\nYour pay link — hang onto this email, it's yours for good. We'll use it when we lock the date on the call or right before the shoot:\n${clientPayLink}\n\nOr just text me back — this came straight to my phone too.\n\nBrandon\nRoth Media · rothmediaco.com`,
+          text: `Hi ${fn},\n\nHere's your quote for ${cq.pkg.name}${cq.chosen.length ? ` with ${cq.chosen.map((a) => a.name.toLowerCase()).join(", ")}` : ""}.\n\nYou get:\n${get.map((g) => `• ${g}`).join("\n")}\n\n${dueLine}${friendOff}\n\n${next}${giveLine}\n\nBook the call: ${CALENDLY}\n\nYour pay link — hang onto this email, it's yours for good. We'll use it when we lock the date on the call or right before the shoot:\n${clientPayLink}\n\nOr just text me back — this came straight to my phone too.\n\nBrandon\nRoth Media · rothmediaco.com`,
         });
       } catch {}
     }

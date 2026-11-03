@@ -28,6 +28,7 @@ export default function BusinessAdPage() {
             <li><strong>Two posts a week, done.</strong> 8 vertical reels + 10–30 photos — a month of content from one morning, no scramble on a Tuesday night.</li>
             <li><strong>Your profile sells for you.</strong> The Pinned Three: who you are &amp; where to find you · why people trust you · how to book or stop in. The first thing every new customer sees.</li>
             <li><strong>Real people, your place.</strong> Your team, your regulars, your work — not stock footage. That&apos;s what makes someone in Sayre pick you over the chain.</li>
+            <li><strong>Give $100, get $100.</strong> Once you&apos;re booked you get a link to hand to the business next door — $100 off their first shoot, $100 back to you. Every owner you send.</li>
             <li><strong>Cleared for ads.</strong> Licensed music, yours to run on Facebook and Instagram. Want me to run them? Ask on the call.</li>
           </ul>
           <ul className="cx-rows bz-go-prices">
@@ -35,7 +36,7 @@ export default function BusinessAdPage() {
             <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">half day · adds a 45–90s promo video · 15–30 photos · missed a shot? I come back free</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
             <li className="cx-row"><span className="cx-row-name">{always.name}</span><span className="cx-row-note">The Month, every month · pause or cancel anytime</span><strong className="cx-row-price"><DealPrice price={always.price} category="business" packageId={always.id} />/mo</strong></li>
           </ul>
-          <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks · no contracts, pay when we lock the date</p>
+          <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks · one payment, paid in full when you book</p>
         </div>
         <div className="bz-go-form cx-panel" id="plan">
           <p className="cx-kick">Your quote, instantly</p>

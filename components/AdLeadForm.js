@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { money } from "../lib/packages";
+import { isReferralCode, REFERRAL_AMOUNT } from "../lib/referral-rules";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
 import BookCall from "./BookCall";
@@ -16,11 +17,17 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
   const [status, setStatus] = useState("idle");
   const [who, setWho] = useState({ name: "", email: "" });
   const [plan, setPlan] = useState(plans.find((p) => p.popular)?.id || plans[0]?.id || "");
+  // ?ref=FRIEND-SARA-7K2P — a friend's link: the $100 is built in, say so up top.
+  const [ref, setRef] = useState("");
   useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const r = String(q.get("ref") || "").trim().toUpperCase();
+    if (isReferralCode(r)) setRef(r);
     if (!plans.length) return;
-    const want = new URLSearchParams(window.location.search).get("pkg");
+    const want = q.get("pkg");
     if (want && plans.some((p) => p.id === want)) setPlan(want);
   }, [plans]);
+  const friendName = ref ? (() => { const s = ref.split("-")[1] || ""; return s.charAt(0) + s.slice(1).toLowerCase(); })() : "";
   const picked = plans.find((p) => p.id === plan);
   async function onSubmit(e) {
     e.preventDefault();
@@ -34,8 +41,8 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
         name: d.name, email: d.email || "", phone: d.phone,
         subject: `Ad lead — ${d.name} · ${label}${tag}${d.extra ? ` · ${d.extra}` : ""}`,
         summary: `From an ad · ${label}${tag}${d.extra ? ` · ${d.extra}` : ""}`,
-        fields: [["name", d.name], ["phone", d.phone], ["email", d.email], [extra.label.toLowerCase(), d.extra], ["plan", picked ? `${picked.name} — ${money(picked.price)}` : plans.length ? "not sure — help me pick" : ""], ["came in through", `ad page (${label})`]],
-        ...(picked ? { cart: { category, packageId: picked.id, addons: [], code: "" } } : {}),
+        fields: [["name", d.name], ["phone", d.phone], ["email", d.email], [extra.label.toLowerCase(), d.extra], ["sent by", ref ? `${friendName} (${ref})` : ""], ["plan", picked ? `${picked.name} — ${money(picked.price)}` : plans.length ? "not sure — help me pick" : ""], ["came in through", `ad page (${label})`]],
+        ...(picked ? { cart: { category, packageId: picked.id, addons: [], code: ref } } : {}),
       });
       track("ad_lead_sent", { category });
       setWho({ name: d.name, email: d.email || "" });
@@ -53,6 +60,7 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
   return (
     <form className="golead-form" onSubmit={onSubmit}>
       <input type="text" name="website" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+      {ref && <p className="golead-friend"><strong>{friendName} sent you {money(REFERRAL_AMOUNT)} off.</strong> It&apos;s built into every price below — nothing to type.</p>}
       {plans.length > 0 && (
         <fieldset className="golead-plans">
           <legend>Pick a plan</legend>
@@ -61,7 +69,7 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
               <input type="radio" name="plan" value={p.id} checked={plan === p.id} onChange={() => setPlan(p.id)} />
               <span className="golead-plan-name">{p.name}{p.popular && <em>Most booked</em>}</span>
               <span className="golead-plan-scope">{p.scope}</span>
-              <strong className="golead-plan-price">{money(p.price)}{p.per || ""}</strong>
+              <strong className="golead-plan-price">{ref ? <>{money(p.price - REFERRAL_AMOUNT)}{p.per || ""} <s>{money(p.price)}</s></> : <>{money(p.price)}{p.per || ""}</>}</strong>
             </label>
           ))}
           <label className={"golead-plan golead-plan--any" + (plan === "" ? " is-on" : "")}>
