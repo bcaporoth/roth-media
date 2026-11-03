@@ -184,7 +184,7 @@ export default function CinemaHome() {
         <nav className="cin-nav-links" aria-label="Main navigation">
           <Link href="/business">Business</Link>
           <Link href="/weddings">Weddings</Link>
-          <a href="#families">Portraits</a>
+          <Link href="/quote?for=portraits">Portraits</Link>
           <a href={PHONE_HREF} className="cin-nav-phone">{PHONE}</a>
           <Link href="/portal" className="cin-nav-login">Client login</Link>
         </nav>
@@ -421,7 +421,7 @@ export default function CinemaHome() {
                 <span>Film <b>{money(W_FILM.price)}</b></span>
                 <span>Photography <b>{money(W_PHOTO.price)}</b></span>
               </p>
-              <Skip label="Not planning a wedding?" links={[{ href: "#families", text: "Family & portraits" }, { href: "#quote", text: "Your number" }]} />
+              <Skip label="Not planning a wedding?" links={[{ href: "/quote?for=portraits", text: "Family & portraits" }, { href: "#quote", text: "Your number" }]} />
             </div>
 
             {/* Date check — the first thing a couple asks */}
