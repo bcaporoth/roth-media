@@ -19,9 +19,10 @@ export default function BusinessAdPage() {
     <main className="cx-page cx-page--hero bz-page bz-go">
       <div className="bz-go-grid">
         <div className="bz-go-pitch">
-          <p className="cx-kick bz-go-brand">Roth Media · Twin Tiers · local business content</p>
+          <p className="cx-kick bz-go-brand">Roth Media · Twin Tiers · content that converts</p>
           <h1 className="cx-h1 cx-h1--long">Stop posting nothing. <br />One shoot, a month of posts.</h1>
           <p className="cx-lede">I come to your place for two hours. You get the reels, photos, and the three pinned posts that turn your Instagram into a front door — delivered in two weeks, sized to post. You never touch a camera.</p>
+          <p className="bz-go-converts"><strong>A reel gets a scroll. This gets them through the door.</strong> Every piece is built to answer the one question a new customer has before they walk in: <em>is this place for me?</em> That&apos;s content that converts — not content that fills a feed.</p>
           <a href="#plan" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block bz-go-jump">Get my quote — 60 seconds</a>
           <video className="bz-go-video" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline />
           <ul className="bz-go-why">
@@ -39,7 +40,7 @@ export default function BusinessAdPage() {
           <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks · one payment, paid in full when you book</p>
         </div>
         <div className="bz-go-form cx-panel" id="plan">
-          <p className="cx-kick">Your quote, instantly</p>
+          <p className="cx-kick">Content that converts · your quote, instantly</p>
           <h2 className="bz-go-form-title">Pick a plan. Four fields. Done.</h2>
           <p className="bz-go-form-sub">Your price, exactly what you get, and a link to book a 15-minute call hit your inbox the moment you send. I text you the same day.</p>
           <AdLeadForm category="business" label="business" cta="Send me my quote" emailRequired plans={plans} extra={{ label: "Business name", placeholder: "Your shop, gym, or restaurant" }} />
