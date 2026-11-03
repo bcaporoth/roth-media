@@ -35,6 +35,26 @@ async function api(payload) {
   return j;
 }
 
+// Studio only: the content idea for that date — a reel, a script line, a shot
+// list. Saved on the event, so the plan is there before the shoot.
+function IdeaBox({ ev, clientId, onSaved }) {
+  const [open, setOpen] = useState(Boolean(ev.idea));
+  const [val, setVal] = useState(ev.idea || "");
+  const [saving, setSaving] = useState(false);
+  if (!open) return <button type="button" className="achip" onClick={() => setOpen(true)}>+ Content idea</button>;
+  async function save() {
+    setSaving(true);
+    try { const j = await api({ op: "idea", client_id: clientId, id: ev.id, idea: val }); onSaved(j.event); } catch {}
+    setSaving(false);
+  }
+  return (
+    <div className="ccal-idea">
+      <textarea value={val} onChange={(e) => setVal(e.target.value)} placeholder="Reel: doors-open rush at 7 AM · photo: the sign · script line: 'one day only'" />
+      <button type="button" className="achip" onClick={save} disabled={saving || val === (ev.idea || "")}>{saving ? "Saving…" : val === (ev.idea || "") ? "Saved" : "Save idea"}</button>
+    </div>
+  );
+}
+
 export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null }) {
   const studio = mode === "studio";
   const [events, setEvents] = useState(initialEvents || []);
@@ -112,7 +132,9 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                 <div>
                   <strong>{e.title}</strong>{e.time ? <span className="ccal-time"> · {fmt12(e.time)}</span> : null}
                   {e.note ? <em>{e.note}</em> : null}
-                  <small>{e.created_by === "studio" ? (studio ? "You added this" : "Added by Brandon") : (studio ? `${clientName.split(" ")[0] || "They"} added this` : "You added this")}{e.followup_at ? ` · follow-up on ${studio ? "your" : "Brandon's"} calendar ✓` : ""}</small>
+                  <small>{e.source === "intake" ? "From their intake" : e.created_by === "studio" ? (studio ? "You added this" : "Added by Brandon") : (studio ? `${clientName.split(" ")[0] || "They"} added this` : "You added this")}{e.followup_at ? ` · follow-up on ${studio ? "your" : "Brandon's"} calendar ✓` : ""}</small>
+                  {studio && <IdeaBox ev={e} clientId={clientId} onSaved={(ev) => setEvents((xs) => xs.map((x) => (x.id === ev.id ? ev : x)))} />}
+                  {!studio && e.idea && <p className="ccal-idea-view"><strong>Brandon&rsquo;s idea:</strong> {e.idea}</p>}
                 </div>
                 <span className="ccal-acts">
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}

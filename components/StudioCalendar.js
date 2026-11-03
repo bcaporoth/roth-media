@@ -38,6 +38,12 @@ export function gcalUrl(s) {
 export default function StudioCalendar({ shoots: given = null, onOpen = null }) {
   const embedded = Boolean(given);
   const [fetched, setShoots] = useState(null);
+  // Clients' own dates (sales, launches, events) — from /portal/calendar and their intake.
+  const [cevents, setCevents] = useState([]);
+  useEffect(() => {
+    fetch("/api/admin/client-events").then((r) => r.json()).then((j) => setCevents(j.events || [])).catch(() => {});
+  }, []);
+  const cByDay = useMemo(() => { const m = {}; for (const e of cevents) (m[e.date] ||= []).push(e); return m; }, [cevents]);
   const shoots = useMemo(() => (given ? given.filter((s) => s.status !== "cancelled") : fetched), [given, fetched]);
   const [error, setError] = useState("");
   const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
@@ -71,6 +77,8 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
 
   const upcoming = (shoots || []).filter((s) => s.date && s.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
   const undated = (shoots || []).filter((s) => !s.date);
+  const clientUpcoming = cevents.filter((e) => e.date >= today).slice(0, 12);
+  const firstName = (n) => String(n || "").split(" ")[0];
 
   if (error) return <p className="portal-empty">{error}</p>;
   if (!shoots) return <p className="portal-empty">Loading…</p>;
@@ -92,6 +100,7 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
             <div key={i} className={"scal-cell" + (k === today ? " is-today" : "") + (list.length ? " has-shoot" : "")}>
               <span className="scal-num">{d.getDate()}</span>
               {list.map((s) => <Link key={s.id} href={shootHref(s)} onClick={go(s)} className={`scal-ev is-${s.kind}`} title={s.title}>{startOf(s) ? fmt12(startOf(s)).replace(":00", "") + " " : ""}{s.title}</Link>)}
+              {(cByDay[k] || []).map((e) => <Link key={e.id} href={`/portal/admin/clients/${e.client_id}#calendar`} className={"scal-ev is-client" + (e.idea ? " has-idea" : "")} title={`${e.clientName}: ${e.title}${e.idea ? " · idea ready" : ""}`}>{firstName(e.clientName)}: {e.title}</Link>)}
             </div>
           );
         })}
@@ -124,6 +133,19 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
           <p className="inbox-hint">Google won&apos;t let you sign in inside an embedded calendar, so this page reads from your Shoots. Tap <strong>+ Google Cal</strong> on any shoot to drop it into your phone&apos;s calendar with the address, client, and drive time filled in.</p>
           <div className="gcard-actions">
             <a className="achip" href="https://calendar.google.com/calendar/r" target="_blank" rel="noreferrer">Open Google Calendar ↗</a>
+            {clientUpcoming.length > 0 && (
+              <div className="scal-clientdates">
+                <h3>Clients&rsquo; dates coming up</h3>
+                <ul className="alist">
+                  {clientUpcoming.map((e) => (
+                    <li key={e.id} className="arow">
+                      <div><strong>{e.clientName}</strong> — {e.title}<br /><small>{new Date(`${e.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}{e.time ? ` · ${e.time}` : ""}{e.source === "intake" ? " · from intake" : ""}{e.idea ? " · idea ready" : " · no idea yet"}</small></div>
+                      <Link className="achip" href={`/portal/admin/clients/${e.client_id}#calendar`}>Plan it →</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <a className="achip" href="https://calendly.com/app/scheduled_events/user/me" target="_blank" rel="noreferrer">Calendly bookings ↗</a>
             {!embedded && <Link className="achip" href="/portal/admin/shoots">Manage shoots →</Link>}
           </div>

@@ -16,3 +16,7 @@ create table if not exists public.client_events (
 );
 create index if not exists client_events_client_date_idx on public.client_events(client_id, date);
 alter table public.client_events enable row level security; -- service role only
+
+-- Nov 3 2026: content ideas on a date + where the event came from.
+alter table public.client_events add column if not exists idea text not null default '';
+alter table public.client_events add column if not exists source text not null default '';  -- '' | 'intake'

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
 import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../../lib/studio-emails";
+import { parseEventDates } from "../../../lib/event-dates";
 import { clip, visitorId } from "../../../lib/visitor";
 import { priceQuote } from "../../../lib/booking";
 import { cartUrl } from "../../../lib/cart";
@@ -74,6 +75,28 @@ export async function POST(request) {
       ? await db.from("submissions").update({ ...sub, status: "new", read_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", placeholder.id)
       : await db.from("submissions").insert(sub);
     stored = !error;
+  }
+
+  // Intake → their calendar: the "anything on the calendar we should shoot
+  // around?" answer becomes dated events on the client's calendar, so the
+  // calendar isn't empty on day one. Needs an email; makes the client row if
+  // it's their first time through.
+  if (adminConfigured && sub.email) {
+    try {
+      const answer = (fields.find(([k]) => /calendar/i.test(k)) || [])[1] || "";
+      const { events: found } = answer ? parseEventDates(answer) : { events: [] };
+      if (found.length) {
+        const db = supabaseAdmin();
+        let { data: c } = await db.from("clients").select("id").eq("email", sub.email).maybeSingle();
+        if (!c) ({ data: c } = await db.from("clients").insert({ email: sub.email, name: sub.name, phone: sub.phone }).select("id").single());
+        if (c) {
+          const { data: have } = await db.from("client_events").select("date, title").eq("client_id", c.id);
+          const seen = new Set((have || []).map((e) => `${e.date}|${e.title.toLowerCase()}`));
+          const rows = found.filter((e) => !seen.has(`${e.date}|${e.title.toLowerCase()}`)).map((e) => ({ client_id: c.id, date: e.date, title: e.title, note: "From their intake", created_by: "studio", source: "intake" }));
+          if (rows.length) { await db.from("client_events").insert(rows); fields.push(["on their calendar now", rows.map((r) => `${r.title} (${r.date})`).join(" · ")]); }
+        }
+      }
+    } catch {}
   }
 
   let emailed = false;
