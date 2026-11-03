@@ -25,7 +25,7 @@ export default function BusinessAdPage() {
           <p className="bz-go-converts"><strong>A reel gets a scroll. This gets them through the door.</strong> Every piece is built to answer the one question a new customer has before they walk in: <em>is this place for me?</em> That&apos;s content that converts — not content that fills a feed.</p>
           <a href="#plan" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block bz-go-jump">Get my quote — 60 seconds</a>
           <div className="bz-go-adwrap">
-            <video className="bz-go-video bz-go-video--ad" src={videoUrl("/reels/roth-ad.mp4")} poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
+            <video className="bz-go-video bz-go-video--ad" src="/reels/roth-ad.mp4" poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
             <video className="bz-go-video bz-go-video--work" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline aria-label="A promo shot for a local gym" />
           </div>
           <ul className="bz-go-why">
