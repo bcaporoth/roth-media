@@ -52,18 +52,20 @@ const DOORS = [
     from: wedFrom, cta: "Check my date", href: "#date", jump: "Skip to weddings",
   },
   {
-    n: "03", id: "families", name: "Families", sub: "Seniors & couples too · 1 hour, 30+ photos",
-    from: PORTRAIT.price, cta: "Text Brandon", href: SMS_HREF, jump: "Skip to portraits",
+    n: "03", id: "quote", name: "Families", sub: "Seniors & couples too · 1 hour, 30+ photos",
+    from: PORTRAIT.price, cta: "Text Brandon", href: SMS_HREF, jump: "Get a portrait quote",
   },
 ];
+
+// One review where it sells, not a chapter of them.
+const BIZ_REVIEW = REVIEWS.find((r) => /business|promo|content/i.test(r.who)) || REVIEWS[0];
+const WED_REVIEW = REVIEWS.find((r) => /wedding|engagement/i.test(r.who)) || REVIEWS[1] || REVIEWS[0];
 
 const CHAPTERS = [
   { id: "top", label: "Opening" },
   { id: "business", label: "Business" },
   { id: "weddings", label: "Weddings" },
-  { id: "promises", label: "Promises" },
   { id: "wedding-prices", label: "Wedding prices" },
-  { id: "families", label: "Portraits" },
   { id: "quote", label: "Your number" },
   { id: "about", label: "Brandon" },
 ];
@@ -85,19 +87,10 @@ const REEL = [
   },
 ];
 
-const PROMISES = [
-  { k: "48 hours", v: "A sneak peek within 48 hours — ready to share while everyone’s still talking about the day." },
-  { k: "Real audio", v: "Your real vows, your full ceremony and the speeches, with clean audio." },
-  { k: "In writing", v: "I confirm the exact number in writing before we shoot. Locked date, no surprises." },
-  { k: "50% holds it", v: "A 50% retainer holds your date; the balance is due 14 days before. One free reschedule with 30 days’ notice." },
-  { k: "Your guests", v: "A QR card on every table — guests send their photos and 60-second video messages to your private gallery. No app." },
-  { k: "Licensed", v: "All music licensed through Epidemic Sound; your films are cleared for socials, your website and ads." },
-];
 
 // Venue names go here when Brandon has them. Until then this stays empty
 // and the page shows nothing in its place — never a placeholder. (Reviews
 // live in lib/reviews.js and render in the "On Google" chapter below.)
-const VENUES = [];
 
 const FILM_FACTS = [
   { k: "Two films", v: "Short & sweet, 1–3 minutes each, custom made from your day" },
@@ -111,7 +104,6 @@ const IDEAS = [
   { who: "A gym", what: "The 6 AM crew — chalk, last reps, a PR bell, your coaches actually coaching." },
 ];
 
-const SESSIONS = PORTRAIT.intake[0].options.slice(0, 4);
 
 const STRIP = [
   { src: "/photos/07-senior-portrait-last-light.jpg", cap: "Last light", cat: "Senior" },
@@ -203,7 +195,7 @@ export default function CinemaHome() {
             <Link href="/business">Business <em>from {money(bizFrom)}</em></Link>
             <Link href={BIZ_QUOTE}>Instant business quote <em>pick a plan</em></Link>
             <Link href="/weddings">Weddings <em>from {money(wedFrom)}</em></Link>
-            <a href="#families">Family &amp; portraits <em>from {money(PORTRAIT.price)}</em></a>
+            <Link href="/quote?for=portraits">Family &amp; portraits <em>from {money(PORTRAIT.price)}</em></Link>
             <a href="#date">Check a wedding date <em>open Saturdays</em></a>
             <Link href="/quote">Get a quote <em>2 minutes</em></Link>
             <a href={SMS_HREF}>Text Brandon <em>{PHONE}</em></a>
@@ -322,6 +314,7 @@ export default function CinemaHome() {
                 </p>
               </div>
               <div className="cin-card-act">
+                {BIZ_REVIEW && <blockquote className="cin-quote-inline cin-rise">“{BIZ_REVIEW.quote}”<cite>{BIZ_REVIEW.name} · {BIZ_REVIEW.who} · {GOOGLE_RATING} on Google</cite></blockquote>}
                 <p className="cin-fromline"><span>Content Days from <b>{money(bizFrom)}</b></span></p>
                 <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--light cin-btn--lg">Book a 15-minute call <Arrow /></a>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
@@ -418,6 +411,7 @@ export default function CinemaHome() {
                 comfortable with. I work with your DJ, your planner and your
                 venue.
               </p>
+              {WED_REVIEW && <blockquote className="cin-quote-inline cin-rise">“{WED_REVIEW.quote}”<cite>{WED_REVIEW.name} · {WED_REVIEW.who} · <a href={GOOGLE_PAGE_URL} target="_blank" rel="noopener noreferrer">{GOOGLE_RATING} on Google</a></cite></blockquote>}
               <p className="cin-say cin-rise">
                 A cinematic wedding film with your real vows and ceremony
                 audio, or full-day photography. You relax and have a good
@@ -512,31 +506,6 @@ export default function CinemaHome() {
           </div>
         </section>
 
-        {/* ── Promises — the proof that can be checked, above the price list ── */}
-        <section className="cin-chapter cin-proof" id="promises" data-ch="Promises">
-          <div className="cin-loop" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/nolan-kennedy-wedding-poster.jpg" alt="" loading="lazy" data-drift />
-            <video muted loop playsInline preload="none" poster="/nolan-kennedy-wedding-poster.jpg" data-loop-src={videoUrl("/nolan-kennedy-wedding-hero.mp4")} />
-          </div>
-          <div className="cin-proof-inner">
-            <Slate n="03" name="Before the price list" note="What you can hold me to" />
-            <h2 className="cin-card-title">
-              <span className="cin-mask"><span>Promises you</span></span>
-              <span className="cin-mask"><span>can hold me to.</span></span>
-            </h2>
-
-            <ul className="cin-promises">
-              {PROMISES.map((p) => (
-                <li key={p.k} className="cin-rise"><strong>{p.k}</strong><span>{p.v}</span></li>
-              ))}
-            </ul>
-
-            {VENUES.length > 0 && (
-              <p className="cin-venues cin-rise"><span>Filmed at</span> {VENUES.join(" · ")}</p>
-            )}
-          </div>
-        </section>
 
         {/* ── Wedding price list ── */}
         <section className="cin-chapter cin-prices" id="wedding-prices" data-ch="Wedding prices">
@@ -597,88 +566,13 @@ export default function CinemaHome() {
           <Skip label="That’s the wedding chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#about", text: "Meet Brandon" }]} />
         </section>
 
-        {/* ── Chapter 04 · Family & portraits ── */}
-        <section className="cin-chapter cin-fam" id="families" data-ch="Portraits">
-          <div className="cin-card cin-card--split">
-            <div className="cin-card-lead">
-              <Slate n="04" name="Family & portraits" note={SESSIONS.join(" · ")} />
-              <h2 className="cin-card-title cin-card-title--long">
-                <span className="cin-mask"><span>Less posing,</span></span>
-                <span className="cin-mask"><span>more flow.</span></span>
-              </h2>
-              <p className="cin-lede cin-rise">
-                I used to pose everybody. Now it’s more of a flow — a couple of
-                things to do, and you stay in the moment. The portraits come
-                out a lot more natural.
-              </p>
-              <p className="cin-say cin-rise">
-                Families, seniors, engagements, couples — whatever you’re
-                celebrating. An hour with your people, photos you’ll actually
-                frame.
-              </p>
-            </div>
-            <div className="cin-spec cin-rise">
-              <p className="cin-spec-head"><span>{PORTRAIT.name}</span><b>{money(PORTRAIT.price)}</b></p>
-              <ul>
-                <li><span>Time</span>{PORTRAIT.scope}</li>
-                <li><span>Photos</span>30+ edited photos</li>
-                <li><span>First look</span>Sneak peeks within 48 hours, ready to share</li>
-                <li><span>Yours to keep</span>Your own client account — a year of access, unlimited downloads</li>
-                <li><span>Want more?</span>Twenty more edited photos, +{money(ADDONS.family[0].price)}</li>
-              </ul>
-              {deal && (
-                <p className="cin-offer">
-                  <strong>Booked by {deal.endsLabel}:</strong> {money(applyDeal(PORTRAIT.price, deal))} with the {deal.label.toLowerCase()}, applied automatically.
-                </p>
-              )}
-              <div className="cin-cta-row">
-                <a href={SMS_HREF} className="cin-btn cin-btn--light cin-btn--lg">Text Brandon <Arrow /></a>
-                <Link href="/quote?for=portraits" className="cin-link">or hold a date online <Arrow /></Link>
-              </div>
-            </div>
-          </div>
-
-          <p className="cin-strip-note">From recent shoots — seniors, an engagement, at home and community events.</p>
-          <div className="cin-strip" tabIndex={0} aria-label="Photographs from recent shoots — swipe sideways">
-            <div className="cin-strip-track">
-              {STRIP.map((s, i) => (
-                <figure key={s.src} className={s.wide ? "cin-cell cin-cell--wide" : "cin-cell"}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.src} alt={s.cap} loading="lazy" />
-                  <figcaption><span>{String(i + 1).padStart(2, "0")}A</span><strong>{s.cap}</strong><em>{s.cat}</em></figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-          <div className="cin-cta-row cin-fam-end">
-            <Link href="/quote?for=portraits" className="cin-btn cin-btn--light cin-btn--lg">Hold a portrait date <Arrow /></Link>
-            <a href={SMS_HREF} className="cin-link">or text Brandon <Arrow /></a>
-          </div>
-          <Skip label="That’s portraits." links={[{ href: "#quote", text: "Next: your number" }]} />
-        </section>
 
         {/* ── Chapter 05 · Your number ── (legacy /#pricing and /#quote both land here) */}
-        {/* ── On Google: their words, verbatim ── */}
-        <section className="cin-chapter cin-google" id="reviews" data-ch="On Google">
-          <div className="cin-google-head cin-rise">
-            <p className="cin-kick">On Google</p>
-            <h2 className="cin-h2">{GOOGLE_RATING} on Google.</h2>
-          </div>
-          <ul className="cin-google-list">
-            {REVIEWS.map((r) => (
-              <li key={r.id} className="cin-rise">
-                <blockquote>“{r.quote}”</blockquote>
-                <cite>{r.name} · {r.who}</cite>
-              </li>
-            ))}
-          </ul>
-          <p className="cin-google-link cin-rise"><a href={GOOGLE_PAGE_URL} target="_blank" rel="noopener noreferrer">Read them on Google <Arrow /></a></p>
-        </section>
 
         <section className="cin-chapter cin-quote" id="quote" data-ch="Your number">
           <span id="pricing" className="cin-anchor" aria-hidden="true" />
           <div className="cin-quote-inner">
-            <Slate n="05" name="Your number" note="Two minutes · no obligation" />
+            <Slate n="03" name="Your number" note="Two minutes · no obligation" />
             <h2 className="cin-card-title">
               <span className="cin-mask"><span>See your number</span></span>
               <span className="cin-mask"><span>before you talk</span></span>
@@ -713,7 +607,7 @@ export default function CinemaHome() {
             <img src="/about-brandon.png" alt="Brandon Roth" loading="lazy" />
           </div>
           <div className="cin-about-text">
-            <Slate n="06" name="Behind the camera" />
+            <Slate n="04" name="Behind the camera" />
             <h2 className="cin-h2 cin-card-title"><span className="cin-mask"><span>Hi, I’m Brandon.</span></span></h2>
             <p className="cin-about-lead cin-rise">
               I’m all about candid work that feels real. The good moments

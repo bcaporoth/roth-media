@@ -754,3 +754,8 @@
   .rm-cinema .cin-door-price { grid-column: 2; grid-row: 3; text-align: left; font-size: 1.5rem; margin-top: 0.5rem; }
   .rm-cinema .cin-door-jump { grid-row: 4; }
 }
+
+/* one review quote inside a chapter (replaces the reviews chapter) */
+.cin-quote-inline { margin: 1.2rem 0 0; padding: 0 0 0 1rem; border-left: 2px solid var(--gold, #c9a86a); font-size: 1.05rem; line-height: 1.45; font-style: italic; max-width: 36rem; }
+.cin-quote-inline cite { display: block; margin-top: 0.4rem; font-style: normal; font-size: 0.8rem; letter-spacing: 0.04em; opacity: 0.7; }
+.cin-quote-inline cite a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
