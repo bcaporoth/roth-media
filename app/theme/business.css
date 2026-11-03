@@ -125,6 +125,8 @@
 .bz-page .golead-plan input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
 .bz-page .golead-plan.is-on { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: var(--bg-2); }
 .bz-page .golead-plan:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+.bz-page .bz-go-form .golead-form .golead-plan > span { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--dim); font-size: 0.82rem; }
+.bz-page .bz-go-form .golead-form .golead-plan > .golead-plan-name { font-weight: 600; font-size: 1.02rem; color: var(--fg); }
 .bz-page .golead-plan-name { grid-column: 1; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.02rem; color: var(--fg); display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .bz-page .golead-plan-name em { font-style: normal; font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--bg); background: var(--gold); padding: 0.15rem 0.4rem; border-radius: 2px; }
 .bz-page .golead-plan-scope { grid-column: 1; font-size: 0.82rem; line-height: 1.4; color: var(--dim); }
