@@ -7178,3 +7178,6 @@ textarea.grow { overflow: hidden; }
 .ccal-add .cform-error { grid-column: 1 / -1; }
 .pt-ccal-wrap { max-width: 900px; }
 @media (max-width: 640px) { .ccal-add { grid-template-columns: 1fr; } .ccal-list li { flex-direction: column; align-items: flex-start; } }
+
+/* inline copy button beside a code */
+.cx-link-btn { background: none; border: 0; padding: 0; margin-left: 0.3rem; font: inherit; color: var(--gold); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

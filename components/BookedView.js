@@ -1,4 +1,5 @@
 import SiteNav from "./SiteNav";
+import CopyButton from "./CopyButton";
 import PurchasePing from "./PurchasePing";
 import SiteFooter from "./SiteFooter";
 import { money } from "../lib/packages";
@@ -87,9 +88,9 @@ export default function BookedView({ paid, m = {}, q = null, paidAmt = "", amoun
                 <p className="cx-lede">{pitch.body}</p>
                 <p className="cx-cta-row">
                   <a className="cx-btn cx-btn--light cx-btn--lg" href={`sms:?&body=${encodeURIComponent(pitch.text(refCode))}`}>{pitch.button}</a>
-                  <a className="cx-btn cx-btn--ghost cx-btn--lg" href={link}>{link.replace(/^https:\/\//, "")}</a>
+                  <CopyButton className="cx-btn cx-btn--ghost cx-btn--lg" text={link} label="Copy my link" done="Link copied ✓" />
                 </p>
-                <p className="cx-fine">Your link does it all — when they open it, the {money(REFERRAL_AMOUNT)} is already on. If they'd rather type something, your code is <span className="cx-num">{refCode}</span>.</p>
+                <p className="cx-fine">Your link does it all — when they open it, the {money(REFERRAL_AMOUNT)} is already on. Paste it anywhere: a text, a DM, a Facebook comment. If they'd rather type something, your code is <span className="cx-num">{refCode}</span> <CopyButton className="cx-link-btn" text={refCode} label="copy code" done="copied ✓" />.</p>
                 <p className="cx-fine">Give {money(REFERRAL_AMOUNT)}, get {money(REFERRAL_AMOUNT)}. Works on weddings and business packages; the $100 lands once their booking is paid.</p>
               </div>
             ); })()}
