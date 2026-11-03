@@ -77,7 +77,7 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
 
   const upcoming = (shoots || []).filter((s) => s.date && s.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 12);
   const undated = (shoots || []).filter((s) => !s.date);
-  const clientUpcoming = cevents.filter((e) => e.date >= today).slice(0, 12);
+  const clientUpcoming = cevents.filter((e) => e.date >= today).sort((a, b) => Number(b.wants_shoot) - Number(a.wants_shoot) || a.date.localeCompare(b.date)).slice(0, 12);
   const firstName = (n) => String(n || "").split(" ")[0];
 
   if (error) return <p className="portal-empty">{error}</p>;
@@ -100,7 +100,7 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
             <div key={i} className={"scal-cell" + (k === today ? " is-today" : "") + (list.length ? " has-shoot" : "")}>
               <span className="scal-num">{d.getDate()}</span>
               {list.map((s) => <Link key={s.id} href={shootHref(s)} onClick={go(s)} className={`scal-ev is-${s.kind}`} title={s.title}>{startOf(s) ? fmt12(startOf(s)).replace(":00", "") + " " : ""}{s.title}</Link>)}
-              {(cByDay[k] || []).map((e) => <Link key={e.id} href={`/portal/admin/clients/${e.client_id}#calendar`} className={"scal-ev is-client" + (e.idea ? " has-idea" : "")} title={`${e.clientName}: ${e.title}${e.idea ? " · idea ready" : ""}`}>{firstName(e.clientName)}: {e.title}</Link>)}
+              {(cByDay[k] || []).map((e) => <Link key={e.id} href={`/portal/admin/clients/${e.client_id}#calendar`} className={"scal-ev is-client" + (e.idea ? " has-idea" : "") + (e.wants_shoot ? " is-hot" : "")} title={`${e.clientName}: ${e.title}${e.wants_shoot ? " · wants content" : ""}${e.idea ? " · idea ready" : ""}`}>{e.wants_shoot ? "🔥 " : ""}{firstName(e.clientName)}: {e.title}</Link>)}
             </div>
           );
         })}
@@ -139,7 +139,7 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
                 <ul className="alist">
                   {clientUpcoming.map((e) => (
                     <li key={e.id} className="arow">
-                      <div><strong>{e.clientName}</strong> — {e.title}<br /><small>{new Date(`${e.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}{e.time ? ` · ${e.time}` : ""}{e.source === "intake" ? " · from intake" : ""}{e.idea ? " · idea ready" : " · no idea yet"}</small></div>
+                      <div><strong>{e.clientName}</strong> — {e.title}<br /><small>{new Date(`${e.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}{e.time ? ` · ${e.time}` : ""}{e.repeat ? ` · ${e.repeat}` : ""}{e.source === "intake" ? " · from intake" : ""}{e.wants_shoot ? " · 🔥 wants content" : ""}{e.idea ? " · idea ready" : " · no idea yet"}</small></div>
                       <Link className="achip" href={`/portal/admin/clients/${e.client_id}#calendar`}>Plan it →</Link>
                     </li>
                   ))}

@@ -7,6 +7,7 @@
 // Calendar prefilled (one tap to save) and marks the event as followed up.
 
 import { useEffect, useMemo, useState } from "react";
+import { expandEvents } from "../lib/event-repeat";
 
 const pad = (n) => String(n).padStart(2, "0");
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -44,7 +45,7 @@ function IdeaBox({ ev, clientId, onSaved }) {
   if (!open) return <button type="button" className="achip" onClick={() => setOpen(true)}>+ Content idea</button>;
   async function save() {
     setSaving(true);
-    try { const j = await api({ op: "idea", client_id: clientId, id: ev.id, idea: val }); onSaved(j.event); } catch {}
+    try { const j = await api({ op: "idea", client_id: clientId, id: ev.base_id || ev.id, idea: val }); onSaved({ ...ev, idea: j.event.idea }); } catch {}
     setSaving(false);
   }
   return (
@@ -85,19 +86,24 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
     const d = Object.fromEntries(new FormData(e.currentTarget).entries());
     setBusy(true); setErr("");
     try {
-      const j = await api({ op: "add", client_id: clientId, date: day, title: d.title, time: d.time, note: d.note });
-      setEvents((xs) => [...xs, j.event].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
+      const j = await api({ op: "add", client_id: clientId, date: day, title: d.title, time: d.time, note: d.note, repeat: d.repeat || "", wants: Boolean(d.wants) });
+      setEvents((xs) => [...xs, ...expandEvents([j.event])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
       e.target.reset();
     } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
   async function remove(ev) {
     if (!confirm(`Remove "${ev.title}"?`)) return;
-    try { await api({ op: "delete", client_id: clientId, id: ev.id }); setEvents((xs) => xs.filter((x) => x.id !== ev.id)); } catch (x) { setErr(x.message); }
+    const base = ev.base_id || ev.id;
+    try { await api({ op: "delete", client_id: clientId, id: base }); setEvents((xs) => xs.filter((x) => (x.base_id || x.id) !== base)); } catch (x) { setErr(x.message); }
+  }
+  async function wants(ev, on) {
+    const base = ev.base_id || ev.id;
+    try { await api({ op: "wants", client_id: clientId, id: base, wants: on }); setEvents((xs) => xs.map((x) => ((x.base_id || x.id) === base ? { ...x, wants_shoot: on } : x))); } catch (x) { setErr(x.message); }
   }
   async function followup(ev) {
     window.open(followupUrl({ clientName, clientPhone, clientId, date: ev ? ev.date : day, ev }), "_blank", "noopener");
     if (!ev) return;
-    try { const j = await api({ op: "followup", client_id: clientId, id: ev.id }); setEvents((xs) => xs.map((x) => (x.id === ev.id ? j.event : x))); } catch (x) { setErr(x.message); }
+    try { const j = await api({ op: "followup", client_id: clientId, id: ev.base_id || ev.id }); setEvents((xs) => xs.map((x) => ((x.base_id || x.id) === (ev.base_id || ev.id) ? { ...x, followup_at: j.event.followup_at } : x))); } catch (x) { setErr(x.message); }
   }
 
   const monthLabel = cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -130,13 +136,15 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
             {dayEvents.map((e) => (
               <li key={e.id}>
                 <div>
-                  <strong>{e.title}</strong>{e.time ? <span className="ccal-time"> · {fmt12(e.time)}</span> : null}
+                  <strong>{e.wants_shoot ? "🔥 " : ""}{e.title}</strong>{e.time ? <span className="ccal-time"> · {fmt12(e.time)}</span> : null}{e.repeat ? <span className="ccal-time"> · every {e.repeat === "weekly" ? "week" : "month"}</span> : null}
                   {e.note ? <em>{e.note}</em> : null}
                   <small>{e.source === "intake" ? "From their intake" : e.created_by === "studio" ? (studio ? "You added this" : "Added by Brandon") : (studio ? `${clientName.split(" ")[0] || "They"} added this` : "You added this")}{e.followup_at ? ` · follow-up on ${studio ? "your" : "Brandon's"} calendar ✓` : ""}</small>
-                  {studio && <IdeaBox ev={e} clientId={clientId} onSaved={(ev) => setEvents((xs) => xs.map((x) => (x.id === ev.id ? ev : x)))} />}
+                  {studio && <IdeaBox ev={e} clientId={clientId} onSaved={(ev) => setEvents((xs) => xs.map((x) => ((x.base_id || x.id) === (ev.base_id || ev.id) ? { ...x, idea: ev.idea } : x)))} />}
                   {!studio && e.idea && <p className="ccal-idea-view"><strong>Brandon&rsquo;s idea:</strong> {e.idea}</p>}
                 </div>
                 <span className="ccal-acts">
+                  {!studio && <button type="button" className={"achip" + (e.wants_shoot ? " is-on" : "")} onClick={() => wants(e, !e.wants_shoot)}>{e.wants_shoot ? "Content requested ✓" : "I want content for this"}</button>}
+                  {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
                   {(studio || e.created_by === "client") && <button type="button" className="achip" onClick={() => remove(e)}>Remove</button>}
                 </span>
@@ -149,6 +157,8 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         <form className="ccal-add" onSubmit={add}>
           <label className="grow"><span>{studio ? "Add to their calendar" : "What's happening?"}</span><input name="title" required placeholder={studio ? "Content Day · Shoot the new menu" : "Spring sale starts · New class launches · Anniversary week"} /></label>
           <label><span>Time <small>optional</small></span><input name="time" type="time" /></label>
+          <label><span>Repeats</span><select name="repeat" defaultValue=""><option value="">Just once</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></label>
+          {!studio && <label className="ccal-check"><input type="checkbox" name="wants" value="1" /> <span>I&rsquo;d like content for this</span></label>}
           <label className="wide"><span>Notes <small>optional</small></span><input name="note" placeholder={studio ? "What we'll film, who's there" : "Anything Brandon should know — what it is, who's involved, what you'd love content for"} /></label>
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Add to ${longDay(day).split(",")[0]}`}</button>
           {err && <p className="cform-error">{err}</p>}

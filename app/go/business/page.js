@@ -24,7 +24,10 @@ export default function BusinessAdPage() {
           <p className="cx-lede">I come to your place for two hours. You get the reels, photos, and the three pinned posts that turn your Instagram into a front door — delivered in two weeks, sized to post. You never touch a camera.</p>
           <p className="bz-go-converts"><strong>A reel gets a scroll. This gets them through the door.</strong> Every piece is built to answer the one question a new customer has before they walk in: <em>is this place for me?</em> That&apos;s content that converts — not content that fills a feed.</p>
           <a href="#plan" className="cx-btn cx-btn--light cx-btn--lg cx-btn--block bz-go-jump">Get my quote — 60 seconds</a>
-          <video className="bz-go-video" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline />
+          <div className="bz-go-adwrap">
+            <video className="bz-go-video bz-go-video--ad" src={videoUrl("/reels/roth-ad.mp4")} poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
+            <video className="bz-go-video bz-go-video--work" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline aria-label="A promo shot for a local gym" />
+          </div>
           <ul className="bz-go-why">
             <li><strong>Two posts a week, done.</strong> 8 vertical reels + 10–30 photos — a month of content from one morning, no scramble on a Tuesday night.</li>
             <li><strong>Your profile sells for you.</strong> The Pinned Three: who you are &amp; where to find you · why people trust you · how to book or stop in. The first thing every new customer sees.</li>

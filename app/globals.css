@@ -7192,3 +7192,9 @@ textarea.grow { overflow: hidden; }
 .ccal-idea .achip { justify-self: start; }
 
 .ccal-idea-view { margin: 0.4rem 0 0; font-size: 0.9rem; padding: 0.5rem 0.7rem; border-left: 3px solid #4a7c59; background: rgba(74,124,89,0.08); }
+
+.ccal-add select { font: inherit; padding: 0.5rem 0.6rem; border: 1px solid var(--line, #ddd); border-radius: 4px; background: transparent; color: inherit; }
+.ccal-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.ccal-check input { width: 18px; height: 18px; }
+.achip.is-on { background: #4a7c59; color: #fff; border-color: #4a7c59; }
+.scal-ev.is-client.is-hot { background: #b06a4f; }

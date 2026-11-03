@@ -82,6 +82,10 @@
 .bz-page .bz-go-pitch { display: grid; gap: 1rem; justify-items: start; min-width: 0; }
 .bz-page .bz-go-pitch > * { max-width: 100%; }
 .bz-page .bz-go-video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border-radius: 2px; margin-top: 0.2rem; }
+.bz-page .bz-go-adwrap { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 0.8rem; align-items: start; width: 100%; }
+.bz-page .bz-go-video--ad { aspect-ratio: 9 / 16; border-radius: 12px; margin-top: 0; }
+.bz-page .bz-go-video--work { aspect-ratio: 9 / 16; border-radius: 12px; margin-top: 0; }
+@media (max-width: 639px) { .bz-page .bz-go-adwrap { grid-template-columns: minmax(0, 1fr); } .bz-page .bz-go-video--work { display: none; } }
 .bz-page .bz-go-prices { width: 100%; }
 .bz-page .bz-go-prices .cx-row-price { font-size: 1.35rem; }
 .bz-page .bz-go-prices .cx-row-price s { font-size: 0.95rem; margin: 0 0 0 0.3rem; }

@@ -20,3 +20,7 @@ alter table public.client_events enable row level security; -- service role only
 -- Nov 3 2026: content ideas on a date + where the event came from.
 alter table public.client_events add column if not exists idea text not null default '';
 alter table public.client_events add column if not exists source text not null default '';  -- '' | 'intake'
+
+-- Nov 3 2026: repeating dates (Friday Night Magic, Taco Tuesday) + "I'd like content for this".
+alter table public.client_events add column if not exists repeat text not null default '' check (repeat in ('', 'weekly', 'monthly'));
+alter table public.client_events add column if not exists wants_shoot boolean not null default false;

@@ -248,6 +248,11 @@ export default function CinemaHome() {
           </div>
           {/* The plans, right in the opening — each one lands on the instant quote with that plan picked */}
           <div className="cin-hero-offer">
+            {/* The ad — the same 30 seconds people see on Facebook, so the page picks up where the ad left off. */}
+            <div className="cin-hero-ad cin-rise">
+              <video src={videoUrl("/reels/roth-ad.mp4")} poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
+              <span className="cin-hero-ad-tag">30 sec · tap for sound</span>
+            </div>
             <p className="cin-lead-kick">Pick a plan · real prices</p>
             <ul className="cin-hero-planlist">
               {BIZ_PLANS.map((p) => (

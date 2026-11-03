@@ -4,10 +4,11 @@ import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supaba
 import { clip } from "../../../lib/visitor";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
 import { LEAD_ALERT_TO, LEAD_SMS_TO } from "../../../lib/studio-emails";
+import { expandEvents } from "../../../lib/event-repeat";
 
 export const dynamic = "force-dynamic";
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
-const SELECT = "id, client_id, date, time, title, note, idea, source, created_by, followup_at, followup_note, created_at";
+const SELECT = "id, client_id, date, time, title, note, idea, source, repeat, wants_shoot, created_by, followup_at, followup_note, created_at";
 
 // Client calendars. A signed-in client works on their own calendar; Brandon
 // (admin) passes client_id and works on anyone's. A client adding a date pings
@@ -31,7 +32,7 @@ export async function GET(request) {
   const w = await who(request); if (w.error) return w.error;
   const { data, error } = await w.db.from("client_events").select(SELECT).eq("client_id", w.clientId).order("date").order("time");
   if (error) return bad(/relation .*client_events/i.test(error.message) ? "Run supabase/client-events.sql once in Supabase first." : error.message, 500);
-  return NextResponse.json({ events: data || [], admin: w.admin });
+  return NextResponse.json({ events: expandEvents(data || []), admin: w.admin });
 }
 
 export async function POST(request) {
@@ -40,19 +41,35 @@ export async function POST(request) {
   const { db, admin, clientId } = w;
   const op = String(body.op || "add");
 
+  const rowId = String(body.id || "").split("@")[0];
   if (op === "delete") {
-    const q = db.from("client_events").delete().eq("id", String(body.id || "")).eq("client_id", clientId);
+    const q = db.from("client_events").delete().eq("id", rowId).eq("client_id", clientId);
     const { error } = await (admin ? q : q.eq("created_by", "client"));
     return error ? bad(error.message, 500) : NextResponse.json({ ok: true });
   }
   if (op === "idea") {
     if (!admin) return bad("Not authorized", 401);
-    const { data, error } = await db.from("client_events").update({ idea: clip(body.idea, 2000), updated_at: new Date().toISOString() }).eq("id", String(body.id || "")).eq("client_id", clientId).select(SELECT).single();
+    const { data, error } = await db.from("client_events").update({ idea: clip(body.idea, 2000), updated_at: new Date().toISOString() }).eq("id", rowId).eq("client_id", clientId).select(SELECT).single();
     return error ? bad(error.message, 500) : NextResponse.json({ ok: true, event: data });
+  }
+  if (op === "wants") {
+    // The client raising a hand: "I'd like content for this." Pings Brandon.
+    const want = Boolean(body.wants);
+    const { data, error } = await db.from("client_events").update({ wants_shoot: want, updated_at: new Date().toISOString() }).eq("id", rowId).eq("client_id", clientId).select(SELECT).single();
+    if (error) return bad(error.message, 500);
+    if (want && !admin && resendConfigured) {
+      const profile = `https://rothmediaco.com/portal/admin/clients/${clientId}#calendar`;
+      const line = `${w.clientName} wants content for "${data.title}" — ${data.date}${data.time ? ` · ${data.time}` : ""}`;
+      try {
+        await sendEmail({ to: LEAD_ALERT_TO, subject: `🔥 Shoot request: ${w.clientName} — ${data.title}`, text: `${line}\n\nPlan it: ${profile}` });
+        if (LEAD_SMS_TO) await sendEmail({ to: LEAD_SMS_TO, subject: "Shoot request", text: `${line}\n${profile}` });
+      } catch {}
+    }
+    return NextResponse.json({ ok: true, event: data });
   }
   if (op === "followup") {
     if (!admin) return bad("Not authorized", 401);
-    const { data, error } = await db.from("client_events").update({ followup_at: new Date().toISOString(), followup_note: clip(body.note, 300), updated_at: new Date().toISOString() }).eq("id", String(body.id || "")).eq("client_id", clientId).select(SELECT).single();
+    const { data, error } = await db.from("client_events").update({ followup_at: new Date().toISOString(), followup_note: clip(body.note, 300), updated_at: new Date().toISOString() }).eq("id", rowId).eq("client_id", clientId).select(SELECT).single();
     return error ? bad(error.message, 500) : NextResponse.json({ ok: true, event: data });
   }
   // add
@@ -61,16 +78,17 @@ export async function POST(request) {
   const title = clip(body.title, 120);
   if (!title) return bad("Give it a name");
   const time = /^\d{2}:\d{2}$/.test(String(body.time || "")) ? body.time : "";
-  const row = { client_id: clientId, date, time, title, note: clip(body.note, 600), created_by: admin ? "studio" : "client" };
+  const repeat = ["weekly", "monthly"].includes(String(body.repeat || "")) ? body.repeat : "";
+  const row = { client_id: clientId, date, time, title, note: clip(body.note, 600), repeat, wants_shoot: Boolean(body.wants), created_by: admin ? "studio" : "client" };
   const { data, error } = await db.from("client_events").insert(row).select(SELECT).single();
   if (error) return bad(/relation .*client_events/i.test(error.message) ? "Run supabase/client-events.sql once in Supabase first." : error.message, 500);
   // Their date → Brandon's phone, so content gets planned ahead of it.
   if (!admin && resendConfigured) {
     const whenTxt = `${new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}${time ? ` · ${time}` : ""}`;
     const profile = `https://rothmediaco.com/portal/admin/clients/${clientId}#calendar`;
-    const line = `${w.clientName} added "${title}" — ${whenTxt}${row.note ? ` · ${row.note}` : ""}`;
+    const line = `${w.clientName} added "${title}" — ${whenTxt}${repeat ? ` · repeats ${repeat}` : ""}${row.wants_shoot ? " · WANTS CONTENT FOR THIS" : ""}${row.note ? ` · ${row.note}` : ""}`;
     try {
-      await sendEmail({ to: LEAD_ALERT_TO, subject: `Calendar: ${w.clientName} — ${title} (${whenTxt})`, text: `${line}\n\nPlan content around it: ${profile}` });
+      await sendEmail({ to: LEAD_ALERT_TO, subject: `${row.wants_shoot ? "🔥 Shoot request" : "Calendar"}: ${w.clientName} — ${title} (${whenTxt})`, text: `${line}\n\nPlan content around it: ${profile}` });
       if (LEAD_SMS_TO) await sendEmail({ to: LEAD_SMS_TO, subject: "Client calendar", text: `${line}\n${profile}` });
     } catch {}
   }
