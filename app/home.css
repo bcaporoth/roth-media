@@ -185,6 +185,7 @@
 .rm-cinema .cin-hero-where strong { color: var(--fg); font-weight: 700; }
 /* The business pitch, its two buttons and the plan prices — the opening sells the Content Day */
 .rm-cinema .cin-hero-pitch { margin-top: 0.75rem; font-size: 0.98rem; line-height: 1.5; color: rgba(246, 241, 232, 0.92); max-width: 36rem; }
+.rm-cinema .cin-hero-pitch strong { display: block; margin-bottom: 0.35rem; color: var(--fg); font-weight: 700; }
 .rm-cinema .cin-hero-cta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.1rem; }
 .rm-cinema .cin-hero-cta .cin-btn { flex: 1 1 auto; justify-content: center; }
 /* The plan card beside the pitch: tap a plan, land on the instant quote with it picked */
@@ -202,6 +203,7 @@
 .rm-cinema .cin-plan-what { display: grid; gap: 0.2rem; min-width: 0; }
 .rm-cinema .cin-plan-what strong { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: var(--font-display), sans-serif; font-size: 1.12rem; font-weight: 600; }
 .rm-cinema .cin-plan-what > span { font-size: 0.8rem; line-height: 1.35; color: var(--dim); }
+.rm-cinema .cin-plan-what > .cin-plan-promise, .rm-cinema .cin-plan-promise { color: var(--gold); font-style: normal; }
 .rm-cinema .cin-plan-price { font-family: var(--font-display), sans-serif; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
 .rm-cinema .cin-plan-price small { font-family: var(--font-body), sans-serif; font-size: 0.75rem; color: var(--dim); margin-left: 0.1rem; }
 .rm-cinema .cin-hero-seework { justify-self: start; min-height: 44px; }

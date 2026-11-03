@@ -240,6 +240,7 @@ export default function CinemaHome() {
               <span className="cin-mask"><span>A month of posts.</span></span>
             </h1>
             <p className="cin-hero-pitch">
+              <strong>People finally get to see your craft, shown in a beautiful way.</strong>{" "}
               I come to your place and film you doing what you already do. You get the
               reels, photos and the three pinned posts that turn your Instagram into a
               front door — delivered in two weeks, sized to post. You never touch a camera.
@@ -263,6 +264,7 @@ export default function CinemaHome() {
                     <span className="cin-plan-what">
                       <strong>{p.name}{p.popular && <span className="cin-flag">Most booked</span>}</strong>
                       <span>{p.scope}</span>
+                      {p.promise && <span className="cin-plan-promise">{p.promise}</span>}
                     </span>
                     <span className="cin-plan-price">{money(p.price)}{p.id === "always" && <small>/mo</small>}</span>
                   </Link>
@@ -369,7 +371,7 @@ export default function CinemaHome() {
                   <li key={p.id}>
                     <div>
                       <strong>{p.name}{p.popular && <span className="cin-flag">Most booked</span>}</strong>
-                      <span>{p.scope}. {p.get.slice(0, p.id === "day" ? 3 : 2).join(" · ")}</span>
+                      <span>{p.scope}. {p.get.slice(0, p.id === "day" ? 3 : 2).join(" · ")}{p.promise && <em className="cin-plan-promise"> {p.promise}</em>}</span>
                     </div>
                     <b>{money(p.price)}</b>
                   </li>

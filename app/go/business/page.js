@@ -32,7 +32,7 @@ export default function BusinessAdPage() {
           </ul>
           <ul className="cx-rows bz-go-prices">
             <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">2-hr shoot · 8 reels + Pinned Three + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} category="business" packageId={mini.id} /></strong></li>
-            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">half day · + a 45–90s promo video · 15–30 photos</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
+            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">half day · + a 45–90s promo video · 15–30 photos · {day.promise}</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
             <li className="cx-row"><span className="cx-row-name">{always.name}</span><span className="cx-row-note">The Month, every month · pause or cancel anytime</span><strong className="cx-row-price"><DealPrice price={always.price} category="business" packageId={always.id} />/mo</strong></li>
           </ul>
           <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks · no contracts, pay when we lock the date</p>
