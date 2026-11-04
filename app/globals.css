@@ -7242,3 +7242,4 @@ textarea.grow { overflow: hidden; }
 .sday-remind summary { cursor: pointer; font-size: 0.95rem; }
 .sday-remind ul { margin: 0.3rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.2rem; font-size: 0.95rem; }
 .sday-writing { color: var(--clay); font-weight: 600; }
+.sday-rowx { min-width: 2.4rem; font-size: 1.15rem; line-height: 1; padding: 0.35rem 0.6rem; }

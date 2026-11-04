@@ -235,6 +235,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
               <span className="sday-rowactions">
                 <button type="button" className="achip" onClick={() => move(s.id, -1)} disabled={i === 0} aria-label="Move earlier">↑</button>
                 <button type="button" className="achip" onClick={() => move(s.id, 1)} disabled={i === order.length - 1} aria-label="Move later">↓</button>
+                {(me === "brandon" || s.created_by === "client") && <button type="button" className="achip achip-danger sday-rowx" onClick={() => remove(s)} aria-label={`Remove ${s.title || KIND_LABEL[s.kind]}`} title="Remove from this day">×</button>}
               </span>
               {open === s.id && (
                 <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} onDuplicate={() => duplicate(s)} onError={fail} onSay={say} />
