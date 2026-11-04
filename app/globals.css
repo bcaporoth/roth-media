@@ -4957,11 +4957,12 @@ a.svc-cta:hover {
 .gsign-big .gsign-credit { font-size: 0.95rem; }
 .gsign-print { font-size: 0.85rem; opacity: 0.7; }
 .gsign-print a { color: inherit; }
+@page gsign { size: 4in 6in; margin: 0; }
 @media print {
   .gsign { background: #fff; padding: 0; min-height: auto; display: block; }
   .gsign-card { box-shadow: none; margin: 0; }
   .no-print { display: none !important; }
-  @page { size: 4in 6in; margin: 0; }
+  .gsign { page: gsign; }
   .gsign-big { }
 }
 
@@ -7253,4 +7254,24 @@ textarea.grow { overflow: hidden; }
   .qc-row { grid-template-columns: 2.2rem minmax(0, 1fr); row-gap: 0.3rem; }
   .qc-row .tc-rowactions { grid-column: 2; flex-direction: row; justify-content: flex-end; gap: 0.35rem; }
   .qc-row .tc-rowactions .achip { min-height: 2.1rem; min-width: 2.4rem; }
+}
+
+/* Day sheet on paper: letter, every line has a box, each script on its own page. */
+.sprint-printbtn { font-size: 1rem; padding: 0.7rem 1.3rem; }
+.dprint-order li { grid-template-columns: 1.1rem 5.5rem 1fr; }
+.dprint-order li em { grid-column: 3; }
+.dprint-order .sprint-box { margin-top: 0.15rem; }
+.dprint-steps td:first-child { width: 1.4rem; padding-right: 0; }
+.dprint-steps td:nth-child(2) { font-weight: 400; width: auto; white-space: nowrap; color: #6b6358; }
+.dprint-steps td:nth-child(3) { font-weight: 600; width: 36%; }
+.dprint-steps td { padding: 0.5rem 0.4rem; }
+.dprint-steps .sprint-box { display: inline-block; }
+.sprint-box { display: inline-block; width: 0.95rem; height: 0.95rem; border: 1.5px solid #191612; border-radius: 3px; flex: none; vertical-align: -0.15rem; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+@media print {
+  @page { size: letter; margin: 0.5in; }
+  .dprint .dprint-script { break-before: page; break-inside: auto; }
+  .dprint-steps tr, .dprint-needs li, .dprint-order li { break-inside: avoid; }
+  .dprint-steps thead { display: table-header-group; }
+  .dprint { font-size: 11pt; }
+  .dprint-steps { font-size: 10pt; }
 }

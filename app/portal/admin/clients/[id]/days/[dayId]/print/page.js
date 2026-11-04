@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import DayPrintSheet from "../../../../../../../../components/DayPrintSheet";
+import PrintButton from "../../../../../../../../components/PrintButton";
 import { requireAdminPage } from "../../../../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../../../../lib/supabase-admin";
 import { loadDay } from "../../../../../../../../lib/scripts-server";
@@ -17,7 +18,8 @@ export default async function AdminDayPrintPage({ params }) {
     <div className="sprint-page">
       <nav className="sprint-bar no-print">
         <Link href={`/portal/admin/clients/${id}/days/${dayId}`}>← Back to the day</Link>
-        <span className="sprint-bar-hint">⌘P / Ctrl+P → Save as PDF</span>
+        <PrintButton />
+        <span className="sprint-bar-hint">Every line has a box — tick or cross out as you get it.</span>
       </nav>
       <DayPrintSheet day={day} />
     </div>

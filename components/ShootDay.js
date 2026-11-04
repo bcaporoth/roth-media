@@ -175,15 +175,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
-        {me === "brandon" ? (
-          <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>
-        ) : printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">Print the day ↗</a>}
+        {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">🖨 Print</a>}
+        {me === "brandon" && <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>}
       </div>
       {me === "brandon" && more && (
         <div className="sday-tools sday-more">
           <button type="button" className={"achip" + (tool === "plan" ? " is-on" : "")} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Plan the day with Claude</button>
           <button type="button" className={"achip" + (tool === "import" ? " is-on" : "")} onClick={() => setTool(tool === "import" ? "" : "import")}>Import from content plan</button>
-          {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">Print the day ↗</a>}
         </div>
       )}
       {tool === "plan" && <PlanDayBox aiReady={aiReady} busy={busy} onGo={planDay} onCancel={() => setTool("")} existing={scripts.length} />}

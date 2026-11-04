@@ -32,7 +32,7 @@ export default function DayPrintSheet({ day, tips = false }) {
         <h2 className="dprint-h2">Running order</h2>
         <ol className="dprint-order">
           {order.map((s, i) => (
-            <li key={s.id}><span className="dprint-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span><strong>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</strong><em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} · {STATUS_LABEL[s.status]}</em></li>
+            <li key={s.id}><span className="sprint-box" /><span className="dprint-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span><strong>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</strong><em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} · {STATUS_LABEL[s.status]}</em></li>
           ))}
         </ol>
       </section>
@@ -51,23 +51,23 @@ export default function DayPrintSheet({ day, tips = false }) {
             {b.needs.length > 0 && <div className="dprint-needs"><span className="sprint-label">{NEEDS_LABEL[s.kind] || "Have ready"}</span><ul>{b.needs.map((n, j) => <li key={j}><span className="sprint-box" />{n}</li>)}</ul></div>}
             {b.steps.length > 0 && (
               <table className="dprint-steps">
-                <thead><tr><th>#</th><th>Say</th><th>Do</th><th>Camera shows</th><th>s</th></tr></thead>
-                <tbody>{b.steps.map((st, j) => <tr key={j} className={st.done ? "is-done" : ""}><td>{j + 1}</td><td>{st.say}</td><td>{st.do}</td><td>{st.shot}</td><td>{st.secs || ""}</td></tr>)}</tbody>
+                <thead><tr><th>Got</th><th>#</th><th>Say</th><th>Do</th><th>Camera shows</th><th>s</th></tr></thead>
+                <tbody>{b.steps.map((st, j) => <tr key={j} className={st.done ? "is-done" : ""}><td><span className="sprint-box" /></td><td>{j + 1}</td><td>{st.say}</td><td>{st.do}</td><td>{st.shot}</td><td>{st.secs || ""}</td></tr>)}</tbody>
               </table>
             )}
             {b.scenes.map((sc, j) => (
               <table key={j} className="dprint-steps dprint-tchart">
-                <thead><tr><th colSpan={4} className="dprint-scene">{sc.label || `Scene ${j + 1}`}</th></tr><tr><th>#</th><th>What&apos;s said</th><th>On camera</th><th>What&apos;s seen</th></tr></thead>
-                <tbody>{sc.lines.map((l, k) => <tr key={k} className={l.done ? "is-done" : ""}><td>{k + 1}</td><td>{l.say}</td><td>{SEE_LABEL[l.tag]}</td><td>{l.see}</td></tr>)}</tbody>
+                <thead><tr><th colSpan={5} className="dprint-scene">{sc.label || `Scene ${j + 1}`}</th></tr><tr><th>Got</th><th>#</th><th>What&apos;s said</th><th>On camera</th><th>What&apos;s seen</th></tr></thead>
+                <tbody>{sc.lines.map((l, k) => <tr key={k} className={l.done ? "is-done" : ""}><td><span className="sprint-box" /></td><td>{k + 1}</td><td>{l.say}</td><td>{SEE_LABEL[l.tag]}</td><td>{l.see}</td></tr>)}</tbody>
               </table>
             ))}
             {b.questions.length > 0 && (
               <table className="dprint-steps">
-                <thead><tr><th>#</th><th>Question</th><th>Answer / notes</th></tr></thead>
-                <tbody>{b.questions.map((q, k) => <tr key={k} className={q.done ? "is-done" : ""}><td>{k + 1}</td><td>{q.q}</td><td>{q.a}</td></tr>)}</tbody>
+                <thead><tr><th>Got</th><th>#</th><th>Question</th><th>Answer / notes</th></tr></thead>
+                <tbody>{b.questions.map((q, k) => <tr key={k} className={q.done ? "is-done" : ""}><td><span className="sprint-box" /></td><td>{k + 1}</td><td>{q.q}</td><td>{q.a}</td></tr>)}</tbody>
               </table>
             )}
-            {b.broll.length > 0 && <p className="dprint-line"><span>B-roll</span>{b.broll.join(" · ")}</p>}
+            {b.broll.length > 0 && <div className="dprint-needs"><span className="sprint-label">B-roll to grab</span><ul>{b.broll.map((x, j) => <li key={j}><span className="sprint-box" />{x}</li>)}</ul></div>}
             {b.cta && <p className="dprint-line"><span>Close with</span>{b.cta}</p>}
             {b.caption && <p className="dprint-line"><span>Caption</span>{b.caption}</p>}
             {b.notes && <p className="dprint-line"><span>Notes</span>{b.notes}</p>}

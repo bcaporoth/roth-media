@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import PrintButton from "../../../../../components/PrintButton";
 import DayPrintSheet from "../../../../../components/DayPrintSheet";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay } from "../../../../../lib/scripts-server";
@@ -17,7 +18,7 @@ export default async function PortalDayPrintPage({ params }) {
     <div className="sprint-page">
       <nav className="sprint-bar no-print">
         <Link href={`/portal/days/${dayId}`}>← Back to the day</Link>
-        <span className="sprint-bar-hint">⌘P / Ctrl+P → Save as PDF</span>
+        <PrintButton /><span className="sprint-bar-hint">⌘P / Ctrl+P → Save as PDF</span>
       </nav>
       <DayPrintSheet day={day} tips />
     </div>
