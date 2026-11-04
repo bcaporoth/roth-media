@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
-import { whoAmI, canOpen, loadDay, draftScript, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
+import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
 import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { loadPlaybook } from "../../../lib/playbook";
@@ -93,13 +93,15 @@ export async function POST(request) {
     if (body.action === "day-draft") {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
-      const { scripts, dayNotes } = await draftDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts, day });
+      // Outline first (quick), saved at once as draft scripts; the page then
+      // asks for each script's full text one request at a time (script-draft).
+      const { scripts, dayNotes } = await outlineDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts, day });
       let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
       const rows = scripts.map((sc) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(sc), created_by: "brandon", updated_by: "brandon" }));
-      const { error } = await db.from("scripts").insert(rows);
+      const { data: inserted, error } = await db.from("scripts").insert(rows).select("id");
       if (error) throw new Error(error.message);
       if (dayNotes && !day.notes) await db.from("shoot_days").update({ notes: dayNotes, updated_at: now() }).eq("id", day.id);
-      return NextResponse.json({ ok: true, added: rows.length, day: await loadDay(db, day.id) });
+      return NextResponse.json({ ok: true, added: rows.length, newIds: (inserted || []).map((r) => r.id), day: await loadDay(db, day.id) });
     }
 
     // Brandon: the content plan's items, ready to drop in as scripts.

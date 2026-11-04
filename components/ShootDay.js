@@ -99,12 +99,29 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   async function duplicate(s) {
     try { const r = await api({ action: "script-duplicate", dayId: day.id, scriptId: s.id }); setScripts((x) => [...x, r.script]); setOpen(r.script.id); say("Copied — rename it"); } catch (e) { fail(e); }
   }
+  // Write N scripts: the outline lands first (titles, goals, minutes), then
+  // each script is written in its own request so a long day never times out.
+  const [writing, setWriting] = useState(""); // "Writing 3 of 8 — Title…"
   async function planDay(theme, counts) {
     setBusy(true);
+    let r;
     try {
-      const r = await api({ action: "day-draft", dayId: day.id, theme, counts });
-      setDay(r.day); setScripts(r.day.scripts); setTool(""); say(`${r.added} script${r.added === 1 ? "" : "s"} drafted — read them through`);
-    } catch (e) { fail(e); } finally { setBusy(false); }
+      setWriting("Planning the day…");
+      r = await api({ action: "day-draft", dayId: day.id, theme, counts });
+      setDay(r.day); setScripts(r.day.scripts); setTool("");
+    } catch (e) { fail(e); setBusy(false); setWriting(""); return; }
+    const ids = r.newIds || [];
+    let done = 0, failed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      const sc = r.day.scripts.find((x) => x.id === ids[i]);
+      setWriting(`Writing ${i + 1} of ${ids.length} — ${sc?.title || KIND_LABEL[sc?.kind] || "script"}…`);
+      try {
+        const rr = await api({ action: "script-draft", dayId: day.id, scriptId: ids[i], title: sc?.title, idea: sc?.body?.goal || theme });
+        replace(rr.script, true); done++;
+      } catch { failed++; }
+    }
+    setWriting(""); setBusy(false);
+    say(failed ? `${done} of ${ids.length} written — ${failed} didn't finish; open each one and tap "Ask Claude"` : `${done} script${done === 1 ? "" : "s"} written — read them through`);
   }
   async function importPlan(itemIds) {
     setBusy(true);
@@ -137,7 +154,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     <div className="sday">
       <div className="sday-top">
         <a className="achip" href={backHref}>← {backLabel}</a>
-        {flash && <span className="sday-flash" role="status">{flash}</span>}
+        {writing && <span className="sday-flash sday-writing" role="status" aria-live="polite">⏳ {writing}</span>}
+        {flash && !writing && <span className="sday-flash" role="status">{flash}</span>}
         {error && <span className="cform-error" role="alert">{error}</span>}
       </div>
 
