@@ -1,0 +1,23 @@
+/* Scene T-chart: SAID = cool blue (speech), SHOWN = clay (camera). Loaded after globals.css so it wins. */
+:root { --say: #8fb8e8; --say-tint: rgba(143, 184, 232, 0.12); --say-line: rgba(143, 184, 232, 0.5); --see: var(--clay); --see-tint: rgba(213, 154, 126, 0.12); --see-line: rgba(213, 154, 126, 0.5); }
+body:has(.admin-shell, .sprint-page, .bprint), .admin-shell { --say: #2f5f9e; --say-tint: rgba(47, 95, 158, 0.07); --say-line: rgba(47, 95, 158, 0.45); --see: #a0583d; --see-tint: rgba(176, 106, 79, 0.08); --see-line: rgba(176, 106, 79, 0.45); }
+.admin-shell.is-dark { --say: #8fb8e8; --say-tint: rgba(143, 184, 232, 0.12); --say-line: rgba(143, 184, 232, 0.5); --see: var(--clay); --see-tint: rgba(213, 154, 126, 0.14); --see-line: rgba(213, 154, 126, 0.55); }
+.scr-tchart-head { font-size: 0.72rem; font-weight: 700; }
+.scr-tchart-head span:nth-child(2) { color: var(--say); border-bottom: 3px solid var(--say); }
+.scr-tchart-head span:nth-child(3) { color: var(--see); border-bottom: 3px solid var(--see); }
+.scr-tchart { gap: 0.6rem; }
+.scr-tcol { padding: 0.6rem 0.7rem 0.7rem; border-radius: 10px; }
+.scr-tcol-say { padding-right: 0.7rem; border-right: 0; background: var(--say-tint); border: 1px solid var(--say-line); border-left: 4px solid var(--say); }
+.scr-tcol-show { padding-left: 0.7rem; background: var(--see-tint); border: 1px solid var(--see-line); border-left: 4px solid var(--see); }
+.scr-tcol .scr-field > span { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; }
+.scr-tcol-say .scr-field > span { color: var(--say); }
+.scr-tcol-show .scr-field > span { color: var(--see); }
+.scr-tcol-show .scr-field:first-child > span::before { content: "👁 "; }
+.scr-tcol-show .scr-field:last-child > span::before { content: "🎥 "; }
+.scr-tcol .scr-field textarea { background: var(--paper); color: var(--ink); font-size: 1rem; line-height: 1.5; border: 1px solid var(--field-line); border-radius: 8px; padding: 0.55rem 0.65rem; }
+.scr-tcol-say .scr-field textarea { border-color: var(--say-line); }
+.scr-tcol-show .scr-field textarea { border-color: var(--see-line); }
+.scr-tcol-say .scr-field textarea:focus { outline: 2px solid var(--say); outline-offset: 1px; }
+.scr-tcol-show .scr-field textarea:focus { outline: 2px solid var(--see); outline-offset: 1px; }
+.scr-tcol .scr-field textarea::placeholder { color: var(--ink-soft); opacity: 0.7; }
+@media (max-width: 640px) { .scr-tcol-say { padding-bottom: 0.7rem; border-bottom: 1px solid var(--say-line); } }
