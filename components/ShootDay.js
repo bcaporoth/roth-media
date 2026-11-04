@@ -248,7 +248,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                 {(me === "brandon" || s.created_by === "client") && <button type="button" className={"achip achip-danger sday-rowx" + (armed === s.id ? " is-armed" : "")} onClick={() => remove(s)} aria-label={`Remove ${s.title || KIND_LABEL[s.kind]}`} title="Remove from this day">{armed === s.id ? "Sure?" : "×"}</button>}
               </span>
               {open === s.id && (
-                <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} removeArmed={armed === s.id} onDuplicate={() => duplicate(s)} onError={fail} onSay={say} />
+                <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} removeArmed={armed === s.id} onDuplicate={() => duplicate(s)} onClose={() => { setOpen(null); setTimeout(() => document.getElementById("scr-" + s.id)?.scrollIntoView({ behavior: "smooth", block: "center" }), 30); }} onError={fail} onSay={say} />
               )}
             </li>
           ))}
@@ -395,7 +395,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
 
 // The script itself. Autosaves 900ms after the last change, with the rev it
 // was loaded at; a 409 means the other person saved first.
-function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, removeArmed = false, onDuplicate, onError, onSay }) {
+function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, removeArmed = false, onDuplicate, onClose = null, onError, onSay }) {
   const [title, setTitle] = useState(script.title || "");
   const [kind, setKind] = useState(script.kind);
   const [status, setStatus] = useState(script.status);
@@ -581,6 +581,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
       <div className="gcard-actions scr-foot">
         <button type="button" className="achip" onClick={onDuplicate}>Duplicate</button>
         {(role === "brandon" || script.created_by === "client") && <button type="button" className={"achip achip-danger" + (removeArmed ? " is-armed" : "")} onClick={onRemove}>{removeArmed ? "Tap again to remove" : "Remove from this day"}</button>}
+        {onClose && <button type="button" className="abtn scr-close" onClick={onClose}>Close ▲</button>}
       </div>
     </div>
   );

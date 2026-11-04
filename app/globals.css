@@ -7244,3 +7244,7 @@ textarea.grow { overflow: hidden; }
 .sday-writing { color: var(--clay); font-weight: 600; }
 .sday-rowx { min-width: 2.4rem; font-size: 1.15rem; line-height: 1; padding: 0.35rem 0.6rem; }
 .achip-danger.is-armed { background: #c0392b; color: #fff; border-color: #c0392b; }
+/* Questions card: the answer box was sized 100% minus the gutter AND given a margin, so it spilled past the card. Let the grid size it. */
+.qc-a { width: auto; justify-self: stretch; box-sizing: border-box; }
+.scr-foot { justify-content: space-between; align-items: center; }
+.scr-close { margin-left: auto; }
