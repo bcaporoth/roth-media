@@ -336,6 +336,16 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
             </div>
             {role === "brandon" && <button type="button" className="achip" onClick={() => setEdit(true)}>Edit day</button>}
           </div>
+          {role === "brandon" && (day.location || day.client?.phone || (day.reminders || []).length > 0) && (
+            <div className="sday-basics">
+              <div className="gcard-actions">
+                {day.location && <a className="abtn" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.location)}`} target="_blank" rel="noreferrer">Directions ↗</a>}
+                {day.client?.phone && <a className="abtn" href={`sms:${day.client.phone.replace(/[^\d+]/g, "")}`}>Text {day.client?.name?.split(" ")[0] || "them"}</a>}
+                {day.client?.phone && <a className="abtn" href={`tel:${day.client.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
+              </div>
+              {(day.reminders || []).length > 0 && <details className="sday-remind"><summary>📷 My camera reminders ({day.reminders.length})</summary><ul>{day.reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
+            </div>
+          )}
           <dl className="sday-stats">
             <div><dt>Scripts</dt><dd>{count}</dd></div>
             <div><dt>Filming</dt><dd>{fmtMins(total)}{win.wraps && <small className="sday-wraps"> · wraps {fmt12(win.wraps)}</small>}</dd></div>

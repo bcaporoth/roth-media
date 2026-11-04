@@ -34,6 +34,12 @@ export default function ClientProfile({ initial, emailReady }) {
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
   const [pasting, setPasting] = useState(false);
   const [editing, setEditing] = useState(false); // contact details form, closed until asked for
+  // One drawer open at a time: Shoot days · Paperwork · Notes · Delivery.
+  const [tab, setTab] = useState(() => (initial.type === "business" || (initial.days || []).length ? "days" : "paper"));
+  useEffect(() => {
+    const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
+    if (h === "notes") setTab("notes"); else if (h === "galleries" || h === "login") setTab("delivery"); else if (h === "shoots" || h === "days") setTab("days");
+  }, []);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
   const brief = latestBrief(d.intakes); // one record: their latest intake. The call sheet and shoots read it.
@@ -93,18 +99,31 @@ export default function ClientProfile({ initial, emailReady }) {
 
   return (
     <div className="cprof">
-      <div className="cprof-head">
-        <div>
-          <span className={`itag stage-${d.stage}`}>{STAGE_LABEL[d.stage]}</span>
-          <span className="gcard-meta"> · client since {fmt(c.created_at)}</span>
+      <div className="cprof-head cprof-head2">
+        <div className="cprof-who">
+          <p className="cprof-wholine"><span className={`itag stage-${d.stage}`}>{STAGE_LABEL[d.stage]}</span> <span className="gcard-meta">client since {fmt(c.created_at)}</span></p>
+          <p className="cprof-contactline">{isNoEmail(c.email) ? <em>no email yet</em> : c.email}{c.phone ? ` · ${c.phone}` : ""}</p>
+          {c.notes && <p className="cprof-desc">{c.notes}</p>}
         </div>
-        <div className="gcard-actions">
-          {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
+        <div className="gcard-actions cprof-headacts">
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
+          {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
+          <button type="button" className="achip" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Cancel" : "Edit"}</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
         </div>
       </div>
+      {editing && (
+        <form className="client-edit cprof-card" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
+          <div className="client-fields">
+            <label>Name<input name="name" defaultValue={c.name} /></label>
+            <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
+            <label>Phone<input name="phone" defaultValue={c.phone} /></label>
+          </div>
+          <label className="client-notes">Short description<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Who they are in a line — the bakery on Elmira St, gluten-free, owner Kaci…" /></label>
+          <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
+        </form>
+      )}
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
 
@@ -121,36 +140,30 @@ export default function ClientProfile({ initial, emailReady }) {
         </p>
       )}
 
-      <section className="cprof-card cprof-contact">
-        <div className="cprof-cardhead">
-          <h2>Details</h2>
-          <button type="button" className="achip" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Cancel" : "Edit details"}</button>
-        </div>
-        {!editing ? (
-          <dl className="cprof-facts">
-            <div><dt>Email</dt><dd>{isNoEmail(c.email) ? <em>none yet</em> : c.email}</dd></div>
-            <div><dt>Phone</dt><dd>{c.phone || <em>none yet</em>}</dd></div>
-            <div className="is-wide"><dt>Notes</dt><dd>{c.notes || <em>nothing yet — anniversary, kids&apos; names, what they loved…</em>}</dd></div>
-          </dl>
-        ) : (
-          <form className="client-edit" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
-            <div className="client-fields">
-              <label>Name<input name="name" defaultValue={c.name} /></label>
-              <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
-              <label>Phone<input name="phone" defaultValue={c.phone} /></label>
-            </div>
-            <label className="client-notes">Notes<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Anniversary, kids' names, what they loved…" /></label>
-            <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
-          </form>
-        )}
-        <div className="cprof-type">
-          <span className="kick-sm" id="cprof-type-label">Questions to use</span>
-          {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
-          <p className="sm-typehint" id="cprof-type-hint" title="Not a saved setting — it starts on whatever their last intake, call sheet or shoot was.">For the intake link, new call sheets and new shoots.</p>
-        </div>
-      </section>
 
-      <div className="cprof-cols">
+      <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
+        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["delivery", "Galleries & money", d.galleries.length || null]].map(([k, label, n]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
+        ))}
+      </div>
+
+      {tab === "days" && (
+        <div className="cprof-tabbody">
+          <ClientShoots client={c} type={type} brief={brief} days={d.days} onFail={fail} />
+          <div className="cprof-type">
+            <span className="kick-sm" id="cprof-type-label">Questions to use</span>
+            {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
+            <p className="sm-typehint" id="cprof-type-hint" title="Not a saved setting — it starts on whatever their last intake, call sheet or shoot was.">For the intake link, new call sheets and new shoots.</p>
+          </div>
+        </div>
+      )}
+
+      {tab === "notes" && (
+        <div className="cprof-tabbody">
+        </div>
+      )}
+
+      <div className={"cprof-cols" + (tab === "paper" ? " is-paper" : tab === "delivery" ? " is-delivery" : " is-hidden")}>
         <div className="cprof-col cprof-ref">
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Initial inquiry{d.messages.length > 0 && <em className="cprof-count">{d.messages.length}</em>}</h2>
@@ -202,16 +215,14 @@ export default function ClientProfile({ initial, emailReady }) {
             ))}
           </section>
 
-          <ClientShoots client={c} type={type} brief={brief} days={d.days} onFail={fail} />
-
-          <section className="cprof-card" id="login">
+          <section className="cprof-card cprof-deliv" id="login">
             <div className="cprof-cardhead"><h2>Login</h2>
               <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
             </div>
             <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
           </section>
 
-          <section className="cprof-card" id="galleries">
+          <section className="cprof-card cprof-deliv" id="galleries">
             <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
             {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
               <ul className="cprof-list cprof-gals">{d.galleries.map((g) => (
@@ -224,7 +235,7 @@ export default function ClientProfile({ initial, emailReady }) {
             )}
           </section>
 
-          <section className="cprof-card">
+          <section className="cprof-card cprof-deliv">
             <div className="cprof-cardhead"><h2>Payments{bookings.length + d.payments.length > 0 && <em className="cprof-count">{bookings.length + d.payments.length}</em>}</h2>
               {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}
             </div>

@@ -7215,3 +7215,29 @@ textarea.grow { overflow: hidden; }
   .shoot-daybtn { width: 100%; text-align: center; font-size: 1.05rem; padding: 0.85rem 1rem; }
   .shoot-daylink { display: grid; gap: 0.3rem; }
 }
+
+/* Client profile v2: one header, four drawers. */
+.cprof-head2 { align-items: flex-start; }
+.cprof-who { display: grid; gap: 0.2rem; min-width: 0; }
+.cprof-wholine { margin: 0; }
+.cprof-contactline { margin: 0; font-size: 1rem; }
+.cprof-desc { margin: 0.1rem 0 0; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.4; max-width: 60ch; }
+.cprof-headacts .achip { min-height: 2.3rem; padding: 0.4rem 0.85rem; font-size: 0.9rem; }
+.cprof-tabs { margin-top: 0.3rem; }
+.cprof-tabs .ifilter { font-size: 0.95rem; padding: 0.55rem 0.95rem; }
+.cprof-tabbody { display: grid; gap: 1rem; }
+.cprof-cols.is-hidden { display: none; }
+.cprof-cols.is-paper .cprof-deliv { display: none; }
+.cprof-cols.is-delivery .cprof-card:not(.cprof-deliv) { display: none; }
+.cprof-cols.is-delivery .cprof-ref { display: none; }
+@media (max-width: 520px) {
+  .cprof-head2 { flex-direction: column; }
+  .cprof-headacts { width: 100%; }
+  .cprof-headacts .achip { flex: 1 1 auto; text-align: center; }
+  .cprof-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .cprof-tabs .ifilter { text-align: center; }
+}
+/* Day sheet: the shoot basics live here too — directions, the owner's phone, Brandon's camera reminders. */
+.sday-basics { display: grid; gap: 0.5rem; margin: 0.4rem 0; }
+.sday-remind summary { cursor: pointer; font-size: 0.95rem; }
+.sday-remind ul { margin: 0.3rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.2rem; font-size: 0.95rem; }

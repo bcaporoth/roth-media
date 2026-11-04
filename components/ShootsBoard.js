@@ -398,7 +398,6 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
     <section className="cprof-card cprof-shoots">
       <div className="cprof-cardhead"><h2>Shoots{mine.length + loose.length > 0 && <em className="cprof-count">{mine.length + loose.length}</em>}</h2>
         <span className="gcard-actions">
-          {isBiz && !anyOpen && data && <button type="button" className="achip" onClick={() => { setShowNew(true); setNewDay(false); }}>+ Shoot only (no scripts)</button>}
           <button type="button" className="abtn" onClick={toggleNew} disabled={!data}>{anyOpen ? "Close" : `+ ${PLAN_LABEL[type] || "Plan a shoot"}`}</button>
         </span>
       </div>
