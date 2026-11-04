@@ -7248,3 +7248,9 @@ textarea.grow { overflow: hidden; }
 .qc-a { width: auto; justify-self: stretch; box-sizing: border-box; }
 .scr-foot { justify-content: space-between; align-items: center; }
 .scr-close { margin-left: auto; }
+/* Phone: question row = checkbox + question; the ↑ ↓ + × sit in a short row under it instead of a tall column. */
+@media (max-width: 520px) {
+  .qc-row { grid-template-columns: 2.2rem minmax(0, 1fr); row-gap: 0.3rem; }
+  .qc-row .tc-rowactions { grid-column: 2; flex-direction: row; justify-content: flex-end; gap: 0.35rem; }
+  .qc-row .tc-rowactions .achip { min-height: 2.1rem; min-width: 2.4rem; }
+}
