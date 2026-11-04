@@ -92,6 +92,19 @@ export async function GET() {
     db.from("galleries").select("id, title").order("created_at", { ascending: false }),
     loadPlaybook(db),
   ]);
+  // The script days (T-charts) behind each shoot, and which client each
+  // shoot's email belongs to — so the Shoots page can open or start one.
+  const [{ data: dayRows }, { data: clientRows }] = await Promise.all([
+    db.from("shoot_days").select("id, client_id, shoot_id, title, date, status").not("shoot_id", "is", null),
+    db.from("clients").select("id, email"),
+  ]);
+  const scriptCounts = {};
+  if ((dayRows || []).length) {
+    const { data: counts } = await db.from("scripts").select("day_id, status").in("day_id", dayRows.map((d) => d.id));
+    for (const c of counts || []) { scriptCounts[c.day_id] = scriptCounts[c.day_id] || { n: 0, ready: 0 }; scriptCounts[c.day_id].n += 1; if (c.status !== "draft") scriptCounts[c.day_id].ready += 1; }
+  }
+  const days = (dayRows || []).map((d) => ({ ...d, scripts: scriptCounts[d.id]?.n || 0, ready: scriptCounts[d.id]?.ready || 0, href: `/portal/admin/clients/${d.client_id}/days/${d.id}` }));
+  const clientByEmail = Object.fromEntries((clientRows || []).filter((c) => c.email).map((c) => [c.email.toLowerCase(), c.id]));
   if (error) return bad(/relation .* does not exist/i.test(error.message) ? "Run supabase/shoots.sql first" : error.message, 500);
   // Is the delivery clock switched on (studio-2.sql run)? Rows carry the
   // columns when it is; with no rows yet, ask the table directly.
@@ -105,6 +118,8 @@ export async function GET() {
   return NextResponse.json({
     shoots: await withPhotos(shoots, "checklist"),
     delivery: { ready: deliveryReady },
+    days,
+    clientByEmail,
     leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
     galleries: galleries || [],
     guides: { ...GUIDES, __base: GEAR_BASE },

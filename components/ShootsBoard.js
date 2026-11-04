@@ -243,7 +243,8 @@ export default function ShootsBoard() {
   }, [wanted, data]);
   const reveal = (id) => setWanted({ id });
 
-  const rowProps = (s) => ({ s, open: openId === s.id, onToggle: () => setOpenId(openId === s.id ? null : s.id), onUpdate: sh.update, onRemove: sh.remove, onRelocate: sh.relocate, onPatched: sh.patch, onSay: sh.say, clock, busy, galleries: data.galleries, guides: data.guides, playbook: data.playbook });
+  const dayOf = (s) => (data.days || []).find((d) => d.shoot_id === s.id) || null;
+  const rowProps = (s) => ({ s, day: dayOf(s), clientId: (data.clientByEmail || {})[(s.client_email || "").toLowerCase()] || null, open: openId === s.id, onToggle: () => setOpenId(openId === s.id ? null : s.id), onUpdate: sh.update, onRemove: sh.remove, onRelocate: sh.relocate, onPatched: sh.patch, onSay: sh.say, clock, busy, galleries: data.galleries, guides: data.guides, playbook: data.playbook });
   const upcoming = shoots.filter((s) => !s.date || s.date >= today).filter((s) => s.status !== "cancelled" && s.status !== "done");
   const past = shoots.filter(isPast).reverse();
   const owed = data ? owedList(shoots, new Date()) : [];
@@ -518,7 +519,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
 const NO_CLOCK = { ready: false, deliver: () => {} };
 const SAVE_LABEL = { saving: "Saving…", saved: "Saved ✓", retrying: "No signal — still trying. Your ticks are safe.", failed: "Couldn't save." };
-export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
+export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
   const d = deliveryState(s);
@@ -612,10 +613,11 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
       </button>
       {day && (
         <div className="shoot-daylink">
-          <a className="abtn shoot-daybtn" href={day.href}>Open scripts →</a>
+          <a className="abtn shoot-daybtn" href={day.href}>▶ Open the scripts (T-chart) →</a>
           <span className="gcard-meta">{day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready to film` : " — nothing written yet"} · shared with {first}</span>
         </div>
       )}
+      {!day && s.kind === "business" && s.status !== "done" && s.status !== "cancelled" && <StartScripts s={s} clientId={clientId} />}
       {!open && d.applies && d.owed && d.overdue && <div className="shoot-clock"><DeliveryChips d={d} done={false} /></div>}
 
       {open && dayMode && (
@@ -736,6 +738,30 @@ export function ShootRow({ s, day = null, open, onToggle, onUpdate, onRemove, on
         </div>
       )}
     </li>
+  );
+}
+
+// A business shoot with no script day yet: one tap makes the day (tied to
+// this calendar entry) and opens the T-chart page. Needs the client on file
+// so the owner can see the same page from their portal.
+function StartScripts({ s, clientId }) {
+  const [busy, setBusy] = useState(false);
+  async function start() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, shootId: s.id, title: s.title, date: s.date || "", start_time: s.start_time || "09:00", location: s.address || "" }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Couldn't start the day");
+      window.location.href = `/portal/admin/clients/${clientId}/days/${j.id}`;
+    } catch (e) { setBusy(false); alert(e.message); }
+  }
+  return (
+    <div className="shoot-daylink">
+      {clientId
+        ? <button type="button" className="abtn shoot-daybtn" disabled={busy} onClick={start}>{busy ? "Starting…" : "▶ Start the scripts (T-chart) →"}</button>
+        : <a className="abtn shoot-daybtn" href="/portal/admin/clients">Add {s.client_name ? s.client_name.split(" ")[0] : "them"} as a client to start scripts →</a>}
+      <span className="gcard-meta">{clientId ? "Opens the plan page — what they'll say, what you'll shoot." : "Scripts live on the client's page so they can see them too."}</span>
+    </div>
   );
 }
 

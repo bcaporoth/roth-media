@@ -50,10 +50,12 @@ export async function POST(request) {
       const { data: client } = await db.from("clients").select("id").eq("id", body.clientId).maybeSingle();
       if (!client) return bad("Client not found", 404);
       const patch = cleanDayPatch({ title: body.title || "Shoot day", date: body.date, start_time: body.start_time || "09:00", end_time: body.end_time, location: body.location });
-      const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch }).select("id").single();
+      // Started from a shoot that's already on the calendar → tie the day to it, no second entry.
+      const shootId = isUuid(body.shootId) ? body.shootId : null;
+      const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch, ...(shootId ? { shoot_id: shootId } : {}) }).select("id").single();
       if (error) throw new Error(/shoot_days/.test(error.message) ? "Run supabase/shoot-days.sql once in the Supabase SQL editor first." : error.message);
       // Dated from the start → it's on the Shoots calendar right away.
-      if (patch.date) {
+      if (patch.date && !shootId) {
         const { data: who } = await db.from("clients").select("name, email").eq("id", client.id).maybeSingle();
         await syncShoot(db, { id: data.id, shoot_id: null, client: who || {} }, { ...patch });
       }
