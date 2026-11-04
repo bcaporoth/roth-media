@@ -21,3 +21,5 @@ body:has(.admin-shell, .sprint-page, .bprint), .admin-shell { --say: #2f5f9e; --
 .scr-tcol-show .scr-field textarea:focus { outline: 2px solid var(--see); outline-offset: 1px; }
 .scr-tcol .scr-field textarea::placeholder { color: var(--ink-soft); opacity: 0.7; }
 @media (max-width: 640px) { .scr-tcol-say { padding-bottom: 0.7rem; border-bottom: 1px solid var(--say-line); } }
+/* Questions card on phone: question box fills the row; ↑ ↓ + × sit under it (the 640px rule pinned the buttons to row 1 and squeezed the box into the checkbox column). */
+@media (max-width: 520px) { .qc-row .qc-q { grid-column: 2; grid-row: 1; } .qc-row .tc-rowactions { grid-column: 2; grid-row: 2; } }
