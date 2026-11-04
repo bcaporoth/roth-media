@@ -1,5 +1,6 @@
 import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
+import "./tchart.css";
 import SiteBeacon from "../components/SiteBeacon";
 import MetaPixel from "../components/MetaPixel";
 
