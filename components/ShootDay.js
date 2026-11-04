@@ -92,9 +92,19 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     setScripts(ids.map((x, position) => ({ ...by[x], position })));
     try { await api({ action: "script-order", dayId: day.id, order: ids }); } catch (e) { fail(e); reload(); }
   }
+  // Two taps to remove (no confirm() popup — phones swallow it): the first
+  // arms the button for 4 s, the second deletes.
+  const [armed, setArmed] = useState(null);
+  const armTimer = useRef(null);
   async function remove(s) {
-    if (!window.confirm(`Remove “${s.title || KIND_LABEL[s.kind]}” from this day?`)) return;
-    try { await api({ action: "script-delete", dayId: day.id, scriptId: s.id }); setScripts((x) => x.filter((y) => y.id !== s.id)); if (open === s.id) setOpen(null); } catch (e) { fail(e); }
+    if (armed !== s.id) {
+      setArmed(s.id);
+      clearTimeout(armTimer.current);
+      armTimer.current = setTimeout(() => setArmed(null), 4000);
+      return;
+    }
+    clearTimeout(armTimer.current); setArmed(null);
+    try { await api({ action: "script-delete", dayId: day.id, scriptId: s.id }); setScripts((x) => x.filter((y) => y.id !== s.id)); if (open === s.id) setOpen(null); say("Removed"); } catch (e) { fail(e); }
   }
   async function duplicate(s) {
     try { const r = await api({ action: "script-duplicate", dayId: day.id, scriptId: s.id }); setScripts((x) => [...x, r.script]); setOpen(r.script.id); say("Copied — rename it"); } catch (e) { fail(e); }
@@ -235,10 +245,10 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
               <span className="sday-rowactions">
                 <button type="button" className="achip" onClick={() => move(s.id, -1)} disabled={i === 0} aria-label="Move earlier">↑</button>
                 <button type="button" className="achip" onClick={() => move(s.id, 1)} disabled={i === order.length - 1} aria-label="Move later">↓</button>
-                {(me === "brandon" || s.created_by === "client") && <button type="button" className="achip achip-danger sday-rowx" onClick={() => remove(s)} aria-label={`Remove ${s.title || KIND_LABEL[s.kind]}`} title="Remove from this day">×</button>}
+                {(me === "brandon" || s.created_by === "client") && <button type="button" className={"achip achip-danger sday-rowx" + (armed === s.id ? " is-armed" : "")} onClick={() => remove(s)} aria-label={`Remove ${s.title || KIND_LABEL[s.kind]}`} title="Remove from this day">{armed === s.id ? "Sure?" : "×"}</button>}
               </span>
               {open === s.id && (
-                <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} onDuplicate={() => duplicate(s)} onError={fail} onSay={say} />
+                <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} removeArmed={armed === s.id} onDuplicate={() => duplicate(s)} onError={fail} onSay={say} />
               )}
             </li>
           ))}
@@ -385,7 +395,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
 
 // The script itself. Autosaves 900ms after the last change, with the rev it
 // was loaded at; a 409 means the other person saved first.
-function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onDuplicate, onError, onSay }) {
+function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, removeArmed = false, onDuplicate, onError, onSay }) {
   const [title, setTitle] = useState(script.title || "");
   const [kind, setKind] = useState(script.kind);
   const [status, setStatus] = useState(script.status);
@@ -570,7 +580,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, onD
 
       <div className="gcard-actions scr-foot">
         <button type="button" className="achip" onClick={onDuplicate}>Duplicate</button>
-        {(role === "brandon" || script.created_by === "client") && <button type="button" className="achip achip-danger" onClick={onRemove}>Remove from this day</button>}
+        {(role === "brandon" || script.created_by === "client") && <button type="button" className={"achip achip-danger" + (removeArmed ? " is-armed" : "")} onClick={onRemove}>{removeArmed ? "Tap again to remove" : "Remove from this day"}</button>}
       </div>
     </div>
   );
