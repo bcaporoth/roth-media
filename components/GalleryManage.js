@@ -30,17 +30,16 @@ async function api(payload) {
   return json;
 }
 
+// Four tabs, named by what you're doing. Old tab keys still work (links,
+// ?tab=delete) via ALIAS.
 const TABS = [
-  { key: "edit", label: "Edit" },
-  { key: "cover", label: "Cover" },
-  { key: "design", label: "Design" },
-  { key: "premiere", label: "Premiere" },
-  { key: "add", label: "+ Add photos" },
-  { key: "photos", label: "Photos & albums" },
-  { key: "ready", label: "It's ready ✉" },
-  { key: "later", label: "Send it later 🕓" },
-  { key: "delete", label: "Delete", danger: true },
+  { key: "photos", label: "Photos" },
+  { key: "send", label: "Send" },
+  { key: "look", label: "Look" },
+  { key: "details", label: "Details" },
 ];
+const ALIAS = { edit: "details", cover: "look", design: "look", premiere: "look", add: "photos", ready: "send", later: "send", delete: "details" };
+const norm = (k) => ALIAS[k] || (TABS.some((t) => t.key === k) ? k : "photos");
 
 // Design and Premiere keep their own open/close button. Inside the drawer the
 // tab IS that button, so the panel is opened once on mount and its own toggle
@@ -332,11 +331,12 @@ function GalleryDelete({ gallery, onDeleted }) {
   );
 }
 
-export default function GalleryManage({ gallery, open, onChanged, askDelete, defaultTab = "edit" }) {
-  const [tab, setTab] = useState(defaultTab);
+export default function GalleryManage({ gallery, open, onChanged, askDelete, defaultTab = "photos" }) {
+  const [tab, setTab] = useState(() => norm(defaultTab));
   // Tabs stay mounted once visited (just hidden), so switching tabs or
   // closing the drawer never interrupts an upload in progress.
-  const [visited, setVisited] = useState(() => new Set([defaultTab]));
+  const [visited, setVisited] = useState(() => new Set([norm(defaultTab)]));
+  const [addOpen, setAddOpen] = useState(defaultTab === "add");
   const [ver, setVer] = useState(0); // bumps when files were added → Photos tab reloads
   // Album the uploader is pointed at ("" = top of gallery); set by the
   // "+ Add photos" button on an album heading in Photos & albums.
@@ -345,14 +345,15 @@ export default function GalleryManage({ gallery, open, onChanged, askDelete, def
   // The card's Delete chip opens the drawer straight on the Delete tab.
   useEffect(() => {
     if (!askDelete) return;
-    setTab("delete");
-    setVisited((v) => (v.has("delete") ? v : new Set(v).add("delete")));
+    setTab("details");
+    setVisited((v) => (v.has("details") ? v : new Set(v).add("details")));
   }, [askDelete]);
   if (open) everOpen.current = true;
   if (!everOpen.current) return null;
 
   const g = gallery;
-  const show = (key) => {
+  const show = (raw) => {
+    const key = norm(raw);
     setTab(key);
     setVisited((v) => (v.has(key) ? v : new Set(v).add(key)));
   };
@@ -380,58 +381,66 @@ export default function GalleryManage({ gallery, open, onChanged, askDelete, def
             {t.label}
           </button>
         ))}
-        <ReviewButton galleryId={g.id} clientEmail={isNoEmail(g.clientEmail) ? "" : g.clientEmail} requestedAt={g.reviewRequestedAt} />
       </div>
       <div className="gmanage-body">
         {pane(
-          "edit",
-          <GalleryEditPanel galleryId={g.id} embedded onSaved={() => window.location.reload()} />
-        )}
-        {pane("cover", <CoverPicker galleryId={g.id} cover={g.cover_filename} embedded />)}
-        {pane(
-          "design",
-          <AutoOpen>
-            <DesignPanel galleryId={g.id} design={g.design} shareToken={g.share_token} title={g.title} />
-          </AutoOpen>
-        )}
-        {pane(
-          "premiere",
-          <AutoOpen>
-            <PremierePanel galleryId={g.id} />
-          </AutoOpen>
-        )}
-        {pane(
-          "add",
-          <div className="gmanage-add">
-            <p className="cover-picker-hint">
-              Add to “{g.title}” — same gallery, same link. Pick which album they go in below;
-              you can always move them later under Photos &amp; albums.
-            </p>
-            <AdminUploader
-              gallery={{ id: g.id, title: g.title, shareToken: g.share_token }}
-              album={addAlbum}
-              onDone={() => {
-                setVer((v) => v + 1);
-                onChanged?.();
+          "photos",
+          <>
+            <GalleryPhotos
+              key={ver}
+              gallery={g}
+              onChanged={onChanged}
+              onAddTo={(album) => {
+                setAddAlbum(album);
+                setAddOpen(true);
+                setTimeout(() => document.getElementById(`gadd-${g.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
               }}
             />
-          </div>
+            <section className="gmanage-sec" id={`gadd-${g.id}`}>
+              <button type="button" className="achip" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}>
+                {addOpen ? "Hide uploader" : "+ Add photos"}
+              </button>
+              {addOpen && (
+                <div className="gmanage-add">
+                  <p className="cover-picker-hint">
+                    Same gallery, same link. Pick which album they go in; you can always move them later.
+                  </p>
+                  <AdminUploader
+                    gallery={{ id: g.id, title: g.title, shareToken: g.share_token }}
+                    album={addAlbum}
+                    onDone={() => {
+                      setVer((v) => v + 1);
+                      onChanged?.();
+                    }}
+                  />
+                </div>
+              )}
+            </section>
+          </>
         )}
         {pane(
-          "photos",
-          <GalleryPhotos
-            key={ver}
-            gallery={g}
-            onChanged={onChanged}
-            onAddTo={(album) => {
-              setAddAlbum(album);
-              show("add");
-            }}
-          />
+          "send",
+          <>
+            <section className="gmanage-sec"><h3>It&apos;s ready ✉</h3><GalleryReady gallery={g} onChanged={onChanged} /></section>
+            <section className="gmanage-sec"><h3>Send it later 🕓</h3><GalleryLater gallery={g} onChanged={onChanged} /></section>
+            <section className="gmanage-sec"><h3>Ask for a review</h3><ReviewButton galleryId={g.id} clientEmail={isNoEmail(g.clientEmail) ? "" : g.clientEmail} requestedAt={g.reviewRequestedAt} /></section>
+          </>
         )}
-        {pane("ready", <GalleryReady gallery={g} onChanged={onChanged} />)}
-        {pane("later", <GalleryLater gallery={g} onChanged={onChanged} />)}
-        {pane("delete", <GalleryDelete gallery={g} onDeleted={onChanged} />)}
+        {pane(
+          "look",
+          <>
+            <section className="gmanage-sec"><h3>Cover</h3><CoverPicker galleryId={g.id} cover={g.cover_filename} embedded /></section>
+            <section className="gmanage-sec"><h3>Design</h3><AutoOpen><DesignPanel galleryId={g.id} design={g.design} shareToken={g.share_token} title={g.title} /></AutoOpen></section>
+            <section className="gmanage-sec"><h3>Premiere</h3><AutoOpen><PremierePanel galleryId={g.id} /></AutoOpen></section>
+          </>
+        )}
+        {pane(
+          "details",
+          <>
+            <section className="gmanage-sec"><GalleryEditPanel galleryId={g.id} embedded onSaved={() => window.location.reload()} /></section>
+            <section className="gmanage-sec gmanage-danger"><h3>Delete</h3><GalleryDelete gallery={g} onDeleted={onChanged} /></section>
+          </>
+        )}
       </div>
     </div>
   );

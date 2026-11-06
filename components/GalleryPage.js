@@ -15,7 +15,7 @@ function fmtDate(iso) {
   return new Date(iso.length === 10 ? iso + "T12:00:00" : iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default function GalleryPage({ gallery, tab = "photos" }) {
+export default function GalleryPage({ gallery, tab = "photos" }) {  // old tab keys (edit/cover/…/delete) are aliased inside GalleryManage
   const g = gallery;
   const router = useRouter();
   const [editing, setEditing] = useState(false);
