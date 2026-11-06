@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import GuestEventsPanel from "./GuestEventsPanel";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
-import GalleryManage from "./GalleryManage";
 import { isNoEmail } from "../lib/no-email";
-import { useRouter } from "next/navigation";
 
 // Studio → Galleries: compact counts, search/sort, cover-photo cards, the
 // uploader and Guest Reel. The frame around it (tabs, Look, footer) is the
@@ -37,18 +35,6 @@ export default function AdminDashboard({ galleries }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
   const [copiedId, setCopiedId] = useState(null);
-  // Which cards have their Manage drawer open (several can be).
-  const [managing, setManaging] = useState(() => new Set());
-  // gallery id → bumps each time its card's Delete chip is tapped (opens Manage on the Delete tab)
-  const [askDelete, setAskDelete] = useState({});
-  const router = useRouter();
-  const toggleManage = (id) =>
-    setManaging((m) => {
-      const next = new Set(m);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -162,7 +148,7 @@ export default function AdminDashboard({ galleries }) {
           <div className="agrid">
             {shown.map((g) => (
               <article
-                className={"gcard" + (managing.has(g.id) ? " is-managing" : "")}
+                className="gcard"
                 key={g.id}
               >
                 <Link
@@ -221,33 +207,17 @@ export default function AdminDashboard({ galleries }) {
                     >
                       Open ↗
                     </a>
-                    <button
-                      type="button"
-                      className={"achip gcard-manage" + (managing.has(g.id) ? " is-on" : "")}
-                      aria-expanded={managing.has(g.id)}
-                      aria-controls={`gmanage-${g.id}`}
-                      onClick={() => toggleManage(g.id)}
-                    >
-                      {managing.has(g.id) ? "Close" : "Manage ▾"}
-                    </button>
-                    <button
-                      type="button"
+                    <Link className="achip gcard-manage" href={`/portal/admin/gallery/${g.id}`}>
+                      Edit →
+                    </Link>
+                    <Link
                       className="achip achip-danger"
                       title="Delete this gallery"
-                      onClick={() => {
-                        setAskDelete((m) => ({ ...m, [g.id]: (m[g.id] || 0) + 1 }));
-                        if (!managing.has(g.id)) toggleManage(g.id);
-                      }}
+                      href={`/portal/admin/gallery/${g.id}?tab=delete`}
                     >
                       Delete
-                    </button>
+                    </Link>
                   </div>
-                  <GalleryManage
-                    gallery={g}
-                    open={managing.has(g.id)}
-                    askDelete={askDelete[g.id]}
-                    onChanged={() => router.refresh()}
-                  />
                 </div>
               </article>
             ))}

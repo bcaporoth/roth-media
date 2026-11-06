@@ -332,11 +332,11 @@ function GalleryDelete({ gallery, onDeleted }) {
   );
 }
 
-export default function GalleryManage({ gallery, open, onChanged, askDelete }) {
-  const [tab, setTab] = useState("edit");
+export default function GalleryManage({ gallery, open, onChanged, askDelete, defaultTab = "edit" }) {
+  const [tab, setTab] = useState(defaultTab);
   // Tabs stay mounted once visited (just hidden), so switching tabs or
   // closing the drawer never interrupts an upload in progress.
-  const [visited, setVisited] = useState(() => new Set(["edit"]));
+  const [visited, setVisited] = useState(() => new Set([defaultTab]));
   const [ver, setVer] = useState(0); // bumps when files were added → Photos tab reloads
   // Album the uploader is pointed at ("" = top of gallery); set by the
   // "+ Add photos" button on an album heading in Photos & albums.

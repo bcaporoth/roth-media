@@ -213,7 +213,10 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                 ) : (
                   <>
                     <h4 className="gph-title">
-                      {title(g.key)} <em>{plural(g.files.length, "photo")}</em>
+                      <button type="button" className="gph-title-btn" title={g.key === TOP ? "Give these photos an album name" : "Click to rename"} disabled={busy} onClick={() => { setRenaming(g.key); setRenameTo(g.key === TOP ? "" : g.key); }}>
+                        {title(g.key)}
+                      </button>{" "}
+                      <em>{plural(g.files.length, "photo")}</em>
                       {g.key === TOP && <small>no heading — shows first</small>}
                     </h4>
                     <span className="gph-actions">

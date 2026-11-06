@@ -501,3 +501,26 @@ body:has(.admin-shell.is-dark) { background: #191612; }
 .today-money b { color: var(--ink); font-weight: 700; font-size: 1.4rem; }
 .st-domore { border-color: var(--clay); }
 .st-domore p { margin: 0; line-height: 1.5; }
+
+/* ── Gallery page (/portal/admin/gallery/[id]) ── */
+.gpage-back { margin: 0 0 0.6rem; font-size: 0.85rem; }
+.gpage-back a { color: var(--ink-soft); text-decoration: none; }
+.gpage-back a:hover { color: var(--ink); }
+.gpage-head { display: grid; grid-template-columns: 112px 1fr; gap: 1rem; align-items: start; padding: 1rem; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.gpage-cover { display: block; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--ink-soft); }
+.gpage-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gpage-cover .gcard-blank { display: grid; place-items: center; width: 100%; height: 100%; font-size: 2rem; font-weight: 700; color: var(--bone); }
+.gpage-info { min-width: 0; display: grid; gap: 0.5rem; }
+.gpage-title { margin: 0; font-size: clamp(1.3rem, 3vw, 1.9rem); line-height: 1.15; }
+.gpage-title-btn { all: unset; cursor: text; font: inherit; color: inherit; border-bottom: 1px dashed transparent; }
+.gpage-title-btn:hover, .gpage-title-btn:focus-visible { border-bottom-color: var(--ink-soft); outline: none; }
+.gpage-title-btn span { font-size: 0.6em; color: var(--ink-soft); margin-left: 0.2em; }
+.gpage-rename { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.gpage-rename .cform-input { flex: 1 1 14rem; font-size: 1.1rem; font-weight: 600; }
+.gpage-meta { margin: 0; font-size: 0.86rem; color: var(--ink-soft); }
+.gpage-meta a { color: inherit; }
+.gpage-manage { margin-top: 1rem; }
+.gpage-manage .gmanage { border-top: 0; padding-top: 0; margin-top: 0; }
+.gph-title-btn { all: unset; cursor: text; font: inherit; color: inherit; border-bottom: 1px dashed transparent; }
+.gph-title-btn:hover, .gph-title-btn:focus-visible { border-bottom-color: var(--ink-soft); outline: none; }
+@media (max-width: 560px) { .gpage-head { grid-template-columns: 72px 1fr; padding: 0.75rem; } }

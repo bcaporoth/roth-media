@@ -228,7 +228,7 @@ export default function ClientProfile({ initial, emailReady }) {
               <ul className="cprof-list cprof-gals">{d.galleries.map((g) => (
                 <li key={g.id + (g.shared ? "-s" : "")} className="cprof-gal">
                   <div className="cprof-galrow"><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span>
-                    <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a></span></div>
+                    <span className="gcard-actions"><button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button><a className="achip" href={`/portal/gallery/${g.id}`}>Open</a><a className="achip" href={`/portal/admin/gallery/${g.id}`}>Edit →</a></span></div>
                   {!g.shared && <AfterDelivery gallery={g} client={c} type={type} say={say} fail={fail} />}
                 </li>
               ))}</ul>
