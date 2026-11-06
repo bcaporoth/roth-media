@@ -3826,6 +3826,10 @@ body:has(.lightbox) nav.rm-nav {
   overflow: hidden;
 }
 
+.rm-bar-big { height: 14px; }
+.rm-bar-big span { min-width: 6px; }
+.rm-pct { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+
 .rm-bar span {
   display: block;
   height: 100%;

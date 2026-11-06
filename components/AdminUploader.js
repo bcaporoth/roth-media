@@ -267,11 +267,29 @@ async function apiWithRetry(payload) {
   }
 }
 
-async function putWithRetry(url, body, onRetry) {
+// One PUT via XHR so the bar can move WHILE the bytes go up (fetch can't
+// report upload progress). Resolves with the response headers getter.
+function putOnce(url, body, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(e.loaded); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve({ header: (h) => xhr.getResponseHeader(h) });
+      else reject(new Error(`HTTP ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("network error"));
+    xhr.ontimeout = () => reject(new Error("timed out"));
+    xhr.send(body);
+  });
+}
+
+async function putWithRetry(url, body, onRetry, onProgress) {
   for (let attempt = 1; ; attempt++) {
     try {
-      const res = await fetch(url, { method: "PUT", body });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      onProgress?.(0);
+      await putOnce(url, body, onProgress);
+      onProgress?.(body.size || 0);
       return;
     } catch (err) {
       if (attempt >= MAX_ATTEMPTS) throw err;
@@ -283,7 +301,7 @@ async function putWithRetry(url, body, onRetry) {
 
 // A big film in PART_SIZE pieces, each with its own retries. Part URLs are
 // signed 100 at a time as the upload gets to them. Returns the stored filename.
-async function putMultipart(galleryId, file, filename, contentType, onRetry, onNote) {
+async function putMultipart(galleryId, file, filename, contentType, onRetry, onNote, onPart) {
   const started = await apiWithRetry({ action: "mp-start", galleryId, filename, contentType });
   const { uploadId, key } = started;
   const total = Math.max(1, Math.ceil(file.size / PART_SIZE));
@@ -313,9 +331,10 @@ async function putMultipart(galleryId, file, filename, contentType, onRetry, onN
         const blob = file.slice((n - 1) * PART_SIZE, Math.min(n * PART_SIZE, file.size));
         for (let attempt = 1; ; attempt++) {
           try {
-            const res = await fetch(urls.get(n), { method: "PUT", body: blob });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            parts[n - 1] = { PartNumber: n, ETag: (res.headers.get("ETag") || "").replace(/"/g, "") };
+            onPart?.(n, 0);
+            const res = await putOnce(urls.get(n), blob, (loaded) => onPart?.(n, loaded));
+            onPart?.(n, blob.size);
+            parts[n - 1] = { PartNumber: n, ETag: (res.header("ETag") || "").replace(/"/g, "") };
             break;
           } catch (err) {
             if (attempt >= MAX_ATTEMPTS) throw err;
@@ -595,11 +614,19 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
         done: [...entryOf.values()],
       });
 
-      const bump = (note) => {
+      // Bytes still in flight, keyed per file / per part, so the bar moves
+      // continuously instead of jumping when a whole file lands.
+      const inflight = new Map();
+      let lastPaint = 0;
+      const liveBytes = () => { let b = bytesDone; for (const v of inflight.values()) b += v; return Math.min(totalBytes, b); };
+      const bump = (note, soft = false) => {
+        const now = Date.now();
+        if (soft && now - lastPaint < 150) return;
+        lastPaint = now;
         setProgress({
           done: completed,
           total: files.length,
-          bytes: bytesDone,
+          bytes: liveBytes(),
           totalBytes,
           startedAt,
           note: note || "",
@@ -612,6 +639,8 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
         const isVideo = VIDEO_EXT.test(file.name);
         const name = names[i];
         const retry = () => bump(`retrying ${file.name}`);
+        const onOrig = (loaded) => { inflight.set(`${i}`, loaded); bump(undefined, true); };
+        const onPart = (n, loaded) => { inflight.set(`${i}:${n}`, loaded); bump(undefined, true); };
 
         if (isVideo) {
           const poster = await videoPoster(file);
@@ -628,9 +657,9 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           const signed = toSign.length ? await apiWithRetry({ action: "sign", galleryId, files: toSign }) : { urls: [] };
           const bySize = Object.fromEntries(signed.urls.map((u) => [u.size, u]));
           if (multipart) {
-            bySize.orig = { filename: await putMultipart(galleryId, file, name, file.type || "video/mp4", retry, bump) };
+            bySize.orig = { filename: await putMultipart(galleryId, file, name, file.type || "video/mp4", retry, bump, onPart) };
           } else {
-            await putWithRetry(bySize.orig.url, file, retry);
+            await putWithRetry(bySize.orig.url, file, retry, onOrig);
           }
           let hasPoster = false;
           if (poster) {
@@ -682,7 +711,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
         });
         const bySize = Object.fromEntries(signed.urls.map((u) => [u.size, u]));
         await Promise.all([
-          putWithRetry(bySize.orig.url, origBlob, retry),
+          putWithRetry(bySize.orig.url, origBlob, retry, onOrig),
           putWithRetry(bySize.web.url, web, retry),
           putWithRetry(bySize.thumb.url, thumb, retry),
         ]);
@@ -711,6 +740,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           }
           completed += 1;
           bytesDone += file.size;
+          for (const k of inflight.keys()) if (k === `${i}` || k.startsWith(`${i}:`)) inflight.delete(k);
           bump();
           if (completed % 5 === 0) saveResume(resumeState());
         }
@@ -1035,16 +1065,14 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
 
       {progress && (
         <div className="rm-progress" role="status" aria-live="polite">
-          <div className="rm-bar">
+          <div className="rm-bar rm-bar-big" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} role="progressbar">
             <span style={{ width: `${pct}%` }} />
           </div>
           <p className="rm-progress-line">
             {stage === "Uploading" ? (
               <>
-                <strong>
-                  {progress.done} of {progress.total}
-                </strong>{" "}
-                files · {fmtBytes(progress.bytes)} of {fmtBytes(progress.totalBytes)}
+                <strong className="rm-pct">{pct}%</strong>{" "}
+                · {progress.done} of {progress.total} files · {fmtBytes(progress.bytes)} of {fmtBytes(progress.totalBytes)}
                 {eta ? ` · about ${eta} left` : ""}
                 {progress.alreadyDone ? ` · ${progress.alreadyDone} carried over` : ""}
               </>
