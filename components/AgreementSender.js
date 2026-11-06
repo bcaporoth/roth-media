@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import CopyChip from "./CopyChip";
-import { AGREEMENT_KINDS, agreementText, money } from "../lib/agreements";
+import { AGREEMENT_KINDS, OFFER_DAYS, agreementText, money, offerDate, offerDaysLeft, offerExpired, offerExpiry } from "../lib/agreements";
 
 const STATUS = { sent: "Sent — not signed", signed: "Signed — not paid", paid: "Paid", void: "Voided" };
+function statusText(r) {
+  if (r.status !== "sent" || r.kind === "invoice") return STATUS[r.status] || r.status;
+  if (offerExpired(r)) return "Expired — off the table";
+  const n = offerDaysLeft(r);
+  return `Sent — ${n} day${n === 1 ? "" : "s"} left`;
+}
 
 // Studio → Payments → Send an agreement. Pick what it is, type the amount,
 // get a private link. Email / text buttons open YOUR mail or messages app
@@ -91,7 +97,7 @@ export default function AgreementSender({ recent = [] }) {
 
       {made && (
         <div className="agsend-made">
-          <p className="pcharge-ok">Link ready for {made.name} — {money(Math.round(Number(made.amount) * 100))}. Send it your way:</p>
+          <p className="pcharge-ok">Link ready for {made.name} — {money(Math.round(Number(made.amount) * 100))}.{rows[0] && offerExpiry(rows[0]) ? ` Good for ${OFFER_DAYS} days — through ${offerDate(offerExpiry(rows[0]))}.` : ""} Send it your way:</p>
           <div className="pcharge-row">
             <CopyChip text={made.url} label="Copy link" />
             <a className="abtn" href={mailto}>Email it</a>
@@ -113,8 +119,8 @@ export default function AgreementSender({ recent = [] }) {
                   <td>{r.client_name}{r.business ? <><br /><small>{r.business}</small></> : null}</td>
                   <td>{AGREEMENT_KINDS[r.kind]?.label || r.kind}{r.period ? <><br /><small>{r.period}</small></> : null}</td>
                   <td>{money(r.amount_cents)}</td>
-                  <td>{STATUS[r.status] || r.status}</td>
-                  <td>{r.status === "paid" || r.status === "void" ? null : <span className="pcharge-row" style={{ margin: 0 }}><CopyChip text={r.url} label="Copy link" /><button type="button" className="achip" onClick={() => voidRow(r.id)}>Void</button></span>}</td>
+                  <td>{statusText(r)}</td>
+                  <td>{r.status === "paid" || r.status === "void" || offerExpired(r) ? null : <span className="pcharge-row" style={{ margin: 0 }}><CopyChip text={r.url} label="Copy link" /><button type="button" className="achip" onClick={() => voidRow(r.id)}>Void</button></span>}</td>
                 </tr>
               ))}
             </tbody>

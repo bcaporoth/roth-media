@@ -5,7 +5,7 @@ import AgreementText from "../../../components/AgreementText";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { stripe, stripeConfigured } from "../../../lib/stripe";
 import { recordBooking } from "../../../lib/booking";
-import { AGREEMENT_KINDS, agreementText, money } from "../../../lib/agreements";
+import { AGREEMENT_KINDS, OFFER_DAYS, agreementText, money, offerDate, offerExpired, offerExpiry } from "../../../lib/agreements";
 
 export const metadata = { title: "Sign & pay", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -42,6 +42,17 @@ export default async function SignPage({ params, searchParams }) {
         <div className="mx-done" role="status">
           <p className="mx-done-title">{money(row.paid_cents || row.amount_cents)} paid{row.period ? ` for ${row.period}` : ""}. Thank you!</p>
           <p>A receipt is on its way to {row.client_email}. {row.kind === "shoot" ? "Your date is locked. I'll text before the shoot to confirm the plan — have the people and the space ready at the start time and we're golden." : row.kind === "invoice" ? "" : "Send your changes any time — text or email, one batch at a time, with the final words and files."}</p>
+        </div>
+      </LegalPage>
+    );
+  }
+
+  if (offerExpired(row)) {
+    return (
+      <LegalPage kick={k.title} title={`${first}, this proposal has expired.`} updated="" plain>
+        <div className="mx-done" role="status">
+          <p className="mx-done-title">It was good for {OFFER_DAYS} days — through {offerDate(offerExpiry(row))}.</p>
+          <p>The price and {row.kind === "shoot" ? "the date" : "the terms"} came off the table after that. Still want to work together? Text Brandon at 845-549-4425 or reply to the email and he&apos;ll send a fresh one.</p>
         </div>
       </LegalPage>
     );

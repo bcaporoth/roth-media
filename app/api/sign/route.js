@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { stripe, stripeConfigured } from "../../../lib/stripe";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
-import { AGREEMENT_KINDS, agreementText, money } from "../../../lib/agreements";
+import { AGREEMENT_KINDS, OFFER_DAYS, agreementText, money, offerExpired } from "../../../lib/agreements";
 import { clip } from "../../../lib/visitor";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ export async function POST(request) {
   const { data: row } = await db.from("agreements").select("*").eq("token", token).maybeSingle();
   if (!row || row.status === "void") return bad("That link has expired — text Brandon for a new one.", 404);
   if (row.status === "paid") return bad("This one's already paid — thank you!", 409);
+  if (offerExpired(row)) return bad(`This proposal was good for ${OFFER_DAYS} days and has expired — text Brandon at 845-549-4425 for a fresh one.`, 410);
 
   let patch = {};
   if (row.sign_required && row.status !== "signed") {
