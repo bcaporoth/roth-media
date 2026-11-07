@@ -529,3 +529,30 @@ body:has(.admin-shell.is-dark) { background: #0f0f10; }
 .gmanage-sec > h3 { margin: 0; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
 .gmanage-danger > h3 { color: #b3402e; }
 .gmanage-danger { margin-top: 1.5rem; }
+
+/* == day albums + folders (GalleryPhotos, lib/albums.js) == */
+.gph-day { padding: 0.55rem; border: 1px solid var(--line); border-radius: 14px; gap: 0.6rem; }
+.gph-day.is-top { border-style: dashed; }
+.gph-day > .gph-dayhead { border: 0; padding: 0.15rem 0.2rem 0.35rem; border-bottom: 1px solid var(--line); border-radius: 0; }
+.gph-kind { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--clay); align-self: center; }
+.gph-folder { display: grid; gap: 0.45rem; padding-left: 0.7rem; border-left: 2px solid var(--line); }
+.gph-day.is-top .gph-folder, .gph-folder.is-loose:only-of-type { padding-left: 0; border-left: 0; }
+.gph-fhead { display: flex; flex-wrap: wrap; gap: 0.3rem 0.6rem; align-items: center; min-width: 0; }
+.gph-ftitle { margin: 0; flex: 1 1 8rem; min-width: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 0.5rem; align-items: baseline; font-size: 0.88rem; font-weight: 600; }
+.gph-ftitle em { font-style: normal; font-size: 0.74rem; font-weight: 400; color: var(--ink-soft); }
+.gph-factions .achip { min-height: 32px; padding-block: 0.2rem; font-size: 0.78rem; }
+.gph-moveform select, .gph-moveform input {
+  min-height: 40px; min-width: 0; max-width: 100%; padding: 0.3rem 0.9rem; border: 1px solid var(--field-line); border-radius: 999px;
+  background: var(--paper); color: var(--ink); font: inherit; font-size: 0.86rem;
+}
+.gph-moveform input { flex: 1 1 10rem; }
+.gph-go { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.gph-go:disabled { opacity: 0.4; }
+@media (max-width: 640px) {
+  .gph-folder { padding-left: 0.45rem; }
+  .gph-moveform select { flex: 1 1 100%; }
+}
+/* == /day albums + folders == */
+
+/* Dark Studio's footer: neutral like the rest (was warm brown #221f1a) */
+body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-top: 1px solid rgba(255, 255, 255, 0.06); }

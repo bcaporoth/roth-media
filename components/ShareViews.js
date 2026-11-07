@@ -4,10 +4,11 @@ import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import Reveal from "./Reveal";
 import BrandMark from "./BrandMark";
-import PortalGallery from "./PortalGallery";
+import GalleryDays from "./GalleryDays";
 import PremiereGate from "./PremiereGate";
 import GuestInvite from "./GuestInvite";
 import GuestUpload from "./GuestUpload";
+import { titleSize } from "../lib/gallery-title";
 
 // Everything a couple shares with other people, in the Cinema design:
 // the shared album (/g/[token]), its pre-premiere waiting room, and the
@@ -71,7 +72,7 @@ export function SharedPremiereWait({ skin, gallery, token, eyebrow, coverUrl = n
             <div className="cx-wrap cx-hero-body sh-wait-body">
               <div className="sh-wait-head">
                 <p className="cx-kick sh-accent">{eyebrow}</p>
-                <h1 className="cx-display sh-title">{gallery.title}</h1>
+                <h1 className={"cx-display sh-title gal-title" + titleSize(gallery.title)}>{gallery.title}</h1>
               </div>
               <PremiereGate
                 mode="inline"
@@ -124,7 +125,7 @@ export function SharedAlbum({
             <HeroMedia coverUrl={coverUrl} />
             <div className="cx-wrap cx-hero-body">
               <p className="cx-kick sh-accent">{eyebrow}</p>
-              <h1 className="cx-display sh-title">{gallery.title}</h1>
+              <h1 className={"cx-display sh-title gal-title" + titleSize(gallery.title)}>{gallery.title}</h1>
               <p className="sh-meta">
                 {items.length} {items.length === 1 ? "item" : "items"} · filmed
                 &amp; photographed by Roth Media
@@ -175,7 +176,7 @@ export function SharedAlbum({
             )}
 
             <section id="grid" className="sh-grid">
-              <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
+              <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} />
               {children}
             </section>
 

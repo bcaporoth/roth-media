@@ -4,10 +4,11 @@ import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import Reveal from "./Reveal";
 import PortalNav from "./PortalNav";
-import PortalGallery from "./PortalGallery";
+import GalleryDays from "./GalleryDays";
 import GuestInvite from "./GuestInvite";
 import NotesThread from "./NotesThread";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
+import { titleSize } from "../lib/gallery-title";
 
 // The client side of the portal, in the Cinema design: the lobby (signed
 // out), the client home, the account page and the gallery "premiere".
@@ -657,7 +658,7 @@ export function PortalPremiere({
             <div className="cx-hero-shade" aria-hidden="true" />
             <div className="cx-wrap cx-hero-body">
               <p className="cx-kick pt-accent">{eyebrow}</p>
-              <h1 className="cx-display pt-prem-title">
+              <h1 className={"cx-display pt-prem-title gal-title" + titleSize(gallery.title)}>
                 {words.slice(0, -1).join(" ")} {words.slice(-1)}
               </h1>
               <p className="pt-prem-meta">
@@ -721,7 +722,7 @@ export function PortalPremiere({
           )}
 
           <section id="grid" className="pt-prem-grid">
-            <PortalGallery items={items} title={gallery.title} videoPoster={videoPoster} />
+            <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} />
             {children}
           </section>
         </main>

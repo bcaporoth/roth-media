@@ -18,6 +18,7 @@ import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { revealEmail } from "../../../../lib/premiere-emails";
 import { resolveDesign } from "../../../../lib/design";
 import { setOwner, sendAccessInvite } from "../../../../lib/album-access";
+import { SECTION_MAX, cleanPart, splitAlbum, joinAlbum } from "../../../../lib/albums";
 import { sendReady, readyRecipients } from "../../../../lib/ready-send";
 import {
   isUuid,
@@ -531,8 +532,9 @@ export async function POST(request) {
   // ── Albums ("sections" on media): name, rename, reorder ──
   // An album is just media.section; order is media.position (the client
   // gallery groups by first appearance). "" / null = no album.
+  // Day albums + folders ride in the same column as "Day › Folder" (lib/albums.js).
   const albumName = (v) => {
-    const s = String(v ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+    const s = String(v ?? "").trim().replace(/\s+/g, " ").slice(0, SECTION_MAX);
     return s || null;
   };
 
@@ -588,6 +590,27 @@ export async function POST(request) {
     const { error, count } = await q;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true, album: to, renamed: count ?? 0 });
+  }
+
+  // Rename a whole day album: the day itself and every "Day › Folder" under it.
+  if (body.action === "day-rename") {
+    const { galleryId } = body;
+    if (!isUuid(galleryId)) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const from = cleanPart(body.from);
+    const to = cleanPart(body.to);
+    if (!from || !to) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    if (from === to) return NextResponse.json({ ok: true, day: to, renamed: 0 });
+    const { data: rows, error: readError } = await db.from("media").select("section").eq("gallery_id", galleryId);
+    if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
+    const sections = [...new Set((rows || []).map((r) => r.section).filter((s) => s && splitAlbum(s).day === from))];
+    let renamed = 0;
+    for (const s of sections) {
+      const next = joinAlbum(to, splitAlbum(s).folder);
+      const { error, count } = await db.from("media").update({ section: next }, { count: "exact" }).eq("gallery_id", galleryId).eq("section", s);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      renamed += count ?? 0;
+    }
+    return NextResponse.json({ ok: true, day: to, renamed });
   }
 
   // Reorder albums: order = album names first to last ("" for no album).

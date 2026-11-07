@@ -12,8 +12,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // the middle and end of the day. Items are now dealt round-robin into
 // explicit columns (item i → column i % N), which keeps the masonry look
 // while reading left-to-right in true album order.
-export default function PortalGallery({ items, title, videoPoster = null }) {
+export default function PortalGallery({ items, title, videoPoster = null, groupWord = "album" }) {
   const [lightbox, setLightbox] = useState(null);
+  // Folder tabs: null = everything; otherwise one group's key. A new set of
+  // items (another day opened) starts back on "All".
+  const [tab, setTab] = useState(null);
+  useEffect(() => setTab(null), [items]);
+  const visibleRef = useRef(null); // indices the viewer's ‹ › walk through
   const [cols, setCols] = useState(3);
   const [saving, setSaving] = useState(null);
   const [touchShare, setTouchShare] = useState(false);
@@ -300,11 +305,16 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
   }, []);
 
   const close = useCallback(() => setLightbox(null), []);
+  // ‹ › stay inside the folder tab you're on.
   const step = useCallback(
     (dir) =>
-      setLightbox((i) =>
-        i === null ? null : (i + dir + items.length) % items.length
-      ),
+      setLightbox((i) => {
+        if (i === null) return null;
+        const v = visibleRef.current;
+        const p = v ? v.indexOf(i) : -1;
+        if (p === -1) return (i + dir + items.length) % items.length;
+        return v[(p + dir + v.length) % v.length];
+      }),
     [items.length]
   );
 
@@ -398,14 +408,9 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           return { id: albumId(g), title: g.title || "More", meta, cover };
         })
       : [];
-  const jumpTo = (e, id) => {
-    const el = document.getElementById(id);
-    if (!el) return; // let the hash link do its thing
-    e.preventDefault();
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
-    window.history.replaceState(null, "", `#${id}`);
-  };
+  const showTabs = albums.length > 0;
+  const shown = tab === null || !showTabs ? groups : groups.filter((g) => g.key === tab);
+  visibleRef.current = tab === null || !showTabs ? null : shown.flatMap((g) => g.entries.map(([, i]) => i));
 
   // Deal a group's items into columns without disturbing their order.
   // Each item goes to the currently-shortest column, weighted by its
@@ -507,30 +512,22 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
 
   return (
     <div className={"pt-gal" + (selectMode ? " is-selecting" : "")}>
-      {albums.length > 0 && (
-        <nav className="pgal-albums" aria-label="Albums in this gallery">
-          <p className="pgal-albums-kick">
-            <span>{albums.length} albums</span>
-            <em>Tap one to jump to it</em>
-          </p>
-          <div className="pgal-albums-row">
-            {albums.map((a) => (
-              <a key={a.id} href={`#${a.id}`} className="pgal-album" onClick={(e) => jumpTo(e, a.id)}>
-                <span className="pgal-album-shot">
-                  {a.cover ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={a.cover} alt="" loading="eager" decoding="async" />
-                  ) : (
-                    <span className="pgal-album-blank" aria-hidden="true" />
-                  )}
-                </span>
-                <span className="pgal-album-body">
-                  <span className="pgal-album-title">{a.title}</span>
-                  <span className="pgal-album-meta">{a.meta}</span>
-                </span>
-              </a>
-            ))}
-          </div>
+      {showTabs && (
+        <nav className="pgal-tabs" aria-label={`${groupWord === "folder" ? "Folders" : "Albums"} in this ${groupWord === "folder" ? "day" : "gallery"}`}>
+          <button type="button" className={"pgal-tab" + (tab === null ? " is-on" : "")} aria-pressed={tab === null} onClick={() => setTab(null)}>
+            All <em>{items.length}</em>
+          </button>
+          {groups.map((g) => (
+            <button
+              type="button"
+              key={g.key || "·"}
+              className={"pgal-tab" + (tab === g.key ? " is-on" : "")}
+              aria-pressed={tab === g.key}
+              onClick={() => setTab(g.key)}
+            >
+              {g.title || "More"} <em>{g.entries.length}</em>
+            </button>
+          ))}
         </nav>
       )}
       {photoCount > 1 && (
@@ -562,7 +559,7 @@ export default function PortalGallery({ items, title, videoPoster = null }) {
           )}
         </div>
       )}
-      {groups.map((group) => (
+      {shown.map((group) => (
         <section className="pgal-section" key={group.key || "·"} id={albums.length ? albumId(group) : undefined}>
           {group.title && (
             <h2 className="pgal-section-title">

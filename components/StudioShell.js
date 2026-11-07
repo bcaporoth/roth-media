@@ -19,9 +19,9 @@ const LOOK_KEY = "rm-admin-look-2";
 // Seven tabs that fit a phone. A tab with `subs` shows them as a second row
 // while you're inside it. `key` in a sub is the `active` name its page passes
 // to StudioShell — every page keeps the URL and the `active` it always had.
+// Galleries first — it's where Brandon spends his time (2026-11-07); Studio already lands there.
 export const STUDIO_TABS = [
-  { key: "today", label: "Today", href: "/portal/admin/today" },
-  { key: "inbox", label: "Inbox", href: "/portal/admin/inbox" },
+  { key: "galleries", label: "Galleries", href: "/portal/admin" },
   { key: "clients", label: "Clients", href: "/portal/admin/clients" },
   {
     key: "shoots",
@@ -34,7 +34,8 @@ export const STUDIO_TABS = [
       { key: "playbook", label: "Playbook", href: "/portal/admin/playbook" },
     ],
   },
-  { key: "galleries", label: "Galleries", href: "/portal/admin" },
+  { key: "inbox", label: "Inbox", href: "/portal/admin/inbox" },
+  { key: "today", label: "Today", href: "/portal/admin/today" },
   {
     key: "money",
     label: "Money",

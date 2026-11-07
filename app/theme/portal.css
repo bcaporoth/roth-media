@@ -601,3 +601,137 @@ body:has(.pt-gal .lightbox) .cx-nav, body:has(.pt-gal .lightbox) nav.rm-nav { vi
 .pt-biz .is-posted .pt-month-steps li.is-now, .pt-biz .is-delivered .pt-month-steps li.is-now { background: #6fae84; border-color: #6fae84; }
 .pt-biz .pt-month-when { grid-column: 1 / -1; color: var(--faint); font-size: 0.84rem; }
 .pt-biz .pt-month-day { font-size: 0.95rem; }
+
+/* ── Shoot days (GalleryDays): tiles first, tap one to open it ── */
+/* The tiles ARE the page here, so they sit in a grid instead of a scrolling strip. */
+.pt-gal.pgal-daypick .pgal-albums { margin-bottom: 0; }
+.pt-gal.pgal-daypick .pgal-albums-row {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; scroll-snap-type: none; margin: 0; padding: 0;
+}
+.pt-gal.pgal-daypick .pgal-album { flex: none; border-radius: 18px; } /* soft, like the pills */
+.pt-gal .pgal-album-folders { font-size: 0.74rem; line-height: 1.35; color: rgba(246, 241, 232, 0.78); overflow-wrap: anywhere; }
+@media (min-width: 800px) {
+  .pt-gal.pgal-daypick .pgal-albums-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .pt-gal.pgal-daypick .pgal-albums-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* An open day: back link, the day's name, its counts */
+.pgal-dayhead { display: grid; gap: 0.35rem; margin: 0 2px 1.4rem; }
+.pgal-back {
+  justify-self: start; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0 1.05rem; margin-bottom: 0.4rem;
+  background: transparent; border: 1px solid var(--line-strong, rgba(246, 241, 232, 0.4)); border-radius: 999px; color: var(--fg); cursor: pointer;
+  font: 700 0.74rem/1 var(--font-body), "Manrope", sans-serif; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.pgal-back:hover { border-color: var(--fg); }
+.pgal-day-title { margin: 0; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.6rem, 5vw, 2.6rem); line-height: 1.05; letter-spacing: -0.025em; color: var(--fg); overflow-wrap: anywhere; }
+.pgal-day-meta { margin: 0; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); }
+
+/* Folder tabs inside a day (PortalGallery) */
+.pt-gal .pgal-tabs { display: flex; gap: 0.45rem; margin: 0 2px 1.4rem; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.pt-gal .pgal-tabs::-webkit-scrollbar { display: none; }
+.pt-gal .pgal-tab {
+  flex: none; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0 1rem;
+  border: 1px solid var(--line-strong, rgba(246, 241, 232, 0.4)); border-radius: 999px; background: transparent; color: var(--fg); cursor: pointer;
+  font: 600 0.86rem/1 var(--font-body), "Manrope", sans-serif; white-space: nowrap; transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.pt-gal .pgal-tab em { font-style: normal; font-weight: 500; font-size: 0.76rem; color: var(--faint); font-variant-numeric: tabular-nums; }
+.pt-gal .pgal-tab:hover { border-color: var(--fg); }
+.pt-gal .pgal-tab.is-on { background: var(--fg); color: var(--bg, #0b0a09); border-color: var(--fg); }
+.pt-gal .pgal-tab.is-on em { color: inherit; opacity: 0.7; }
+
+/* ════ Soft look (2026-11-07): round pills + rounded tiles, a little 3D ════
+   Client galleries only (signed-in .pt-page + share link .sh-page). Depth =
+   a hairline highlight on top + a soft shadow under; hover lifts 2px. */
+body:has(.pt-page, .sh-page) {
+  --soft-r: 18px;
+  --soft-r-sm: 14px;
+  --soft-lift: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 32px -14px rgba(0, 0, 0, 0.7);
+  --soft-lift-hi: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 4px 10px rgba(0, 0, 0, 0.4), 0 22px 44px -16px rgba(0, 0, 0, 0.75);
+}
+/* Buttons → pills */
+body:has(.pt-page, .sh-page) .cx-btn, .pt-gal .pgal-tool-btn, .pt-gal .pgal-dl, .pt-gal .pgal-lightbox-dl {
+  border-radius: 999px; box-shadow: var(--soft-lift);
+  transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.25s var(--ease), box-shadow 0.25s;
+}
+body:has(.pt-page, .sh-page) .cx-btn--light, .pt-gal .pgal-tool-btn.primary {
+  background-image: linear-gradient(180deg, #ffffff 0%, var(--fg) 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -1px 0 rgba(0, 0, 0, 0.12) inset, 0 3px 8px rgba(0, 0, 0, 0.35), 0 16px 32px -14px rgba(0, 0, 0, 0.7);
+}
+body:has(.pt-page, .sh-page) .cx-btn--ghost, .pt-gal .pgal-tool-btn:not(.primary) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0));
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+@media (hover: hover) {
+  body:has(.pt-page, .sh-page) .cx-btn:hover, .pt-gal .pgal-tool-btn:hover:not(:disabled), .pt-gal .pgal-tab:hover, .pgal-back:hover {
+    transform: translateY(-2px); box-shadow: var(--soft-lift-hi);
+  }
+}
+body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-gal .pgal-tab:active { transform: translateY(0); }
+
+/* Tabs + back pill share the same depth */
+.pt-gal .pgal-tab, .pgal-back {
+  box-shadow: var(--soft-lift);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.25s var(--ease), box-shadow 0.25s;
+}
+.pt-gal .pgal-tab.is-on { background-image: linear-gradient(180deg, #ffffff 0%, var(--fg) 100%); }
+
+/* Tiles: photos, films, day albums → rounded, sitting slightly up off the page */
+.pt-gal .gallery.pgal-grid .pgal-item { border-radius: var(--soft-r-sm); box-shadow: var(--soft-lift); isolation: isolate; }
+.pt-gal .pgal-view.is-selected::after { border-radius: var(--soft-r-sm); }
+.pt-gal .pgal-album { border-radius: var(--soft-r); box-shadow: var(--soft-lift); isolation: isolate; transition: transform 0.35s var(--ease), box-shadow 0.35s; }
+.pt-gal .pgal-album::before {
+  content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+@media (hover: hover) {
+  .pt-gal .pgal-album:hover { transform: translateY(-3px); box-shadow: var(--soft-lift-hi); }
+  .pt-gal:not(.is-selecting) .gallery.pgal-grid .pgal-item:hover { box-shadow: var(--soft-lift-hi); }
+}
+/* The play disc + download chip get the same raised feel */
+.pt-gal .pgal-play svg { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 6px 18px rgba(0, 0, 0, 0.45); }
+
+/* Light skin: shadows read too heavy on cream — soften them */
+.pt-page.skin-light, .sh-page.skin-light, .skin-light .pt-page, .skin-light .sh-page {
+  --soft-lift: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 1px 3px rgba(40, 30, 20, 0.12), 0 10px 26px -14px rgba(40, 30, 20, 0.35);
+  --soft-lift-hi: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 3px 8px rgba(40, 30, 20, 0.16), 0 18px 38px -16px rgba(40, 30, 20, 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  body:has(.pt-page, .sh-page) .cx-btn, .pt-gal .pgal-tool-btn, .pt-gal .pgal-tab, .pgal-back, .pt-gal .pgal-album { transition: none; transform: none !important; }
+}
+
+/* ════ Gallery hero title: bigger, heavier, a little 3D (2026-11-07) ════
+   Works with every album font (Signature/Syne, Timeless/Playfair,
+   Editorial/Cormorant, Bold/Fraunces). Size steps down for long titles
+   (lib/gallery-title.js). Soft cream-to-sand fill + a stacked drop shadow
+   so it sits up off the photo; rises in once on load. */
+.sh-page .gal-title, .pt-page .gal-title {
+  font-size: clamp(3.1rem, 14vw, 10rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.04em;
+  text-wrap: balance; overflow-wrap: normal; word-break: normal; max-width: 14ch;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f1e8 52%, #d8cdb9 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.3)) drop-shadow(0 14px 26px rgba(0, 0, 0, 0.5));
+  /* background-clip:text only paints inside the box, so descenders (g, y, p)
+     need real room: padding below and above, pulled back with margins so the
+     layout spacing doesn't change. */
+  padding: 0.08em 0.04em 0.2em; margin: -0.08em -0.04em -0.2em;
+}
+.sh-page .gal-title--mid, .pt-page .gal-title--mid { font-size: clamp(2.6rem, 10.5vw, 7.6rem); max-width: 16ch; }
+.sh-page .gal-title--long, .pt-page .gal-title--long { font-size: clamp(2.2rem, 8vw, 5.8rem); line-height: 0.94; max-width: 18ch; }
+/* Multi-line titles: each line keeps its descenders (the clip is per box, so line-height can't go below 0.9 with these fonts) */
+.sh-page .gal-title, .pt-page .gal-title { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+/* Light album skin with no cover photo: deep ink fill instead of cream (over a photo it stays light) */
+.skin-light .sh-hero--bare .gal-title, .skin-light .pt-prem-hero--bare .gal-title {
+  background: linear-gradient(180deg, #2b2620 0%, #14110e 100%); -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.6)) drop-shadow(0 10px 20px rgba(40, 30, 20, 0.18));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sh-page .gal-title, .pt-page .gal-title { animation: gal-title-rise 1s cubic-bezier(0.2, 0.7, 0.1, 1) both 0.1s; }
+}
+@keyframes gal-title-rise {
+  from { opacity: 0; transform: translateY(0.18em) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}

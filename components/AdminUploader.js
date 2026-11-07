@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { allocateName, jpgName, safeName, stemKey } from "../lib/upload-names";
+import { joinAlbum } from "../lib/albums";
 
 // Browser-based gallery uploader, rebuilt for full wedding galleries.
 //
@@ -42,20 +43,27 @@ const RESUME_KEY = "rm-upload-resume";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Folder mode: the picked folder's SUBFOLDERS become the gallery's albums.
-// "Gallery/02 Ceremony/IMG_1.jpg" → album "Ceremony" (leading numbers are
-// sort order, not display). Files sitting directly in the picked folder
-// get no album. (An album is media.section in the database.)
+// Folder mode: the picked folder's SUBFOLDERS become the gallery's day
+// albums, and folders inside those become that day's folders:
+//   "Gallery/02 Ceremony/IMG_1.jpg"            → day "Ceremony"
+//   "Gallery/01 Oct 22 Pop-up/Reels/clip.mov"  → day "Oct 22 Pop-up", folder "Reels"
+// Leading numbers are sort order, not display. Files sitting directly in the
+// picked folder get no album. (Stored as media.section — see lib/albums.js.)
 function relPath(file) {
   return file.webkitRelativePath || file.name;
+}
+
+function folderName(raw) {
+  const r = String(raw || "").trim();
+  return r.replace(/^\d+[\s._-]*/, "").trim() || r;
 }
 
 function sectionOf(file) {
   const parts = relPath(file).split("/");
   if (parts.length < 3) return null;
-  const raw = parts[parts.length - 2].trim();
-  const clean = raw.replace(/^\d+[\s._-]*/, "").trim();
-  return (clean || raw).slice(0, 80) || null;
+  const day = folderName(parts[1]);
+  const folder = parts.length >= 4 ? folderName(parts[parts.length - 2]) : null;
+  return joinAlbum(day, folder);
 }
 
 function fmtBytes(n) {
@@ -464,7 +472,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
   // The album name every file in this run gets (folder mode: per subfolder).
   const chosenAlbum = () => {
     if (albumPick === NO_ALBUM) return null;
-    if (albumPick === NEW_ALBUM) return albumNew.trim().replace(/\s+/g, " ").slice(0, 80) || null;
+    if (albumPick === NEW_ALBUM) return albumNew.trim().replace(/\s+/g, " ").slice(0, 140) || null;
     return albumPick;
   };
 
