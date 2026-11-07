@@ -11,8 +11,8 @@
 // "Print prep sheet" opens a one-page version to print or save as PDF.
 //
 // Delivery clock: once a shoot has happened it shows what's owed — the
-// sneak peek (48 hours) and the finished work (film six weeks, galleries
-// four, business content two — lib/delivery.js) — with one-tap "sent" /
+// sneak peek (48 hours) and the finished work (wedding photos + film twelve weeks,
+// portrait galleries four, business content two — lib/delivery.js) — with one-tap "sent" /
 // "delivered". Everything still owed is listed at the top, most urgent first.
 //
 // One filter row: Upcoming | Owed | Done | Month. Owed is the delivery

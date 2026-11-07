@@ -25,7 +25,7 @@ export function GET() {
     "",
     "## What we do",
     `- Wedding photography — ${money(photo.price)}, full day: ${photo.get[0].toLowerCase()}; sneak peek gallery within 48 hours.`,
-    `- Wedding videography — ${money(film.price)}, full day: two short films (1–3 minutes each), the full ceremony and speeches with clean audio; sneak peek within 48 hours. Full delivery online within six weeks.`,
+    `- Wedding videography — ${money(film.price)}, full day: two short films (1–3 minutes each), the full ceremony and speeches with clean audio; sneak peek within 48 hours. Full delivery online within twelve weeks.`,
     `- Wedding add-ons: second shooter ${money(wAdd("second").price)}; guest photos & video messages (QR card on every table) ${money(wAdd("guest").price)}; engagement session free with any wedding.`,
     `- The Quarter for businesses — ${money(biz("day").price)}: one shoot day at your business; a 45–90 second promo, 8 vertical reels, 15–30 edited photos. Delivered within two weeks, cleared for ads.`,
     `- The Month — ${money(biz("mini").price)}: 8 vertical reels and 10–20 edited photos, no promo.`,

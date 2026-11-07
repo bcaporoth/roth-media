@@ -11,9 +11,9 @@ export default function TermsPage() {
       <aside className="terms-glance" aria-label="The terms at a glance">
         <p className="cx-kick">At a glance</p>
         <ul>
-          <li><strong>Your date is held</strong> once the agreement is signed and the 50% retainer is paid. The retainer is non-refundable. <a href="#booking-and-payment">More</a></li>
+          <li><strong>Your date is held</strong> once the agreement is signed and you&apos;ve paid: a 50% retainer for weddings and portraits (non-refundable), or the full amount for business work. <a href="#booking-and-payment">More</a></li>
           <li><strong>Move your date once, free,</strong> with at least 30 days&apos; notice. <a href="#rescheduling">More</a></li>
-          <li><strong>Delivery:</strong> wedding films in 6 weeks, wedding and portrait photos in 4, business content in 2. <a href="#delivery">More</a></li>
+          <li><strong>Delivery:</strong> wedding sneak peek in 48 hours; wedding photos and film in 12 weeks; portrait photos in 4; business content in 2. <a href="#delivery">More</a></li>
           <li><strong>Your gallery is online for 12 months.</strong> Download everything. $35 keeps it up another year. <a href="#client-galleries">More</a></li>
           <li><strong>You can use your photos and videos forever.</strong> Roth Media keeps the copyright. <a href="#copyright-and-how-you-can-use-the-work">More</a></li>
           <li><strong>Travel is included</strong> within an hour of Corning, Waverly, Sayre, or Athens. <a href="#travel">More</a></li>
@@ -57,7 +57,7 @@ export default function TermsPage() {
       <p>Travel is included anywhere within an hour of Corning, Waverly, Sayre, or Athens. Farther than that, it&apos;s $65 per hour of driving, counted round trip. When the shoot is three or more hours away, or the schedule needs an overnight (an early start or a late finish far from home), travel is a flat $1,000 that covers the drive and lodging. Travel is confirmed in writing with the rest of the quote, so it never shows up as a surprise on the invoice.</p>
 
       <h2>Delivery</h2>
-      <p>Wedding films are delivered online within six weeks of the wedding; wedding and portrait photo galleries within four weeks; business content within two. Peak season can stretch that a bit, and we&apos;ll tell you if it does. Sneak peeks come within 48 hours where your package includes them. Delivery is digital, through your private gallery — you get full-resolution files you can print anywhere.</p>
+      <p>Wedding photos and films are delivered online within twelve weeks of the wedding; portrait photo galleries within four weeks; business content within two. Peak season can stretch that a bit, and we&apos;ll tell you if it does. Sneak peeks come within 48 hours where your package includes them. Delivery is digital, through your private gallery — you get full-resolution files you can print anywhere.</p>
       <p>Raw footage and unedited photos aren&apos;t part of any package. Businesses can add all the raw footage as an add-on; otherwise, unedited files stay with us. What you receive is the finished work, and it&apos;s complete when delivered — we don&apos;t re-edit a full gallery or re-cut a film after delivery except as covered under Revisions below.</p>
 
       <h2>Revisions</h2>

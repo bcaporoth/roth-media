@@ -17,7 +17,7 @@ const NEED = {
 };
 const WHEN = {
   engagement: ["Sneak peeks: within 48 hours", "Full gallery: within 2 weeks", "Save-the-date frames flagged in the gallery"],
-  wedding: ["Sneak peek: within 48 hours", "Photo gallery: within 4 weeks", "Wedding film: within 6 weeks"],
+  wedding: ["Sneak peek: within 48 hours", "Photo gallery: within 12 weeks", "Wedding film: within 12 weeks"],
   business: ["Sneak peek: within 48 hours", "Finished content: within 2 weeks", "One round of revisions included"],
   family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks", "A year of access in your client account, unlimited downloads"],
 };
@@ -37,7 +37,7 @@ export default async function WelcomePage({ searchParams }) {
   const cat = ["wedding", "engagement", "business", "family"].includes(want) ? want : "";
   const tel = PHONE.replace(/\D/g, "");
   const need = cat ? NEED[cat] : ["The short questionnaire, back within 3 days", "Any must-have shots or moments", "One point of contact for shoot day"];
-  const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Photo galleries: within 4 weeks", "Wedding films: within 6 weeks"];
+  const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Portrait galleries: within 4 weeks", "Wedding photos & film: within 12 weeks"];
 
   return (
     <LegalPage kick="Welcome" title="Here's what to expect working with me." updated="" photo={PHOTO[cat]}>

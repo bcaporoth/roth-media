@@ -74,7 +74,7 @@ export async function GET(request) {
   const POST_IDEAS = [
     "A reel from your latest shoot + \"Filmed in [town]. Booking [month] dates now.\"",
     "A behind-the-scenes photo + one line on what the client wanted and how it turned out",
-    "A wedding sneak-peek still + \"Sneak peeks in 48 hours, full film in 6 weeks. Waverly, Sayre, Athens, Elmira, Corning.\"",
+    "A wedding sneak-peek still + \"Sneak peeks in 48 hours, full film in 12 weeks. Waverly, Sayre, Athens, Elmira, Corning.\"",
     "A local business you filmed + \"Content Day at [business], [town]: one shoot, a month of posts.\"",
   ];
   const etDay = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long" });

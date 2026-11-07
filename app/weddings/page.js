@@ -51,7 +51,7 @@ const FAQS = [
   },
   {
     q: "When do we get everything?",
-    a: "Sneak peeks land within 48 hours — photos or video, ready to post while everyone's still talking about the day. Your full delivery follows online within six weeks, in your own client account: a year of access, unlimited downloads.",
+    a: "Sneak peeks land within 48 hours — photos or video, ready to post while everyone's still talking about the day. Your full delivery follows online within twelve weeks, in your own client account: a year of access, unlimited downloads.",
   },
   {
     q: "Can we post our films anywhere? What about the music?",
@@ -217,7 +217,7 @@ export default function WeddingsPage() {
             <ol className="cx-steps cx-reveal">
               <li><span><strong>Build your quote online.</strong> Pick your package and add-ons — you see the real starting price in two minutes.</span></li>
               <li><span><strong>I confirm it in writing.</strong> Exact number, locked date, no surprises.</span></li>
-              <li><span><strong>Your day, delivered.</strong> Filmed candid and unobtrusive, delivered online within six weeks — ready to share anywhere.</span></li>
+              <li><span><strong>Your day, delivered.</strong> Filmed candid and unobtrusive, delivered online within twelve weeks — ready to share anywhere.</span></li>
             </ol>
           </div>
         </section>
