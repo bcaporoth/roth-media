@@ -8,7 +8,7 @@ import GalleryDays from "./GalleryDays";
 import PremiereGate from "./PremiereGate";
 import GuestInvite from "./GuestInvite";
 import GuestUpload from "./GuestUpload";
-import { titleSize } from "../lib/gallery-title";
+import { titleSize, mediaCounts, madeBy } from "../lib/gallery-title";
 
 // Everything a couple shares with other people, in the Cinema design:
 // the shared album (/g/[token]), its pre-premiere waiting room, and the
@@ -127,8 +127,7 @@ export function SharedAlbum({
               <p className="cx-kick sh-accent">{eyebrow}</p>
               <h1 className={"cx-display sh-title gal-title" + titleSize(gallery.title)}>{gallery.title}</h1>
               <p className="sh-meta">
-                {items.length} {items.length === 1 ? "item" : "items"} · filmed
-                &amp; photographed by Roth Media
+                {mediaCounts(items)} · {madeBy(items)}
               </p>
               {onlineUntil && (
                 <p className="sh-meta sh-online">

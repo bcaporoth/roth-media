@@ -8,7 +8,7 @@ import GalleryDays from "./GalleryDays";
 import GuestInvite from "./GuestInvite";
 import NotesThread from "./NotesThread";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
-import { titleSize } from "../lib/gallery-title";
+import { titleSize, mediaCounts } from "../lib/gallery-title";
 
 // The client side of the portal, in the Cinema design: the lobby (signed
 // out), the client home, the account page and the gallery "premiere".
@@ -662,7 +662,7 @@ export function PortalPremiere({
                 {words.slice(0, -1).join(" ")} {words.slice(-1)}
               </h1>
               <p className="pt-prem-meta">
-                {items.length} {items.length === 1 ? "item" : "items"}
+                {mediaCounts(items)}
                 {onlineUntil ? ` · ${onlineUntil} · ` : " · yours to keep, forever"}
                 {onlineUntil && <a className="terms-how" href="/terms#client-galleries">How this works</a>}
               </p>
