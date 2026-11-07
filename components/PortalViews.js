@@ -662,7 +662,8 @@ export function PortalPremiere({
               </h1>
               <p className="pt-prem-meta">
                 {items.length} {items.length === 1 ? "item" : "items"}
-                {onlineUntil ? ` · ${onlineUntil}` : " · yours to keep, forever"}
+                {onlineUntil ? ` · ${onlineUntil} · ` : " · yours to keep, forever"}
+                {onlineUntil && <a className="terms-how" href="/terms#client-galleries">How this works</a>}
               </p>
               <div className="cx-cta-row">
                 <a href="#grid" className="cx-btn cx-btn--light cx-btn--lg">

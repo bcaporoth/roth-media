@@ -249,3 +249,13 @@
   .mx-page .mx-pa-agreement { max-height: none; overflow: visible; }
 }
 .mx-page .mx-pa-intro { max-width: 44rem; margin: 0 0 2.2rem; }
+
+/* Terms → "At a glance" box: the key points in one card, each linking to its section. */
+.mx-page .mx-prose .terms-glance { margin: 0 0 2rem; padding: 1.2rem 1.25rem 1.1rem; border: 1px solid rgba(220, 189, 122, 0.4); border-radius: 4px; background: var(--bg-2); }
+.mx-page .mx-prose .terms-glance .cx-kick { margin: 0 0 0.7rem; }
+.mx-page .mx-prose .terms-glance ul { display: grid; gap: 0.7rem; margin: 0; }
+.mx-page .mx-prose .terms-glance li { line-height: 1.5; color: var(--dim); }
+.mx-page .mx-prose .terms-glance li::before { content: ""; position: absolute; left: 0; top: 0.72em; width: 0.6rem; height: 1px; background: var(--gold); }
+.mx-page .mx-prose .terms-glance strong { color: var(--fg); font-weight: 700; }
+.mx-page .mx-prose .terms-glance a { color: var(--gold); white-space: nowrap; }
+.mx-page .mx-prose .terms-glance + p { color: var(--fg); font-size: 1.08rem; line-height: 1.6; }

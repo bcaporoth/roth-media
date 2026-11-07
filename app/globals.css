@@ -7299,3 +7299,7 @@ textarea.grow { overflow: hidden; }
 body:has(.cin-dock) .studio-return { bottom: calc(58px + 14px + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 800px) { body:has(.cin-dock) .studio-return { bottom: 20px; } }
 @media print { .studio-return { display: none; } }
+
+/* "How this works" → Terms › Client galleries, after the gallery's "Online until" line */
+a.terms-how { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; white-space: nowrap; padding-block: 0.6rem; margin-block: -0.6rem; display: inline-block; }
+a.terms-how:hover { color: var(--fg, #f4f4f2); }

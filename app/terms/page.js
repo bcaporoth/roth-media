@@ -8,6 +8,19 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <LegalPage kick="Terms" title="The short version of how we work." updated="November 7, 2026" toc>
+      <aside className="terms-glance" aria-label="The terms at a glance">
+        <p className="cx-kick">At a glance</p>
+        <ul>
+          <li><strong>Your date is held</strong> once the agreement is signed and the 50% retainer is paid. The retainer is non-refundable. <a href="#booking-and-payment">More</a></li>
+          <li><strong>Move your date once, free,</strong> with at least 30 days&apos; notice. <a href="#rescheduling">More</a></li>
+          <li><strong>Delivery:</strong> wedding films in 6 weeks, wedding and portrait photos in 4, business content in 2. <a href="#delivery">More</a></li>
+          <li><strong>Your gallery is online for 12 months.</strong> Download everything. $35 keeps it up another year. <a href="#client-galleries">More</a></li>
+          <li><strong>You can use your photos and videos forever.</strong> Roth Media keeps the copyright. <a href="#copyright-and-how-you-can-use-the-work">More</a></li>
+          <li><strong>Travel is included</strong> within an hour of Corning, Waverly, Sayre, or Athens. <a href="#travel">More</a></li>
+          <li><strong>If we can&apos;t make it</strong> and can&apos;t find a replacement, you get everything back. <a href="#cancelling">More</a></li>
+        </ul>
+      </aside>
+
       <p>These terms cover everything Roth Media does — wedding photo and video, portrait sessions, Content Days and event coverage for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
 
       <h2>Quotes</h2>
