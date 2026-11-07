@@ -795,3 +795,57 @@
   .rm-cinema .cin-open-word { font-size: clamp(5rem, 26vw, 9rem); }
 }
 @media (prefers-reduced-motion: reduce) { .rm-cinema .cin-open-scroll span { animation: none; } }
+
+/* ── Redesign step 3: editorial layer (neo-classical / magazine) ──
+   Appended last so it overrides the Cinema defaults above. Gold → red,
+   titles in the giant display face, hairline rules, more air. */
+.rm-cinema { --gold: var(--red-soft); --tint: rgba(179, 18, 27, 0.1); --tint-line: rgba(215, 38, 47, 0.45); }
+.rm-cinema .cin-card-title, .rm-cinema .cin-h2, .rm-cinema .cin-hero h1 {
+  font-family: var(--font-giant); font-weight: 400; letter-spacing: 0.015em; line-height: 0.92; text-transform: uppercase;
+}
+.rm-cinema .cin-card-title { font-size: clamp(3.4rem, 9vw, 8.4rem); }
+.rm-cinema .cin-card-title--long { font-size: clamp(2.8rem, 6.6vw, 6.2rem); }
+.rm-cinema .cin-h2 { font-size: clamp(3rem, 6.4vw, 6rem); }
+.rm-cinema .cin-hero h1 { font-size: clamp(3.2rem, 8vw, 7.4rem); }
+.rm-cinema .cin-card-title em, .rm-cinema .cin-h2 em { font-style: normal; color: var(--red-soft); }
+
+/* Chapter slate → magazine folio: big red numeral, hairline, small caps */
+.rm-cinema .cin-chapter { border-top: 1px solid var(--line); }
+.rm-cinema .cin-card { padding-top: clamp(4.5rem, 9vh, 7.5rem); padding-bottom: clamp(3rem, 6vh, 5rem); }
+.rm-cinema .cin-slate { gap: 0.4rem 1.1rem; color: var(--faint); font-weight: 600; letter-spacing: 0.26em; margin-bottom: 2rem; }
+.rm-cinema .cin-slate-n { font-family: var(--font-giant); font-size: 1.6rem; letter-spacing: 0.04em; color: var(--red-soft); line-height: 1; }
+.rm-cinema .cin-slate-rule { width: 4rem; background: var(--line-strong); }
+.rm-cinema .cin-kick, .rm-cinema .cin-h3, .rm-cinema .cin-extras h3, .rm-cinema .cin-lead-kick { letter-spacing: 0.26em; font-weight: 600; }
+
+/* Lede reads like a deck under a headline */
+.rm-cinema .cin-lede { font-size: clamp(1.05rem, 1.5vw, 1.25rem); line-height: 1.55; max-width: 38rem; }
+
+/* Doors + plans: flat, ruled, no card chrome */
+.rm-cinema .cin-door { border-radius: 0; background: transparent; border-bottom: 1px solid var(--line); }
+.rm-cinema .cin-door:hover { background: var(--surface); }
+.rm-cinema .cin-door-n { font-family: var(--font-giant); font-size: 1.4rem; letter-spacing: 0.04em; color: var(--red-soft); }
+.rm-cinema .cin-plan { border-radius: 0; }
+.rm-cinema .cin-plan.is-popular { border-color: var(--tint-line); }
+.rm-cinema .cin-flag { background: var(--red); color: #fff; }
+.rm-cinema .cin-plan-price, .rm-cinema .cin-fromline b { font-family: var(--font-giant); font-weight: 400; letter-spacing: 0.02em; font-size: 2rem; }
+
+/* Buttons: squared, editorial */
+.rm-cinema .cin-btn { border-radius: 0; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.76rem; }
+.rm-cinema .cin-btn--light { background: var(--fg); }
+.rm-cinema .cin-btn--light:hover { background: var(--red-soft); color: #fff; }
+.rm-cinema .cin-nav-quote { border-radius: 0; }
+
+/* Date check + review blocks pick up the red line */
+.rm-cinema .cin-date { border-color: var(--tint-line); border-radius: 0; }
+
+/* Nav: thinner, more air, red record dot */
+.rm-cinema .cin-nav-links a { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.72rem; }
+.rm-cinema .cin-rec { background: var(--red-soft); }
+.rm-cinema .cin-tc { color: var(--faint); }
+
+/* Images: slight desaturate + reveal on hover (keeps b&w feel of the board) */
+.rm-cinema .cin-chapter img { filter: saturate(0.82) contrast(1.04); transition: filter 0.6s ease; }
+.rm-cinema .cin-chapter a:hover img { filter: saturate(1) contrast(1.02); }
+
+/* Footer in the same register */
+.rm-cinema footer { border-top: 1px solid var(--line); }
