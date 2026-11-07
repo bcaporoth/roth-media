@@ -7,6 +7,7 @@ import { createSupabaseServer, portalConfigured } from "../../../../lib/supabase
 import { r2Configured, signedUrl, photoKey, getDims, keyExists } from "../../../../lib/r2";
 import { guestLinkForGallery } from "../../../../lib/guest";
 import { emailHasBrand } from "../../../../lib/brand-server";
+import { onlineUntilText } from "../../../../lib/gallery-access";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export default async function GalleryPage({ params }) {
   const db = isAdmin && adminConfigured ? supabaseAdmin() : supabase;
   const { data: gallery } = await db
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key, share_token, design")
+    .select("id, title, event_date, cover_filename, zip_key, share_token, design, ready_sent_at, created_at")
     .eq("id", id)
     .maybeSingle();
   if (!gallery) notFound();
@@ -158,6 +159,7 @@ export default async function GalleryPage({ params }) {
       videoPoster={videoPoster}
       guestLink={guestLink}
       hasBrand={hasBrand}
+      onlineUntil={onlineUntilText(gallery)}
     >
       <GalleryBeacon galleryId={gallery.id} via="portal" />
     </PortalPremiere>

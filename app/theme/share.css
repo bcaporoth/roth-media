@@ -46,6 +46,7 @@
 .sh-page .sh-title { font-size: clamp(2.3rem, 8.4vw, 6.2rem); overflow-wrap: anywhere; margin: 0; }
 .sh-page .sh-hero .cx-hero-body > .cx-kick { margin: 0; }
 .sh-page .sh-meta { margin: 0; color: var(--dim); font-size: 0.98rem; }
+.sh-page .sh-meta.sh-online { margin-top: -0.35rem; font-size: 0.86rem; color: var(--faint); }
 .sh-page .sh-hero--bare { --shot: 4.2rem; padding-top: calc(var(--nav-h) + 2.6rem); border-bottom: 1px solid var(--line); }
 .sh-page .sh-ico { flex: none; }
 @media (prefers-reduced-motion: no-preference) {

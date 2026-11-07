@@ -102,6 +102,7 @@ export function SharedAlbum({
   videoPoster = null,
   premiereActive = false,
   reviewUrl = null,
+  onlineUntil = null,
   children = null,
 }) {
   return (
@@ -128,6 +129,7 @@ export function SharedAlbum({
                 {items.length} {items.length === 1 ? "item" : "items"} · filmed
                 &amp; photographed by Roth Media
               </p>
+              {onlineUntil && <p className="sh-meta sh-online">{onlineUntil}</p>}
               <div className="cx-cta-row">
                 <a href="#grid" className="cx-btn cx-btn--light cx-btn--lg">
                   View gallery ↓

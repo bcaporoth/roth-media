@@ -664,11 +664,19 @@
     display: flex; align-items: center; justify-content: flex-end; gap: 0.7rem; height: 30px;
     font-size: 0.64rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--fg);
   }
-  .rm-cinema .cin-rail a span { opacity: 0; transform: translateX(6px); transition: opacity 0.3s, transform 0.3s; text-shadow: 0 0 10px #000, 0 0 3px #000; }
-  .rm-cinema .cin-rail a i { width: 14px; height: 1.5px; background: var(--fg); opacity: 0.55; transition: width 0.3s var(--ease), opacity 0.3s, background 0.3s; box-shadow: 0 0 4px rgba(0, 0, 0, 0.8); }
+  /* Only the ticks catch the mouse — hidden labels never block clicks on the content underneath. */
+  .rm-cinema.cin--js .cin-rail { pointer-events: none; }
+  .rm-cinema .cin-rail a span {
+    opacity: 0; transform: translateX(6px); transition: opacity 0.35s, transform 0.35s; pointer-events: none;
+    padding: 0.25rem 0.5rem; background: rgba(11, 10, 9, 0.88); text-shadow: 0 0 10px #000, 0 0 3px #000;
+  }
+  .rm-cinema .cin-rail a i { pointer-events: auto; width: 14px; height: 1.5px; background: var(--fg); opacity: 0.55; transition: width 0.3s var(--ease), opacity 0.3s, background 0.3s; box-shadow: 0 0 4px rgba(0, 0, 0, 0.8); position: relative; }
+  .rm-cinema .cin-rail a i::after { content: ""; position: absolute; inset: -14px -10px; }
   .rm-cinema .cin-rail a.is-on i { width: 30px; opacity: 1; background: var(--clay); }
-  /* Labels only on hover/focus (on a plate) — the current chapter's name lives in the nav, so nothing sits on content. */
-  .rm-cinema .cin-rail:hover a span, .rm-cinema .cin-rail a:focus-visible span { opacity: 1; transform: none; background: rgba(11, 10, 9, 0.88); padding: 0.25rem 0.5rem; }
+  .rm-cinema .cin-rail a.is-on span { color: var(--gold); }
+  /* Names: all of them on hover/focus; the chapter you just entered flashes its name for a moment, then gets out of the way. */
+  .rm-cinema .cin-rail:hover a span, .rm-cinema .cin-rail a:focus-visible span { opacity: 1; transform: none; pointer-events: auto; }
+  .rm-cinema .cin-rail.is-flash a.is-on span { opacity: 1; transform: none; }
   .rm-cinema.cin--js .cin-brand { margin-right: 0; }
   .rm-cinema.cin--js .cin-nav .cin-hud {
     display: flex; align-items: center; gap: 0.6rem; margin: 0 auto 0 0; padding-left: 1.4rem; border-left: 1px solid var(--line);

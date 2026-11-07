@@ -613,6 +613,7 @@ export function PortalPremiere({
   videoPoster = null,
   guestLink = null,
   hasBrand = false,
+  onlineUntil = null,
   children = null,
 }) {
   const words = gallery.title.split(" ");
@@ -660,8 +661,8 @@ export function PortalPremiere({
                 {words.slice(0, -1).join(" ")} {words.slice(-1)}
               </h1>
               <p className="pt-prem-meta">
-                {items.length} {items.length === 1 ? "item" : "items"} · yours to
-                keep, forever
+                {items.length} {items.length === 1 ? "item" : "items"}
+                {onlineUntil ? ` · ${onlineUntil}` : " · yours to keep, forever"}
               </p>
               <div className="cx-cta-row">
                 <a href="#grid" className="cx-btn cx-btn--light cx-btn--lg">

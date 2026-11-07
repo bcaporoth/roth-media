@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage kick="Terms" title="The short version of how we work." updated="October 1, 2026" toc>
+    <LegalPage kick="Terms" title="The short version of how we work." updated="November 7, 2026" toc>
       <p>These terms cover everything Roth Media does — wedding photo and video, portrait sessions, Content Days and event coverage for businesses, the client galleries, and this website. When you book, you also sign a short agreement for your specific date. If that agreement ever says something different from this page, the agreement wins.</p>
 
       <h2>Quotes</h2>
@@ -64,6 +64,7 @@ export default function TermsPage() {
 
       <h2>Client galleries</h2>
       <p>Galleries are private. Share the link with whoever you like — that&apos;s what they&apos;re for — but the gallery stays yours, and we&apos;ll take it down whenever you ask. Galleries stay online for twelve months after delivery; download everything to your own storage in that window. We keep a backup of your delivered files for twelve months after delivery as a courtesy, not a guarantee — after that they may be gone, so your copy is the copy.</p>
+      <p>After the twelve months, the gallery closes. Want it longer? $35 keeps it online for another year — ask any time, before or after it closes. If it has already closed and we still have a backup, bringing it back is $75. We can&apos;t promise a backup still exists after the twelve months, so please don&apos;t count on it. The license to use your photos and videos doesn&apos;t end when the gallery does.</p>
 
       <h2>If something goes wrong on our end</h2>
       <p>We shoot on professional gear with two cards in every camera and back everything up the same night. Even so, cameras break, cards fail, and things get stolen. If any part of your coverage is lost or unusable because of equipment failure, data loss, theft, or an error on our side, we&apos;ll refund the value of what was lost, and if it&apos;s the whole thing, everything you paid. That refund is the limit of our liability for any booking — we&apos;re not responsible for things like the cost of restaging an event, travel, emotional distress, or anything indirect. This cap doesn&apos;t apply to gross negligence or intentional misconduct on our part, and nothing here limits what New York law won&apos;t let us limit.</p>

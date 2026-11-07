@@ -2041,7 +2041,11 @@ section.contact .lead a {
 /* ── PORTAL ── */
 .portal-nav {
   mix-blend-mode: normal;
-  background: rgba(34, 31, 26, 0.92);
+  /* Neutral glass bar (was warm brown) — 2026-11-07. */
+  background: rgba(12, 12, 13, 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .portal-nav .brand-text,
@@ -3088,17 +3092,18 @@ body:has(.lightbox) nav.rm-nav {
 }
 
 .admin-shell.is-dark {
-  --bone: #191612;
-  --bone-2: #221d17;
-  --paper: #201b15;
-  --ink: #f1ebdf;
-  --ink-soft: #b4a894;
-  --line: #3b332a;
-  --sand: #8d7f68;
+  /* Neutral charcoal (no brown cast) — 2026-11-07. */
+  --bone: #0f0f10;
+  --bone-2: #18181a;
+  --paper: #161618;
+  --ink: #f4f4f2;
+  --ink-soft: #a3a3a8;
+  --line: #2a2a2d;
+  --sand: #7d7d83;
   /* Card fills: the light palette's 60% cream reads as a gray slab on dark — use a faint tint instead. */
-  --surface: rgba(246, 241, 232, 0.05);
-  --surface-2: rgba(246, 241, 232, 0.1);
-  --field-line: rgba(246, 241, 232, 0.38);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --field-line: rgba(255, 255, 255, 0.22);
 }
 
 .admin-wrap {

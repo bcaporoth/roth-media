@@ -7,6 +7,7 @@ import { REVIEW_URL } from "../../../lib/site";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey, getDims, keyExists } from "../../../lib/r2";
 import { guestLinkForGallery } from "../../../lib/guest";
+import { onlineUntilText } from "../../../lib/gallery-access";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function SharedGalleryPage({ params }) {
   const db = supabaseAdmin();
   const { data: gallery } = await db
     .from("galleries")
-    .select("id, title, event_date, cover_filename, zip_key, premiere_enabled, reveal_at, design")
+    .select("id, title, event_date, cover_filename, zip_key, premiere_enabled, reveal_at, design, ready_sent_at, created_at")
     .eq("share_token", token)
     .maybeSingle();
   if (!gallery) notFound();
@@ -168,6 +169,7 @@ export default async function SharedGalleryPage({ params }) {
       videoPoster={videoPoster}
       premiereActive={premiereActive}
       reviewUrl={REVIEW_URL}
+      onlineUntil={onlineUntilText(gallery)}
     >
       <GalleryBeacon galleryId={gallery.id} via="share" />
     </SharedAlbum>

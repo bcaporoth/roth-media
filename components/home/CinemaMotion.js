@@ -67,10 +67,20 @@ export default function CinemaMotion() {
       // Chapter rail — light up the chapter you're in.
       const links = [...root.querySelectorAll(".cin-rail a")];
       const chName = root.querySelector(".cin-ch-name");
+      const rail = root.querySelector(".cin-rail");
+      let flashTimer;
       gsap.utils.toArray("[data-ch]").forEach((sec) => {
         const set = () => {
-          links.forEach((a) => a.classList.toggle("is-on", a.getAttribute("href") === `#${sec.dataset.rail || sec.id}`));
+          const href = `#${sec.dataset.rail || sec.id}`;
+          const changed = links.some((a) => a.getAttribute("href") === href && !a.classList.contains("is-on"));
+          links.forEach((a) => a.classList.toggle("is-on", a.getAttribute("href") === href));
           if (chName) chName.textContent = sec.dataset.ch;
+          // Flash the new chapter's name beside its tick, then fade it out.
+          if (rail && changed) {
+            rail.classList.add("is-flash");
+            clearTimeout(flashTimer);
+            flashTimer = setTimeout(() => rail.classList.remove("is-flash"), 1800);
+          }
         };
         ScrollTrigger.create({ trigger: sec, start: "top 55%", end: "bottom 55%", onEnter: set, onEnterBack: set });
       });
