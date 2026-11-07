@@ -765,3 +765,33 @@
 .rm-cinema .cin-hero-ad video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rm-cinema .cin-hero-ad-tag { position: absolute; left: 0.6rem; top: 0.6rem; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #fff; background: rgba(0,0,0,0.55); padding: 0.25rem 0.5rem; border-radius: 3px; pointer-events: none; }
 @media (min-width: 900px) { .rm-cinema .cin-hero-ad { margin: 0 0 1rem; } }
+
+/* ── Redesign opening: statue + giant word (components/home/Statue.js) ── */
+.rm-cinema { --red: #b3121b; --red-soft: #d7262f; --font-giant: var(--font-giant, "Bebas Neue", "Syne", sans-serif); }
+.rm-cinema .cin-open {
+  position: relative; min-height: 100svh; overflow: hidden; isolation: isolate;
+  display: grid; align-items: end; background: #050404;
+}
+.rm-cinema .cin-open-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0; transition: opacity 1.2s ease; }
+.rm-cinema .cin-open.is-live .cin-open-canvas { opacity: 1; }
+.rm-cinema .cin-open.is-off .cin-open-canvas { display: none; }
+.rm-cinema .cin-open::after { /* floor fade into the next chapter */
+  content: ""; position: absolute; inset: auto 0 0 0; height: 28%; z-index: 1; pointer-events: none;
+  background: linear-gradient(rgba(5,4,4,0), var(--bg));
+}
+.rm-cinema .cin-open-copy { position: relative; z-index: 2; padding: 0 var(--gut) clamp(2rem, 6vh, 4rem); }
+.rm-cinema .cin-open-word { margin: 0.2em 0 0.1em; line-height: 0.86; font-family: var(--font-giant); font-weight: 400; letter-spacing: 0.01em; font-size: clamp(5.6rem, 23vw, 19rem); color: var(--fg); }
+.rm-cinema .cin-open-line { display: block; overflow: hidden; }
+.rm-cinema .cin-open-line > span { display: inline-block; overflow: hidden; vertical-align: top; }
+.rm-cinema .cin-open-line > span > span { display: inline-block; will-change: transform; }
+.rm-cinema .cin-open-line--red { color: var(--red-soft); }
+.rm-cinema .cin-open-sub { max-width: 30rem; color: var(--dim); font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.5; margin: 0.6rem 0 0; }
+.rm-cinema .cin-open-scroll { display: flex; align-items: center; gap: 0.6rem; margin-top: 2rem; font-size: 0.68rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--faint); }
+.rm-cinema .cin-open-scroll span { width: 2.4rem; height: 1px; background: var(--faint); animation: cin-open-pulse 2.2s ease-in-out infinite; transform-origin: left; }
+@keyframes cin-open-pulse { 0%,100% { transform: scaleX(0.3); opacity: 0.4 } 50% { transform: scaleX(1); opacity: 1 } }
+@media (max-width: 760px) {
+  .rm-cinema .cin-open { align-items: end; }
+  .rm-cinema .cin-open-canvas { opacity: 0.85; }
+  .rm-cinema .cin-open-word { font-size: clamp(5rem, 26vw, 9rem); }
+}
+@media (prefers-reduced-motion: reduce) { .rm-cinema .cin-open-scroll span { animation: none; } }

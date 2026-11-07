@@ -1,4 +1,4 @@
-import { Syne, Manrope } from "next/font/google";
+import { Syne, Manrope, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import "./tchart.css";
 import SiteBeacon from "../components/SiteBeacon";
@@ -8,6 +8,12 @@ const syne = Syne({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
+});
+
+const bebas = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-giant",
 });
 
 const manrope = Manrope({
@@ -66,7 +72,7 @@ const META_DOMAIN_VERIFICATION = process.env.META_DOMAIN_VERIFICATION || "";
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${syne.variable} ${manrope.variable}`}>
+    <html lang="en" className={`${syne.variable} ${manrope.variable} ${bebas.variable}`}>
       <head>{META_DOMAIN_VERIFICATION ? <meta name="facebook-domain-verification" content={META_DOMAIN_VERIFICATION} /> : null}</head>
       <body>
         {children}

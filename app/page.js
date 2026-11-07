@@ -7,6 +7,7 @@ import BrandMark from "../components/BrandMark";
 import CinemaMotion from "../components/home/CinemaMotion";
 import Player from "../components/home/Player";
 import HomeLead from "../components/home/HomeLead";
+import Statue from "../components/home/Statue";
 import { EMAIL, SOCIAL, SAME_AS, CALENDLY, PHONE, OWNER_NAME, GOOGLE_PAGE_URL } from "../lib/site";
 import { REVIEWS, GOOGLE_RATING } from "../lib/reviews";
 import { PACKAGES, ADDONS, TRAVEL, listedAddons, money } from "../lib/packages";
@@ -216,8 +217,11 @@ export default function CinemaHome() {
       </nav>
 
       <main>
+        {/* ── Redesign opening: statue + giant word ── */}
+        <Statue />
+
         {/* ── Opening shot ── */}
-        <section className="cin-hero" id="top" data-ch="Opening">
+        <section className="cin-hero" id="business-hero" data-ch="Business">
           <div className="cin-hero-media">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/photos/41-gym-mid-set-laughter.jpg" alt="A lifter laughing mid-set at the squat rack, black and white" fetchPriority="high" className="cin-hero-img--biz" />
