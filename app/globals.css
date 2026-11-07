@@ -7284,3 +7284,18 @@ textarea.grow { overflow: hidden; }
   .dprint { font-size: 11pt; }
   .dprint-steps { font-size: 10pt; }
 }
+
+/* ── "← Studio" pill (components/StudioReturn.js) — only on Brandon's device, outside Studio ── */
+.studio-return {
+  position: fixed; z-index: 9990; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0 1.05rem;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 12, 13, 0.82); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  color: #f4f4f2; font: 600 0.78rem/1 var(--font-body), "Manrope", sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+  text-decoration: none; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35); transition: background 0.2s, border-color 0.2s;
+}
+.studio-return:hover { background: rgba(28, 28, 30, 0.92); border-color: rgba(255, 255, 255, 0.32); }
+/* Clear the homepage's phone dock (Get a quote / Call / Text) */
+body:has(.cin-dock) .studio-return { bottom: calc(58px + 14px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 800px) { body:has(.cin-dock) .studio-return { bottom: 20px; } }
+@media print { .studio-return { display: none; } }

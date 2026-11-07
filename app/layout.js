@@ -2,6 +2,7 @@ import { Syne, Manrope } from "next/font/google";
 import "./globals.css";
 import "./tchart.css";
 import SiteBeacon from "../components/SiteBeacon";
+import StudioReturn from "../components/StudioReturn";
 import MetaPixel from "../components/MetaPixel";
 
 const syne = Syne({
@@ -71,6 +72,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <SiteBeacon />
+        <StudioReturn />
         <MetaPixel />
         {/* Vercel Web Analytics — enable "Web Analytics" on the Vercel project once; no package needed. */}
         <script dangerouslySetInnerHTML={{ __html: "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};" }} />
