@@ -92,7 +92,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
         {!type && <p className="cx-help">Pick one and the questions for it appear below.</p>}
       </div>
       <div className="cx-form-row">
-        <div className="mx-field"><label className="cx-label" htmlFor="in-name">Your name</label><input className="cx-input" id="in-name" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></div>
+        <div className="mx-field"><label className="cx-label" htmlFor="in-name">Full name</label><input className="cx-input" id="in-name" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></div>
         <div className="mx-field"><label className="cx-label" htmlFor="in-phone">Best phone</label><input className="cx-input" id="in-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" /></div>
       </div>
       {!portal && <div className="mx-field"><label className="cx-label" htmlFor="in-email">Email</label><input className="cx-input" id="in-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoCapitalize="none" /></div>}
