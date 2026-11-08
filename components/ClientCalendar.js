@@ -149,21 +149,6 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
 
       <div className="ccal-day">
         <h4>{longDay(day)}</h4>
-        {days !== null && (
-          <div className="ccal-shoot">
-            {(shootByDay[day] || []).map((d) => (
-              <a key={d.id} className="ccal-shoot-row" href={dayHref(d.id)}>
-                <span><strong>🎬 {d.title}</strong><em>{d.scripts ? `${d.scripts} script${d.scripts === 1 ? "" : "s"}${d.ready ? ` · ${d.ready} ready` : ""}` : "No scripts yet"}</em></span>
-                <span className="abtn">Open the scripts →</span>
-              </a>
-            ))}
-            <p className="ccal-opt"><span className="ccal-optn">1</span> <strong>A shoot day, with scripts</strong></p>
-            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
-              {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
-            </button>
-            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
-          </div>
-        )}
         {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing here yet — add what's happening below."}</p> : (
           <ul className="ccal-list">
             {dayEvents.map((e) => (
@@ -188,7 +173,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         )}
         {studio && dayEvents.length === 0 && <p><button type="button" className="abtn abtn-ghost" onClick={() => followup(null)}>Follow up with {clientName.split(" ")[0] || "them"} this day →</button></p>}
 
-        <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>{studio ? "Put something on their calendar" : "Put something on your calendar"}</strong></p>
+        <p className="ccal-opt"><span className="ccal-optn">1</span> <strong>{studio ? "Put something on their calendar" : "Put something on your calendar"}</strong></p>
         <p className="inbox-hint ccal-opt-hint">{studio
           ? "Something happening at their business, or a reminder for you. It doesn't book a shoot."
           : "Something happening at your business: a sale, a launch, an event, a busy week. Brandon sees it and plans content around it. It doesn't book a shoot."}</p>
@@ -201,6 +186,21 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Put it on ${longDay(day).split(",")[0]}`}</button>
           {err && <p className="cform-error">{err}</p>}
         </form>
+        {days !== null && (
+          <div className="ccal-shoot">
+            <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>A shoot day, with scripts</strong></p>
+            {(shootByDay[day] || []).map((d) => (
+              <a key={d.id} className="ccal-shoot-row" href={dayHref(d.id)}>
+                <span><strong>🎬 {d.title}</strong><em>{d.scripts ? `${d.scripts} script${d.scripts === 1 ? "" : "s"}${d.ready ? ` · ${d.ready} ready` : ""}` : "No scripts yet"}</em></span>
+                <span className="abtn">Open the scripts →</span>
+              </a>
+            ))}
+            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
+              {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
+            </button>
+            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
+          </div>
+        )}
       </div>
 
       {upcoming.length > 0 && (
