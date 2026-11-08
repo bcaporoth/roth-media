@@ -7374,3 +7374,7 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .tc-tag-text.is-on { background: #6b5bd6 !important; border-color: #6b5bd6 !important; color: #fff !important; }
 .scr-kindtag { font-size: 0.82rem; font-weight: 600; padding: 0.25rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; align-self: end; }
 .scr-convert { align-self: end; }
+/* Running order: room on the right for the ↑ ↓ × circles so the Draft /
+   Ready tag never sits under them (2026-11-08). */
+.sday-rowbtn { padding-right: 10rem; }
+@media (max-width: 760px) { .sday-rowbtn { padding-right: 0.9rem; } }
