@@ -4,6 +4,9 @@ import PortalNav from "../../../components/PortalNav";
 import { PortalFrame } from "../../../components/PortalViews";
 import IntakeForm from "../../../components/IntakeForm";
 import WelcomeForm from "../../../components/WelcomeForm";
+import PortalTop from "../../../components/PortalTop";
+import { portalWho } from "../../../lib/portal-who";
+
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
 import { latestBrief, welcomeOf, briefsByType, TYPES, TYPE_LABEL } from "../../../lib/intake";
@@ -54,6 +57,7 @@ export default async function BriefPage({ searchParams }) {
       brief.phone = src?.phone || "";
     }
   }
+  const who = adminConfigured ? await portalWho(supabaseAdmin(), email) : { kick: "Client portal", title: "Hi, there." };
   const nav = <PortalNav email={user.email} isAdmin={email === ADMIN_EMAIL} active="brief" brand={hasBrand} />;
   const name = welcome?.name || brief?.name || client?.name || "";
   const phone = welcome?.phone || brief?.phone || client?.phone || "";
@@ -63,15 +67,9 @@ export default async function BriefPage({ searchParams }) {
   if (!welcome && !brief || editWelcome) {
     return (
       <PortalFrame nav={nav} className="pt-brief mx-page">
-        <header className="cx-wrap cx-wrap--narrow pt-head">
-          <p className="cx-kick">{editWelcome ? "About you" : "Step 1 of 2 · About you"}</p>
-          <h1 className="cx-h1 cx-h1--long">{editWelcome ? "About you." : "Let's start with you."}</h1>
-          <p className="cx-lede">
-            {editWelcome
-              ? "Change anything and save. I see it right away."
-              : "A few quick questions about you and what you're after. About three minutes. Next, you'll fill in the details for each thing you pick."}
-          </p>
-        </header>
+        <PortalTop who={who} page={editWelcome ? "About you" : "Step 1 of 2: About you"} lede={editWelcome
+          ? "Change anything and save. I see it right away."
+          : "A few quick questions about you and what you're after. About three minutes. Next, you'll fill in the details for each thing you pick."} />
         <section className="cx-section cx-section--tight">
           <div className="cx-wrap cx-wrap--narrow">
             <WelcomeForm name={name} phone={phone} services={welcome?.services || []} initial={welcome?.answers || {}} editing={Boolean(welcome)} />
@@ -94,17 +92,15 @@ export default async function BriefPage({ searchParams }) {
 
   return (
     <PortalFrame nav={nav} className="pt-brief mx-page">
-      <header className="cx-wrap cx-wrap--narrow pt-head">
-        <p className="cx-kick">{doneCount === services.length ? "Your brief" : "Step 2 of 2 · The details"}</p>
-        <h1 className="cx-h1 cx-h1--long">{doneCount === services.length ? "Everything I know about your day." : "Now, the details."}</h1>
-        <p className="cx-lede">
-          {doneCount === services.length
-            ? `Last saved ${when}. Change anything, any time. I see it the moment you save, and your day plan updates with it.`
-            : services.length > 1
-              ? `You picked ${services.length} things, so there's a short set of questions for each. A guess is fine on anything you don't know yet.`
-              : "A guess is fine on anything you don't know yet. You can come back and change it any time before the shoot."}
-        </p>
-      </header>
+      <PortalTop
+        who={who}
+        page={doneCount === services.length ? "Your brief" : "Step 2 of 2: The details"}
+        lede={doneCount === services.length
+          ? `Last saved ${when}. Change anything, any time. I see it the moment you save, and your day plan updates with it.`
+          : services.length > 1
+            ? `You picked ${services.length} things, so there's a short set of questions for each. A guess is fine on anything you don't know yet.`
+            : "A guess is fine on anything you don't know yet. You can come back and change it any time before the shoot."}
+      />
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap cx-wrap--narrow">
           <ol className="bf-steps">

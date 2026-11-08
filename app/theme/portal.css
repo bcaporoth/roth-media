@@ -735,3 +735,12 @@ body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-
   from { opacity: 0; transform: translateY(0.18em) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
+
+/* Same top on every client page (components/PortalTop.js): their name as
+   the big line, then this page's name smaller underneath. */
+.pt-top .pt-top-page { margin: 1.4rem 0 0; font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.4rem, 3.2vw, 2rem); line-height: 1.15; letter-spacing: -0.01em; color: var(--fg, #f6f1e8); }
+.pt-top .pt-top-page + .cx-lede { margin-top: 0.5rem; }
+/* Client pages: the narrow form column starts where the page top starts
+   (left), instead of sitting centered under a left-aligned title. */
+.pt-page .cx-section > .cx-wrap--narrow { max-width: var(--maxw); }
+.pt-page .cx-section > .cx-wrap--narrow > * { max-width: 760px; }

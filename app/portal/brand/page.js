@@ -1,4 +1,5 @@
 import "../../theme/brand.css";
+import PortalTop from "../../../components/PortalTop";
 import { redirect } from "next/navigation";
 import PortalNav from "../../../components/PortalNav";
 import { PortalFrame, PortalNotice } from "../../../components/PortalViews";
@@ -39,11 +40,7 @@ export default async function BrandPage() {
   const name = b.palette.data?.business?.name || client.name;
   return (
     <PortalFrame nav={nav} className="pt-brand mx-page">
-      <header className="cx-wrap pt-head">
-        <p className="cx-kick">Your brand palette</p>
-        <h1 className="cx-h1 cx-h1--long">{name || "Your brand"}</h1>
-        <p className="cx-lede">Logo, colors, look, customers and goals, in one place. I plan every shoot, edit and caption for you from it. It saves as you go — skip anything and we&apos;ll cover it on a call.</p>
-      </header>
+      <PortalTop who={{ kick: "Your business portal", title: name || "Your business" }} page="Your brand" lede={<>Logo, colors, look, customers and goals, in one place. I plan every shoot, edit and caption for you from it. It saves as you go — skip anything and we&apos;ll cover it on a call.</>} />
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap">
           <BrandPalette mode="client" initial={b.palette} initialAssets={b.assets} />
