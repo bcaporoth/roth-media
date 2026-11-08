@@ -155,6 +155,40 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, added: rows.length, day: await loadDay(db, day.id) });
     }
 
+    // Brandon: the Pinned Three (2026-11-08). Makes sure this day has the three
+    // pinned-post T-charts (reuses ones already titled "Pinned #1/2/3"), then
+    // hands back what to ask Claude for each; the page drafts them one at a time
+    // (script-draft), which reads the whole brand page and their brief.
+    if (body.action === "pinned-start") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
+      const { data: pal } = await db.from("brand_palettes").select("data").eq("client_id", day.client_id).maybeSingle();
+      if (!pal) return bad("They don't have a brand page yet — open it from their Studio profile first.", 422);
+      const b = pal.data?.business || {};
+      const PINS = [
+        { n: 1, title: "Pinned #1: Who we are", ask: "who they are, what they do, where, since when, and why they started", answer: b.pinned_who },
+        { n: 2, title: "Pinned #2: Why people trust us", ask: "proof: years in business, reviews, numbers, results, the regulars who keep coming back", answer: b.pinned_trust },
+        { n: 3, title: "Pinned #3: How to buy from us", ask: "the exact next step to buy: walk in, call, DM, order online or book, with where and when", answer: b.pinned_next },
+      ];
+      let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
+      const out = [];
+      for (const p of PINS) {
+        let sc = day.scripts.find((s) => new RegExp(`^Pinned #${p.n}\\b`).test(s.title || ""));
+        if (!sc) {
+          const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position: position++, kind: "tchart", title: p.title, status: "draft", minutes: 30, body: cleanBody({ style: "reel" }), created_by: "brandon", updated_by: "brandon" }).select("*").single();
+          if (error) throw new Error(error.message);
+          sc = data;
+        }
+        const idea = [
+          `Pinned post #${p.n} of 3: one of the three posts that stay pinned at the top of their Instagram, the first things a new customer sees. This one is ${p.ask}.`,
+          p.answer ? `Build it from their own answer on the brand page ("Pinned post #${p.n}"): ${String(p.answer).trim()}` : `They haven't answered "Pinned post #${p.n}" on the brand page yet — build it from the rest of the brand page and brief, and keep anything you're unsure of in [brackets] for them to fill in.`,
+          "Use their real details (name, where, hours, products, reviews) from the brand page. 30–45 seconds, hook in the first 2 seconds, one clear call to action.",
+        ].join("\n");
+        out.push({ id: sc.id, title: sc.title || p.title, idea, answered: Boolean(p.answer) });
+      }
+      return NextResponse.json({ ok: true, pins: out, day: await loadDay(db, day.id) });
+    }
+
     if (body.action === "day-send") {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       const r = await sendDayEmail({ day, note: body.note });

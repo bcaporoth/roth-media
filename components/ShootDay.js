@@ -132,6 +132,26 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     setWriting(""); setBusy(false);
     say(failed ? `${done} of ${ids.length} written — ${failed} didn't finish; open each one and tap "Ask Claude"` : `${done} script${done === 1 ? "" : "s"} written — read them through`);
   }
+  // ✦ The Pinned Three: the three pinned-post T-charts, written by Claude from
+  // their brand page answers (pinned-start, then script-draft one at a time).
+  async function writePinned() {
+    setBusy(true);
+    let r;
+    try {
+      setWriting("Setting up the Pinned Three…");
+      r = await api({ action: "pinned-start", dayId: day.id });
+      setDay(r.day); setScripts(r.day.scripts);
+    } catch (e) { fail(e); setBusy(false); setWriting(""); return; }
+    let done = 0, failed = 0;
+    for (let i = 0; i < r.pins.length; i++) {
+      const p = r.pins[i];
+      setWriting(`Writing ${i + 1} of 3 — ${p.title}…`);
+      try { const rr = await api({ action: "script-draft", dayId: day.id, scriptId: p.id, title: p.title, idea: p.idea }); replace(rr.script, true); done++; } catch { failed++; }
+    }
+    setWriting(""); setBusy(false);
+    const empty = r.pins.filter((p) => !p.answered).length;
+    say(failed ? `${done} of 3 written — open the others and tap "Ask Claude"` : `The Pinned Three are written — read them through${empty ? ` (${empty} had no answer on their brand page yet, so look for [brackets])` : ""}`);
+  }
   async function importPlan(itemIds) {
     setBusy(true);
     try { const r = await api({ action: "plan-import", dayId: day.id, itemIds }); setDay(r.day); setScripts(r.day.scripts); setTool(""); say(`${r.added} brought in from the content plan`); } catch (e) { fail(e); } finally { setBusy(false); }
@@ -175,6 +195,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
         {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">🖨 Print</a>}
+        {me === "brandon" && aiReady && <button type="button" className="achip" onClick={() => { if (!scripts.some((s) => /^Pinned #[123]\b/.test(s.title || "")) || window.confirm("Rewrite the three Pinned posts with Claude from their brand page? It keeps what's good and fills in what's thin.")) writePinned(); }} disabled={busy}>✦ Write the Pinned Three</button>}
         {me === "brandon" && <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>}
       </div>
       {me === "brandon" && more && (
