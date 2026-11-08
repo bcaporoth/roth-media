@@ -4,6 +4,7 @@ import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsF
 import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { loadPlaybook } from "../../../lib/playbook";
+import { baselineScripts } from "../../../lib/baseline-day";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
 import { LEAD_ALERT_TO, leadAlertEmail } from "../../../lib/studio-emails";
 
@@ -61,6 +62,19 @@ export async function POST(request) {
       const shootId = isUuid(body.shootId) ? body.shootId : null;
       const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch, ...(shootId ? { shoot_id: shootId } : {}) }).select("id").single();
       if (error) throw new Error(/shoot_days/.test(error.message) ? "Run supabase/shoot-days.sql once in the Supabase SQL editor first." : error.message);
+      // Their first shoot day + a brand page = the baseline day: the Pinned
+      // Three and the B-roll basics, started from their answers (lib/baseline-day.js).
+      try {
+        const { count } = await db.from("shoot_days").select("id", { count: "exact", head: true }).eq("client_id", client.id);
+        if (count === 1) {
+          const { data: pal } = await db.from("brand_palettes").select("data").eq("client_id", client.id).maybeSingle();
+          if (pal) {
+            const rows = baselineScripts(pal.data || {}).map((sc, i) => ({ day_id: data.id, client_id: client.id, position: i, status: "draft", created_by: me.role, updated_by: me.role, ...sc }));
+            await db.from("scripts").insert(rows);
+            if (!body.title || body.title === "Shoot day") await db.from("shoot_days").update({ title: "Baseline day" }).eq("id", data.id);
+          }
+        }
+      } catch {}
       // A client started it: tell Brandon, and leave his Shoots calendar alone
       // until he sets the time (his first date edit puts it on there).
       if (byClient) {

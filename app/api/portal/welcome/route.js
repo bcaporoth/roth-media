@@ -5,6 +5,7 @@ import { TYPES, TYPE_LABEL, WELCOME, WELCOME_PICK } from "../../../../lib/intake
 import { clip } from "../../../../lib/visitor";
 import { resendConfigured, sendEmail } from "../../../../lib/resend";
 import { LEAD_ALERT_TO, leadAlertEmail } from "../../../../lib/studio-emails";
+import { ensureBrand } from "../../../../lib/brand-server";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,15 @@ export async function POST(request) {
     if (!String(c.name || "").trim()) patch.name = name;
     if (phone && !String(c.phone || "").trim()) patch.phone = phone;
     if (Object.keys(patch).length) await db.from("clients").update(patch).eq("id", c.id);
+  }
+
+  // Business clients get their brand page (business basics, the Pinned Three)
+  // right away — Brandon no longer has to open it for them (2026-11-08).
+  if (services.includes("business")) {
+    try {
+      const { data: me } = await db.from("clients").select("id, name, email").eq("email", email).maybeSingle();
+      if (me) await ensureBrand(db, me);
+    } catch {}
   }
 
   if (!cur && resendConfigured) {

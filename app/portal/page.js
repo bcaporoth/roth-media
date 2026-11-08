@@ -8,7 +8,7 @@ import { ADMIN_EMAIL } from "../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../lib/r2";
 import { adminConfigured, supabaseAdmin } from "../../lib/supabase-admin";
 import { ESSENTIALS, completeness } from "../../lib/brand";
-import { loadBrand } from "../../lib/brand-server";
+import { loadBrand, ensureBrand } from "../../lib/brand-server";
 import { loadPublishedPlan } from "../../lib/content-plan-server";
 import { listDays } from "../../lib/scripts-server";
 import { clientAddresses } from "../../lib/client-addresses";
@@ -54,9 +54,22 @@ async function getClientData() {
   // A brand palette makes them a business client: they get the business
   // home. Quietly absent until supabase/brand.sql has run.
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  // A business sign-up (welcome form) gets their brand page on first visit,
+  // even if they signed up before that was automatic (2026-11-08).
   const brandLoad =
     adminConfigured && !isAdmin
-      ? loadBrand(supabaseAdmin(), client.id).catch(() => null)
+      ? (async () => {
+          const db = supabaseAdmin();
+          let b = await loadBrand(db, client.id).catch(() => null);
+          if (b?.ready && !b.palette) {
+            const { data: w } = await db.from("submissions").select("utm").eq("kind", "welcome").eq("email", user.email.toLowerCase()).limit(1).maybeSingle();
+            if ((w?.utm?.services || []).includes("business")) {
+              await ensureBrand(db, { id: client.id, name: client.name || "", email: user.email }).catch(() => {});
+              b = await loadBrand(db, client.id).catch(() => b);
+            }
+          }
+          return b;
+        })()
       : Promise.resolve(null);
 
   const [{ data: galleries }, { data: payments }, { data: hosted }] =
