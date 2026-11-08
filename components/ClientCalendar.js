@@ -66,10 +66,10 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
   const dayHref = (id) => (studio ? `/portal/admin/clients/${clientId}/days/${id}` : `/portal/days/${id}`);
   const [starting, setStarting] = useState(false);
   const shootByDay = useMemo(() => { const m = {}; for (const d of days || []) if (d.date) (m[d.date] ||= []).push(d); return m; }, [days]);
-  async function startDay() {
+  async function startDay(title = "Shoot day") {
     setStarting(true); setErr("");
     try {
-      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, title: "Shoot day", date: day, location: defaultLocation }) });
+      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, title: String(title || "Shoot day").slice(0, 120), date: day, location: defaultLocation }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't start the day");
       window.location.href = dayHref(j.id);
@@ -157,7 +157,8 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                 <span className="abtn">Open the scripts →</span>
               </a>
             ))}
-            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={startDay} disabled={starting}>
+            <p className="ccal-opt"><span className="ccal-optn">1</span> <strong>A shoot day, with scripts</strong></p>
+            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
               {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
             </button>
             {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
@@ -177,6 +178,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                 <span className="ccal-acts">
                   {!studio && <button type="button" className={"achip" + (e.wants_shoot ? " is-on" : "")} onClick={() => wants(e, !e.wants_shoot)}>{e.wants_shoot ? "Content requested ✓" : "I want content for this"}</button>}
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
+                  {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
                   {(studio || e.created_by === "client") && <button type="button" className="achip" onClick={() => remove(e)}>Remove</button>}
                 </span>
@@ -186,6 +188,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         )}
         {studio && dayEvents.length === 0 && <p><button type="button" className="abtn abtn-ghost" onClick={() => followup(null)}>Follow up with {clientName.split(" ")[0] || "them"} this day →</button></p>}
 
+        <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>A note on the calendar</strong> <span className="inbox-hint">— a sale, an event, a busy week. No scripts.</span></p>
         <form className="ccal-add" onSubmit={add}>
           <label className="grow"><span>{studio ? "Add to their calendar" : "What's happening?"}</span><input name="title" required placeholder={studio ? "Content Day · Shoot the new menu" : "Spring sale starts · New class launches · Anniversary week"} /></label>
           <label><span>Time <small>optional</small></span><input name="time" type="time" /></label>

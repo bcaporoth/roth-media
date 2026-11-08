@@ -241,6 +241,15 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
           </section>
 
+          {d.cart && (
+            <section className="cprof-card cprof-deliv cprof-mtab" id="cart">
+              <div className="cprof-cardhead"><h2>In their cart</h2><span className="gcard-meta">Updated {fmt(d.cart.updated_at || d.cart.created_at)} · from their Shop page</span></div>
+              {(d.cart.fields || []).length === 0 ? <p className="gcard-meta">Empty right now.</p> : (
+                <ul className="cprof-list">{d.cart.fields.map(([k, v]) => <li key={k}><strong>{k}</strong> <span className="gcard-meta">· {v}</span></li>)}</ul>
+              )}
+            </section>
+          )}
+
           <section className="cprof-card cprof-deliv cprof-mtab" id="money">
             <div className="cprof-cardhead"><h2>Payments{bookings.length + d.payments.length > 0 && <em className="cprof-count">{bookings.length + d.payments.length}</em>}</h2>
               {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}

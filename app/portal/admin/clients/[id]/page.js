@@ -83,7 +83,8 @@ export default async function ClientPage({ params }) {
     intakes: all.filter((s) => s.kind === "intake"),
     intakeSent: all.find((s) => s.kind === "intake_sent") || null,
     calls: all.filter((s) => s.kind === "call"),
-    messages: all.filter((s) => !["intake", "intake_sent", "call"].includes(s.kind)),
+    messages: all.filter((s) => !["intake", "intake_sent", "call", "cart"].includes(s.kind)),
+    cart: all.find((s) => s.kind === "cart") || null, // their Shop cart (lib/shop.js)
     shoots: shoots || [],
     galleries,
     payments: payments || [],

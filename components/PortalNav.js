@@ -53,6 +53,13 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
         )}
         {!isAdmin && !isStaff && (
           <li className="pnav-tab">
+            <Link className={cls("shop")} href="/portal/shop" title="Packages and extras you can book — your cart, pay, or ask" aria-current={active === "shop" ? "page" : undefined}>
+              Shop
+            </Link>
+          </li>
+        )}
+        {!isAdmin && !isStaff && (
+          <li className="pnav-tab">
             <Link className={cls("calendar")} href="/portal/calendar" title="What's coming up at your business — I plan content around it" aria-current={active === "calendar" ? "page" : undefined}>
               Your calendar
             </Link>
