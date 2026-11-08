@@ -176,7 +176,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                   {!studio && e.idea && <p className="ccal-idea-view"><strong>Brandon&rsquo;s idea:</strong> {e.idea}</p>}
                 </div>
                 <span className="ccal-acts">
-                  {!studio && <button type="button" className={"achip" + (e.wants_shoot ? " is-on" : "")} onClick={() => wants(e, !e.wants_shoot)}>{e.wants_shoot ? "Content requested ✓" : "I want content for this"}</button>}
+                  {!studio && <button type="button" className={"achip" + (e.wants_shoot ? " is-on" : "")} onClick={() => wants(e, !e.wants_shoot)}>{e.wants_shoot ? "Asked Brandon to film this ✓" : "Ask Brandon to film this"}</button>}
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
                   {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
@@ -188,14 +188,17 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         )}
         {studio && dayEvents.length === 0 && <p><button type="button" className="abtn abtn-ghost" onClick={() => followup(null)}>Follow up with {clientName.split(" ")[0] || "them"} this day →</button></p>}
 
-        <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>A note on the calendar</strong> <span className="inbox-hint">— a sale, an event, a busy week. No scripts.</span></p>
+        <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>{studio ? "Put something on their calendar" : "Put something on your calendar"}</strong></p>
+        <p className="inbox-hint ccal-opt-hint">{studio
+          ? "Something happening at their business, or a reminder for you. It doesn't book a shoot."
+          : "Something happening at your business: a sale, a launch, an event, a busy week. Brandon sees it and plans content around it. It doesn't book a shoot."}</p>
         <form className="ccal-add" onSubmit={add}>
-          <label className="grow"><span>{studio ? "Add to their calendar" : "What's happening?"}</span><input name="title" required placeholder={studio ? "Content Day · Shoot the new menu" : "Spring sale starts · New class launches · Anniversary week"} /></label>
+          <label className="grow"><span>What&rsquo;s happening?</span><input name="title" required placeholder={studio ? "Content Day · Shoot the new menu" : "Spring sale starts · New class launches · Anniversary week"} /></label>
           <label><span>Time <small>optional</small></span><input name="time" type="time" /></label>
-          <label><span>Repeats</span><select name="repeat" defaultValue=""><option value="">Just once</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></label>
-          {!studio && <label className="ccal-check"><input type="checkbox" name="wants" value="1" /> <span>I&rsquo;d like content for this</span></label>}
-          <label className="wide"><span>Notes <small>optional</small></span><input name="note" placeholder={studio ? "What we'll film, who's there" : "Anything Brandon should know — what it is, who's involved, what you'd love content for"} /></label>
-          <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Add to ${longDay(day).split(",")[0]}`}</button>
+          <label><span>How often?</span><select name="repeat" defaultValue=""><option value="">Just once</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></label>
+          {!studio && <label className="ccal-check"><input type="checkbox" name="wants" value="1" /> <span>I&rsquo;d like Brandon to film or photograph this</span></label>}
+          <label className="wide"><span>Details <small>optional</small></span><input name="note" placeholder={studio ? "Who's there, what to remember" : "What it is, who's involved, what you'd love content of"} /></label>
+          <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Put it on ${longDay(day).split(",")[0]}`}</button>
           {err && <p className="cform-error">{err}</p>}
         </form>
       </div>
