@@ -30,8 +30,14 @@ export async function POST(request) {
     let name = "";
     if (email !== ADMIN_EMAIL) {
       const { data: c } = await db.from("clients").select("name").eq("email", email).maybeSingle();
-      if (!c) return NextResponse.json({ known: false });
-      name = c.name || "";
+      // New email (2026-11-08, Brandon: "let anyone make an account"): add them
+      // to the roster as a new client so their portal works and they show up
+      // in Studio → Clients. No name yet — Studio shows their email instead.
+      if (!c) {
+        const { error: addErr } = await db.from("clients").insert({ email, name: "" });
+        if (addErr && !/duplicate/i.test(addErr.message || "")) throw addErr;
+      }
+      name = c?.name || "";
     }
     return NextResponse.json(await sendSetupCode(db, { email, name, next: body.next }));
   } catch (err) {

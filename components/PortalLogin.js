@@ -220,7 +220,7 @@ export default function PortalLogin() {
       setError(
         known
           ? `That password didn't match ${addr}. Passwords are case-sensitive — check caps lock, or tap "Show" to see what you typed. Never made one, or forgot it? Tap "${SETUP_LABEL}" below.`
-          : `I don't have an account under ${addr}. It's usually the email you booked with — double-check the spelling, or ${TEXT_ME}.`
+          : `There's no account under ${addr} yet. New here? Tap "${SETUP_LABEL}" below — I'll email you a code and you'll make your password. Or double-check the spelling.`
       );
     }
   }
@@ -242,7 +242,7 @@ export default function PortalLogin() {
     const notOnFile = () => {
       setMode("password");
       setError(
-        `I don't have ${addr} on file. It's usually the email you booked with — double-check the spelling, or ${TEXT_ME}.`
+        `"${addr}" doesn't look like a full email address. Check the spelling (it needs an @ and a dot, like name@gmail.com), or ${TEXT_ME}.`
       );
     };
     // recent: a code already went out under a minute ago — nothing new was sent, that one still works.
@@ -271,7 +271,6 @@ export default function PortalLogin() {
       if (!json.fallback) throw Object.assign(new Error(json.error || "send failed"), { sendFailed: true });
 
       // Fallback (Resend not configured): Supabase's own email, as before.
-      if (!(await emailIsKnown(addr))) return notOnFile();
       window.localStorage.setItem(NEXT_KEY, afterSetup(nextPath));
       const supabase = createSenderClient();
       const { error: err } = await supabase.auth.signInWithOtp({
