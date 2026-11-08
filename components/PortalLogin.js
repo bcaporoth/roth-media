@@ -80,6 +80,14 @@ export default function PortalLogin() {
   // Where to go after signing in (?next=/portal/gallery/…). Portal paths only.
   const [nextPath, setNextPath] = useState("");
   const codeRef = useRef(null);
+  const emailRef = useRef(null);
+  // Buttons only work once the page's script has loaded. Until then they say
+  // "One sec…" instead of silently doing nothing (slow phones, first load).
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  // iPhone/Chrome autofill can fill the box without telling React — read the
+  // box itself when the saved value is empty.
+  const typedEmail = () => cleanEmail(email || emailRef.current?.value || "");
   const safeNext = (v) => (/^\/portal(\/[\w-]+)*\/?$/.test(String(v || "")) ? String(v) : "");
   const afterSetup = (next) => `/portal/account?setup=1${next ? `&next=${encodeURIComponent(next)}` : ""}`;
 
@@ -191,7 +199,8 @@ export default function PortalLogin() {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const addr = cleanEmail(email);
+    const addr = typedEmail();
+    if (addr !== email) setEmail(addr);
     try {
       const supabase = createSupabaseBrowser();
       const { error: err } = await supabase.auth.signInWithPassword({
@@ -220,7 +229,8 @@ export default function PortalLogin() {
   // lands on the choose-a-password page.
   async function handleSendSetup(e) {
     e?.preventDefault();
-    const addr = cleanEmail(email);
+    const addr = typedEmail();
+    if (addr && addr !== email) setEmail(addr);
     if (!addr) {
       setMode("password");
       setError(`Type your email in the box above first, then tap "${SETUP_LABEL}" again.`);
@@ -437,6 +447,7 @@ export default function PortalLogin() {
         <label className="cx-label" htmlFor="pl-email">Email</label>
         <input
           id="pl-email"
+          ref={emailRef}
           className="cx-input"
           type="email"
           placeholder="The email you used to book with me"
@@ -475,9 +486,9 @@ export default function PortalLogin() {
       <button
         type="submit"
         className="cx-btn cx-btn--light cx-btn--lg cx-btn--block"
-        disabled={mode === "sending" || busy}
+        disabled={!ready || mode === "sending" || busy}
       >
-        {busy ? "Signing you in…" : "Sign in"}
+        {!ready ? "One sec…" : busy ? "Signing you in…" : "Sign in"}
       </button>
       {error && (
         <p className="cx-error" role="alert">
@@ -489,9 +500,11 @@ export default function PortalLogin() {
         type="button"
         className="pt-setup"
         onClick={handleSendSetup}
-        disabled={mode === "sending"}
+        disabled={!ready || mode === "sending"}
       >
-        {mode === "sending"
+        {!ready
+          ? "One sec…"
+          : mode === "sending"
           ? "Sending your code…"
           : `${SETUP_LABEL} Set one up →`}
       </button>
