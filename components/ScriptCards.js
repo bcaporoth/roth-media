@@ -41,7 +41,9 @@ export function TChartEditor({ body, setBody, onPrompt }) {
   const set = (k, v) => setBody((b) => ({ ...b, [k]: v }));
   const style = body.style || "";
   const secsTotal = tchartSecs(body);
-  const [moreOpen] = useState(() => Boolean(body.broll?.length || body.caption || body.notes));
+  const [moreOpen] = useState(() => Boolean(body.broll?.length || body.caption));
+  const planFilled = [body.goal && "for", body.on_camera && "who", body.where && "where", body.length && "length", body.needs?.length && "ready"].filter(Boolean);
+  const [planOpen] = useState(false);
   const [askOpen, setAskOpen] = useState(() => (body.questions || []).length > 0 || style === "questions");
   const [filter, setFilter] = useState(""); // "" | talent | place | thing
   const scenes = body.scenes || [];
@@ -67,29 +69,33 @@ export function TChartEditor({ body, setBody, onPrompt }) {
             <button key={t.id} type="button" className={"achip" + (style === t.id ? " is-on" : "")} aria-pressed={style === t.id} onClick={() => set("style", style === t.id ? "" : t.id)}>{t.label}</button>
           ))}
         </div>
-        <div className="scr-grid">
-          <PlanField label="What it's for" value={body.goal} onChange={(v) => set("goal", v)} rows={2} placeholder="One sentence: trust, proof, craving, teaching, or selling one thing." />
-          <PlanField label="The hook — first words or first thing on screen" value={body.hook} onChange={(v) => set("hook", v)} rows={2} placeholder={HOOK_PH[style] || "The exact words. For a reel it lands in under 2 seconds."} />
-          <PlanField label="Who's on camera" value={body.on_camera} onChange={(v) => set("on_camera", v)} placeholder="Who's in it, who's filming" />
-          <PlanField label="Where" value={body.where} onChange={(v) => set("where", v)} placeholder="The spot, the light, time of day" />
-          <PlanField label="Finished length" value={body.length} onChange={(v) => set("length", v)} placeholder={style === "photos" ? "How many photos" : "30–45s · 3 min"} />
-          <PlanField label={NEEDS_LABEL[style] || "What to have ready"} value={(body.needs || []).join("\n")} onChange={(v) => set("needs", v.split("\n"))} rows={3} placeholder={NEEDS_PH[style] || "One per line: props, products, people, outfits"} wide />
-        </div>
+        <PlanField label="The hook" value={body.hook} onChange={(v) => set("hook", v)} placeholder={HOOK_PH[style] || "The first words or first thing on screen"} wide />
+        {/* The rest of the plan, folded (2026-11-08, Brandon: "too much to look at"). */}
+        <details className="tc-fold" open={planOpen}>
+          <summary>Details{planFilled.length ? <em> · {planFilled.join(", ")}</em> : <em> · what it&apos;s for, who, where, length, what to have ready</em>}</summary>
+          <div className="scr-grid">
+            <PlanField label="What it's for" value={body.goal} onChange={(v) => set("goal", v)} placeholder="Trust, proof, craving, teaching, or selling one thing" />
+            <PlanField label="Who's on camera" value={body.on_camera} onChange={(v) => set("on_camera", v)} placeholder="Who's in it" />
+            <PlanField label="Where" value={body.where} onChange={(v) => set("where", v)} placeholder="The spot, the light" />
+            <PlanField label="Finished length" value={body.length} onChange={(v) => set("length", v)} placeholder={style === "photos" ? "How many photos" : "30–45s"} />
+            <PlanField label={NEEDS_LABEL[style] || "What to have ready"} value={(body.needs || []).join("\n")} onChange={(v) => set("needs", v.split("\n"))} placeholder={NEEDS_PH[style] || "One per line"} wide />
+          </div>
+        </details>
       </div>
 
       <div className="sday-sechead">
         <h3>Scenes — said | seen</h3>
         {secsTotal > 0 && <span className="gcard-meta">{secsTotal}s on screen</span>}
         {onPrompt && all.some((l) => l.say.trim()) && <button type="button" className="achip" onClick={onPrompt}>▶ Teleprompter</button>}
-        <span className="tc-filters" role="group" aria-label="Show lines where the viewer sees">
+        {all.length >= 4 && <span className="tc-filters" role="group" aria-label="Show lines where the viewer sees">
           <button type="button" className={"achip" + (filter === "" ? " is-on" : "")} onClick={() => setFilter("")}>All · {all.length}</button>
           {SEE_TAGS.map((t) => (
             <button key={t.id} type="button" className={"achip tc-tag-" + t.id + (filter === t.id ? " is-on" : "")} onClick={() => setFilter(filter === t.id ? "" : t.id)}>{t.label} · {counts[t.id]}</button>
           ))}
-        </span>
+        </span>}
       </div>
       {scenes.length === 0 && (
-        <p className="gcard-meta">Label a scene, then one line per beat: the <strong>words</strong> on the left, what the <strong>viewer sees</strong> on the right — tagged talent, place or thing. <button type="button" className="rm-linkbtn" onClick={() => addScene(-1)}>Add the first scene</button></p>
+        <p className="gcard-meta">Label a scene, then one line per beat: the <strong>words</strong> on the left, what the <strong>viewer sees</strong> on the right — tagged talent, place, thing or text on screen. <button type="button" className="rm-linkbtn" onClick={() => addScene(-1)}>Add the first scene</button></p>
       )}
       {scenes.map((sc, i) => {
         const shown = sc.lines.map((l, k) => ({ l, k })).filter(({ l }) => !filter || l.tag === filter);
@@ -143,14 +149,14 @@ export function TChartEditor({ body, setBody, onPrompt }) {
       )}
 
       <div className="scr-grid tc-close">
-        <PlanField label="Call to action — the closing line" value={body.cta} onChange={(v) => set("cta", v)} rows={2} placeholder="One ask: stop in, order, book, follow." wide />
+        <PlanField label="Call to action" value={body.cta} onChange={(v) => set("cta", v)} placeholder="One ask: stop in, order, book, follow" />
+        <PlanField label="Notes" value={body.notes} onChange={(v) => set("notes", v)} placeholder="Timing, safety, shoot this first" />
       </div>
-      <details className="scr-more" open={moreOpen}>
-        <summary>B-roll, caption and notes</summary>
+      <details className="tc-fold" open={moreOpen}>
+        <summary>B-roll &amp; caption{body.broll?.length || body.caption ? <em> · {[body.broll?.length && `${body.broll.length} B-roll`, body.caption && "caption"].filter(Boolean).join(", ")}</em> : null}</summary>
         <div className="scr-grid">
-          <PlanField label="B-roll to grab" value={(body.broll || []).join("\n")} onChange={(v) => set("broll", v.split("\n"))} rows={3} placeholder="One per line: hands, textures, the sign, the street, customers" />
-          <PlanField label="Caption" value={body.caption} onChange={(v) => set("caption", v)} rows={3} placeholder="1–3 lines + hashtags" />
-          <PlanField label="Notes for the day" value={body.notes} onChange={(v) => set("notes", v)} rows={3} placeholder="Safety, timing, shoot this first while the light is good" wide />
+          <PlanField label="B-roll to grab" value={(body.broll || []).join("\n")} onChange={(v) => set("broll", v.split("\n"))} placeholder="One per line" />
+          <PlanField label="Caption" value={body.caption} onChange={(v) => set("caption", v)} placeholder="1–3 lines + hashtags" />
         </div>
       </details>
     </div>

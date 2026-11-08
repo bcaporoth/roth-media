@@ -7378,3 +7378,15 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
    Ready tag never sits under them (2026-11-08). */
 .sday-rowbtn { padding-right: 10rem; }
 @media (max-width: 760px) { .sday-rowbtn { padding-right: 0.9rem; } }
+/* T-chart, condensed (2026-11-08): kind + hook up top, the rest folds. */
+.tc-plan { gap: 0.55rem; padding-bottom: 0.7rem; }
+.tc-plan > .scr-field { margin: 0; }
+.tc-fold { border: 1px solid var(--line); border-radius: 12px; padding: 0.15rem 0.8rem; }
+.tc-fold > summary { cursor: pointer; padding: 0.5rem 0; font-size: 0.86rem; font-weight: 600; list-style: none; }
+.tc-fold > summary::-webkit-details-marker { display: none; }
+.tc-fold > summary::before { content: "▸ "; display: inline-block; transition: transform 0.15s; }
+.tc-fold[open] > summary::before { transform: rotate(90deg); }
+.tc-fold > summary em { font-style: normal; font-weight: 400; opacity: 0.6; }
+.tc-fold > .scr-grid { padding-bottom: 0.7rem; }
+.tc .scr-field textarea { min-height: 0; }
+.tc-close { margin-top: 0.5rem; }
