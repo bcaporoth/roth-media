@@ -89,9 +89,9 @@ export default async function AccountPage({ searchParams }) {
 
           <section className="st-card" aria-labelledby="st-cardh">
             <h2 id="st-cardh" className="st-h">Card &amp; receipts</h2>
-            <p className="cx-help">Update the card on file, see past receipts, or cancel a monthly plan. You&apos;ll sign in with your email; it sends you a quick code.</p>
-            <p className="cx-help">Only monthly plans keep a card on file. If you paid once, you&apos;ll see your receipts there.</p>
-            <a className="cx-btn cx-btn--light st-btn" href="/billing" target="_blank" rel="noopener noreferrer">Manage card &amp; receipts →</a>
+            <p className="cx-help"><strong>On a monthly plan?</strong> Update your card, see your monthly receipts, or cancel. You sign in with your email and get a quick code.</p>
+            <a className="cx-btn cx-btn--light st-btn" href="/billing" target="_blank" rel="noopener noreferrer">Manage my monthly plan →</a>
+            <p className="cx-help"><strong>Paid once?</strong> Your receipt was emailed to you when you paid, and your payments are listed at the bottom of your <a href="/portal">home page</a>. No card is kept on file.</p>
           </section>
 
           <section className="st-card" aria-labelledby="st-addr">
