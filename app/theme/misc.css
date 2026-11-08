@@ -269,3 +269,6 @@
 .mx-page .mx-prose .terms-glance a { color: var(--gold); white-space: nowrap; }
 .mx-page .mx-prose .terms-glance + p { color: var(--fg); font-size: 1.08rem; line-height: 1.6; }
 .mx-page .wf-detail { margin-top: 0.7rem; }
+/* Answer boxes that grow as you type (components/AutoText.js). */
+.mx-page textarea.auto-text { resize: none; overflow: hidden; display: block; width: 100%; }
+.mx-page textarea.cx-input.auto-text { line-height: 1.5; min-height: 48px; }

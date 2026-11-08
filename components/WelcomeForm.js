@@ -6,6 +6,7 @@
 // brief for each service they picked.
 
 import { useState } from "react";
+import AutoText from "./AutoText";
 import { TYPES, WELCOME } from "../lib/intake";
 
 export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", services: services0 = [], initial = {}, editing = false }) {
@@ -109,12 +110,12 @@ export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", serv
               ))}
             </div>
             {it.detail && (
-              <input className="cx-input wf-detail" aria-label={it.detail} placeholder={it.detail} value={answers[`${it.q}::detail`] || ""} onChange={(e) => setAnswers({ ...answers, [`${it.q}::detail`]: e.target.value })} />
+              <input className="cx-input wf-detail" spellCheck autoCorrect="on" autoCapitalize="words" aria-label={it.detail} placeholder={it.detail} value={answers[`${it.q}::detail`] || ""} onChange={(e) => setAnswers({ ...answers, [`${it.q}::detail`]: e.target.value })} />
             )}
             </>
           ) : it.long
-            ? <textarea className="cx-textarea" id={`wf-q${i}`} rows={3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
-            : <input className="cx-input" id={`wf-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />}
+            ? <AutoText className="cx-textarea" id={`wf-q${i}`} rows={3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
+            : <AutoText className="cx-input" id={`wf-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />}
         </div>
       ))}
 
