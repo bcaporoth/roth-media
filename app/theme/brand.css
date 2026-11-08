@@ -228,3 +228,9 @@ textarea.bp-input { resize: vertical; }
   .bsheet-swatch span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .bsheet-scale i.is-on { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Unanswered questions show red (2026-11-08) — until filled in or marked "let's talk". */
+.bp-row.is-empty { position: relative; padding-left: 0.9rem; border-left: 3px solid #e5705f; }
+.bp-row.is-empty .bp-empty-tag { justify-self: start; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #f08a7e; }
+.bp-row.is-empty input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.bp-row.is-empty textarea { border-color: rgba(229, 112, 95, 0.75) !important; }

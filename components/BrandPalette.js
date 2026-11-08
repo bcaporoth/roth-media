@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  SECTIONS, ESSENTIALS, COLOR_ROLES, fieldsFor, completeness, isTalk, talkKey,
+  SECTIONS, ESSENTIALS, COLOR_ROLES, fieldsFor, completeness, isTalk, isFilled, talkKey,
 } from "../lib/brand";
 import { normHex, hexToRgb, hexToCmyk, contrastPairs, contrastLabel, dominantColors } from "../lib/brand-color";
 import BrandPreview, { useGoogleFont } from "./BrandPreview";
@@ -206,12 +206,17 @@ function AllSections({ ctx, c, status, initialNotes, clientId }) {
             {isOpen && (
               <div className="bp-sec-body">
                 <p className="bp-lede">{s.blurb}</p>
-                {fields.map((f) => (
-                  <div key={f.id} className="bp-row">
-                    <Field ctx={ctx} section={s.key} field={f} />
-                    <TalkToggle ctx={ctx} section={s.key} id={f.id} />
-                  </div>
-                ))}
+                {fields.map((f) => {
+                  // Red until it's answered or marked "let's talk" (2026-11-08).
+                  const empty = !isFilled(f, ctx.data?.[s.key]?.[f.id], ctx.assets) && !isTalk(ctx.data, s.key, f.id);
+                  return (
+                    <div key={f.id} className={"bp-row" + (empty ? " is-empty" : "")}>
+                      {empty && <span className="bp-empty-tag">Not filled in yet</span>}
+                      <Field ctx={ctx} section={s.key} field={f} />
+                      <TalkToggle ctx={ctx} section={s.key} id={f.id} />
+                    </div>
+                  );
+                })}
                 {ctx.admin && <BrandonNote section={s.key} initial={initialNotes?.[s.key] || ""} clientId={clientId} />}
                 <button type="button" className="bp-btn bp-btn--ghost bp-sec-close" onClick={() => setOpen(null)}>Done with {s.title.toLowerCase()}</button>
               </div>
