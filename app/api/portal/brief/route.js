@@ -6,8 +6,8 @@ import { clip } from "../../../../lib/visitor";
 
 export const dynamic = "force-dynamic";
 
-// The signed-in client edits their brief (the latest intake row under their
-// email). One record: an edit updates it in place; the first save creates it.
+// The signed-in client edits their brief for one service (the intake row under
+// their email with that utm.type). An edit updates it; the first save creates it.
 // Brandon's call-sheet notes live on a separate "call" row, so nothing of his
 // is touched here.
 export async function POST(request) {
@@ -25,7 +25,9 @@ export async function POST(request) {
   const phone = clip(body.phone, 40);
 
   const db = supabaseAdmin();
-  const { data: cur } = await db.from("submissions").select("id").eq("kind", "intake").eq("email", email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  // One brief per service (2026-11-08): a family brief never overwrites a
+  // business one. Older briefs all carry utm.type, so they match the same way.
+  const { data: cur } = await db.from("submissions").select("id").eq("kind", "intake").eq("email", email).eq("utm->>type", type).order("created_at", { ascending: false }).limit(1).maybeSingle();
   const row = {
     kind: "intake", email, fields, utm: { type },
     ...(name ? { name } : {}), ...(phone ? { phone } : {}),

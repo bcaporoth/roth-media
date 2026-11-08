@@ -14,7 +14,7 @@ import { listDays } from "../../lib/scripts-server";
 import { unreadFor } from "../../lib/notes-server";
 import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
-import { latestBrief } from "../../lib/intake";
+import { latestBrief, welcomeOf, briefsByType, TYPE_LABEL } from "../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -226,11 +226,16 @@ export default async function PortalPage({ searchParams }) {
 
   // Their brief (latest intake row) — shown as a card so they can keep it current.
   let brief = null;
+  let welcome = null; // step 1 of the brief (the welcome form), or null
+  let missing = []; // services they picked that still have no details
   if (adminConfigured && !isAdmin) {
     try {
-      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").eq("kind", "intake").eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(3);
+      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
       const b = latestBrief(data || []);
       brief = b ? { id: b.id, when: new Date(b.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) } : false;
+      welcome = welcomeOf(data || []);
+      const have = briefsByType(data || []);
+      missing = (welcome?.services || []).filter((t) => !have[t]);
     } catch { brief = null; }
   }
 
@@ -239,7 +244,8 @@ export default async function PortalPage({ searchParams }) {
   if (adminConfigured && !isAdmin) {
     const unread = await unreadFor(supabaseAdmin(), client.id, "client").catch(() => 0);
     if (unread) todo.push({ who: "brandon", text: `${unread} new note${unread === 1 ? "" : "s"} from Brandon`, href: "#notes" });
-    if (brief === false) todo.push({ who: "you", text: "Fill in your brief — five minutes, and every shoot is planned from it", href: "/portal/brief" });
+    if (!welcome && brief === false) todo.push({ who: "you", text: "Start here: tell me about you and what you're after (about 3 minutes)", href: "/portal/brief" });
+    else if (missing.length) todo.push({ who: "you", text: `Fill in your ${TYPE_LABEL[missing[0]].toLowerCase()} details${missing.length > 1 ? ` (${missing.length} left)` : ""}`, href: `/portal/brief?type=${missing[0]}` });
   }
 
   // Business client (Brandon has opened a brand palette for them): their
@@ -276,8 +282,9 @@ export default async function PortalPage({ searchParams }) {
     );
   }
 
-  const first = client.name.trim().split(/\s+/)[0] || "there";
-  const firstName = first.charAt(0).toUpperCase() + first.slice(1);
+  // No name yet (a brand-new sign-up) → "Hi, there." — never "Hi, There."
+  const first = (client.name || "").trim().split(/\s+/)[0];
+  const firstName = first ? first.charAt(0).toUpperCase() + first.slice(1) : "there";
 
   return (
     <PortalHome

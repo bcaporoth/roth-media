@@ -63,6 +63,15 @@
 .mx-page .mx-done { display: grid; gap: 0.5rem; padding: 1.3rem 1.1rem; background: var(--bg-2); border: 1px solid var(--line); border-left: 2px solid var(--ok); border-radius: 2px; }
 .mx-page .mx-done p { margin: 0; color: var(--dim); }
 .mx-page .mx-done .mx-done-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.3rem; letter-spacing: -0.015em; color: var(--fg); line-height: 1.2; }
+/* After saving one service's details: Next → / Edit again, side by side, wrapping on phones. */
+.mx-page .mx-intake-done { display: grid; gap: 1rem; }
+.mx-page .mx-done-acts { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+/* Portal brief: where they are in the two steps. */
+.pt-brief .bf-steps { list-style: none; margin: 0 0 1.4rem; padding: 0; display: grid; gap: 0.45rem; }
+.pt-brief .bf-steps li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.6rem; color: var(--dim); font-size: 0.95rem; }
+.pt-brief .bf-steps strong { color: var(--fg); font-weight: 600; }
+.pt-brief .bf-steps .is-done strong::before { content: "✓ "; color: var(--ok); }
+.pt-brief .bf-steps a { color: var(--accent, #dcbd7a); text-decoration: underline; text-underline-offset: 3px; }
 .mx-page .mx-intake-head .cx-h1 { max-width: 12em; }
 
 /* BookCall (shared component, keeps its own class names) */

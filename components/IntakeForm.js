@@ -4,25 +4,33 @@
 // Saves to the Studio inbox (kind "intake"), then offers a call slot.
 // mode="portal" (/portal/brief): the same questions, prefilled from their
 // saved brief, saving over the same record — no call slot, no new row.
+// Portal step 2 (2026-11-08): `types` = the services they picked in the
+// welcome form (pills limited to those), `initialByType` = each service's
+// saved answers, `skipWelcomeAsked` hides questions the welcome form already asked.
 
 import { useState } from "react";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
-import { INTAKE, TYPES, typeOf } from "../lib/intake";
+import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME } from "../lib/intake";
 import BookCall from "./BookCall";
 
-export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public" }) {
+export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public", types = null, initialByType = null, skipWelcomeAsked = false }) {
   const portal = mode === "portal";
   const [type, setType] = useState(type0 ? typeOf(type0) : "");
   const [name, setName] = useState(name0);
   const [email, setEmail] = useState(email0);
   const [phone, setPhone] = useState(phone0);
-  const [answers, setAnswers] = useState(initial);
+  // Answers per service, so switching pills never loses what they typed.
+  const [byType, setByType] = useState(() => initialByType || (type0 ? { [typeOf(type0)]: initial } : {}));
+  const [saved, setSaved] = useState(() => Object.keys(initialByType || {}).filter((t) => Object.keys(initialByType[t] || {}).length));
+  const answers = (type && byType[type]) || {};
+  const setAnswers = (a) => setByType((b) => ({ ...b, [type]: a }));
+  const pills = types?.length ? TYPES.filter((t) => types.includes(t.id)) : TYPES;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  const questions = type ? INTAKE[type] : [];
+  const questions = type ? INTAKE[type].filter((it) => !(skipWelcomeAsked && ASKED_IN_WELCOME.test(it.q))) : [];
 
   async function submit(e) {
     e.preventDefault();
@@ -33,6 +41,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
       try {
         const res = await fetch("/api/portal/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, name, phone, answers }) });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Save failed");
+        setSaved((s) => (s.includes(type) ? s : [...s, type]));
         setDone(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
@@ -58,13 +67,22 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   }
 
   if (done && portal) {
+    const next = pills.find((t) => !saved.includes(t.id));
     return (
       <div className="mx-intake-done">
         <div className="mx-done" role="status">
-          <p className="mx-done-title">Saved.</p>
-          <p>I see it right away, and your day plan picks it up. Come back and change anything whenever you like.</p>
+          <p className="mx-done-title">{TYPE_LABEL[type]} details saved.</p>
+          <p>
+            {next
+              ? `One more to go: your ${next.label.toLowerCase()} details.`
+              : "That's everything. I see it right away. Come back and change anything whenever you like."}
+          </p>
         </div>
-        <button type="button" className="cx-btn cx-btn--light" onClick={() => setDone(false)}>Edit again</button>
+        <div className="mx-done-acts">
+          {next && <button type="button" className="cx-btn cx-btn--light" onClick={() => { setType(next.id); setDone(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Next: {next.label} →</button>}
+          {!next && <a className="cx-btn cx-btn--light" href="/portal">Back to my portal</a>}
+          <button type="button" className="cx-btn" onClick={() => setDone(false)}>Edit {TYPE_LABEL[type].toLowerCase()} again</button>
+        </div>
       </div>
     );
   }
@@ -83,13 +101,14 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   return (
     <form className="mx-form" onSubmit={submit}>
       <div className="mx-field">
-        <p className="cx-label" id="in-type">This is for</p>
+        <p className="cx-label" id="in-type">{types?.length > 1 ? "Details for" : "This is for"}</p>
         <div className="cx-pills" role="group" aria-labelledby="in-type">
-          {TYPES.map((t) => (
-            <button key={t.id} type="button" className={"cx-pill" + (type === t.id ? " is-on" : "")} aria-pressed={type === t.id} onClick={() => setType(t.id)}>{t.label}</button>
+          {pills.map((t) => (
+            <button key={t.id} type="button" className={"cx-pill" + (type === t.id ? " is-on" : "")} aria-pressed={type === t.id} onClick={() => setType(t.id)}>{saved.includes(t.id) ? "✓ " : ""}{t.label}</button>
           ))}
         </div>
         {!type && <p className="cx-help">Pick one and the questions for it appear below.</p>}
+        {types?.length > 1 && <p className="cx-help">One set of questions for each thing you picked. A ✓ means it's saved.</p>}
       </div>
       <div className="cx-form-row">
         <div className="mx-field"><label className="cx-label" htmlFor="in-name">Full name</label><input className="cx-input" id="in-name" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></div>
@@ -108,7 +127,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
         </div>
       ))}
       <input type="text" name="website" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-      {type && <button type="submit" className="cx-btn cx-btn--light cx-btn--lg" disabled={busy}>{busy ? (portal ? "Saving…" : "Sending…") : portal ? "Save my brief" : "Send it to Brandon"}</button>}
+      {type && <button type="submit" className="cx-btn cx-btn--light cx-btn--lg" disabled={busy}>{busy ? (portal ? "Saving…" : "Sending…") : portal ? `Save my ${TYPE_LABEL[type].toLowerCase()} details` : "Send it to Brandon"}</button>}
       {error && <p className="cx-error" role="alert">{error}</p>}
     </form>
   );
