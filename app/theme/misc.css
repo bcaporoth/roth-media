@@ -277,3 +277,22 @@
 .mx-page .mx-addr .addr-list button { color: #f6f1e8; }
 .mx-page .mx-addr .addr-list button:hover,
 .mx-page .mx-addr .addr-list button:focus-visible { background: rgba(246, 241, 232, 0.08); }
+/* "The shots": one question, three parts. */
+.mx-page .mx-q-group .mx-subq { display: grid; gap: 0.35rem; margin-top: 0.9rem; padding-left: 0.9rem; border-left: 2px solid rgba(246, 241, 232, 0.14); }
+.mx-page .mx-subq-label { font-weight: 600; font-size: 0.98rem; color: var(--fg); }
+.mx-page .mx-subq .cx-help { margin: 0; }
+.mx-page .mx-subq textarea.cx-textarea { min-height: 76px; }
+/* Add-ons as tap-to-pick cards (components/AddonPicker.js). */
+.mx-page .addon-grid { list-style: none; margin: 0.3rem 0 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.mx-page .addon-card { width: 100%; height: 100%; display: grid; gap: 0.35rem; align-content: start; text-align: left; font: inherit; color: var(--fg); background: rgba(246, 241, 232, 0.03); border: 1px solid rgba(246, 241, 232, 0.18); border-radius: 16px; padding: 0.85rem 0.95rem; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.15s; }
+.mx-page .addon-card:hover { border-color: rgba(246, 241, 232, 0.4); transform: translateY(-1px); }
+.mx-page .addon-card.is-on { border-color: #f6f1e8; background: rgba(246, 241, 232, 0.09); }
+.mx-page .addon-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.mx-page .addon-top strong { font-weight: 600; font-size: 0.98rem; line-height: 1.25; }
+.mx-page .addon-price { white-space: nowrap; font-size: 0.9rem; color: #dcbd7a; }
+.mx-page .addon-get { font-size: 0.84rem; line-height: 1.4; color: var(--dim); }
+.mx-page .addon-tick { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; color: var(--dim); }
+.mx-page .addon-card.is-on .addon-tick { color: #f6f1e8; }
+.mx-page .addon-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 0.8rem; }
+.mx-page .addon-total { margin: 0; color: var(--dim); }
+.mx-page .addon-total strong { color: #f6f1e8; }

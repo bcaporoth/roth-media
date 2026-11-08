@@ -11,9 +11,10 @@
 import { useState } from "react";
 import AutoText from "./AutoText";
 import AddressInput from "./AddressInput";
+import AddonPicker from "./AddonPicker";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
-import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME } from "../lib/intake";
+import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME, SHOT_GROUP, shotPart } from "../lib/intake";
 import BookCall from "./BookCall";
 
 export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public", types = null, initialByType = null, skipWelcomeAsked = false }) {
@@ -33,6 +34,23 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   const [done, setDone] = useState(false);
 
   const questions = type ? INTAKE[type].filter((it) => !(skipWelcomeAsked && ASKED_IN_WELCOME.test(it.q))) : [];
+  // The three shot questions render as one block where the first of them sits.
+  const blocks = [];
+  questions.forEach((it, i) => {
+    if (shotPart(it.q) < 0) return blocks.push({ it, i });
+    const g = blocks.find((b) => b.group);
+    if (g) g.group.push({ it, i });
+    else blocks.push({ group: [{ it, i }] });
+  });
+  for (const b of blocks) if (b.group) b.group.sort((x, y) => shotPart(x.it.q) - shotPart(y.it.q));
+  const box = (it, i) =>
+    it.addons
+      ? <AddonPicker category={it.addons} id={`in-q${i}`} value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
+      : it.address
+      ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
+      : it.long
+      ? <AutoText className="cx-textarea" id={`in-q${i}`} rows={it.opt || shotPart(it.q) >= 0 ? 2 : 3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
+      : <AutoText className="cx-input" id={`in-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />;
 
   async function submit(e) {
     e.preventDefault();
@@ -118,18 +136,36 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
       </div>
       {!portal && <div className="mx-field"><label className="cx-label" htmlFor="in-email">Email</label><input className="cx-input" id="in-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoCapitalize="none" /></div>}
 
-      {questions.map((it, i) => (
-        <div key={it.q} className="mx-field mx-q">
-          <span className="mx-q-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-          <label className="cx-label" htmlFor={`in-q${i}`}>{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>
-          {it.hint && <p className="cx-help">{it.hint}</p>}
-          {it.address
-            ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
-            : it.long
-            ? <AutoText className="cx-textarea" id={`in-q${i}`} rows={3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
-            : <AutoText className="cx-input" id={`in-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />}
-        </div>
-      ))}
+      {blocks.map((b, n) => {
+        const num = <span className="mx-q-n" aria-hidden="true">{String(n + 1).padStart(2, "0")}</span>;
+        if (b.group) {
+          return (
+            <div key="shots" className="mx-field mx-q mx-q-group" role="group" aria-labelledby="in-shots">
+              {num}
+              <p className="cx-label" id="in-shots">{SHOT_GROUP.title}</p>
+              <p className="cx-help">{SHOT_GROUP.hint}</p>
+              {b.group.map(({ it, i }) => (
+                <div key={it.q} className="mx-subq">
+                  <label className="mx-subq-label" htmlFor={`in-q${i}`}>{SHOT_GROUP.parts[shotPart(it.q)].label}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>
+                  {it.hint && <p className="cx-help">{it.hint}</p>}
+                  {box(it, i)}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        const { it, i } = b;
+        return (
+          <div key={it.q} className="mx-field mx-q">
+            {num}
+            {it.addons
+              ? <p className="cx-label">{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</p>
+              : <label className="cx-label" htmlFor={`in-q${i}`}>{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>}
+            {it.hint && <p className="cx-help">{it.hint}</p>}
+            {box(it, i)}
+          </div>
+        );
+      })}
       <input type="text" name="website" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
       {type && <button type="submit" className="cx-btn cx-btn--light cx-btn--lg" disabled={busy}>{busy ? (portal ? "Saving…" : "Sending…") : portal ? `Save my ${TYPE_LABEL[type].toLowerCase()} details` : "Send it to Brandon"}</button>}
       {error && <p className="cx-error" role="alert">{error}</p>}
