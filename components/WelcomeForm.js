@@ -12,11 +12,32 @@ export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", serv
   const [name, setName] = useState(name0);
   const [phone, setPhone] = useState(phone0);
   const [services, setServices] = useState(services0);
-  const [answers, setAnswers] = useState(initial);
+  // A pick with a detail is saved as "Choice — detail"; split it back for editing.
+  const [answers, setAnswers] = useState(() => {
+    const a = { ...initial };
+    for (const it of WELCOME) {
+      const v = a[it.q];
+      if (!it.choices || !v || it.choices.includes(v)) continue;
+      const hit = it.choices.find((c) => v.startsWith(`${c} — `));
+      if (hit) { a[it.q] = hit; a[`${it.q}::detail`] = v.slice(hit.length + 3); }
+    }
+    return a;
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const toggle = (id) => setServices((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  // The pick and its little detail box travel as one answer.
+  function packed() {
+    const out = {};
+    for (const it of WELCOME) {
+      const v = (answers[it.q] || "").trim();
+      const d = it.detail ? (answers[`${it.q}::detail`] || "").trim() : "";
+      if (v || d) out[it.q] = v && d ? `${v} — ${d}` : v || d;
+    }
+    return out;
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -25,13 +46,19 @@ export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", serv
       document.getElementById("wf-pick")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    const unpicked = WELCOME.find((it) => it.choices && !it.opt && !answers[it.q]);
+    if (unpicked) {
+      setError(`Pick one for "${unpicked.q}".${unpicked.choices.includes("Not sure yet") ? ' "Not sure yet" is fine.' : ""}`);
+      document.getElementById(`wf-q${WELCOME.indexOf(unpicked)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setBusy(true);
     setError("");
     try {
       const res = await fetch("/api/portal/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, services, answers }),
+        body: JSON.stringify({ name, phone, services, answers: packed() }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Save failed");
       // On to step 2: the details for the first service they picked.
@@ -70,9 +97,22 @@ export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", serv
       {WELCOME.map((it, i) => (
         <div key={it.q} className="mx-field mx-q">
           <span className="mx-q-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
-          <label className="cx-label" htmlFor={`wf-q${i}`}>{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>
+          {it.choices ? <p className="cx-label" id={`wf-q${i}-l`}>{it.q}</p> : <label className="cx-label" htmlFor={`wf-q${i}`}>{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>}
           {it.hint && <p className="cx-help">{it.hint}</p>}
-          {it.long
+          {it.choices ? (
+            <>
+            <div className="cx-pills" role="radiogroup" aria-labelledby={`wf-q${i}-l`} id={`wf-q${i}`}>
+              {it.choices.map((c) => (
+                <button key={c} type="button" role="radio" aria-checked={answers[it.q] === c} className={"cx-pill" + (answers[it.q] === c ? " is-on" : "")} onClick={() => setAnswers({ ...answers, [it.q]: c })}>
+                  {c}
+                </button>
+              ))}
+            </div>
+            {it.detail && (
+              <input className="cx-input wf-detail" aria-label={it.detail} placeholder={it.detail} value={answers[`${it.q}::detail`] || ""} onChange={(e) => setAnswers({ ...answers, [`${it.q}::detail`]: e.target.value })} />
+            )}
+            </>
+          ) : it.long
             ? <textarea className="cx-textarea" id={`wf-q${i}`} rows={3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
             : <input className="cx-input" id={`wf-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />}
         </div>
