@@ -77,10 +77,10 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
           <Link
             className={"pnav-user" + (active === "account" ? " is-active" : "")}
             href="/portal/account"
-            title="Your account & password"
+            title="Settings: your details, password, card, addresses"
           >
             <span className="pnav-user-email">{email}</span>
-            <span className="pnav-user-short">Account</span>
+            <span className="pnav-user-short">Settings</span>
           </Link>
         </li>
         <li className="pnav-me">

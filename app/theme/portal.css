@@ -744,3 +744,7 @@ body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-
    (left), instead of sitting centered under a left-aligned title. */
 .pt-page .cx-section > .cx-wrap--narrow { max-width: var(--maxw); }
 .pt-page .cx-section > .cx-wrap--narrow > * { max-width: 760px; }
+/* The account link reads "Settings" on every screen (2026-11-08); the email
+   lives on the Settings page itself. */
+.pt-root .portal-appbar .pnav-user-email { display: none; }
+.pt-root .portal-appbar .pnav-user-short { display: inline; }
