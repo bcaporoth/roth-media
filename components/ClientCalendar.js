@@ -165,7 +165,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
                   {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
-                  {(studio || e.created_by === "client") && <button type="button" className="achip" onClick={() => remove(e)}>Remove</button>}
+                  {(studio || e.created_by === "client") && <button type="button" className="achip achip-danger" onClick={() => remove(e)}>Remove</button>}
                 </span>
               </li>
             ))}

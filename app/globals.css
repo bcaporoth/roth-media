@@ -7354,3 +7354,6 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .ccal-optn { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 999px; border: 1px solid currentColor; font-size: 0.75rem; font-weight: 700; opacity: 0.8; }
 .ccal-opt-hint { margin: 0 0 0.3rem; }
 .ccal-shoot { margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px dashed var(--line); }
+/* Red "Remove" (calendar events, 2026-11-08). */
+.achip.achip-danger { color: #f08a7e; border-color: rgba(240, 138, 126, 0.55); }
+.achip.achip-danger:hover, .achip.achip-danger:focus-visible { background: rgba(240, 138, 126, 0.14); border-color: #f08a7e; color: #ffb3aa; }
