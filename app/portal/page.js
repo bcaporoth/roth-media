@@ -278,9 +278,13 @@ export default async function PortalPage({ searchParams }) {
         months={months}
         next={todo}
         clientName={client.name || ""}
+        clientId={client.id}
       />
     );
   }
+
+  // Their shoot days (the scripts) — shown on the calendar and as their own list.
+  const personalDays = adminConfigured && !isAdmin ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
 
   // No name yet (a brand-new sign-up) → "Hi, there." — never "Hi, There."
   const first = (client.name || "").trim().split(/\s+/)[0];
@@ -299,6 +303,8 @@ export default async function PortalPage({ searchParams }) {
       brief={brief}
       next={todo}
       clientName={client.name || ""}
+      clientId={client.id}
+      days={personalDays}
     />
   );
 }

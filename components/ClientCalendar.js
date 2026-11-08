@@ -5,6 +5,11 @@
 // content around them. mode="studio": Brandon sees that calendar on their
 // profile, adds to it, and taps "Follow up on this" — which opens Google
 // Calendar prefilled (one tap to save) and marks the event as followed up.
+// Shoot days (2026-11-08): `days` = their dated shoot days. They show on the
+// grid as 🎬 chips; picking that date shows "Open the scripts →", and any date
+// has "Start a shoot day here" — creates the day and opens its scripts page.
+// So a filming/photo day and its scripts are 1–2 taps from the calendar, for
+// Brandon (Studio) and the client (portal) alike.
 
 import { useEffect, useMemo, useState } from "react";
 import { expandEvents } from "../lib/event-repeat";
@@ -56,8 +61,20 @@ function IdeaBox({ ev, clientId, onSaved }) {
   );
 }
 
-export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null }) {
+export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null, days = null }) {
   const studio = mode === "studio";
+  const dayHref = (id) => (studio ? `/portal/admin/clients/${clientId}/days/${id}` : `/portal/days/${id}`);
+  const [starting, setStarting] = useState(false);
+  const shootByDay = useMemo(() => { const m = {}; for (const d of days || []) if (d.date) (m[d.date] ||= []).push(d); return m; }, [days]);
+  async function startDay() {
+    setStarting(true); setErr("");
+    try {
+      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, title: "Shoot day", date: day }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Couldn't start the day");
+      window.location.href = dayHref(j.id);
+    } catch (x) { setStarting(false); setErr(x.message); }
+  }
   const [events, setEvents] = useState(initialEvents || []);
   const [loadErr, setLoadErr] = useState("");
   const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
@@ -123,6 +140,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         {cells.map((c, i) => c ? (
           <button type="button" key={c} className={`scal-cell ccal-cell${c === today ? " is-today" : ""}${c === day ? " is-picked" : ""}`} onClick={() => setDay(c)} aria-pressed={c === day} aria-label={longDay(c)}>
             <span className="scal-num">{Number(c.slice(-2))}</span>
+            {(shootByDay[c] || []).map((d) => <span key={d.id} className="scal-ev is-shootday">🎬 {d.title}</span>)}
             {(byDay[c] || []).slice(0, 3).map((e) => <span key={e.id} className={`scal-ev ${e.created_by === "studio" ? "is-business" : "is-event"}${e.followup_at ? " is-followed" : ""}`}>{e.time ? `${fmt12(e.time).replace(":00", "")} ` : ""}{e.title}</span>)}
             {(byDay[c] || []).length > 3 && <span className="scal-num">+{byDay[c].length - 3} more</span>}
           </button>
@@ -131,6 +149,20 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
 
       <div className="ccal-day">
         <h4>{longDay(day)}</h4>
+        {days !== null && (
+          <div className="ccal-shoot">
+            {(shootByDay[day] || []).map((d) => (
+              <a key={d.id} className="ccal-shoot-row" href={dayHref(d.id)}>
+                <span><strong>🎬 {d.title}</strong><em>{d.scripts ? `${d.scripts} script${d.scripts === 1 ? "" : "s"}${d.ready ? ` · ${d.ready} ready` : ""}` : "No scripts yet"}</em></span>
+                <span className="abtn">Open the scripts →</span>
+              </a>
+            ))}
+            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={startDay} disabled={starting}>
+              {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
+            </button>
+            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
+          </div>
+        )}
         {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing here yet — add what's happening below."}</p> : (
           <ul className="ccal-list">
             {dayEvents.map((e) => (

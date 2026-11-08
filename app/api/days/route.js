@@ -4,6 +4,8 @@ import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsF
 import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { loadPlaybook } from "../../../lib/playbook";
+import { resendConfigured, sendEmail } from "../../../lib/resend";
+import { LEAD_ALERT_TO, leadAlertEmail } from "../../../lib/studio-emails";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // a Claude draft can take a minute
@@ -14,7 +16,9 @@ const clip = (v, n) => String(v ?? "").slice(0, n);
 
 // Shoot days + scripts — ONE route for Brandon (Studio) and the client
 // (portal). Every action checks who is asking and that the day is theirs.
-//   day-create (Brandon)      day-update (both)      day-delete (Brandon)
+//   day-create (both — a client only for themselves; theirs stays off
+//               Brandon's Shoots calendar and emails him instead)
+//   day-update (both)         day-delete (Brandon)
 //   script-add (both)         script-save (both, rev-checked)
 //   script-delete (Brandon; client only their own)   script-order (both)
 //   script-note (both)        script-draft (Brandon — Claude writes it)
@@ -45,7 +49,10 @@ export async function POST(request) {
 
   try {
     if (body.action === "day-create") {
-      if (me.role !== "brandon") return bad("Not authorized", 403);
+      // 2026-11-08: clients can start a shoot day too, from their calendar.
+      const byClient = me.role === "client";
+      if (byClient) body.clientId = me.clientId;
+      else if (me.role !== "brandon") return bad("Not authorized", 403);
       if (!isUuid(body.clientId)) return bad("Bad client");
       const { data: client } = await db.from("clients").select("id").eq("id", body.clientId).maybeSingle();
       if (!client) return bad("Client not found", 404);
@@ -54,6 +61,18 @@ export async function POST(request) {
       const shootId = isUuid(body.shootId) ? body.shootId : null;
       const { data, error } = await db.from("shoot_days").insert({ client_id: client.id, ...patch, ...(shootId ? { shoot_id: shootId } : {}) }).select("id").single();
       if (error) throw new Error(/shoot_days/.test(error.message) ? "Run supabase/shoot-days.sql once in the Supabase SQL editor first." : error.message);
+      // A client started it: tell Brandon, and leave his Shoots calendar alone
+      // until he sets the time (his first date edit puts it on there).
+      if (byClient) {
+        if (resendConfigured) {
+          try {
+            const { data: who } = await db.from("clients").select("name, email, phone").eq("id", client.id).maybeSingle();
+            const when = patch.date ? new Date(patch.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "no date yet";
+            await sendEmail({ to: LEAD_ALERT_TO, ...leadAlertEmail({ kind: "shoot day", name: who?.name || who?.email, email: who?.email, phone: who?.phone, subject: `${who?.name || who?.email} started a shoot day — ${when}`, summary: "They started it from their calendar. Open it to write the scripts together.", fields: [["Day", patch.title || "Shoot day"], ["Date", when], ["Open it", `rothmediaco.com/portal/admin/clients/${client.id}/days/${data.id}`]] }) });
+          } catch {}
+        }
+        return NextResponse.json({ ok: true, id: data.id });
+      }
       // Dated from the start → it's on the Shoots calendar right away.
       if (patch.date && !shootId) {
         const { data: who } = await db.from("clients").select("name, email").eq("id", client.id).maybeSingle();

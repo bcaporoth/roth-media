@@ -26,7 +26,7 @@ const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short"
 const money = (c) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const today = () => new Date().toISOString().slice(0, 10);
 
-export default function ClientProfile({ initial, emailReady }) {
+export default function ClientProfile({ initial, emailReady, children = null }) {
   const [d, setD] = useState(initial);
   const [flash, setFlash] = useState("");
   const [error, setError] = useState("");
@@ -140,6 +140,9 @@ export default function ClientProfile({ initial, emailReady }) {
         </p>
       )}
 
+
+      {/* The calendar (passed in by the page) sits above the tabs. */}
+      {children}
 
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
         {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null]].map(([k, label, n]) => (

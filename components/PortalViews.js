@@ -5,6 +5,7 @@ import SiteFooter from "./SiteFooter";
 import Reveal from "./Reveal";
 import PortalNav from "./PortalNav";
 import GalleryDays from "./GalleryDays";
+import ClientCalendar from "./ClientCalendar";
 import GuestInvite from "./GuestInvite";
 import NotesThread from "./NotesThread";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
@@ -234,10 +235,14 @@ export function PortalHome({
   brief = null, // null = not shown; false = none yet; object = saved
   next = [],
   clientName = "",
+  clientId = "",
+  days = null, // their shoot days (null = table not set up / not loaded)
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
 
+  // Order (2026-11-08, Brandon: "gallery, calendar and script focused"):
+  // what's next → calendar → shoot days & scripts → galleries → the rest.
   return (
     <PortalFrame nav={nav} className="pt-home">
       <Reveal />
@@ -251,7 +256,8 @@ export function PortalHome({
       </header>
 
       <NextStrip items={next} />
-      <NotesCard clientName={clientName} />
+      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} />}
+      {days?.length > 0 && <DaysSection days={days} />}
 
       {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} />}
 
@@ -263,6 +269,8 @@ export function PortalHome({
           </p>
         </div>
       )}
+
+      <NotesCard clientName={clientName} />
 
       {brief !== null && (
         <section className="cx-wrap pt-brief-card cx-reveal" aria-label="Your shoot brief">
@@ -307,6 +315,7 @@ export function PortalBusinessHome({
   next = [],
   clientName = "",
   months = [],
+  clientId = "",
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -380,15 +389,10 @@ export function PortalBusinessHome({
       </header>
 
       <NextStrip items={next} />
-      <NotesCard clientName={clientName} />
-
-      {months.length > 0 && <MonthsSection months={months} />}
+      {/* Calendar → shoot days & scripts → content first (2026-11-08). */}
+      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} />}
 
       {days.length > 0 && <DaysSection days={days} />}
-
-      {plan && <PlanSection plan={plan} />}
-
-      {todo && cards}
 
       <section id="content" className="pt-biz-content" aria-labelledby="pt-biz-content-h">
         <div className="cx-wrap pt-biz-sechead">
@@ -409,6 +413,15 @@ export function PortalBusinessHome({
           </div>
         )}
       </section>
+
+      {months.length > 0 && <MonthsSection months={months} />}
+
+      {plan && <PlanSection plan={plan} />}
+
+      <NotesCard clientName={clientName} />
+
+      {todo && cards}
+
 
       {!todo && cards}
 
@@ -493,6 +506,21 @@ function MonthsSection({ months }) {
           {m.day_id && <a className="cx-link pt-month-day" href={`/portal/days/${m.day_id}`}>The shoot day and scripts →</a>}
         </article>
       ))}
+    </section>
+  );
+}
+
+// Their calendar, near the top of the portal: their dates, shoot days (🎬 →
+// the scripts) and "Start a shoot day" on any date. Same component Brandon
+// sees on their Studio profile.
+function CalendarSection({ clientId, clientName, days }) {
+  return (
+    <section id="calendar" className="cx-wrap pt-cal" aria-labelledby="pt-cal-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-cal-h" className="cx-kick">Your calendar</h2>
+        <p className="pt-note">Tap a day to add what&apos;s happening, open a shoot day&apos;s scripts 🎬, or start a new shoot day.</p>
+      </div>
+      <ClientCalendar mode="client" clientId={clientId} clientName={clientName} days={days ?? []} />
     </section>
   );
 }
