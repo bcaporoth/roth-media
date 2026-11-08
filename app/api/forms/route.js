@@ -5,6 +5,8 @@ import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../.
 import { parseEventDates } from "../../../lib/event-dates";
 import { clip, visitorId } from "../../../lib/visitor";
 import { priceQuote } from "../../../lib/booking";
+import { findCoupon } from "../../../lib/coupons-server";
+import { dealOff, codeDeal, isFreebieCode } from "../../../lib/deals";
 import { cartUrl } from "../../../lib/cart";
 import { TYPE_LABEL } from "../../../lib/intake";
 import { CALENDLY } from "../../../lib/site";
@@ -31,7 +33,9 @@ export async function POST(request) {
     : [];
 
   // A quote's cart (package + add-ons) is saved as pay links Brandon can send.
-  const cq = body.cart && priceQuote({ category: body.cart.category, packageId: body.cart.packageId, addons: body.cart.addons, code: body.cart.code });
+  const cartCode = String(body.cart?.code || "");
+  const cartCoupon = cartCode && adminConfigured && !/^(FRIEND|THANKS)-/i.test(cartCode) && !isFreebieCode(cartCode) && !codeDeal(cartCode) ? await findCoupon(supabaseAdmin(), cartCode, { email: String(body.email || "") }) : null;
+  const cq = body.cart && priceQuote({ category: body.cart.category, packageId: body.cart.packageId, addons: body.cart.addons, code: body.cart.code, coupon: cartCoupon });
   let clientPayLink = "";
   if (cq) {
     // A friend code rides on the pay link too — /pay/cart looks it up and takes the $100 off.
@@ -40,7 +44,7 @@ export async function POST(request) {
     clientPayLink = cartUrl(base);
     fields.push([cq.mode === "retainer" ? "pay link — retainer (their exact cart)" : "pay link (their exact cart)", clientPayLink]);
     if (cq.mode === "retainer") fields.push(["pay link — balance (send 14 days before)", cartUrl({ ...base, pay: "balance", code: "" })]);
-    if (cq.deal) fields.push(["deal", `${cq.deal.label} — ${cq.deal.pct}% off, ends ${cq.deal.endsLabel}${cq.deal.auto ? "" : ` (code ${cq.deal.code})`}`]);
+    if (cq.deal) fields.push(["deal", `${cq.deal.label} — ${dealOff(cq.deal)}${cq.deal.endsLabel ? `, ends ${cq.deal.endsLabel}` : ""}${cq.deal.auto ? "" : ` (code ${cq.deal.code})`}`]);
     if (cq.free) fields.push(["included", `${cq.chosen.find((a) => a.id === cq.free.addon)?.name || "add-on"} — ${cq.free.label}${cq.free.code ? ` (code ${cq.free.code})` : ""}`]);
     if (/^(FRIEND|THANKS)-/i.test(String(body.cart.code || ""))) fields.push(["friend code", `${String(body.cart.code).toUpperCase()} — $100 off if it checks out`]);
   }

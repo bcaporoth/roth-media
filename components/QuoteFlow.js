@@ -5,7 +5,7 @@ import { submitLead } from "../lib/submit-lead";
 import BookCall from "./BookCall";
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, PACKAGES, DETAIL, TRAVEL, addonsFor, money } from "../lib/packages";
-import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie, isFreebieCode } from "../lib/deals";
+import { bestDeal, applyDeal, codeDeal, upcomingCode, dealTotal, freebie, isFreebieCode, dealOff } from "../lib/deals";
 import { REFERRAL_AMOUNT, isFriendCode, isReferralCode, referralEligible } from "../lib/referral-rules";
 
 // ── Three screens. One way in, one way out. ─────────────────────────
@@ -75,11 +75,23 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   // Cinema view only: once the quote is sent, bring the confirmation into view (the form above it is gone).
   useEffect(() => { if (cinema && status === "sent") topRef.current?.scrollIntoView({ block: "start" }); }, [cinema, status]);
 
+  // A Studio coupon (Money, Coupons) for the typed code, looked up on the server.
+  const [coupon, setCoupon] = useState(null);
+  const typedNow = code.trim().toUpperCase();
+  useEffect(() => {
+    if (!typedNow || isFriendCode(typedNow) || isFreebieCode(typedNow) || codeDeal(typedNow)) { setCoupon(null); return; }
+    const t = setTimeout(() => {
+      fetch(`/api/coupon?code=${encodeURIComponent(typedNow)}`).then((r) => r.json()).then((j) => setCoupon(j.deal || null)).catch(() => setCoupon(null));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [typedNow]);
+  const extra = coupon ? [coupon] : [];
+
   const packages = category ? PACKAGES[category] : [];
   const pkg = packages.find((p) => p.id === pkgId) || null;
   const addonList = pkg ? addonsFor(category, pkg).filter((a) => !a.hidden) : [];
   // Biggest live deal wins (lib/deals.js); checkout re-checks it on the server.
-  const deal = pkg ? bestDeal({ category, packageId: pkg.id, code }) : null;
+  const deal = pkg ? bestDeal({ category, packageId: pkg.id, code, extra }) : null;
   // An included add-on (the launch bonus, or a code like GUEST) rides along whether or not it's ticked.
   const freeCode = pkg ? freebie({ code, category, packageId: pkg.id }) : null;
   const freeAddon = freeCode ? addonList.find((a) => a.id === freeCode.addon) : null;
@@ -91,7 +103,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
   const estimate = pkg ? Math.max(0, dealTotal([pkg, ...chosen], deal, free) - friend) : 0;
   const dealBase = pkg ? [pkg, ...chosen].filter((i) => !i.noDeal && !(free && i.id === free.addon)).reduce((s, i) => s + i.price, 0) : 0;
   const typed = code.trim().toUpperCase();
-  const codeNote = !typed ? "" : isFriendCode(typed) ? (friend ? `Friend code: $${REFERRAL_AMOUNT} off — checked at checkout. Your friend gets $${REFERRAL_AMOUNT} too.` : "Friend codes work on weddings and business packages ($600 and up).") : free && free.code === typed ? `${free.label}: ${freeAddon.name} is included.` : free && isFreebieCode(typed) ? `${freeAddon.name} is already included (${free.label.toLowerCase()}) — no code needed.` : isFreebieCode(typed) ? "That code doesn't cover this package." : deal?.code === typed ? `${deal.pct}% off applied.` : upcomingCode(typed) ? `${typed} opens ${upcomingCode(typed).startsLabel} — right now you're getting ${deal ? `the ${deal.pct}% ${deal.label.toLowerCase()}` : "today's price"}.` : !codeDeal(typed) ? "That code isn't active." : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
+  const codeNote = !typed ? "" : isFriendCode(typed) ? (friend ? `Friend code: $${REFERRAL_AMOUNT} off — checked at checkout. Your friend gets $${REFERRAL_AMOUNT} too.` : "Friend codes work on weddings and business packages ($450 and up).") : free && free.code === typed ? `${free.label}: ${freeAddon.name} is included.` : free && isFreebieCode(typed) ? `${freeAddon.name} is already included (${free.label.toLowerCase()}) — no code needed.` : isFreebieCode(typed) ? "That code doesn't cover this package." : deal?.code === typed ? `${dealOff(deal)} applied.` : upcomingCode(typed) ? `${typed} opens ${upcomingCode(typed).startsLabel} — right now you're getting ${deal ? `${dealOff(deal)} (${deal.label.toLowerCase()})` : "today's price"}.` : !codeDeal(typed, Date.now(), extra) ? (coupon === null && typed.length >= 3 ? "That code isn't active." : "Checking that code…") : deal ? `The ${deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${pkg?.name || "this package"}.`;
   const monthly = chosen.filter((a) => a.monthly);
   const catTitle = CATEGORIES.find((c) => c.id === category)?.title || "";
   // Book-it-now: what they'd pay today. "from" add-ons (scoped on a call) can't be bought.
@@ -128,7 +140,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
       "what it's for": catTitle,
       package: `${pkg.name} — ${money(pkg.price)}${pkg.per || ""}`,
       "add-ons": chosen.length ? chosen.map((a) => `${a.name} (${money(a.price)})`).join("; ") : "none",
-      "starting price": money(estimate) + (pkg.per || "") + (deal ? ` (${deal.label}, ${deal.pct}% off ${money(list)})` : "") + (free ? ` (${freeAddon.name} included — ${free.label})` : ""),
+      "starting price": money(estimate) + (pkg.per || "") + (deal ? ` (${deal.label}, ${dealOff(deal)} ${money(list)})` : "") + (free ? ` (${freeAddon.name} included — ${free.label})` : ""),
       "they get": [...fullGet(category, pkg), ...chosen.map((a) => a.get)].join(" · "),
       name: `${data.firstName} ${data.lastName}`,
       email: data.email,
@@ -259,7 +271,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                         <span className="qt-radio" aria-hidden="true"><Check /></span>
                       </span>
                       <span className="qt-pkg-scope">{p.scope}</span>
-                      <span className="qt-pkg-price"><span className="cx-num"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code })} />{p.per || ""}</span> <small>starting at</small></span>
+                      <span className="qt-pkg-price"><span className="cx-num"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code, extra })} />{p.per || ""}</span> <small>starting at</small></span>
                       <span className="qt-pkg-you">You get</span>
                       <ul className="cx-list">{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
                       <span className="qt-pkg-pick">{on ? <><Check /> Selected</> : "Choose this one"}</span>
@@ -291,7 +303,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                     <p className="qt-total">
                       <span className="qt-total-label">Starting at</span>
                       <strong className="cx-num"><Price list={list} now={estimate} />{pkg.per || ""}</strong>
-                      {deal ? <small className="qt-deal">{deal.label} · {deal.pct}% off</small> : free ? <small className="qt-deal">{freeAddon.name} included</small> : null}
+                      {deal ? <small className="qt-deal">{deal.label} · {dealOff(deal)}</small> : free ? <small className="qt-deal">{freeAddon.name} included</small> : null}
                     </p>
                     <button type="button" className="cx-btn cx-btn--light cx-btn--lg qt-continue" onClick={() => { markStarted(category); jump(2); }}>Continue <Arrow /></button>
                   </>
@@ -318,7 +330,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 ) : (
                   <p className="qt-fine">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
                 )}
-                {deal && <p className="qt-fine"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
+                {deal && <p className="qt-fine"><strong>{deal.label}:</strong> {dealOff(deal)} {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
                 {free && <p className="qt-fine"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
                 {friend > 0 && <p className="qt-fine">{viaFriend && typed === initialCode.trim().toUpperCase() ? <><strong>{friendName}&apos;s {money(friend)} is off this price.</strong> {friendName} gets {money(friend)} too.</> : <><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</>}</p>}
                 {monthly.map((a) => <p key={a.id} className="qt-fine">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}
@@ -451,7 +463,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 <button type="button" key={p.id} className={`qpkg ${pkgId === p.id ? "on" : ""} ${p.popular ? "popular" : ""}`} onClick={() => pickPackage(p.id)} aria-pressed={pkgId === p.id}>
                   {p.popular && <span className="qpkg-flag">Most booked</span>}
                   <span className="qpkg-name">{p.name}</span>
-                  <span className="qpkg-price"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code })} />{p.per || ""} <small>starting at</small></span>
+                  <span className="qpkg-price"><Price list={p.price} deal={bestDeal({ category, packageId: p.id, code, extra })} />{p.per || ""} <small>starting at</small></span>
                   <span className="qpkg-scope">{p.scope}</span>
                   <span className="qpkg-you">You get</span>
                   <ul>{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
@@ -476,7 +488,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
                 <div className="qnav-row">
                   <button type="button" className="qsecondary" onClick={() => jump(0)}>Back</button>
                   <div className="qflow-go">
-                    <span className="qflow-total">Starting at <strong><Price list={list} now={estimate} />{pkg.per || ""}</strong>{deal ? <small className="qdeal-tag">{deal.label} · {deal.pct}% off</small> : free ? <small className="qdeal-tag">{freeAddon.name} included</small> : null}</span>
+                    <span className="qflow-total">Starting at <strong><Price list={list} now={estimate} />{pkg.per || ""}</strong>{deal ? <small className="qdeal-tag">{deal.label} · {dealOff(deal)}</small> : free ? <small className="qdeal-tag">{freeAddon.name} included</small> : null}</span>
                     <button type="button" className="qprimary" onClick={() => { markStarted(category); jump(2); }}>Continue</button>
                   </div>
                 </div>
@@ -507,7 +519,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
               ) : (
                 <p className="qmatch-fineprint">This is your starting point. I confirm the exact number in writing before we shoot — no surprises.</p>
               )}
-              {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {deal.pct}% off {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
+              {deal && <p className="qmatch-fineprint"><strong>{deal.label}:</strong> {dealOff(deal)} {money(dealBase)}{dealBase < list ? " (travel, websites, and ads aren't discounted)" : ""}{deal.endsLabel ? ` — ends ${deal.endsLabel}` : ""}.</p>}
               {free && <p className="qmatch-fineprint"><strong>{free.label}:</strong> {freeAddon.name} ({money(freeAddon.price)}) is included{free.code ? ` with code ${free.code}` : ""}{free.endsLabel ? ` — book by ${free.endsLabel}` : ""}.</p>}
               {friend > 0 && <p className="qmatch-fineprint">{viaFriend && typed === initialCode.trim().toUpperCase() ? <><strong>{friendName}&apos;s {money(friend)} is off this price.</strong> {friendName} gets {money(friend)} too.</> : <><strong>Friend code {typed}:</strong> {money(friend)} off, confirmed at checkout — and your friend gets {money(friend)} too.</>}</p>}
               {monthly.map((a) => <p key={a.id} className="qmatch-fineprint">{a.name}: then {money(a.monthly)}/month, starting 30 days after you pay — manage or cancel anytime at rothmediaco.com/billing.</p>)}

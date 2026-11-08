@@ -7,6 +7,8 @@ import { PACKAGES } from "../../../lib/packages";
 import { supabaseAdmin, adminConfigured } from "../../../lib/supabase-admin";
 import { resolveCode } from "../../../lib/referrals";
 import { isFriendCode } from "../../../lib/referral-rules";
+import { findCoupon } from "../../../lib/coupons-server";
+import { dealOff, codeDeal, isFreebieCode } from "../../../lib/deals";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,9 @@ export async function POST(request) {
   // Give $100, get $100: a friend code is checked here, against this email.
   const pkgHere = (PACKAGES[body.category] || []).find((p) => p.id === body.packageId) || null;
   const credit = isFriendCode(body.code) && adminConfigured ? await resolveCode(supabaseAdmin(), body.code, { email, pkg: pkgHere }) : null;
-  const q = priceQuote({ category: body.category, packageId: body.packageId, addons: body.addons, code: body.code, payFull, credit });
+  // A Studio coupon (Money, Coupons): checked again here, against this email.
+  const coupon = body.code && !credit && adminConfigured && !isFreebieCode(body.code) && !codeDeal(body.code) ? await findCoupon(supabaseAdmin(), body.code, { email }) : null;
+  const q = priceQuote({ category: body.category, packageId: body.packageId, addons: body.addons, code: body.code, payFull, credit, coupon });
   if (!q) return bad("Pick a package first");
   const name = clip(body.name, 120);
   if (!EMAIL_RE.test(email)) return bad("That email doesn't look right");
@@ -41,7 +45,7 @@ export async function POST(request) {
   const owed = balance ? await openRetainer(email) : null;
   const balanceCents = owed ? owed.total_cents - owed.paid_cents : cents(q.total - q.dueToday);
   const freeAddon = q.free ? q.chosen.find((a) => a.id === q.free.addon) : null;
-  const dealNote = (q.deal ? ` ${q.deal.label}: ${q.deal.pct}% off ${money(q.dealBase)}.` : "") + (q.free && freeAddon ? ` ${q.free.label}: ${freeAddon.name} included.` : "") + (q.credit ? ` ${q.credit.label}: ${money(q.credit.amount)} off.` : "");
+  const dealNote = (q.deal ? ` ${q.deal.label}: ${dealOff(q.deal)} ${money(q.dealBase)}.` : "") + (q.free && freeAddon ? ` ${q.free.label}: ${freeAddon.name} included.` : "") + (q.credit ? ` ${q.credit.label}: ${money(q.credit.amount)} off.` : "");
   const line_items = balance
     ? [{
         quantity: 1,
@@ -81,7 +85,7 @@ export async function POST(request) {
     mode: balance ? "balance" : q.mode,
     total: String(q.total),
     discount: String(q.discount),
-    deal: [q.deal ? `${q.deal.label} (${q.deal.pct}% off)` : "", q.free ? `${q.free.label}${q.free.code ? ` (${q.free.code})` : ""}` : ""].filter(Boolean).join(" + "),
+    deal: [q.deal ? `${q.deal.label}${q.deal.coupon ? ` · ${q.deal.code}` : ""} (${dealOff(q.deal)})` : "", q.free ? `${q.free.label}${q.free.code ? ` (${q.free.code})` : ""}` : ""].filter(Boolean).join(" + "),
     pay_full: q.payFull ? "1" : "",
     ref_code: q.credit ? q.credit.code : "",
     code: clip(body.code, 30).toUpperCase(),

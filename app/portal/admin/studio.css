@@ -556,3 +556,32 @@ body:has(.admin-shell.is-dark) { background: #0f0f10; }
 
 /* Dark Studio's footer: neutral like the rest (was warm brown #221f1a) */
 body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+
+/* ── Coupons (components/CouponsBoard.js) ── */
+.cpn { display: grid; gap: 1rem; max-width: 900px; }
+.cpn-form { display: grid; gap: 1rem; }
+.cpn-row { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.cpn-f { display: grid; gap: 0.35rem; }
+.cpn-f > span:first-child { font-size: 0.85rem; font-weight: 600; }
+.cpn-f small { font-weight: 400; opacity: 0.65; }
+.cpn-f input:not([type="checkbox"]) { width: 100%; }
+.cpn-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cpn-inline input { flex: 1 1 140px; width: auto; }
+.cpn-inline .cpn-num { flex: 0 0 110px; }
+.cpn-inline em { font-style: normal; opacity: 0.7; }
+.cpn-check { display: flex; align-items: center; gap: 0.45rem; font-size: 0.95rem; }
+.cpn-check small { opacity: 0.6; }
+.cpn-cats { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 0.3rem; }
+.cpn-cat { display: grid; gap: 0.35rem; align-content: start; }
+.cpn-h { margin: 0.6rem 0 0; font-size: 1.1rem; }
+.cpn-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+.cpn-card { display: grid; gap: 0.35rem; }
+.cpn-card.is-paused, .cpn-card.is-ended { opacity: 0.65; }
+.cpn-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.cpn-code { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.06em; }
+.cpn-status { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid currentColor; opacity: 0.85; }
+.cpn-status.is-live { color: #7fc29b; }
+.cpn-what { margin: 0; }
+.cpn input:not([type="checkbox"]) { font: inherit; font-size: 0.95rem; padding: 0.6rem 0.75rem; min-height: 44px; border: 1px solid var(--field-line, var(--line)); border-radius: 10px; background: transparent; color: inherit; }
+.cpn input:disabled { opacity: 0.6; }
+.cpn input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f4f4f2; }

@@ -5,7 +5,8 @@ import CartPay from "../../../components/CartPay";
 import { priceQuote, bookingLabel, openRetainer } from "../../../lib/booking";
 import { money } from "../../../lib/packages";
 import { stripeConfigured } from "../../../lib/stripe";
-import { codeDeal, upcomingCode, isFreebieCode } from "../../../lib/deals";
+import { codeDeal, upcomingCode, isFreebieCode, dealOff } from "../../../lib/deals";
+import { findCoupon } from "../../../lib/coupons-server";
 import { PACKAGES } from "../../../lib/packages";
 import { supabaseAdmin, adminConfigured } from "../../../lib/supabase-admin";
 import { resolveCode } from "../../../lib/referrals";
@@ -40,7 +41,9 @@ export default async function CartPage({ searchParams }) {
   // A friend code (give $100, get $100) is looked up here, with the email on the link.
   const pkgHere = (PACKAGES[sp?.c] || []).find((p) => p.id === sp?.p) || null;
   const credit = isFriendCode(code) && adminConfigured ? await resolveCode(supabaseAdmin(), code, { email: String(sp?.e || ""), pkg: pkgHere }) : null;
-  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull, credit });
+  // A Studio coupon (Money, Coupons) with this code, for this email.
+  const coupon = code && !credit && adminConfigured && !isFreebieCode(code) && !codeDeal(code) ? await findCoupon(supabaseAdmin(), code, { email: String(sp?.e || "") }) : null;
+  const q = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull, credit, coupon });
   if (!q) {
     return (
       <>
@@ -72,8 +75,8 @@ export default async function CartPage({ searchParams }) {
   const freeAddon = q.free ? q.chosen.find((a) => a.id === q.free.addon) : null;
   // Both ways to pay a wedding, so the choice is one tap.
   const keepQ = Object.entries({ c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t, code: sp?.code }).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
-  const holdQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: false, credit });
-  const fullQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: true, credit });
+  const holdQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: false, credit, coupon });
+  const fullQ = priceQuote({ category: sp?.c, packageId: sp?.p, addons, code, payFull: true, credit, coupon });
   const monthly = q.chosen.filter((a) => a.monthly);
   const keep = { c: sp?.c, p: sp?.p, a: sp?.a, n: sp?.n, e: sp?.e, t: sp?.t };
 
@@ -96,7 +99,7 @@ export default async function CartPage({ searchParams }) {
                     <tr className="qt-cart-deal"><th scope="row">{q.free.label}<small>{q.free.code ? `Code ${q.free.code}` : `${freeAddon?.name || "Add-on"} included`}</small></th><td>− {money(q.freeValue)}</td></tr>
                   )}
                   {!owed && q.deal && (
-                    <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {q.deal.pct}% off{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.dealDiscount)}</td></tr>
+                    <tr className="qt-cart-deal"><th scope="row">{q.deal.label} — {dealOff(q.deal)}{q.deal.endsLabel ? <small>Ends {q.deal.endsLabel}</small> : null}</th><td>− {money(q.dealDiscount)}</td></tr>
                   )}
                   {!owed && q.credit && (
                     <tr className="qt-cart-deal"><th scope="row">{q.credit.label}<small>Code {q.credit.code} · give $100, get $100</small></th><td>− {money(q.credit.amount)}</td></tr>
@@ -116,7 +119,7 @@ export default async function CartPage({ searchParams }) {
                   {Object.entries(keep).filter(([, v]) => v).map(([k, v]) => <input key={k} type="hidden" name={k} value={String(v)} />)}
                   <label className="cx-field"><span className="cx-label">Promo code</span><input className="cx-input" name="code" defaultValue={code} autoCapitalize="characters" /></label>
                   <button type="submit" className="cx-btn cx-btn--ghost">Apply</button>
-                  {codeTried && <small className="cx-help">{isFriendCode(code) ? (referralEligible(q.pkg) ? "That friend code isn't active — or it's your own, and those don't work on your own booking." : "Friend codes work on weddings and business packages ($600 and up).") : isFreebieCode(code) && q.free ? `${freeAddon?.name || "That add-on"} is already included (${q.free.label.toLowerCase()}) — no code needed.` : isFreebieCode(code) ? `${code} doesn't cover ${q.pkg.name}.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
+                  {codeTried && <small className="cx-help">{isFriendCode(code) ? (referralEligible(q.pkg) ? "That friend code isn't active — or it's your own, and those don't work on your own booking." : "Friend codes work on weddings and business packages ($450 and up).") : isFreebieCode(code) && q.free ? `${freeAddon?.name || "That add-on"} is already included (${q.free.label.toLowerCase()}) — no code needed.` : isFreebieCode(code) ? `${code} doesn't cover ${q.pkg.name}.` : upcomingCode(code) ? `${code} opens ${upcomingCode(code).startsLabel}.` : !codeDeal(code, Date.now(), coupon ? [coupon] : []) ? "That code isn't active." : q.deal ? `The ${q.deal.label.toLowerCase()} is the bigger discount — that's the one you get.` : `That code doesn't cover ${q.pkg.name}.`}</small>}
                 </form>
               )}
             </div>
