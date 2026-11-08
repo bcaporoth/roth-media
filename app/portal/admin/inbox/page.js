@@ -26,7 +26,7 @@ export default async function InboxPage() {
     db
       .from("submissions")
       .select(cols)
-      .not("kind", "in", "(partner_lead,partner_month,call,intake_sent,cart,coupon)") // partner leads live in Studio → Partners
+      .not("kind", "in", "(partner_lead,partner_month,call,intake_sent,cart,coupon,addresses)") // partner leads live in Studio → Partners
       .order("created_at", { ascending: false })
       .limit(500);
   let migrated = true;

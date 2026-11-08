@@ -245,7 +245,7 @@ export default async function PortalPage({ searchParams }) {
   let place = ""; // their newest address (brief answers) → new shoot days start there
   if (adminConfigured && !isAdmin) {
     try {
-      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
+      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome", "addresses"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
       const b = latestBrief(data || []);
       brief = b ? { id: b.id, when: new Date(b.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) } : false;
       welcome = welcomeOf(data || []);

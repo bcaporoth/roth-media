@@ -76,6 +76,7 @@ export default async function ClientPage({ params }) {
   const all = subs || [];
   // Their address book: brief answers + shoot days + Shoots calendar.
   const { data: dayPlaces } = await db.from("shoot_days").select("title, date, location, updated_at").eq("client_id", client.id).then((r) => r, () => ({ data: [] }));
+  // all already holds their "addresses" row (their own list from Settings).
   const addresses = clientAddresses({ subs: all, days: dayPlaces || [], shoots: shoots || [] });
   const data = {
     addresses,
@@ -83,7 +84,7 @@ export default async function ClientPage({ params }) {
     intakes: all.filter((s) => s.kind === "intake"),
     intakeSent: all.find((s) => s.kind === "intake_sent") || null,
     calls: all.filter((s) => s.kind === "call"),
-    messages: all.filter((s) => !["intake", "intake_sent", "call", "cart"].includes(s.kind)),
+    messages: all.filter((s) => !["intake", "intake_sent", "call", "cart", "addresses"].includes(s.kind)),
     cart: all.find((s) => s.kind === "cart") || null, // their Shop cart (lib/shop.js)
     shoots: shoots || [],
     galleries,

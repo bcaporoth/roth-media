@@ -554,7 +554,7 @@ function AddressBook({ list, copy }) {
       <ul className="cprof-addr-list">
         {shown.map((a) => (
           <li key={a.address}>
-            <span className="cprof-addr-main"><strong>{a.address}</strong><em>{a.from.join(" · ")}</em></span>
+            <span className="cprof-addr-main"><strong>{a.label ? `${a.label} · ` : ""}{a.address}</strong><em>{a.from.join(" · ")}</em></span>
             <span className="gcard-actions">
               <a className="abtn" href={directionsUrl(a.address)} target="_blank" rel="noopener noreferrer">Directions →</a>
               <button type="button" className="achip" onClick={() => copy(a.address, "Address")}>Copy</button>

@@ -360,3 +360,8 @@
 .pt-settings .st-switch.is-on .st-knob { transform: translateX(22px); }
 .pt-settings .st-switch-label { margin: 0.2rem 0 0.2rem; color: var(--fg); }
 .pt-settings .st-out { background: none; border: 0; padding: 0.4rem 0 0; }
+/* Settings → Your addresses (components/AddressBookEditor.js) */
+.pt-settings .ab { display: grid; gap: 0.7rem; }
+.pt-settings .ab-acts { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.pt-settings .ab-form { display: grid; gap: 0.6rem; width: 100%; padding: 0.4rem 0 0.2rem; }
+.pt-settings .ab-form .cx-field { display: grid; gap: 0.3rem; }

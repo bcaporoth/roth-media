@@ -9,7 +9,8 @@ import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { ADMIN_EMAIL, adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { emailHasBrand } from "../../../lib/brand-server";
 import { portalWho } from "../../../lib/portal-who";
-import { clientAddresses, directionsUrl } from "../../../lib/client-addresses";
+import { clientAddresses, bookFrom } from "../../../lib/client-addresses";
+import AddressBookEditor from "../../../components/AddressBookEditor";
 import { AGREEMENT_KINDS } from "../../../lib/agreements";
 import { money } from "../../../lib/packages";
 
@@ -53,6 +54,7 @@ export default async function AccountPage({ searchParams }) {
 
   let client = null;
   let addresses = [];
+  let book = { book: [], hidden: [] };
   let agreements = [];
   let who = { kick: "Client portal", title: "Hi, there." };
   if (adminConfigured) {
@@ -61,12 +63,13 @@ export default async function AccountPage({ searchParams }) {
     const first = await db.from("clients").select("id, name, phone, email_opt_out").eq("email", email).maybeSingle();
     client = first.error ? (await db.from("clients").select("id, name, phone").eq("email", email).maybeSingle()).data : first.data;
     const [{ data: subs }, { data: days }, { data: shoots }, { data: ag }] = await Promise.all([
-      db.from("submissions").select("kind, fields, created_at, updated_at").eq("kind", "intake").eq("email", email),
+      db.from("submissions").select("kind, fields, utm, created_at, updated_at").in("kind", ["intake", "addresses"]).eq("email", email),
       client ? db.from("shoot_days").select("title, date, location, updated_at").eq("client_id", client.id).then((r) => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
       db.from("shoots").select("title, date, address").eq("client_email", email).then((r) => r, () => ({ data: [] })),
       db.from("agreements").select("token, kind, business, period, amount_cents, status, created_at, signed_at, paid_at").eq("client_email", email).neq("status", "void").order("created_at", { ascending: false }).then((r) => r, () => ({ data: [] })),
     ]);
-    addresses = clientAddresses({ subs: subs || [], days: days || [], shoots: shoots || [] });
+    book = bookFrom(subs || []);
+    addresses = clientAddresses({ subs: subs || [], days: days || [], shoots: shoots || [], book });
     agreements = (ag || []).filter((a) => a.kind !== "invoice" || a.status !== "sent");
   }
 
@@ -96,21 +99,7 @@ export default async function AccountPage({ searchParams }) {
 
           <section className="st-card" aria-labelledby="st-addr">
             <h2 id="st-addr" className="st-h">Your addresses</h2>
-            {addresses.length === 0 ? (
-              <p className="cx-help">None yet. Places you add in <a href="/portal/brief">your brief</a> show up here.</p>
-            ) : (
-              <>
-                <ul className="st-list">
-                  {addresses.map((a) => (
-                    <li key={a.address}>
-                      <span><strong>{a.address}</strong><em>{a.from.join(" · ")}</em></span>
-                      <a className="cx-link" href={directionsUrl(a.address)} target="_blank" rel="noopener noreferrer">Map →</a>
-                    </li>
-                  ))}
-                </ul>
-                <p className="cx-help">To change one, update it in <a href="/portal/brief">your brief</a>.</p>
-              </>
-            )}
+            <AddressBookEditor initial={addresses} book={book.book} hidden={book.hidden} />
           </section>
 
           <section className="st-card" aria-labelledby="st-email">
