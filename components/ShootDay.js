@@ -14,7 +14,7 @@
 //   + Add        — a kind picker; Brandon can ask Claude to draft it
 
 import { useEffect, useRef, useState } from "react";
-import { KINDS, KIND_LABEL, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
+import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
 import AddressInput from "./AddressInput";
@@ -29,7 +29,6 @@ const when = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { month: "sho
 const dateLong = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "");
 const lines = (arr) => (arr || []).join("\n");
 // The add picker leads with these; the rest sit behind "More kinds…".
-const MAIN_KINDS = ["tchart", "questions", "reel"];
 
 // Under each row: the other person's latest note (unanswered) or the note
 // count, and who last changed it — so neither side has to open a script to
@@ -235,7 +234,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                 <span className="sday-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span>
                 <span className="sday-main">
                   <strong>{s.title || <em>Untitled {KIND_LABEL[s.kind]}</em>}</strong>
-                  <em>{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)} to film{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
+                  <em>{KIND_LABEL[s.kind]}{s.body?.style ? ` · ${STYLE_LABEL[s.body.style]}` : ""} · {fmtMins(s.minutes || 0)} to film{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
                   <SyncLine s={s} me={me} who={who} last={lastNote(s)} notes={threadOf(s).length} />
                 </span>
                 <span className={`itag sday-status is-${s.status}`}>{STATUS_LABEL[s.status]}</span>
@@ -252,22 +251,10 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           ))}
         </ol>
 
+        {/* Only T-charts from here on (2026-11-08); the style is picked inside it. */}
         <div className="sday-add">
-          {adding ? (
-            <div className="sday-kinds">
-              <span className="kick-sm">What kind?</span>
-              {KINDS.filter((k) => allKinds || MAIN_KINDS.includes(k.id)).map((k) => (
-                <button key={k.id} type="button" className="sday-kind" onClick={() => addScript(k.id)}>
-                  <strong>{k.label}</strong>{k.hint && <em>{k.hint}</em>}
-                </button>
-              ))}
-              {!allKinds && <button type="button" className="achip" onClick={() => setAllKinds(true)}>More kinds…</button>}
-              <button type="button" className="achip" onClick={() => { setAdding(false); setAddError(""); setAllKinds(false); }}>Cancel</button>
-              {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
-            </div>
-          ) : (
-            <button type="button" className="abtn" onClick={() => setAdding(true)}>+ Add a script or card</button>
-          )}
+          <button type="button" className="abtn" onClick={() => addScript("tchart")}>+ Add a T-chart</button>
+          {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
         </div>
       </section>
     </div>
@@ -444,7 +431,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
     try { const r = await api({ action: "script-note", dayId: day.id, scriptId: script.id, text: note }); onChange({ ...script, thread: r.thread }); setNote(""); } catch (err) { onError(err); } finally { setBusy(false); }
   }
   async function askClaude() {
-    if (body.steps.length && !window.confirm("Rewrite this script with Claude? It keeps what's good and fills in what's thin. The notes thread is read too.")) return;
+    if ((body.steps.length || body.scenes.some((sc) => sc.lines.some((l) => l.say || l.see))) && !window.confirm("Rewrite this script with Claude? It keeps what's good and fills in what's thin. The notes thread is read too.")) return;
     setBusy(true);
     try {
       const r = await api({ action: "script-draft", dayId: day.id, scriptId: script.id, title, idea });
@@ -470,14 +457,16 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
       <div className="scr-top">
         <input className="scr-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Name this ${KIND_LABEL[kind].toLowerCase()}`} maxLength={140} />
         <div className="scr-meta">
-          <label>Kind<select value={kind} onChange={(e) => setKind(e.target.value)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</select></label>
+          {kind === "tchart"
+            ? <span className="scr-kindtag">T-chart{body.style ? ` · ${STYLE_LABEL[body.style]}` : ""}</span>
+            : <button type="button" className="achip scr-convert" onClick={() => { setBody((b) => toTchart(kind, b)); setKind("tchart"); }}>Turn this {KIND_LABEL[kind].toLowerCase()} into a T-chart</button>}
           <label>Status<select value={status} onChange={(e) => setStatus(e.target.value)}>{STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
           <label>Minutes to film<input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>
           <span className={`scr-state is-${state}`}>{state === "saved" ? `Saved ✓ · last by ${who(script.updated_by)} ${when(script.updated_at)}` : state === "saving" ? "Saving…" : state === "stale" ? "Not saved" : "Unsaved…"}</span>
         </div>
       </div>
 
-      {role === "brandon" && !isCard(kind) && (
+      {role === "brandon" && (kind === "tchart" || !isCard(kind)) && (
         <div className="scr-ai">
           {asking ? (
             <div className="scr-ai-box">
@@ -491,7 +480,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
               </div>
             </div>
           ) : (
-            <button type="button" className="achip" onClick={() => setAsking(true)}>✦ {body.steps.length ? "Rewrite with Claude" : "Ask Claude to draft this"}</button>
+            <button type="button" className="achip" onClick={() => setAsking(true)}>✦ {body.steps.length || body.scenes.length ? "Rewrite with Claude" : "Ask Claude to draft this"}</button>
           )}
         </div>
       )}
@@ -688,14 +677,14 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
       </div>
       {prompting && <Teleprompter title={s.title || KIND_LABEL[s.kind]} items={items} onClose={() => setPrompting(false)} />}
       <div className="film-body">
-        <p className="film-kick">{KIND_LABEL[s.kind]} · {fmtMins(s.minutes || 0)}{b.length ? ` · ${b.length} finished` : ""} · <span className={`itag is-${s.status}`}>{STATUS_LABEL[s.status]}</span></p>
+        <p className="film-kick">{KIND_LABEL[s.kind]}{b.style ? ` · ${STYLE_LABEL[b.style]}` : ""} · {fmtMins(s.minutes || 0)}{b.length ? ` · ${b.length} finished` : ""} · <span className={`itag is-${s.status}`}>{STATUS_LABEL[s.status]}</span></p>
         <h2 className="film-title">{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</h2>
         {items.length > 0 && <button type="button" className="abtn film-prompt" onClick={() => setPrompting(true)}>▶ Teleprompter</button>}
         {(b.on_camera || b.where) && <p className="film-meta">{[b.on_camera, b.where].filter(Boolean).join(" · ")}</p>}
         {b.hook && <div className="film-hook"><span>Hook</span><p>{b.hook}</p></div>}
         {tips && <details className="film-needs film-remind"><summary>🎯 Quick tips · talent: {talentOf(tips.scripts, tips.client)}</summary><ul>{TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}</ul></details>}
         {reminders.length > 0 && <details className="film-needs film-remind"><summary>📷 Camera reminders ({reminders.length})</summary><ul>{reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
-        {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
+        {b.needs.length > 0 && <details className="film-needs"><summary>{NEEDS_LABEL[b.style] || NEEDS_LABEL[s.kind] || "Have ready"} ({b.needs.length})</summary><ul>{b.needs.map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
         <div className="film-progress"><span style={{ width: `${prog.total ? Math.round((done / prog.total) * 100) : 0}%` }} /></div>
         {s.kind === "tchart" && b.scenes.map((sc, si) => (
           <div key={si} className="film-scene">
@@ -706,7 +695,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
                   <button type="button" className="film-tick" aria-pressed={Boolean(l.done)} onClick={() => onTick(s, { scene: si, line: li }, !l.done)}>{l.done ? "✓" : li + 1}</button>
                   <div className="film-stepbody">
                     {l.say && <p className="film-say">{l.say}</p>}
-                    {l.see && <p className="film-shot"><span>{SEE_LABEL[l.tag] || "Seen"}</span>{l.see}</p>}
+                    {l.see && <p className="film-shot"><span>{SEE_LABEL[l.tag] || "Seen"}</span>{l.see}{l.secs ? ` · ${l.secs}s` : ""}</p>}
                   </div>
                 </li>
               ))}
@@ -714,7 +703,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
           </div>
         ))}
         {s.kind === "tchart" && b.scenes.length === 0 && <p className="gcard-meta">No scenes written yet.</p>}
-        {s.kind === "questions" && (
+        {(s.kind === "questions" || (s.kind === "tchart" && b.questions.length > 0)) && (
           <ol className="film-steps">
             {b.questions.map((q, qi) => (
               <li key={qi} className={"film-step" + (q.done ? " is-done" : "")}>

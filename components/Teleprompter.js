@@ -29,11 +29,17 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 export function promptItems(kind, b) {
   if (kind === "tchart") {
     const many = b.scenes.length > 1;
-    return b.scenes.flatMap((sc, si) => {
+    const body = b.scenes.flatMap((sc, si) => {
       const lines = sc.lines.filter((l) => l.say.trim()).map((l) => ({ say: l.say, cue: l.see ? `${SEE_LABEL[l.tag] || "Seen"}: ${l.see}` : "" }));
       if (!lines.length) return [];
       return [...(many || sc.label ? [{ scene: sc.label || `Scene ${si + 1}` }] : []), ...lines];
     });
+    // The hook and the close, unless the lines already say them word for word.
+    const said = new Set(body.map((x) => (x.say || "").trim().toLowerCase()));
+    const hook = b.hook && !said.has(b.hook.trim().toLowerCase()) && !/^\[/.test(b.hook.trim()) ? [{ say: b.hook, cue: "Hook" }] : [];
+    const cta = b.cta && !said.has(b.cta.trim().toLowerCase()) ? [{ say: b.cta, cue: "Close" }] : [];
+    const qs = b.questions.filter((q) => q.q.trim());
+    return [...hook, ...body, ...(qs.length ? [{ scene: "Questions" }, ...qs.map((q) => ({ say: q.q, cue: q.a }))] : []), ...cta];
   }
   if (kind === "questions") return b.questions.filter((q) => q.q.trim()).map((q) => ({ say: q.q, cue: q.a }));
   return [

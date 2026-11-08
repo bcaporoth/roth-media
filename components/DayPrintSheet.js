@@ -4,7 +4,7 @@
 // Pure markup; the print routes load the day and hand it over.
 
 import { TALENT_TIPS } from "./ShootDay";
-import { KIND_LABEL, STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, cleanBody, runningOrder, totalMinutes, fmt12, fmtMins } from "../lib/scripts";
+import { KIND_LABEL, STYLE_LABEL, STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, cleanBody, runningOrder, totalMinutes, fmt12, fmtMins } from "../lib/scripts";
 
 const dateLong = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : "Date to be set");
 
@@ -41,14 +41,14 @@ export default function DayPrintSheet({ day, tips = false }) {
         const b = cleanBody(s.body);
         return (
           <section key={s.id} className="dprint-script">
-            <h2 className="dprint-title"><span className="dprint-num">{i + 1}</span>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}<em>{s.at ? fmt12(s.at) : ""} · {KIND_LABEL[s.kind]}{b.length ? ` · ${b.length} finished` : ""}</em></h2>
+            <h2 className="dprint-title"><span className="dprint-num">{i + 1}</span>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}<em>{s.at ? fmt12(s.at) : ""} · {KIND_LABEL[s.kind]}{b.style ? ` · ${STYLE_LABEL[b.style]}` : ""}{b.length ? ` · ${b.length} finished` : ""}</em></h2>
             <div className="dprint-facts">
               {b.goal && <p><span>For</span>{b.goal}</p>}
               {b.hook && <p className="dprint-hook"><span>Hook</span>{b.hook}</p>}
               {b.on_camera && <p><span>On camera</span>{b.on_camera}</p>}
               {b.where && <p><span>Where</span>{b.where}</p>}
             </div>
-            {b.needs.length > 0 && <div className="dprint-needs"><span className="sprint-label">{NEEDS_LABEL[s.kind] || "Have ready"}</span><ul>{b.needs.map((n, j) => <li key={j}><span className="sprint-box" />{n}</li>)}</ul></div>}
+            {b.needs.length > 0 && <div className="dprint-needs"><span className="sprint-label">{NEEDS_LABEL[b.style] || NEEDS_LABEL[s.kind] || "Have ready"}</span><ul>{b.needs.map((n, j) => <li key={j}><span className="sprint-box" />{n}</li>)}</ul></div>}
             {b.steps.length > 0 && (
               <table className="dprint-steps">
                 <thead><tr><th>Got</th><th>#</th><th>Say</th><th>Do</th><th>Camera shows</th><th>s</th></tr></thead>
@@ -57,8 +57,8 @@ export default function DayPrintSheet({ day, tips = false }) {
             )}
             {b.scenes.map((sc, j) => (
               <table key={j} className="dprint-steps dprint-tchart">
-                <thead><tr><th colSpan={5} className="dprint-scene">{sc.label || `Scene ${j + 1}`}</th></tr><tr><th>Got</th><th>#</th><th>What&apos;s said</th><th>On camera</th><th>What&apos;s seen</th></tr></thead>
-                <tbody>{sc.lines.map((l, k) => <tr key={k} className={l.done ? "is-done" : ""}><td><span className="sprint-box" /></td><td>{k + 1}</td><td>{l.say}</td><td>{SEE_LABEL[l.tag]}</td><td>{l.see}</td></tr>)}</tbody>
+                <thead><tr><th colSpan={6} className="dprint-scene">{sc.label || `Scene ${j + 1}`}</th></tr><tr><th>Got</th><th>#</th><th>What&apos;s said</th><th>On camera</th><th>What&apos;s seen</th><th>s</th></tr></thead>
+                <tbody>{sc.lines.map((l, k) => <tr key={k} className={l.done ? "is-done" : ""}><td><span className="sprint-box" /></td><td>{k + 1}</td><td>{l.say}</td><td>{SEE_LABEL[l.tag]}</td><td>{l.see}</td><td>{l.secs || ""}</td></tr>)}</tbody>
               </table>
             ))}
             {b.questions.length > 0 && (

@@ -2,9 +2,13 @@
 
 // The two "card" kinds that live on a shoot day next to full scripts:
 //
-//   T-chart   — scenes, each a table of lines: what's SAID on the left, what's
-//               SEEN on the right, every line tagged talent / place / thing so
-//               a day can be filtered by what has to be in front of the lens.
+//   T-chart   — the one script format (2026-11-08). On top, the plan: what
+//               kind of piece (its style), what it's for, the hook, who's on
+//               camera, where, how long, what to have ready. Then scenes, each a
+//               table of lines: what's SAID on the left, what's SEEN on the
+//               right (tagged talent / place / thing / text on screen) and how
+//               many seconds it gets. Optional interview questions. Then the
+//               close: call to action, B-roll, caption, notes.
 //   Questions — Brandon's own prompts for whoever is on camera, with room for
 //               the answer or notes under each one.
 //
@@ -12,7 +16,7 @@
 // the same autosave as the rest of the script — ShootDay owns the body.
 
 import { useEffect, useRef, useState } from "react";
-import { SEE_TAGS, SEE_LABEL, blankLine, blankScene, blankQuestion, sceneLines } from "../lib/scripts";
+import { SEE_TAGS, SEE_LABEL, STYLES, NEEDS_LABEL, blankLine, blankScene, blankQuestion, sceneLines, tchartSecs } from "../lib/scripts";
 
 function Grow({ value, onChange, rows = 2, placeholder = "", className = "", ariaLabel = "" }) {
   const ref = useRef(null);
@@ -21,7 +25,24 @@ function Grow({ value, onChange, rows = 2, placeholder = "", className = "", ari
 }
 
 // ---------- T-chart ----------
+// Placeholders that fit the piece.
+const HOOK_PH = { recipe: "First thing on screen: the finished dish, or the one line that makes them stay", photos: "The hero shot — the one picture this set is built around", questions: "The opening question, or the line you start the interview with" };
+const NEEDS_PH = { recipe: "One per line, with amounts:\n2 cups gluten-free flour blend\n1 tsp xanthan gum\nOven at 375°F", photos: "One per line: props, products, people, outfits", questions: "One per line: a quiet room, a lav mic, water, the notes they want in front of them" };
+function PlanField({ label, value, onChange, rows = 1, placeholder = "", wide = false }) {
+  return (
+    <label className={"scr-field" + (wide ? " wide" : "")}>
+      <span>{label}</span>
+      <Grow value={value} onChange={onChange} rows={rows} placeholder={placeholder} ariaLabel={label} />
+    </label>
+  );
+}
+
 export function TChartEditor({ body, setBody, onPrompt }) {
+  const set = (k, v) => setBody((b) => ({ ...b, [k]: v }));
+  const style = body.style || "";
+  const secsTotal = tchartSecs(body);
+  const [moreOpen] = useState(() => Boolean(body.broll?.length || body.caption || body.notes));
+  const [askOpen, setAskOpen] = useState(() => (body.questions || []).length > 0 || style === "questions");
   const [filter, setFilter] = useState(""); // "" | talent | place | thing
   const scenes = body.scenes || [];
   const all = sceneLines(body);
@@ -39,8 +60,26 @@ export function TChartEditor({ body, setBody, onPrompt }) {
 
   return (
     <div className="tc">
+      <div className="tc-plan">
+        <div className="tc-style" role="group" aria-label="What kind of piece">
+          <span className="kick-sm">What kind of piece?</span>
+          {STYLES.map((t) => (
+            <button key={t.id} type="button" className={"achip" + (style === t.id ? " is-on" : "")} aria-pressed={style === t.id} onClick={() => set("style", style === t.id ? "" : t.id)}>{t.label}</button>
+          ))}
+        </div>
+        <div className="scr-grid">
+          <PlanField label="What it's for" value={body.goal} onChange={(v) => set("goal", v)} rows={2} placeholder="One sentence: trust, proof, craving, teaching, or selling one thing." />
+          <PlanField label="The hook — first words or first thing on screen" value={body.hook} onChange={(v) => set("hook", v)} rows={2} placeholder={HOOK_PH[style] || "The exact words. For a reel it lands in under 2 seconds."} />
+          <PlanField label="Who's on camera" value={body.on_camera} onChange={(v) => set("on_camera", v)} placeholder="Who's in it, who's filming" />
+          <PlanField label="Where" value={body.where} onChange={(v) => set("where", v)} placeholder="The spot, the light, time of day" />
+          <PlanField label="Finished length" value={body.length} onChange={(v) => set("length", v)} placeholder={style === "photos" ? "How many photos" : "30–45s · 3 min"} />
+          <PlanField label={NEEDS_LABEL[style] || "What to have ready"} value={(body.needs || []).join("\n")} onChange={(v) => set("needs", v.split("\n"))} rows={3} placeholder={NEEDS_PH[style] || "One per line: props, products, people, outfits"} wide />
+        </div>
+      </div>
+
       <div className="sday-sechead">
         <h3>Scenes — said | seen</h3>
+        {secsTotal > 0 && <span className="gcard-meta">{secsTotal}s on screen</span>}
         {onPrompt && all.some((l) => l.say.trim()) && <button type="button" className="achip" onClick={onPrompt}>▶ Teleprompter</button>}
         <span className="tc-filters" role="group" aria-label="Show lines where the viewer sees">
           <button type="button" className={"achip" + (filter === "" ? " is-on" : "")} onClick={() => setFilter("")}>All · {all.length}</button>
@@ -73,10 +112,13 @@ export function TChartEditor({ body, setBody, onPrompt }) {
                   <label className="tc-done" title="Filmed"><input type="checkbox" checked={Boolean(l.done)} onChange={(e) => setLine(i, k, { done: e.target.checked })} /><span>{k + 1}</span></label>
                   <Grow className="tc-say" value={l.say} onChange={(v) => setLine(i, k, { say: v })} rows={2} placeholder="The exact words — or (no talking)" ariaLabel={`Line ${k + 1}: what's said`} />
                   <div className="tc-see">
-                    <select value={l.tag} onChange={(e) => setLine(i, k, { tag: e.target.value })} aria-label={`Line ${k + 1}: what's on camera`}>
-                      {SEE_TAGS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                    </select>
-                    <Grow value={l.see} onChange={(v) => setLine(i, k, { see: v })} rows={2} placeholder={l.tag === "talent" ? "Who, doing what, framed how" : l.tag === "place" ? "The spot, the angle, the light" : "The product / prop, how close"} ariaLabel={`Line ${k + 1}: what's seen`} />
+                    <span className="tc-seehead">
+                      <select value={l.tag} onChange={(e) => setLine(i, k, { tag: e.target.value })} aria-label={`Line ${k + 1}: what's on camera`}>
+                        {SEE_TAGS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                      </select>
+                      <label className="tc-secs">secs<input type="number" min={0} max={3600} value={l.secs || ""} onChange={(e) => setLine(i, k, { secs: Number(e.target.value) })} aria-label={`Line ${k + 1}: seconds`} /></label>
+                    </span>
+                    <Grow value={l.see} onChange={(v) => setLine(i, k, { see: v })} rows={2} placeholder={l.tag === "talent" ? "Who, doing what, framed how (wide / medium / close)" : l.tag === "place" ? "The spot, the angle, the light" : l.tag === "text" ? "The words on screen" : "The product / prop, how close — amounts for a recipe"} ariaLabel={`Line ${k + 1}: what's seen`} />
                   </div>
                   <span className="tc-rowactions">
                     <button type="button" className="achip" onClick={() => moveLine(i, k, -1)} disabled={k === 0} aria-label="Move line up">↑</button>
@@ -93,6 +135,24 @@ export function TChartEditor({ body, setBody, onPrompt }) {
       })}
       {scenes.length > 0 && !filter && <button type="button" className="achip" onClick={() => addScene(scenes.length - 1)}>+ Add a scene</button>}
       {filter && <p className="gcard-meta">Showing only lines where the viewer sees <strong>{SEE_LABEL[filter].toLowerCase()}</strong>. <button type="button" className="rm-linkbtn" onClick={() => setFilter("")}>Show all</button></p>}
+
+      {askOpen ? (
+        <QuestionsEditor body={body} setBody={setBody} />
+      ) : (
+        <button type="button" className="achip tc-askbtn" onClick={() => setAskOpen(true)}>+ Interview questions</button>
+      )}
+
+      <div className="scr-grid tc-close">
+        <PlanField label="Call to action — the closing line" value={body.cta} onChange={(v) => set("cta", v)} rows={2} placeholder="One ask: stop in, order, book, follow." wide />
+      </div>
+      <details className="scr-more" open={moreOpen}>
+        <summary>B-roll, caption and notes</summary>
+        <div className="scr-grid">
+          <PlanField label="B-roll to grab" value={(body.broll || []).join("\n")} onChange={(v) => set("broll", v.split("\n"))} rows={3} placeholder="One per line: hands, textures, the sign, the street, customers" />
+          <PlanField label="Caption" value={body.caption} onChange={(v) => set("caption", v)} rows={3} placeholder="1–3 lines + hashtags" />
+          <PlanField label="Notes for the day" value={body.notes} onChange={(v) => set("notes", v)} rows={3} placeholder="Safety, timing, shoot this first while the light is good" wide />
+        </div>
+      </details>
     </div>
   );
 }

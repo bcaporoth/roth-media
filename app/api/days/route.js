@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
-import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, isUuid, KIND_LABEL, STATUS_LABEL } from "../../../lib/scripts";
+import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { loadPlaybook } from "../../../lib/playbook";
 import { baselineScripts } from "../../../lib/baseline-day";
@@ -130,7 +130,8 @@ export async function POST(request) {
       // asks for each script's full text one request at a time (script-draft).
       const { scripts, dayNotes } = await outlineDay(db, { client: day.client, theme: body.theme, counts: body.counts, existing: day.scripts, day });
       let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
-      const rows = scripts.map((sc) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(sc), created_by: "brandon", updated_by: "brandon" }));
+      // Every script is a T-chart now (2026-11-08); the outline's kind becomes its style.
+      const rows = scripts.map((sc) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch({ ...sc, kind: "tchart", body: toTchart(sc.kind, sc.body) }), created_by: "brandon", updated_by: "brandon" }));
       const { data: inserted, error } = await db.from("scripts").insert(rows).select("id");
       if (error) throw new Error(error.message);
       if (dayNotes && !day.notes) await db.from("shoot_days").update({ notes: dayNotes, updated_at: now() }).eq("id", day.id);
@@ -148,7 +149,7 @@ export async function POST(request) {
       const items = (await planItemsFor(db, day.client_id)).filter((it) => want.has(String(it.id)));
       if (!items.length) return bad("Pick at least one item");
       let position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
-      const rows = items.map((it) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch(it.script), created_by: "brandon", updated_by: "brandon" }));
+      const rows = items.map((it) => ({ day_id: day.id, client_id: day.client_id, position: position++, ...cleanScriptPatch({ ...it.script, kind: "tchart", body: toTchart(it.script.kind, it.script.body) }), created_by: "brandon", updated_by: "brandon" }));
       const { error } = await db.from("scripts").insert(rows);
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, added: rows.length, day: await loadDay(db, day.id) });
@@ -161,7 +162,7 @@ export async function POST(request) {
     }
 
     if (body.action === "script-add") {
-      const kind = KIND_LABEL[body.kind] ? body.kind : "reel";
+      const kind = KIND_LABEL[body.kind] ? body.kind : "tchart";
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
       const patch = cleanScriptPatch({ title: body.title || "", kind, minutes: body.minutes ?? (kind === "recipe" || kind === "manual" ? 45 : kind === "photos" ? 30 : 20), body: body.body || {} });
       const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, ...patch, created_by: me.role, updated_by: me.role }).select("*").single();
@@ -206,6 +207,8 @@ export async function POST(request) {
       if (!script) return bad("Script not found", 404);
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
       const b = cleanBody(script.body); b.steps = b.steps.map((st) => ({ ...st, done: false }));
+      b.scenes = b.scenes.map((sc) => ({ ...sc, lines: sc.lines.map((l) => cleanLine({ ...l, done: false })) }));
+      b.questions = b.questions.map((q) => ({ ...q, done: false }));
       const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, kind: script.kind, title: `${script.title || KIND_LABEL[script.kind]} (copy)`.slice(0, 140), status: "draft", minutes: script.minutes, body: b, created_by: me.role, updated_by: me.role }).select("*").single();
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, script: data });
@@ -254,10 +257,16 @@ export async function POST(request) {
     if (body.action === "script-draft") {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
+      const isT = script.kind === "tchart";
+      const cur = cleanBody(script.body);
+      const style = isT ? (STYLE_LABEL[cur.style] && cur.style !== "questions" ? cur.style : "reel") : script.kind;
       const { title, body: drafted } = await draftScript(db, {
-        client: day.client, kind: script.kind, title: body.title ?? script.title, idea: body.idea, current: script.body, thread: script.thread,
+        client: day.client, kind: style, title: body.title ?? script.title, idea: body.idea, current: script.body, thread: script.thread,
       });
-      const { data, error } = await db.from("scripts").update({ title: title || script.title, body: cleanBody(drafted), rev: script.rev + 1, updated_by: "brandon", updated_at: now() }).eq("id", script.id).select("*").single();
+      // T-chart: Claude writes it as steps, laid out here as said | seen lines;
+      // the style and any interview questions they already had are kept.
+      const next = isT ? { ...toTchart(style, drafted), style: cur.style || style, questions: cur.questions } : cleanBody(drafted);
+      const { data, error } = await db.from("scripts").update({ title: title || script.title, body: next, rev: script.rev + 1, updated_by: "brandon", updated_at: now() }).eq("id", script.id).select("*").single();
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, script: data });
     }
