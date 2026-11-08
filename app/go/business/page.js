@@ -4,17 +4,18 @@ import DealPrice from "../../../components/DealPrice";
 import { PACKAGES } from "../../../lib/packages";
 import { videoUrl } from "../../../lib/media";
 
-export const metadata = { title: { absolute: "A month of posts, shot at your place — Roth Media" }, description: "One shoot at your business: a promo, reels, and photos, delivered in two weeks ready to post. Twin Tiers. Real prices, quote in your inbox instantly.", robots: { index: false } };
+export const metadata = { title: { absolute: "A month of posts, shot at your place — Roth Media" }, description: "One shoot at your business: reels and photos aimed at what you're promoting, delivered in two weeks ready to post. Twin Tiers. Real prices, quote in your inbox instantly.", robots: { index: false } };
 export const revalidate = 3600;
 
 // Where business ads land. One job: get the quote into their inbox and a
 // call on the calendar before they close the tab. Pick plan → name, phone,
-// business, email → send. ?pkg=mini|day|always pre-selects the plan.
+// business, email → send. ?pkg=mini|brand|day|always pre-selects the plan.
 export default function BusinessAdPage() {
   const day = PACKAGES.business.find((p) => p.id === "day");
   const mini = PACKAGES.business.find((p) => p.id === "mini");
+  const brandDay = PACKAGES.business.find((p) => p.id === "brand");
   const always = PACKAGES.business.find((p) => p.id === "always");
-  const plans = [mini, day, { ...always, per: "/mo" }].map(({ id, name, price, scope, popular, per }) => ({ id, name, price, scope, popular, per }));
+  const plans = [mini, brandDay, day, { ...always, per: "/mo" }].filter(Boolean).map(({ id, name, price, scope, popular, per }) => ({ id, name, price, scope, popular, per }));
   return (
     <main className="cx-page cx-page--hero bz-page bz-go">
       <div className="bz-go-grid">
@@ -29,16 +30,17 @@ export default function BusinessAdPage() {
             <video className="bz-go-video bz-go-video--work" src={videoUrl("/reels/nicole-golden-zumba-promo.mp4")} poster="/reels/nicole-golden-zumba-promo-poster.jpg" autoPlay muted loop playsInline aria-label="A promo shot for a local gym" />
           </div>
           <ul className="bz-go-why">
-            <li><strong>Two posts a week, done.</strong> 8 vertical reels + 10–30 photos — a month of content from one morning, no scramble on a Tuesday night.</li>
+            <li><strong>Reels with a job.</strong> Every reel is aimed at what you&apos;re promoting: 5 from a half day, 9 from a full day, plus photos. No scramble on a Tuesday night.</li>
             <li><strong>Your profile sells for you.</strong> The Pinned Three: who you are &amp; where to find you · why people trust you · how to book or stop in. The first thing every new customer sees.</li>
             <li><strong>Real people, your place.</strong> Your team, your regulars, your work — not stock footage. That&apos;s what makes someone in Sayre pick you over the chain.</li>
             <li><strong>Give $100, get $100.</strong> Once you&apos;re booked you get a link to hand to the business next door — $100 off their first shoot, $100 back to you. Every owner you send.</li>
             <li><strong>Cleared for ads.</strong> Licensed music, yours to run on Facebook and Instagram. Want me to run them? Ask on the call.</li>
           </ul>
           <ul className="cx-rows bz-go-prices">
-            <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">2-hr shoot · 8 reels + Pinned Three + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} category="business" packageId={mini.id} /></strong></li>
-            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">half day · adds a 45–90s promo video · 15–30 photos · missed a shot? I come back free</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
-            <li className="cx-row"><span className="cx-row-name">{always.name}</span><span className="cx-row-note">The Month, every month · pause or cancel anytime</span><strong className="cx-row-price"><DealPrice price={always.price} category="business" packageId={always.id} />/mo</strong></li>
+            <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">half day · 5 reels + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} category="business" packageId={mini.id} /></strong></li>
+            {brandDay && <li className="cx-row"><span className="cx-row-name">{brandDay.name}</span><span className="cx-row-note">half day · the Pinned Three + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={brandDay.price} category="business" packageId={brandDay.id} /></strong></li>}
+            <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">full day · 9 reels + Pinned Three + 15–30 photos · missed a shot? I come back free</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
+            <li className="cx-row"><span className="cx-row-name">{always.name}</span><span className="cx-row-note">a Half Day every month · pause or cancel anytime</span><strong className="cx-row-price"><DealPrice price={always.price} category="business" packageId={always.id} />/mo</strong></li>
           </ul>
           <p className="cx-fine bz-go-proof">★★★★★ 5.0 on Google · delivered within 2 weeks · one payment, paid in full when you book</p>
         </div>

@@ -23,7 +23,7 @@ export const metadata = {
 const JSON_LD = businessLd({
   url: "https://rothmediaco.com",
   description:
-    "Videographer and photographer in Waverly, NY — promos, reels, and photos for local businesses, shot at your place, plus cinematic wedding films and portraits across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Public prices.",
+    "Videographer and photographer in Waverly, NY — reels and photos for local businesses, shot at your place, plus cinematic wedding films and portraits across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Public prices.",
 });
 
 // The offer line reads the clock at render — refresh hourly.
@@ -39,12 +39,12 @@ const bizFrom = Math.min(...BIZ.map((p) => p.price));
 // The business ad landing: pick a plan, the quote lands in their inbox instantly.
 const BIZ_QUOTE = "/go/business";
 // The three Content Day plans, in the instant-quote page's order (?pkg= pre-selects one there)
-const BIZ_PLANS = ["mini", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
+const BIZ_PLANS = ["mini", "brand", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
 
 const DOORS = [
   {
-    n: "01", id: "business", name: "Your business", sub: "Reels, photos & a promo, shot at your place",
+    n: "01", id: "business", name: "Your business", sub: "Reels & photos, shot at your place",
     from: bizFrom, cta: "Get my instant quote", href: BIZ_QUOTE, primary: true, jump: "See the work & plans",
   },
   {
@@ -312,8 +312,8 @@ export default function CinemaHome() {
                   content that sounds like you.
                 </p>
                 <p className="cin-say">
-                  One Content Day, a month of posts: a promo, reels and photos
-                  that bring customers through the door — shot at your place,
+                  One Content Day, a month of posts: reels and photos aimed at
+                  what you're promoting, that bring customers through the door — shot at your place,
                   for shops, gyms, restaurants, builders and makers. Delivered
                   within two weeks, sized to post.
                 </p>
@@ -387,7 +387,7 @@ export default function CinemaHome() {
               )}
             </div>
             <div className="cin-rise">
-              <h3 className="cin-h3">What would your promo be?</h3>
+              <h3 className="cin-h3">What would you promote?</h3>
               <ul className="cin-ideas">
                 {IDEAS.map((i) => <li key={i.who}><strong>{i.who}</strong><span>{i.what}</span></li>)}
               </ul>

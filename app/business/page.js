@@ -15,7 +15,7 @@ import { videoUrl } from "../../lib/media";
 export const metadata = {
   title: "Brand Video, Photos & Content Days for Twin Tiers Businesses",
   description:
-    "Videographer and photographer for local businesses — a promo, reels, and photos shot at your place in one Content Day. Sayre, Athens, Waverly, Elmira, Corning, Ithaca & Binghamton. From $600, real prices up front.",
+    "Videographer and photographer for local businesses — reels and photos shot at your place, aimed at whatever you're promoting. Sayre, Athens, Waverly, Elmira, Corning, Ithaca & Binghamton. From $450, real prices up front.",
   alternates: { canonical: "/business" },
 };
 
@@ -48,7 +48,7 @@ function Arrow() {
 const FAQS = [
   {
     q: "What does a Content Day cost, and what do I get?",
-    a: `A The Quarter is ${money(pkg("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Month is ${money(pkg("mini").price)}: 8 reels and 10–20 photos.`,
+    a: `A Full Day is ${money(pkg("day").price)}: a full day of coverage at your business, and you walk away with 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. A Half Day is ${money(pkg("mini").price)}: 5 reels and 10–20 photos. A Brand Awareness Day is ${money(pkg("brand").price)}: the three pinned posts (who you are, why people trust you, how to buy) and 10–20 photos.`,
   },
   {
     q: "How fast do I get my content?",
@@ -56,7 +56,7 @@ const FAQS = [
   },
   {
     q: "Can I get more content from the same shoot?",
-    a: `Yes — the camera's already up, so it's edit time, not a second trip. A second promo video is ${money(addon("promo2").price)}, 8 more reels ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}. Adding a promo to a The Month is ${money(addon("promo").price)}.`,
+    a: `Yes — the camera's already up, so it's edit time, not a second trip. 8 more reels are ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}.`,
   },
   {
     q: "Do you cover events?",
@@ -123,7 +123,7 @@ export default function BusinessPage() {
             <p className="cx-kick">Branded content · Twin Tiers</p>
             <h1 className="cx-h1">One Content Day. <br />A month of posts.</h1>
             <p className="cx-lede">
-              A promo, reels, and photos shot at your business, for anything you
+              Reels and photos shot at your business, aimed at whatever you
               want to promote — for shops, gyms, restaurants, builders, and makers
               in Sayre, Athens, Waverly, Elmira, and Corning.
             </p>
@@ -232,7 +232,7 @@ export default function BusinessPage() {
             <div className="cx-reveal">
               <div className="cx-title">
                 <p className="cx-kick">Your story</p>
-                <h2 className="cx-h2">What would your promo be?</h2>
+                <h2 className="cx-h2">What would you promote?</h2>
                 <p className="cx-lede">
                   Every business has one story worth 60 seconds. A few we&apos;d pitch:
                 </p>
@@ -243,7 +243,7 @@ export default function BusinessPage() {
                 ))}
               </ul>
               <p className="cx-fine bz-ideas-else">
-                Something else? Whatever you do, there&apos;s a promo in it — we find
+                Something else? Whatever you do, there&apos;s something worth promoting — we find
                 it together on the planning call.
               </p>
             </div>

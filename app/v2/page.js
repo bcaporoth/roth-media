@@ -150,7 +150,7 @@ export default function HomeV2() {
 
           <div className="v2-biz-head v2-rise">
             <strong>For business</strong>
-            <span>Promos and reels cut for the feed. One shoot, a month of posts.</span>
+            <span>Reels cut for the feed. One shoot, a month of posts.</span>
           </div>
           <div className="fc-bento v2-rise">
             <FilmCard

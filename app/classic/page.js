@@ -180,7 +180,7 @@ export default function Home() {
             <div className="fc-lane reveal">
               <div className="fc-lane-head">
                 <span className="fc-lane-kick">For business</span>
-                <span className="fc-lane-note">Promos and reels cut for the feed — one shoot, a month of posts.</span>
+                <span className="fc-lane-note">Reels cut for the feed — one shoot, a month of posts.</span>
               </div>
               <div className="fc-bento">
                 <FilmCard
@@ -251,8 +251,8 @@ export default function Home() {
               stiff, rigid posing. We keep it easy and relaxed.
             </p>
             <p>
-              Run a business around here? A Content Day is a promo, reels,
-              and photos shot at your place — your people and your work, not
+              Run a business around here? A Content Day is reels and photos
+              shot at your place — your people and your work, not
               stock footage.
             </p>
             <p>I&apos;m local to the Valley, and I&apos;d love to work with you.</p>

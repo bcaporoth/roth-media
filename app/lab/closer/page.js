@@ -78,7 +78,7 @@ const HERO = {
     cap: "Demand greatness",
     kick: "Video + photo for local business",
     h1: ["Your people.", "Your work.", "On camera."],
-    sub: `One Content Day at your place: a promo, 8 reels and photos that bring customers through the door. From ${money(fromPrice(PACKAGES.business))}, delivered within two weeks.`,
+    sub: `One Content Day at your place: reels aimed at what you're promoting, and photos that bring customers through the door. From ${money(fromPrice(PACKAGES.business))}, delivered within two weeks.`,
   },
   family: {
     img: "/photos/07-senior-portrait-last-light.jpg",
@@ -141,9 +141,9 @@ const PROMISES = {
     { n: 6, unit: "weeks", label: "to full delivery, in your own client account" },
   ],
   business: [
-    { n: 1, unit: "shoot day", label: "at your place — your people, your work, not stock footage" },
-    { n: 8, unit: "reels", label: "vertical, sized for Instagram, Facebook and TikTok" },
-    { pre: "15–", n: 30, unit: "photos", label: "edited, with a 45–90 second promo" },
+    { n: 1, unit: "full day", label: "at your place — your people, your work, not stock footage" },
+    { n: 9, unit: "reels", label: "aimed at what you're promoting, sized for Instagram, Facebook and TikTok" },
+    { pre: "15–", n: 30, unit: "photos", label: "edited, plus your three pinned posts" },
     { n: 2, unit: "weeks", label: "to delivery — one round of revisions included" },
   ],
   family: [
@@ -209,9 +209,9 @@ const FAQS = {
     ["What areas do you serve?", `I’m local to the Valley — Sayre, Athens, and Waverly — and film weddings across the Twin Tiers, including Elmira, Corning, Towanda, and the surrounding area. ${TRAVEL.line}`],
   ],
   business: [
-    ["What does a Content Day cost, and what do I get?", `A The Quarter is ${money(biz("day").price)}: one shoot at your business, and you walk away with a 45–90 second promo, 8 vertical reels, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. The Month is ${money(biz("mini").price)}: 8 reels and 10–20 photos.`],
+    ["What does a Content Day cost, and what do I get?", `A Full Day is ${money(biz("day").price)}: a full day of coverage at your business, and you walk away with 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos. A Half Day is ${money(biz("mini").price)}: 5 reels and 10–20 photos. A Brand Awareness Day is ${money(biz("brand").price)}: the three pinned posts and 10–20 photos.`],
     ["How fast do I get my content?", `Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) is ${money(bAddon("rush").price)}; an extra revision round is ${money(bAddon("revision").price)}.`],
-    ["Can I get more content from the same shoot?", `Yes — a second promo video is ${money(bAddon("promo2").price)}, 8 more reels ${money(bAddon("reels").price)}, 20 more photos ${money(bAddon("photos").price)}, team headshots ${money(bAddon("headshots").price)}, and an extra hour or a second location ${money(bAddon("hour").price)}. Adding a promo to a The Month is ${money(bAddon("promo").price)}.`],
+    ["Can I get more content from the same shoot?", `Yes — 8 more reels are ${money(bAddon("reels").price)}, 20 more photos ${money(bAddon("photos").price)}, team headshots ${money(bAddon("headshots").price)}, and an extra hour or a second location ${money(bAddon("hour").price)}.`],
     ["Do you cover events?", `Yes — Event Coverage is ${money(biz("event").price)}: up to 3 hours of coverage, a 45–90 second highlight short, and a gallery of 50+ edited photos.`],
     ["Can you run ads with the videos?", `Yes — Facebook ads + lead generation is a ${money(bAddon("ads").price)} add-on: ads built from your videos, aimed at local customers, with leads sent straight to you.`],
     ["Can I use the videos in paid ads?", "Yes. All music is licensed through Epidemic Sound and your finished videos are cleared for your website, socials, and online advertising."],
@@ -489,7 +489,7 @@ export default function CloserHome() {
             <div className="clo-start-main">
               <p className="clo-start-k">Start here</p>
               <h2 className="clo-h3">Fifteen minutes, no pitch deck.</h2>
-              <p className="clo-start-p">The prices are on this page: a The Month is {money(biz("mini").price)}, a The Quarter {money(biz("day").price)}, an event {money(biz("event").price)}. Call or text and I’ll tell you what I’d shoot at your place.</p>
+              <p className="clo-start-p">The prices are on this page: a Half Day or a Brand Awareness Day is {money(biz("mini").price)}, a Full Day {money(biz("day").price)}, an event {money(biz("event").price)}. Call or text and I’ll tell you what I’d shoot at your place.</p>
               <div className="clo-btnrow">
                 <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="clo-btn clo-btn--acc">Book a 15-minute call <Arrow /></a>
                 <a href={smsWith("Hi Brandon — I’d like to talk about a Content Day for my business.")} className="clo-btn clo-btn--line">Text {PHONE}</a>
@@ -805,7 +805,7 @@ export default function CloserHome() {
             </p>
             <div className="clo-offer clo-rise">
               <p className="clo-offer-k">If you run a business around here</p>
-              <p className="clo-offer-t">A Content Day is a promo, reels, and photos shot at your place — your people and your work, not stock footage.</p>
+              <p className="clo-offer-t">A Content Day is reels and photos shot at your place, aimed at what you&apos;re promoting — your people and your work, not stock footage.</p>
               <a href={smsWith("Hi Brandon — here’s where we are:")} className="clo-link">Tell me where you are <Arrow /></a>
             </div>
             <p className="clo-sig clo-rise">— {OWNER_NAME}, local to the Valley</p>
