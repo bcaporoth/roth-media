@@ -237,6 +237,7 @@ export function PortalHome({
   clientName = "",
   clientId = "",
   days = null, // their shoot days (null = table not set up / not loaded)
+  place = "", // their newest address — new shoot days start there
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -256,7 +257,7 @@ export function PortalHome({
       </header>
 
       <NextStrip items={next} />
-      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} />}
+      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} place={place} />}
       {days?.length > 0 && <DaysSection days={days} />}
 
       {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} />}
@@ -316,6 +317,7 @@ export function PortalBusinessHome({
   clientName = "",
   months = [],
   clientId = "",
+  place = "",
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -390,7 +392,7 @@ export function PortalBusinessHome({
 
       <NextStrip items={next} />
       {/* Calendar → shoot days & scripts → content first (2026-11-08). */}
-      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} />}
+      {clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} place={place} />}
 
       {days.length > 0 && <DaysSection days={days} />}
 
@@ -513,14 +515,14 @@ function MonthsSection({ months }) {
 // Their calendar, near the top of the portal: their dates, shoot days (🎬 →
 // the scripts) and "Start a shoot day" on any date. Same component Brandon
 // sees on their Studio profile.
-function CalendarSection({ clientId, clientName, days }) {
+function CalendarSection({ clientId, clientName, days, place = "" }) {
   return (
     <section id="calendar" className="cx-wrap pt-cal" aria-labelledby="pt-cal-h">
       <div className="pt-biz-sechead">
         <h2 id="pt-cal-h" className="cx-kick">Your calendar</h2>
         <p className="pt-note">Tap a day to add what&apos;s happening, open a shoot day&apos;s scripts 🎬, or start a new shoot day.</p>
       </div>
-      <ClientCalendar mode="client" clientId={clientId} clientName={clientName} days={days ?? []} />
+      <ClientCalendar mode="client" clientId={clientId} clientName={clientName} days={days ?? []} defaultLocation={place} />
     </section>
   );
 }

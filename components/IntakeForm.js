@@ -10,6 +10,7 @@
 
 import { useState } from "react";
 import AutoText from "./AutoText";
+import AddressInput from "./AddressInput";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
 import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME } from "../lib/intake";
@@ -122,7 +123,9 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
           <span className="mx-q-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
           <label className="cx-label" htmlFor={`in-q${i}`}>{it.q}{it.opt ? <span className="mx-opt"> optional</span> : null}</label>
           {it.hint && <p className="cx-help">{it.hint}</p>}
-          {it.long
+          {it.address
+            ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
+            : it.long
             ? <AutoText className="cx-textarea" id={`in-q${i}`} rows={3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
             : <AutoText className="cx-input" id={`in-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />}
         </div>

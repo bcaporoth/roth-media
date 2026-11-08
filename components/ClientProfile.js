@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { ClientShoots } from "./ShootsBoard";
+import { directionsUrl } from "../lib/client-addresses";
 import BalanceList from "./BalanceList";
 import NotesThread from "./NotesThread";
 import ReviewButton from "./ReviewButton";
@@ -140,6 +141,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
         </p>
       )}
 
+
+      <AddressBook list={d.addresses || []} copy={copy} />
 
       {/* The calendar (passed in by the page) sits above the tabs. */}
       {children}
@@ -525,6 +528,32 @@ function InspoCard({ client: c, save }) {
         <textarea rows={3} value={notes} placeholder="Shot ideas, angles, hooks, things they said they liked…" onChange={(e) => { setNotes(e.target.value); setDirty(true); }} />
       </label>
       {dirty && <div><button type="button" className="abtn" onClick={() => persist({ links, notes })}>Save notes</button></div>}
+    </section>
+  );
+}
+
+// Where they shoot (lib/client-addresses.js): every place from their briefs,
+// shoot days and the Shoots calendar, newest first. Directions opens Google
+// Maps (the Maps app on a phone).
+function AddressBook({ list, copy }) {
+  const [all, setAll] = useState(false);
+  if (!list.length) return null;
+  const shown = all ? list : list.slice(0, 3);
+  return (
+    <section className="cprof-card cprof-addrs" aria-labelledby="cprof-addrs-h">
+      <div className="cprof-cardhead"><h2 id="cprof-addrs-h">Addresses<em className="cprof-count">{list.length}</em></h2></div>
+      <ul className="cprof-addr-list">
+        {shown.map((a) => (
+          <li key={a.address}>
+            <span className="cprof-addr-main"><strong>{a.address}</strong><em>{a.from.join(" · ")}</em></span>
+            <span className="gcard-actions">
+              <a className="abtn" href={directionsUrl(a.address)} target="_blank" rel="noopener noreferrer">Directions →</a>
+              <button type="button" className="achip" onClick={() => copy(a.address, "Address")}>Copy</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {list.length > 3 && <button type="button" className="achip" onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${list.length}`}</button>}
     </section>
   );
 }

@@ -61,7 +61,7 @@ function IdeaBox({ ev, clientId, onSaved }) {
   );
 }
 
-export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null, days = null }) {
+export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null, days = null, defaultLocation = "" }) {
   const studio = mode === "studio";
   const dayHref = (id) => (studio ? `/portal/admin/clients/${clientId}/days/${id}` : `/portal/days/${id}`);
   const [starting, setStarting] = useState(false);
@@ -69,7 +69,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
   async function startDay() {
     setStarting(true); setErr("");
     try {
-      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, title: "Shoot day", date: day }) });
+      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, title: "Shoot day", date: day, location: defaultLocation }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't start the day");
       window.location.href = dayHref(j.id);

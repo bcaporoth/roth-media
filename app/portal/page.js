@@ -11,6 +11,7 @@ import { ESSENTIALS, completeness } from "../../lib/brand";
 import { loadBrand } from "../../lib/brand-server";
 import { loadPublishedPlan } from "../../lib/content-plan-server";
 import { listDays } from "../../lib/scripts-server";
+import { clientAddresses } from "../../lib/client-addresses";
 import { unreadFor } from "../../lib/notes-server";
 import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
@@ -228,6 +229,7 @@ export default async function PortalPage({ searchParams }) {
   let brief = null;
   let welcome = null; // step 1 of the brief (the welcome form), or null
   let missing = []; // services they picked that still have no details
+  let place = ""; // their newest address (brief answers) → new shoot days start there
   if (adminConfigured && !isAdmin) {
     try {
       const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
@@ -236,6 +238,7 @@ export default async function PortalPage({ searchParams }) {
       welcome = welcomeOf(data || []);
       const have = briefsByType(data || []);
       missing = (welcome?.services || []).filter((t) => !have[t]);
+      place = clientAddresses({ subs: data || [] })[0]?.address || "";
     } catch { brief = null; }
   }
 
@@ -279,6 +282,7 @@ export default async function PortalPage({ searchParams }) {
         next={todo}
         clientName={client.name || ""}
         clientId={client.id}
+        place={place}
       />
     );
   }
@@ -305,6 +309,7 @@ export default async function PortalPage({ searchParams }) {
       clientName={client.name || ""}
       clientId={client.id}
       days={personalDays}
+      place={place}
     />
   );
 }

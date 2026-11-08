@@ -4,6 +4,7 @@ import StudioShell from "../../../../../components/StudioShell";
 import StudioFooter from "../../../../../components/StudioFooter";
 import ClientProfile from "../../../../../components/ClientProfile";
 import ClientCalendar from "../../../../../components/ClientCalendar";
+import { clientAddresses } from "../../../../../lib/client-addresses";
 import { requireAdminPage } from "../../../../../lib/admin-guard";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
 import { ensureReferralCode, listReferrals } from "../../../../../lib/referrals";
@@ -73,7 +74,11 @@ export default async function ClientPage({ params }) {
     logo: b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || "") && a.label === "Main logo")?.url || b.assets.find((a) => a.kind === "logo" && /^image\//.test(a.mime || ""))?.url || "",
   };
   const all = subs || [];
+  // Their address book: brief answers + shoot days + Shoots calendar.
+  const { data: dayPlaces } = await db.from("shoot_days").select("title, date, location, updated_at").eq("client_id", client.id).then((r) => r, () => ({ data: [] }));
+  const addresses = clientAddresses({ subs: all, days: dayPlaces || [], shoots: shoots || [] });
   const data = {
+    addresses,
     client: { ...client, phone: client.phone || "", notes: client.notes || "", referral_code: client.referral_code || "" },
     intakes: all.filter((s) => s.kind === "intake"),
     intakeSent: all.find((s) => s.kind === "intake_sent") || null,
@@ -106,7 +111,7 @@ export default async function ClientPage({ params }) {
           <section className="psection cprof-cal" id="calendar">
             <h2>Calendar</h2>
             <p className="inbox-hint">Their dates, your shoot days 🎬 and what you add. Tap a day to open its scripts, start a shoot day, or follow up.</p>
-            <ClientCalendar mode="studio" clientId={client.id} clientName={client.name || client.email} clientPhone={client.phone || ""} days={data.days} />
+            <ClientCalendar mode="studio" clientId={client.id} clientName={client.name || client.email} clientPhone={client.phone || ""} days={data.days} defaultLocation={addresses[0]?.address || ""} />
           </section>
         </ClientProfile>
       </StudioShell>

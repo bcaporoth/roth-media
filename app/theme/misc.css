@@ -272,3 +272,8 @@
 /* Answer boxes that grow as you type (components/AutoText.js). */
 .mx-page textarea.auto-text { resize: none; overflow: hidden; display: block; width: 100%; }
 .mx-page textarea.cx-input.auto-text { line-height: 1.5; min-height: 48px; }
+/* Address questions in the brief: the place-picker list on the dark portal. */
+.mx-page .mx-addr .addr-list { background: #1b1916; border-color: rgba(246, 241, 232, 0.2); }
+.mx-page .mx-addr .addr-list button { color: #f6f1e8; }
+.mx-page .mx-addr .addr-list button:hover,
+.mx-page .mx-addr .addr-list button:focus-visible { background: rgba(246, 241, 232, 0.08); }

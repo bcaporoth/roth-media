@@ -7,7 +7,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function AddressInput({ name = "address", value, defaultValue = "", onChange, placeholder = "Start typing a place or address…", onPick, autoFocus = false, className = "" }) {
+// endpoint: Studio uses /api/admin/geo; the client portal passes /api/portal/geo.
+export default function AddressInput({ name = "address", value, defaultValue = "", onChange, placeholder = "Start typing a place or address…", onPick, autoFocus = false, className = "", endpoint = "/api/admin/geo", inputClassName = "", id, required = false }) {
   const controlled = value !== undefined;
   const [inner, setInner] = useState(defaultValue);
   const text = controlled ? value : inner;
@@ -27,7 +28,7 @@ export default function AddressInput({ name = "address", value, defaultValue = "
     timer.current = setTimeout(async () => {
       setBusy(true);
       try {
-        const r = await fetch(`/api/admin/geo?q=${encodeURIComponent(q)}`).then((x) => x.json());
+        const r = await fetch(`${endpoint}?q=${encodeURIComponent(q)}`).then((x) => x.json());
         setHits(r.hits || []); setOpen(true);
       } catch { setHits([]); } finally { setBusy(false); }
     }, 350);
@@ -42,7 +43,7 @@ export default function AddressInput({ name = "address", value, defaultValue = "
 
   return (
     <div className={"addr" + (className ? ` ${className}` : "")} ref={box}>
-      <input name={name} value={text} onChange={(e) => set(e.target.value)} onFocus={() => hits.length && setOpen(true)} placeholder={placeholder} autoComplete="off" autoFocus={autoFocus} aria-autocomplete="list" aria-expanded={open && hits.length > 0} />
+      <input name={name} id={id} required={required} className={inputClassName || undefined} value={text} onChange={(e) => set(e.target.value)} onFocus={() => hits.length && setOpen(true)} placeholder={placeholder} autoComplete="off" autoFocus={autoFocus} aria-autocomplete="list" aria-expanded={open && hits.length > 0} />
       {busy && <span className="addr-busy" aria-hidden="true">…</span>}
       {open && hits.length > 0 && (
         <ul className="addr-list" role="listbox">
