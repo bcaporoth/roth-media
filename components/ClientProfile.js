@@ -34,11 +34,11 @@ export default function ClientProfile({ initial, emailReady }) {
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
   const [pasting, setPasting] = useState(false);
   const [editing, setEditing] = useState(false); // contact details form, closed until asked for
-  // One drawer open at a time: Shoot days · Paperwork · Notes · Delivery.
+  // One drawer open at a time: Shoot days · Paperwork · Notes · Galleries · Money.
   const [tab, setTab] = useState(() => (initial.type === "business" || (initial.days || []).length ? "days" : "paper"));
   useEffect(() => {
     const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (h === "notes") setTab("notes"); else if (h === "galleries" || h === "login") setTab("delivery"); else if (h === "shoots" || h === "days") setTab("days");
+    if (h === "notes") setTab("notes"); else if (h === "galleries" || h === "login") setTab("gals"); else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
   }, []);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
@@ -142,7 +142,7 @@ export default function ClientProfile({ initial, emailReady }) {
 
 
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
-        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["delivery", "Galleries & money", d.galleries.length || null]].map(([k, label, n]) => (
+        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
@@ -163,7 +163,7 @@ export default function ClientProfile({ initial, emailReady }) {
         </div>
       )}
 
-      <div className={"cprof-cols" + (tab === "paper" ? " is-paper" : tab === "delivery" ? " is-delivery" : " is-hidden")}>
+      <div className={"cprof-cols" + (tab === "paper" ? " is-paper" : tab === "gals" ? " is-gals" : tab === "money" ? " is-money" : " is-hidden")}>
         <div className="cprof-col cprof-ref">
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Initial inquiry{d.messages.length > 0 && <em className="cprof-count">{d.messages.length}</em>}</h2>
@@ -215,14 +215,7 @@ export default function ClientProfile({ initial, emailReady }) {
             ))}
           </section>
 
-          <section className="cprof-card cprof-deliv" id="login">
-            <div className="cprof-cardhead"><h2>Login</h2>
-              <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
-            </div>
-            <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
-          </section>
-
-          <section className="cprof-card cprof-deliv" id="galleries">
+          <section className="cprof-card cprof-deliv cprof-gtab" id="galleries">
             <div className="cprof-cardhead"><h2>Galleries{d.galleries.length > 0 && <em className="cprof-count">{d.galleries.length}</em>}</h2></div>
             {d.galleries.length === 0 ? <p className="gcard-meta">None yet.</p> : (
               <ul className="cprof-list cprof-gals">{d.galleries.map((g) => (
@@ -235,7 +228,14 @@ export default function ClientProfile({ initial, emailReady }) {
             )}
           </section>
 
-          <section className="cprof-card cprof-deliv">
+          <section className="cprof-card cprof-deliv cprof-gtab" id="login">
+            <div className="cprof-cardhead"><h2>Login</h2>
+              <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
+            </div>
+            <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
+          </section>
+
+          <section className="cprof-card cprof-deliv cprof-mtab" id="money">
             <div className="cprof-cardhead"><h2>Payments{bookings.length + d.payments.length > 0 && <em className="cprof-count">{bookings.length + d.payments.length}</em>}</h2>
               {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}
             </div>

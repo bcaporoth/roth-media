@@ -7238,14 +7238,21 @@ textarea.grow { overflow: hidden; }
 .cprof-tabbody { display: grid; gap: 1rem; }
 .cprof-cols.is-hidden { display: none; }
 .cprof-cols.is-paper .cprof-deliv { display: none; }
-.cprof-cols.is-delivery .cprof-card:not(.cprof-deliv) { display: none; }
-.cprof-cols.is-delivery .cprof-ref { display: none; }
+/* Galleries tab = galleries + their login; Money tab = payments. One full-width column each. */
+.cprof-cols.is-gals .cprof-card:not(.cprof-gtab),
+.cprof-cols.is-money .cprof-card:not(.cprof-mtab) { display: none; }
+.cprof-cols.is-gals .cprof-ref,
+.cprof-cols.is-money .cprof-ref { display: none; }
+.cprof-cols.is-gals,
+.cprof-cols.is-money { grid-template-columns: minmax(0, 1fr); max-width: 860px; }
 @media (max-width: 520px) {
   .cprof-head2 { flex-direction: column; }
   .cprof-headacts { width: 100%; }
   .cprof-headacts .achip { flex: 1 1 auto; text-align: center; }
-  .cprof-tabs { display: grid; grid-template-columns: 1fr 1fr; }
-  .cprof-tabs .ifilter { text-align: center; }
+  /* Five tabs: work on top (Shoot days · Paperwork · Notes), delivery below (Galleries · Money). */
+  .cprof-tabs { display: grid; grid-template-columns: repeat(6, 1fr); }
+  .cprof-tabs .ifilter { text-align: center; justify-content: center; grid-column: span 2; padding-inline: 0.4rem; white-space: nowrap; }
+  .cprof-tabs .ifilter:nth-child(n + 4) { grid-column: span 3; }
 }
 /* Day sheet: the shoot basics live here too — directions, the owner's phone, Brandon's camera reminders. */
 .sday-basics { display: grid; gap: 0.5rem; margin: 0.4rem 0; }
