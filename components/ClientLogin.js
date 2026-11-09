@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { isNoEmail } from "../lib/no-email";
+import { confirmTap } from "../lib/confirm-tap";
 
 const PORTAL = "https://rothmediaco.com/portal";
 
@@ -42,7 +43,7 @@ export default function ClientLogin({ client, account, onSaved }) {
     e.preventDefault();
     const p = pw.trim();
     if (p.length < 8) { setError("Make it at least 8 characters."); return; }
-    if (account && !window.confirm(`Set a new password for ${client.email}? Their old one stops working.`)) return;
+    if (account && !confirmTap(`Set a new password for ${client.email}? Their old one stops working.`)) return;
     setBusy(true);
     setError("");
     try {

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { P } from "./ProductionCards";
 import { DISCOVERY_FIELDS, APPROVAL_KIND_LABEL, APPROVAL_STATUS_LABEL, CO_STATUS_LABEL, PAYMENT_STATUS_LABEL, CHANNEL_LABEL, HANDLING_LABEL, money } from "../lib/production";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SqlHint = ({ what }) => <p className="sm-sqlhint">{what} needs <code>supabase/sprint5.sql</code> run once in the Supabase SQL editor.</p>;
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
@@ -15,7 +16,7 @@ function useRows(prefix, project, setRows, fail) {
   return {
     add: async (fields) => { const r = await P({ action: `${prefix}-add`, projectId: project.id, ...fields }); setRows((l) => [r.row, ...l]); return r; },
     patch: async (id, fields) => { try { const r = await P({ action: `${prefix}-update`, id, ...fields }); setRows((l) => l.map((x) => (x.id === id ? r.row : x))); return r.row; } catch (e) { fail(e); } },
-    remove: async (x, label) => { if (!window.confirm(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
+    remove: async (x, label) => { if (!confirmTap(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
   };
 }
 const Blur = ({ value, onSave, ...rest }) => <input defaultValue={value ?? ""} onBlur={(e) => e.target.value !== (value ?? "") && onSave(e.target.value)} {...rest} />;
@@ -184,7 +185,7 @@ export function UpdateCard({ project, rows, setRows, email, fail, say, ready }) 
     try { const d = await P({ action: "update-draft", projectId: project.id }); const r = await api.add({ week_of: today(), body: d.body }); setOpen(r.row.id); } catch (err) { fail(err); } finally { setBusy(false); }
   }
   async function publish(u, withEmail) {
-    if (withEmail && !window.confirm("Email this to the client contacts too?")) return;
+    if (withEmail && !confirmTap("Email this to the client contacts too?")) return;
     try { const r = await P({ action: "update-publish", id: u.id, email: withEmail }); setRows((l) => l.map((x) => (x.id === u.id ? r.row : x))); say(r.emailed ? `Published + emailed ${r.emailed}` : "Published to the portal"); } catch (err) { fail(err); }
   }
   return (

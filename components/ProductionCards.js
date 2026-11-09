@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { PHASES, PHASE_LABEL, SCENE_KINDS, SCENE_KIND_LABEL, SCENE_STATUSES, SCENE_STATUS_LABEL, LOCATION_KINDS, LOCATION_KIND_LABEL, LOCATION_STATUS_LABEL, PERMIT_LABEL, COI_LABEL, BUDGET_SECTIONS, BUDGET_SECTION_LABEL, COST_KINDS, TASK_CATEGORY_LABEL, STAKEHOLDER_ROLE_LABEL, money, fmtSecs } from "../lib/production";
 import AddressInput from "./AddressInput";
+import { confirmTap } from "../lib/confirm-tap";
 
 export async function P(payload) {
   const res = await fetch("/api/admin/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -39,7 +40,7 @@ export function ScenesCard({ project, scenes, setScenes, people, locations, fail
     try { const r = await P({ action: "scene-add", projectId: project.id, ...f }); setScenes((l) => [...l, r.scene]); setAdding(false); setOpen(r.scene.id); e.target.reset(); } catch (err) { fail(err); }
   }
   async function patch(id, fields, msg) { try { const r = await P({ action: "scene-update", id, ...fields }); setScenes((l) => l.map((x) => (x.id === id ? r.scene : x))); if (msg) say(msg); } catch (err) { fail(err); } }
-  async function remove(x) { if (!window.confirm(`Delete scene “${x.title}”?`)) return; try { await P({ action: "scene-delete", id: x.id }); setScenes((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
+  async function remove(x) { if (!confirmTap(`Delete scene “${x.title}”?`)) return; try { await P({ action: "scene-delete", id: x.id }); setScenes((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
   async function move(i, dir) {
     const j = i + dir; if (j < 0 || j >= scenes.length) return;
     const next = [...scenes]; [next[i], next[j]] = [next[j], next[i]];
@@ -157,7 +158,7 @@ export function LocationsCard({ project, locations, setLocations, fail, ready, i
     try { const r = await P({ action: "location-add", projectId: project.id, ...f }); setLocations((l) => [...l, r.location]); setAdding(false); setOpen(r.location.id); e.target.reset(); } catch (err) { fail(err); }
   }
   async function patch(id, fields) { try { const r = await P({ action: "location-update", id, ...fields }); setLocations((l) => l.map((x) => (x.id === id ? r.location : x))); } catch (err) { fail(err); } }
-  async function remove(x) { if (!window.confirm(`Remove ${x.name}?`)) return; try { await P({ action: "location-delete", id: x.id }); setLocations((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
+  async function remove(x) { if (!confirmTap(`Remove ${x.name}?`)) return; try { await P({ action: "location-delete", id: x.id }); setLocations((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
   const tel = (v) => (v || "").replace(/[^\d+]/g, "");
   return (
     <section className="cprof-card">
@@ -223,7 +224,7 @@ export function BudgetCard({ project, lines, setLines, costs, setCosts, days, fa
   async function seed() { try { const r = await P({ action: "budget-seed", projectId: project.id }); setLines((l) => [...l, ...r.lines]); say(`${r.lines.length} lines added`); } catch (err) { fail(err); } }
   async function patchLine(id, fields) { try { const r = await P({ action: "budget-line-update", id, ...fields }); setLines((l) => l.map((x) => (x.id === id ? r.line : x))); } catch (err) { fail(err); } }
   async function addLine(e) { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); try { const r = await P({ action: "budget-line-add", projectId: project.id, ...f, rate_cents: Math.round(Number(f.rate) * 100) }); setLines((l) => [...l, r.line]); e.target.reset(); } catch (err) { fail(err); } }
-  async function removeLine(x) { if (!window.confirm(`Remove ${x.code} ${x.description}?`)) return; try { await P({ action: "budget-line-delete", id: x.id }); setLines((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
+  async function removeLine(x) { if (!confirmTap(`Remove ${x.code} ${x.description}?`)) return; try { await P({ action: "budget-line-delete", id: x.id }); setLines((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
   async function addCost(e) { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); try { const r = await P({ action: "cost-add", projectId: project.id, ...f, amount_cents: Math.round(Number(f.amount) * 100) }); setCosts((l) => [r.cost, ...l]); e.target.reset(); say("Logged"); } catch (err) { fail(err); } }
   async function patchCost(id, fields) { try { const r = await P({ action: "cost-update", id, ...fields }); setCosts((l) => l.map((x) => (x.id === id ? r.cost : x))); } catch (err) { fail(err); } }
   async function removeCost(x) { try { await P({ action: "cost-delete", id: x.id }); setCosts((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
@@ -331,7 +332,7 @@ export function ClientSideCard({ project, stakeholders, setStakeholders, tasks, 
   const ms = project.milestones || [];
   async function addStake(e) { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); try { const r = await P({ action: "stakeholder-add", projectId: project.id, ...f, decision_maker: f.decision_maker === "on", primary_contact: f.primary_contact === "on" }); setStakeholders((l) => [...l, r.stakeholder]); setAddS(false); } catch (err) { fail(err); } }
   async function patchStake(id, fields) { try { const r = await P({ action: "stakeholder-update", id, ...fields }); setStakeholders((l) => l.map((x) => (x.id === id ? r.stakeholder : x))); } catch (err) { fail(err); } }
-  async function removeStake(x) { if (!window.confirm(`Remove ${x.name}?`)) return; try { await P({ action: "stakeholder-delete", id: x.id }); setStakeholders((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
+  async function removeStake(x) { if (!confirmTap(`Remove ${x.name}?`)) return; try { await P({ action: "stakeholder-delete", id: x.id }); setStakeholders((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }
   async function addTask(e) { e.preventDefault(); const f = Object.fromEntries(new FormData(e.currentTarget).entries()); try { const r = await P({ action: "task-add", projectId: project.id, ...f }); setTasks((l) => [...l, r.task]); setAddT(false); e.target.reset(); } catch (err) { fail(err); } }
   async function patchTask(id, fields) { try { const r = await P({ action: "task-update", id, ...fields }); setTasks((l) => l.map((x) => (x.id === id ? r.task : x))); } catch (err) { fail(err); } }
   async function removeTask(x) { try { await P({ action: "task-delete", id: x.id }); setTasks((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); } }

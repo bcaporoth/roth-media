@@ -6,6 +6,7 @@
 // Pause / resume / delete. Saved through /api/admin/coupons.
 
 import { useState } from "react";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SITE = "https://rothmediaco.com";
 const blank = { code: "", label: "", type: "pct", value: "", all: true, only: {}, starts: "", ends: "", email: "", maxUses: "" };
@@ -71,7 +72,7 @@ export default function CouponsBoard({ initial = [], menu = [] }) {
     } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
   async function act(action, c) {
-    if (action === "delete" && !window.confirm(`Delete ${c.code}? It stops working right away. Bookings already paid with it are not affected.`)) return;
+    if (action === "delete" && !confirmTap(`Delete ${c.code}? It stops working right away. Bookings already paid with it are not affected.`)) return;
     try { const j = await api({ action, id: c.id }); setList(j.coupons); say(action === "pause" ? `${c.code} paused.` : action === "resume" ? `${c.code} is live again.` : `${c.code} deleted.`); }
     catch (x) { setErr(x.message); }
   }

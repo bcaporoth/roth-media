@@ -15,6 +15,7 @@ import {
 } from "../lib/brand";
 import { normHex, hexToRgb, hexToCmyk, contrastPairs, contrastLabel, dominantColors } from "../lib/brand-color";
 import BrandPreview, { useGoogleFont } from "./BrandPreview";
+import { confirmTap } from "../lib/confirm-tap";
 
 const LOGO_LABELS = ["Main logo", "Wordmark", "Icon", "Light version", "Dark version", "Other"];
 const fmtDay = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
@@ -520,7 +521,7 @@ function Assets({ ctx, kind }) {
     if (input.current) input.current.value = "";
   }
   async function remove(a) {
-    if (!window.confirm(`Remove ${a.filename || "this file"}?`)) return;
+    if (!confirmTap(`Remove ${a.filename || "this file"}?`)) return;
     try { await ctx.post({ action: "remove", id: a.id }); ctx.setAssets((x) => x.filter((y) => y.id !== a.id)); } catch (err) { ctx.onError(err.message); }
   }
   async function relabel(a, label) {

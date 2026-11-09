@@ -3,6 +3,7 @@
 // Studio → More → Staff: who works with you. Add them, set their password,
 // put them on projects from the project page. Off = they can't sign in.
 import { useState } from "react";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/admin/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -27,7 +28,7 @@ export default function StaffBoard({ initial }) {
     try { const r = await api({ action: "add", ...f }); setList((l) => [...l, r.staff]); setAdding(false); e.target.reset(); say(`${r.staff.name} added — now set their password`); } catch (err) { setError(err.message); }
   }
   async function patch(id, fields) { try { const r = await api({ action: "update", id, ...fields }); setList((l) => l.map((x) => (x.id === id ? { ...x, ...r.staff } : x))); } catch (err) { setError(err.message); } }
-  async function remove(x) { if (!window.confirm(`Remove ${x.name} from staff? Their login stays but stops working.`)) return; try { await api({ action: "remove", id: x.id }); setList((l) => l.filter((y) => y.id !== x.id)); } catch (err) { setError(err.message); } }
+  async function remove(x) { if (!confirmTap(`Remove ${x.name} from staff? Their login stays but stops working.`)) return; try { await api({ action: "remove", id: x.id }); setList((l) => l.filter((y) => y.id !== x.id)); } catch (err) { setError(err.message); } }
   async function setPassword(x) {
     const typed = window.prompt(`Password for ${x.name} (blank = make one up)`, "");
     if (typed === null) return;

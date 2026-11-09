@@ -17,6 +17,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SEE_TAGS, SEE_LABEL, STYLES, NEEDS_LABEL, blankLine, blankScene, blankQuestion, sceneLines, tchartSecs } from "../lib/scripts";
+import { confirmTap } from "../lib/confirm-tap";
 
 function Grow({ value, onChange, rows = 2, placeholder = "", className = "", ariaLabel = "" }) {
   const ref = useRef(null);
@@ -108,7 +109,7 @@ export function TChartEditor({ body, setBody, onPrompt }) {
                 <button type="button" className="achip" onClick={() => moveScene(i, -1)} disabled={i === 0} aria-label="Move scene up">↑</button>
                 <button type="button" className="achip" onClick={() => moveScene(i, 1)} disabled={i === scenes.length - 1} aria-label="Move scene down">↓</button>
                 <button type="button" className="achip" onClick={() => addScene(i)}>+ Scene after</button>
-                <button type="button" className="achip achip-danger" onClick={() => { if (!sc.lines.some((l) => l.say || l.see) || window.confirm(`Remove ${sc.label || `Scene ${i + 1}`} and its ${sc.lines.length} line${sc.lines.length === 1 ? "" : "s"}?`)) delScene(i); }} aria-label="Remove scene">✕</button>
+                <button type="button" className="achip achip-danger" onClick={() => { if (!sc.lines.some((l) => l.say || l.see) || confirmTap(`Remove ${sc.label || `Scene ${i + 1}`} and its ${sc.lines.length} line${sc.lines.length === 1 ? "" : "s"}?`)) delScene(i); }} aria-label="Remove scene">✕</button>
               </span>
             </div>
             <div className="tc-table" role="table">

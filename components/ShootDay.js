@@ -18,6 +18,7 @@ import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_S
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
 import AddressInput from "./AddressInput";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -195,7 +196,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
         {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">🖨 Print</a>}
-        {me === "brandon" && aiReady && <button type="button" className="achip" onClick={() => { if (!scripts.some((s) => /^Pinned #[123]\b/.test(s.title || "")) || window.confirm("Rewrite the three Pinned posts with Claude from their brand page? It keeps what's good and fills in what's thin.")) writePinned(); }} disabled={busy}>✦ Write the Pinned Three</button>}
+        {me === "brandon" && aiReady && <button type="button" className="achip" onClick={() => { if (!scripts.some((s) => /^Pinned #[123]\b/.test(s.title || "")) || confirmTap("Rewrite the three Pinned posts with Claude from their brand page? It keeps what's good and fills in what's thin.")) writePinned(); }} disabled={busy}>✦ Write the Pinned Three</button>}
         {me === "brandon" && <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>}
       </div>
       {me === "brandon" && more && (
@@ -452,7 +453,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
     try { const r = await api({ action: "script-note", dayId: day.id, scriptId: script.id, text: note }); onChange({ ...script, thread: r.thread }); setNote(""); } catch (err) { onError(err); } finally { setBusy(false); }
   }
   async function askClaude() {
-    if ((body.steps.length || body.scenes.some((sc) => sc.lines.some((l) => l.say || l.see))) && !window.confirm("Rewrite this script with Claude? It keeps what's good and fills in what's thin. The notes thread is read too.")) return;
+    if ((body.steps.length || body.scenes.some((sc) => sc.lines.some((l) => l.say || l.see))) && !confirmTap("Rewrite this script with Claude? It keeps what's good and fills in what's thin. The notes thread is read too.")) return;
     setBusy(true);
     try {
       const r = await api({ action: "script-draft", dayId: day.id, scriptId: script.id, title, idea });

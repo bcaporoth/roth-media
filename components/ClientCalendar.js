@@ -108,9 +108,13 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
       e.target.reset();
     } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
+  // Two taps, no popup (popups are blocked in some browsers): the first tap
+  // turns the button into "Tap again to remove" for 4 seconds.
+  const [armed, setArmed] = useState("");
   async function remove(ev) {
-    if (!confirm(`Remove "${ev.title}"?`)) return;
     const base = ev.base_id || ev.id;
+    if (armed !== base) { setArmed(base); setTimeout(() => setArmed((a) => (a === base ? "" : a)), 4000); return; }
+    setArmed("");
     try { await api({ op: "delete", client_id: clientId, id: base }); setEvents((xs) => xs.filter((x) => (x.base_id || x.id) !== base)); } catch (x) { setErr(x.message); }
   }
   async function wants(ev, on) {
@@ -165,7 +169,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
                   {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
-                  {(studio || e.created_by === "client") && <button type="button" className="achip achip-danger" onClick={() => remove(e)}>Remove</button>}
+                  {(studio || e.created_by === "client") && <button type="button" className={"achip achip-danger" + (armed === (e.base_id || e.id) ? " is-armed" : "")} onClick={() => remove(e)}>{armed === (e.base_id || e.id) ? (e.repeat ? `Tap again: removes every ${e.repeat === "monthly" ? "month" : "week"}` : "Tap again to remove") : "Remove"}</button>}
                 </span>
               </li>
             ))}

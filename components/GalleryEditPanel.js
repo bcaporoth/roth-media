@@ -5,6 +5,7 @@
 // their own portal login.
 
 import { useEffect, useState } from "react";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -60,7 +61,7 @@ export default function GalleryEditPanel({ galleryId, onSaved, embedded = false 
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
   async function removeMember(m) {
-    if (!window.confirm(`Remove ${m.name || m.email} from this gallery?`)) return;
+    if (!confirmTap(`Remove ${m.name || m.email} from this gallery?`)) return;
     try { await api("/api/admin/clients", { action: "remove-member", galleryId, clientId: m.id }); await load(); }
     catch (err) { setMsg(err.message); }
   }

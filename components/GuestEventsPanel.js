@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { slugify } from "../lib/guest";
 import TypedConfirm from "./TypedConfirm";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/admin/guest", {
@@ -206,7 +207,7 @@ export default function GuestEventsPanel({ galleries = [] }) {
   }
 
   async function remove(ev) {
-    if (!window.confirm(`Delete "${ev.title}" and every guest upload in it? This can't be undone.`)) return;
+    if (!confirmTap(`Delete "${ev.title}" and every guest upload in it? This can't be undone.`)) return;
     try { await api({ action: "delete-event", eventId: ev.id }); await refresh(); } catch (err) { setError(err.message); }
   }
 
@@ -259,7 +260,7 @@ export default function GuestEventsPanel({ galleries = [] }) {
                   {open ? (
                     <>
                       <button type="button" className="achip" onClick={() => setWindow(ev, new Date(Math.max(Date.now(), new Date(ev.upload_open_until).getTime()) + 30 * 86400000), "x")}>+30 days</button>
-                      <button type="button" className="achip" onClick={() => { if (window.confirm(`Close uploads for "${ev.title}" now? Guests will see "uploads are closed"; you can reopen anytime.`)) setWindow(ev, new Date(), "c"); }}>Close uploads</button>
+                      <button type="button" className="achip" onClick={() => { if (confirmTap(`Close uploads for "${ev.title}" now? Guests will see "uploads are closed"; you can reopen anytime.`)) setWindow(ev, new Date(), "c"); }}>Close uploads</button>
                     </>
                   ) : (
                     <button type="button" className="achip" onClick={() => setWindow(ev, new Date(Date.now() + 30 * 86400000), "r")}>Reopen 30 days</button>

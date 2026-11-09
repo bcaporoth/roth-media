@@ -46,6 +46,7 @@ async function api(payload, { keepalive = false } = {}) {
 }
 
 import { SHOOT_KIND_LABEL as KIND_LABEL, SHOOT_STATUS_LABEL as STATUS_LABEL } from "../lib/studio-labels";
+import { confirmTap } from "../lib/confirm-tap";
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "No date yet");
 const daysOut = (d) => (d ? Math.round((new Date(`${d}T12:00:00`) - new Date()) / 86400000) : null);
 
@@ -83,7 +84,7 @@ function useShoots() {
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   async function remove(s) {
-    if (!window.confirm(`Delete "${s.title}"?`)) return;
+    if (!confirmTap(`Delete "${s.title}"?`)) return;
     try { await api({ action: "delete", id: s.id }); setOpenId(null); await refresh(); } catch (e) { setError(e.message); }
   }
   async function relocate(s) {
@@ -314,7 +315,7 @@ function OwedPanel({ shoots, clock, onOpen, onBulk, tucked = false, full = false
   const old = rows.filter((x) => x.d.final.due && now - x.d.final.due > BACKLOG_DAYS * 86400000);
   const shown = all ? rows : rows.slice(0, OWED_SHOWN);
   function clearOld() {
-    if (!window.confirm(`Mark ${old.length} older shoot${old.length > 1 ? "s" : ""} as delivered? (Everything more than ${BACKLOG_DAYS} days past its due date. You can undo any one of them on its shoot.)`)) return;
+    if (!confirmTap(`Mark ${old.length} older shoot${old.length > 1 ? "s" : ""} as delivered? (Everything more than ${BACKLOG_DAYS} days past its due date. You can undo any one of them on its shoot.)`)) return;
     onBulk(old.map((x) => x.shoot.id));
   }
   return (
@@ -572,7 +573,7 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
     } catch (e) { alert(e.message); }
   }
   function clearGroup(group) {
-    if (!window.confirm(`Empty “${GROUP_LABEL[group]}” on this shoot? The playbook isn't touched.`)) return;
+    if (!confirmTap(`Empty “${GROUP_LABEL[group]}” on this shoot? The playbook isn't touched.`)) return;
     commit((list) => list.filter((c) => c.group !== group));
   }
   function uncheckAll() {
@@ -592,7 +593,7 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
   }
   const wrapMissing = wrapShown.filter((w) => (w.got || 0) < (w.need || 1));
   function setStatus(status) {
-    if (status === "done" && wrapMissing.length && !window.confirm(`Not logged yet: ${wrapMissing.map((w) => w.text).join(", ")}. Mark done anyway?`)) return;
+    if (status === "done" && wrapMissing.length && !confirmTap(`Not logged yet: ${wrapMissing.map((w) => w.text).join(", ")}. Mark done anyway?`)) return;
     onUpdate(s.id, { status });
   }
   const saveNotes = () => { if (notes !== s.notes) onUpdate(s.id, { notes }, "Notes saved"); };

@@ -10,6 +10,7 @@ import { SECTION_LABEL } from "../lib/shoot-guides";
 
 const SECTIONS = ["camera", "gear", "shots", "flow", "poses"];
 import { PLAYBOOK_KIND_OPTIONS as KINDS } from "../lib/studio-labels";
+import { confirmTap } from "../lib/confirm-tap";
 const KIND_LABEL = Object.fromEntries(KINDS);
 const BLURB = {
   camera: "The on-camera nags: white balance, slo-mo, hold still, check the tripod angle. Shows on every shoot so you tick them while you're there, not after.",
@@ -95,7 +96,7 @@ export default function PlaybookBoard() {
     try { const r = await api({ action: "seed", kind: k }); setLists((ls) => [...ls, ...r.lists]); say(r.lists.length ? `${r.lists.length} starter lists added` : "Nothing new to add"); } catch (e) { fail(e); }
   }
   async function remove(l) {
-    if (!window.confirm(`Delete “${l.title}”? Shoots that already used it keep their own copy.`)) return;
+    if (!confirmTap(`Delete “${l.title}”? Shoots that already used it keep their own copy.`)) return;
     try { await api({ action: "delete", id: l.id }); setLists((ls) => ls.filter((x) => x.id !== l.id)); } catch (e) { fail(e); }
   }
 

@@ -8,6 +8,7 @@ import { P } from "./ProductionCards";
 import { DELIVERABLE_KINDS, DELIVERABLE_STATUS_LABEL, QC_CHECKS, FOLLOWUP_KIND_LABEL, VENDOR_SERVICES, TRAVEL_KIND_LABEL, IRS_MILEAGE_CENTS, TEN99_THRESHOLD_CENTS, buildDailyReportText } from "../lib/finish";
 import { CUT_STAGE_LABEL } from "../lib/edit";
 import { money } from "../lib/production";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SqlHint = ({ what }) => <p className="sm-sqlhint">{what} needs <code>supabase/sprint7.sql</code> run once in the Supabase SQL editor.</p>;
 const fmtDate = (d) => (d ? new Date(`${String(d).slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
@@ -18,7 +19,7 @@ function useRows(prefix, project, setRows, fail, { prepend = false } = {}) {
   return {
     add: async (fields) => { const r = await P({ action: `${prefix}-add`, projectId: project.id, ...fields }); setRows((l) => (prepend ? [r.row, ...l] : [...l, r.row])); return r; },
     patch: async (id, fields) => { try { const r = await P({ action: `${prefix}-update`, id, ...fields }); setRows((l) => l.map((x) => (x.id === id ? r.row : x))); return r.row; } catch (e) { fail(e); } },
-    remove: async (x, label) => { if (!window.confirm(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
+    remove: async (x, label) => { if (!confirmTap(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
   };
 }
 const Blur = ({ value, onSave, ...rest }) => <input defaultValue={value ?? ""} onBlur={(e) => e.target.value !== String(value ?? "") && onSave(e.target.value)} {...rest} />;
@@ -60,7 +61,7 @@ export function DeliverablesCard({ project, rows, setRows, onProject, payments =
     } catch (err) { fail(err); } finally { setBusy(""); }
   }
   async function deliverProject() {
-    if (!window.confirm("Mark the project delivered? Stamps today, sets 3-year retention, schedules the follow-ups.")) return;
+    if (!confirmTap("Mark the project delivered? Stamps today, sets 3-year retention, schedules the follow-ups.")) return;
     try { const r = await P({ action: "project-deliver", projectId: project.id }); onProject(null, r.project); say("Delivered. Follow-ups scheduled."); window.setTimeout(() => window.location.reload(), 800); } catch (e) { fail(e); }
   }
   const qcDone = (d) => QC_CHECKS.every(([k]) => d.qc?.checks?.[k]);
@@ -77,7 +78,7 @@ export function DeliverablesCard({ project, rows, setRows, onProject, payments =
           {open === d.id && (
             <div className="person-detail">
               <div className="gcard-actions">
-                <Sel value={d.status} options={DELIVERABLE_STATUS_LABEL} onSave={(v) => { if (v === "delivered" && d.status === "qc" && !qcDone(d) && !window.confirm("QC isn't complete. Deliver anyway?")) return; api.patch(d.id, { status: v }); }} aria-label="Status" />
+                <Sel value={d.status} options={DELIVERABLE_STATUS_LABEL} onSave={(v) => { if (v === "delivered" && d.status === "qc" && !qcDone(d) && !confirmTap("QC isn't complete. Deliver anyway?")) return; api.patch(d.id, { status: v }); }} aria-label="Status" />
                 <label className="achip">{busy === d.id ? "Uploading…" : d.file_key ? "Replace file" : "Upload file"}<input type="file" hidden onChange={(e) => upload(d, e)} disabled={Boolean(busy)} /></label>
                 {d.file_key && <button type="button" className="achip" onClick={async () => { const r = await P({ action: "deliverable-url", id: d.id }); if (r.url) window.open(r.url, "_blank"); }}>Download ↗</button>}
                 <button type="button" className={"achip" + (d.client_visible ? " is-on" : "")} onClick={() => api.patch(d.id, { client_visible: !d.client_visible })}>{d.client_visible ? "in portal when delivered" : "hidden"}</button>

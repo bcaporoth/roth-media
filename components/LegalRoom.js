@@ -8,6 +8,7 @@ import { useState } from "react";
 import { P } from "./ProductionCards";
 import { CLEARANCE_KIND_LABEL, CLEARANCE_STATUS_LABEL, CLEARANCE_BASIS_LABEL, MUSIC_SOURCE_LABEL, MUSIC_USAGE_LABEL, LICENSE_STATUS_LABEL, ARCHIVAL_KIND_LABEL, ARCHIVAL_BASIS_LABEL, ARCHIVAL_STATUS_LABEL, LEGAL_KINDS, LEGAL_STATUS_LABEL, isGood, buildClearanceBible, buildCueSheet, buildEOPacket } from "../lib/legal";
 import { money } from "../lib/production";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SqlHint = ({ what }) => <p className="sm-sqlhint">{what} needs <code>supabase/sprint6.sql</code> run once in the Supabase SQL editor.</p>;
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
@@ -19,7 +20,7 @@ function useRows(prefix, project, setRows, fail) {
   return {
     add: async (fields) => { const r = await P({ action: `${prefix}-add`, projectId: project.id, ...fields }); setRows((l) => [...l, r.row]); return r; },
     patch: async (id, fields) => { try { const r = await P({ action: `${prefix}-update`, id, ...fields }); setRows((l) => l.map((x) => (x.id === id ? r.row : x))); return r.row; } catch (e) { fail(e); } },
-    remove: async (x, label) => { if (!window.confirm(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
+    remove: async (x, label) => { if (!confirmTap(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
   };
 }
 const Blur = ({ value, onSave, ...rest }) => <input defaultValue={value ?? ""} onBlur={(e) => e.target.value !== String(value ?? "") && onSave(e.target.value)} {...rest} />;
@@ -30,7 +31,7 @@ export function GatesCard({ project, gates, onProject, ready, onExport }) {
   if (!ready || !gates) return <section className="cprof-card"><div className="cprof-cardhead"><h2>Gates</h2></div><SqlHint what="The legal layer" /></section>;
   const ov = project.gate_overrides || {};
   function override(c) {
-    if (ov[c.key]) { if (window.confirm("Remove this override?")) { const n = { ...ov }; delete n[c.key]; onProject({ gate_overrides: n }); } return; }
+    if (ov[c.key]) { if (confirmTap("Remove this override?")) { const n = { ...ov }; delete n[c.key]; onProject({ gate_overrides: n }); } return; }
     const reason = window.prompt(`Override "${c.label}" — why is it safe to proceed without it? (logged)`); if (!reason?.trim()) return;
     onProject({ gate_overrides: { ...ov, [c.key]: { reason: reason.trim(), at: today() } } });
   }

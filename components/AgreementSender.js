@@ -3,6 +3,7 @@
 import { useState } from "react";
 import CopyChip from "./CopyChip";
 import { AGREEMENT_KINDS, OFFER_DAYS, agreementText, money, offerDate, offerDaysLeft, offerExpired, offerExpiry } from "../lib/agreements";
+import { confirmTap } from "../lib/confirm-tap";
 
 const STATUS = { sent: "Sent — not signed", signed: "Signed — not paid", paid: "Paid", void: "Voided" };
 function statusText(r) {
@@ -46,7 +47,7 @@ export default function AgreementSender({ recent = [] }) {
   }
 
   async function voidRow(id) {
-    if (!confirm("Void this link? The client won't be able to sign or pay it.")) return;
+    if (!confirmTap("Void this link? The client won't be able to sign or pay it.")) return;
     await fetch("/api/admin/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ void: true, id }) });
     setRows(rows.map((r) => (r.id === id ? { ...r, status: "void" } : r)));
   }

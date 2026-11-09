@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { KINDS, KIND_LABEL, STATUSES, DEFAULT_COUNTS, publicPlan, blankItem } from "../lib/content-plan";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/admin/plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -55,7 +56,7 @@ export default function ContentPlanEditor({ client, initial = {}, aiReady }) {
   }, [draft, direction, counts, free]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function askClaude() {
-    if (draft.items.length && !window.confirm("Replace the current draft with a new one from Claude? (What's published stays as it is until you publish again.)")) return;
+    if (draft.items.length && !confirmTap("Replace the current draft with a new one from Claude? (What's published stays as it is until you publish again.)")) return;
     setBusy("draft"); setError("");
     try {
       const r = await api({ action: "draft", ...settings() });
@@ -67,7 +68,7 @@ export default function ContentPlanEditor({ client, initial = {}, aiReady }) {
   }
 
   async function publish() {
-    if (!window.confirm(`Show this plan on ${client.name || "the client"}'s portal home? (Your questions list stays private.)`)) return;
+    if (!confirmTap(`Show this plan on ${client.name || "the client"}'s portal home? (Your questions list stays private.)`)) return;
     clearTimeout(timer.current);
     setBusy("publish");
     try {
@@ -79,7 +80,7 @@ export default function ContentPlanEditor({ client, initial = {}, aiReady }) {
   }
 
   async function unpublish() {
-    if (!window.confirm("Take the plan off their portal? Your draft stays here.")) return;
+    if (!confirmTap("Take the plan off their portal? Your draft stays here.")) return;
     setBusy("unpublish");
     try { await api({ action: "unpublish", clientId: client.id }); setPublished(null); setPublishedAt(null); say("Taken off their portal"); } catch (err) { fail(err); }
     setBusy("");
@@ -102,7 +103,7 @@ export default function ContentPlanEditor({ client, initial = {}, aiReady }) {
     [items[i], items[j]] = [items[j], items[i]];
     return { ...d, items };
   });
-  const removeItem = (id) => { if (window.confirm("Remove this item from the draft?")) setDraft((d) => ({ ...d, items: d.items.filter((it) => it.id !== id) })); };
+  const removeItem = (id) => { if (confirmTap("Remove this item from the draft?")) setDraft((d) => ({ ...d, items: d.items.filter((it) => it.id !== id) })); };
   const addItem = (kind) => setDraft((d) => ({ ...d, items: [...d.items, blankItem(kind)] }));
 
   const unpublishedChanges = published && !same(draft, published);

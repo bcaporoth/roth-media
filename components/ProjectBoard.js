@@ -21,6 +21,7 @@ import { DiscoveryCard, ApprovalsCard, ReviewsCard, ChangeOrdersCard, PaymentsCa
 import { GatesCard, ClearanceCard, MusicCard, ArchivalCard, LegalRegisterCard } from "./LegalRoom";
 import { PostDashboard, DeliverablesCard, FollowupsCard, PremiereCard, CrewPayCard, VendorsCard, TravelCard, ReportsCard } from "./FinishRoom";
 import { computeGates, buildEOPacket } from "../lib/legal";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -299,7 +300,7 @@ function JournalCard({ project, entries, setEntries, fail, say }) {
     try { const r = await P({ action: "entry-update", id, ...fields }); setEntries((l) => l.map((x) => (x.id === id ? r.entry : x)).sort(sortEntries)); } catch (err) { fail(err); }
   }
   async function remove(x) {
-    if (!window.confirm("Delete this entry?")) return;
+    if (!confirmTap("Delete this entry?")) return;
     try { await P({ action: "entry-delete", id: x.id }); setEntries((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); }
   }
   const pinned = entries.filter((x) => x.pinned);
@@ -360,7 +361,7 @@ function StoryLinesCard({ project, onProject }) {
     setAdding(false); setCur(id); e.target.reset();
   }
   const patchLine = (fields) => saveLines(lines.map((l) => (l.id === cur ? { ...l, ...fields } : l)));
-  function removeLine() { if (!window.confirm(`Delete "${line.title}" and its story line?`)) return; saveLines(lines.filter((l) => l.id !== cur), "Removed"); setCur("film"); }
+  function removeLine() { if (!confirmTap(`Delete "${line.title}" and its story line?`)) return; saveLines(lines.filter((l) => l.id !== cur), "Removed"); setCur("film"); }
   function move(dir) { const i = lines.findIndex((l) => l.id === cur); const j = i + dir; if (j < 0 || j >= lines.length) return; const next = [...lines]; [next[i], next[j]] = [next[j], next[i]]; saveLines(next.map((l, k) => (l.kind === "episode" ? { ...l, number: next.slice(0, k + 1).filter((x) => x.kind === "episode").length } : l))); }
   const label = (l) => (l.kind === "episode" ? `Ep ${l.number}` : LINE_KIND_LABEL[l.kind]) + (l.title ? ` · ${l.title}` : "");
   const filled = (arc) => Object.values(arc || {}).filter((v) => String(v).trim()).length;
@@ -430,7 +431,7 @@ function PeopleCard({ project, people, setPeople, days, byPerson, onSign, onView
     try { const r = await P({ action: "person-update", id, ...fields }); setPeople((l) => l.map((x) => (x.id === id ? r.person : x))); if (msg) say(msg); } catch (err) { fail(err); }
   }
   async function remove(x) {
-    if (!window.confirm(`Remove ${x.name} from the project?`)) return;
+    if (!confirmTap(`Remove ${x.name} from the project?`)) return;
     try { await P({ action: "person-delete", id: x.id }); setPeople((l) => l.filter((y) => y.id !== x.id)); } catch (err) { fail(err); }
   }
   const shown = people.filter((x) => filter === "all" || (filter === "todo" ? !["interviewed", "done", "declined"].includes(x.status) : x.kind === filter));
@@ -606,7 +607,7 @@ function TeamCard({ project, team, staffList, isOwner, fail, say, onDeal = null,
     try { await call({ action: "assign", projectId: project.id, staffId: id }); setMembers((m) => [...m.filter((x) => x.id !== id), { ...s, member_role: "crew" }]); setPick(""); say(`${s.name} is on the project`); } catch (e) { fail(e); }
   }
   async function drop(x) {
-    if (!window.confirm(`Take ${x.name} off this project?`)) return;
+    if (!confirmTap(`Take ${x.name} off this project?`)) return;
     try { await call({ action: "unassign", projectId: project.id, staffId: x.id }); setMembers((m) => m.filter((y) => y.id !== x.id)); } catch (e) { fail(e); }
   }
   const free = (staffList || []).filter((s) => s.active && !members.some((m) => m.id === s.id));

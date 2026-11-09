@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { P } from "./ProductionCards";
 import { CUT_STAGES, CUT_STAGE_LABEL, SELECT_KINDS, VERDICT_LABEL, TRANSCRIPT_STATUS_LABEL, tc, mmss, hms, gb, parseName, buildEDL, buildCSV, buildPaperCut } from "../lib/edit";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SqlHint = ({ what }) => <p className="sm-sqlhint">{what} needs <code>supabase/sprint4.sql</code> run once in the Supabase SQL editor.</p>;
 const VIDEO_EXT = /\.(mov|mp4|m4v|mxf|braw|crm|r3d|avi|mts|m2ts)$/i;
@@ -32,7 +33,7 @@ function useRows(prefix, project, setRows, fail) {
   return {
     add: async (fields) => { const r = await P({ action: `${prefix}-add`, projectId: project.id, ...fields }); setRows((l) => [...l, r.row]); return r; },
     patch: async (id, fields) => { try { const r = await P({ action: `${prefix}-update`, id, ...fields }); setRows((l) => l.map((x) => (x.id === id ? r.row : x))); return r.row; } catch (e) { fail(e); } },
-    remove: async (x, label) => { if (!window.confirm(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
+    remove: async (x, label) => { if (!confirmTap(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
   };
 }
 
@@ -172,7 +173,7 @@ function ClipView({ clip: c, api, selects, setSelects, setClips, days, scenes, p
       setMark({ in: null, out: null }); setSel((s) => ({ ...s, text: "", note: "" })); say(r.person ? "Selected · quote added to " + r.person.name.split(" ")[0] : "Selected");
     } catch (err) { fail(err); }
   }
-  async function dropSelect(s) { if (!window.confirm("Remove this select?")) return; try { await P({ action: "select-delete", id: s.id }); setSelects((l) => l.filter((x) => x.id !== s.id)); if (s.person_id) setPeople((l) => l.map((p) => (p.id === s.person_id ? { ...p, quotes: (p.quotes || []).filter((q) => q.select_id !== s.id) } : p))); } catch (err) { fail(err); } }
+  async function dropSelect(s) { if (!confirmTap("Remove this select?")) return; try { await P({ action: "select-delete", id: s.id }); setSelects((l) => l.filter((x) => x.id !== s.id)); if (s.person_id) setPeople((l) => l.map((p) => (p.id === s.person_id ? { ...p, quotes: (p.quotes || []).filter((q) => q.select_id !== s.id) } : p))); } catch (err) { fail(err); } }
   const curWord = useMemo(() => { if (!words.length) return -1; let lo = 0, hi = words.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (words[m].s <= pos) lo = m; else hi = m - 1; } return words[lo]?.s <= pos && words[lo]?.e >= pos - 0.4 ? lo : -1; }, [pos, words]);
   return (
     <div className="clip-view">
@@ -242,7 +243,7 @@ export function StringoutCard({ project, selects, setSelects, clips, scenes, peo
     try { await Promise.all([P({ action: "select-update", id: s.id, sort: b }), P({ action: "select-update", id: other.id, sort: a })]); setSelects((l) => l.map((x) => (x.id === s.id ? { ...x, sort: b } : x.id === other.id ? { ...x, sort: a } : x))); } catch (e) { fail(e); }
   }
   async function toScene(s, scene_id) { try { const r = await P({ action: "select-update", id: s.id, scene_id }); setSelects((l) => l.map((x) => (x.id === s.id ? r.row : x))); } catch (e) { fail(e); } }
-  async function drop(s) { if (!window.confirm("Remove this select?")) return; try { await P({ action: "select-delete", id: s.id }); setSelects((l) => l.filter((x) => x.id !== s.id)); if (s.person_id) setPeople((l) => l.map((p) => (p.id === s.person_id ? { ...p, quotes: (p.quotes || []).filter((q) => q.select_id !== s.id) } : p))); } catch (e) { fail(e); } }
+  async function drop(s) { if (!confirmTap("Remove this select?")) return; try { await P({ action: "select-delete", id: s.id }); setSelects((l) => l.filter((x) => x.id !== s.id)); if (s.person_id) setPeople((l) => l.map((p) => (p.id === s.person_id ? { ...p, quotes: (p.quotes || []).filter((q) => q.select_id !== s.id) } : p))); } catch (e) { fail(e); } }
   const empty = scenes.filter((s) => !selects.some((x) => x.scene_id === s.id) && !["idea", "locked"].includes(s.status));
   return (
     <section className="cprof-card">

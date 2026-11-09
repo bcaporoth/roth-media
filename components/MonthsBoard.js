@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { KINDS, KIND_LABEL, STATUSES, DEFAULT_COUNTS, blankItem } from "../lib/content-plan";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/admin/months", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -56,7 +57,7 @@ export default function MonthsBoard({ client, initialMonth, initial, months: ini
 
   const setItem = (id, patch) => setRow((r) => ({ ...r, items: r.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }));
   const move = (i, by) => setRow((r) => { const items = [...r.items]; const j = i + by; if (j < 0 || j >= items.length) return r; [items[i], items[j]] = [items[j], items[i]]; return { ...r, items }; });
-  const remove = (id) => { if (window.confirm("Remove this piece from the month?")) setRow((r) => ({ ...r, items: r.items.filter((it) => it.id !== id) })); };
+  const remove = (id) => { if (confirmTap("Remove this piece from the month?")) setRow((r) => ({ ...r, items: r.items.filter((it) => it.id !== id) })); };
   const add = (kind) => setRow((r) => ({ ...r, items: [...r.items, blankItem(kind)] }));
 
   async function run(name, payload, done) {

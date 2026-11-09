@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
 import ClientLogin from "./ClientLogin";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
   const res = await fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -99,7 +100,7 @@ export default function ClientsBoard({ initial, emailReady }) {
     save(c, patch);
   }
   async function galleryReady(c, g) {
-    if (!window.confirm(`Email ${c.email} that "${g.title}" is ready?`)) return;
+    if (!confirmTap(`Email ${c.email} that "${g.title}" is ready?`)) return;
     try { await api({ action: "gallery-ready", clientId: c.id, galleryId: g.id }); say("Sent"); } catch (err) { fail(err); }
   }
   async function addMember(g) {
@@ -109,15 +110,15 @@ export default function ClientsBoard({ initial, emailReady }) {
     try { await api({ action: "add-member", galleryId: g.id, email, name }); await refresh(); say("Added — they log in with their own email"); } catch (err) { fail(err); }
   }
   async function removeMember(g, m) {
-    if (!window.confirm(`Remove ${m.name || m.email} from "${g.title}"?`)) return;
+    if (!confirmTap(`Remove ${m.name || m.email} from "${g.title}"?`)) return;
     try { await api({ action: "remove-member", galleryId: g.id, clientId: m.id }); await refresh(); say("Removed"); } catch (err) { fail(err); }
   }
   async function remove(c) {
-    if (!window.confirm(`Remove ${c.name || c.email} from the roster?`)) return;
+    if (!confirmTap(`Remove ${c.name || c.email} from the roster?`)) return;
     try { const r = await api({ action: "remove", id: c.id }); await refresh(); say(r.loginRemoved ? "Removed — login deleted too" : "Removed"); } catch (err) { fail(err); }
   }
   async function resubscribe(c) {
-    if (!window.confirm(`${c.name || c.email} unsubscribed. Only switch them back on if they asked you to. Continue?`)) return;
+    if (!confirmTap(`${c.name || c.email} unsubscribed. Only switch them back on if they asked you to. Continue?`)) return;
     try { await api({ action: "resubscribe", id: c.id }); await refresh(); say("Back on the list"); } catch (err) { fail(err); }
   }
   async function broadcast(e) {
@@ -125,7 +126,7 @@ export default function ClientsBoard({ initial, emailReady }) {
     const n = audience.send;
     if (!n) { fail(new Error(audience.unsubscribed ? "Nobody to send to — everyone picked has unsubscribed." : "Nobody to send to.")); return; }
     const skip = audience.unsubscribed ? `\n\n${audience.unsubscribed} unsubscribed ${audience.unsubscribed === 1 ? "person is" : "people are"} left out.` : "";
-    if (!window.confirm(`Send "${subject}" to ${n} ${n === 1 ? "person" : "people"}?${skip}`)) return;
+    if (!confirmTap(`Send "${subject}" to ${n} ${n === 1 ? "person" : "people"}?${skip}`)) return;
     setSending(true);
     try {
       const r = await api({ action: "broadcast", subject, message, ids: checkedIds });

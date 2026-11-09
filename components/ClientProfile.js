@@ -16,6 +16,7 @@ import { dueFor, STEPS, rebookText } from "../lib/after-delivery";
 import { referralText } from "../lib/referral-rules";
 import { usd } from "../lib/money-view";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latestBrief, INTAKE } from "../lib/intake";
+import { confirmTap } from "../lib/confirm-tap";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -94,7 +95,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
     } catch (err) { fail(err); }
   }
   async function deleteCall(call) {
-    if (!window.confirm("Delete this call sheet?")) return;
+    if (!confirmTap("Delete this call sheet?")) return;
     try { await api("/api/admin/clients", { action: "call-delete", id: call.id }); setD({ ...d, calls: d.calls.filter((x) => x.id !== call.id) }); } catch (err) { fail(err); }
   }
 
@@ -419,7 +420,7 @@ function BrandCard({ client: c, initial, emailReady, say, fail, copy }) {
     return r;
   }
   async function send() {
-    if (!window.confirm(`Email ${c.email} a button that opens their brand palette? You get a copy.`)) return;
+    if (!confirmTap(`Email ${c.email} a button that opens their brand palette? You get a copy.`)) return;
     setBusy(true);
     try { const r = await api("/api/admin/brand", { action: "invite", clientId: c.id }); setB((x) => ({ ...x, palette: { ...(x.palette || {}), invited_at: r.invited_at } })); say("Brand palette sent"); } catch (err) { fail(err); }
     setBusy(false);

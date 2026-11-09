@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { P } from "./ProductionCards";
 import { ARC_ROLES, ARC_ROLE_LABEL, ERAS, EVIDENCE_LABEL, SOURCE_KINDS, SOURCE_KIND_LABEL, RELIABILITY_LABEL, QUESTION_THEMES, ACCESS_LABEL, EVENT_STATUS_LABEL, STYLE_FIELDS } from "../lib/production";
+import { confirmTap } from "../lib/confirm-tap";
 
 const SqlHint = ({ what }) => <p className="sm-sqlhint">{what} needs <code>supabase/sprint3.sql</code> run once in the Supabase SQL editor.</p>;
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "");
@@ -21,7 +22,7 @@ function useRows(prefix, project, rows, setRows, fail) {
   return {
     add: async (fields) => { const r = await P({ action: `${prefix}-add`, projectId: project.id, ...fields }); setRows((l) => [...l, r.row]); return r.row; },
     patch: async (id, fields) => { try { const r = await P({ action: `${prefix}-update`, id, ...fields }); setRows((l) => l.map((x) => (x.id === id ? r.row : x))); } catch (e) { fail(e); } },
-    remove: async (x, label) => { if (!window.confirm(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
+    remove: async (x, label) => { if (!confirmTap(`Delete ${label || "this"}?`)) return; try { await P({ action: `${prefix}-delete`, id: x.id }); setRows((l) => l.filter((y) => y.id !== x.id)); } catch (e) { fail(e); } },
   };
 }
 

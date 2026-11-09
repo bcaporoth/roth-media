@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { confirmTap } from "../lib/confirm-tap";
 
 // One-tap "please leave a Google review" email to the gallery's client.
 export default function ReviewButton({ galleryId, clientEmail, requestedAt }) {
@@ -10,7 +11,7 @@ export default function ReviewButton({ galleryId, clientEmail, requestedAt }) {
   if (!clientEmail) return null;
 
   async function send() {
-    if (sentAt && !window.confirm(`You already asked on ${new Date(sentAt).toLocaleDateString()}. Send again?`)) return;
+    if (sentAt && !confirmTap(`You already asked on ${new Date(sentAt).toLocaleDateString()}. Send again?`)) return;
     setState("sending");
     try {
       const res = await fetch("/api/admin/review", {
