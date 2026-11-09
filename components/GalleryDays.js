@@ -12,10 +12,9 @@
 import "../app/theme/portal.css";
 import { useEffect, useMemo, useState } from "react";
 import PortalGallery from "./PortalGallery";
-import { splitAlbum } from "../lib/albums";
+import { splitAlbum, albumSlug, albumHash, readAlbumHash } from "../lib/albums";
 
-const slug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "more";
-const hashOf = (key) => `#day-${slug(key)}`;
+const hashOf = (key) => albumHash(key);
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 export default function GalleryDays({ items, title, videoPoster = null }) {
@@ -38,16 +37,34 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
   const picker = named.length >= 2 || (named.length === 1 && days.length > 1);
 
   const [open, setOpen] = useState(null); // day key, or null for the tiles
-  // The address bar carries the open day (#day-oct-22-pop-up), so Back works
-  // and a link can land straight on a day.
+  const [folder, setFolder] = useState(null); // folder slug from the link, or null
+  // The address bar carries the open day (#day-oct-22-pop-up) and folder
+  // (…--photos), so Back works and a link can land straight on either.
   useEffect(() => {
-    if (!picker) return;
     const sync = () => {
-      const h = window.location.hash;
-      const d = days.find((x) => hashOf(x.key) === h);
+      const h = readAlbumHash(window.location.hash);
+      setFolder(h?.folder || null);
+      if (!picker) return;
+      const d = h ? days.find((x) => albumSlug(x.key) === h.day) : null;
       setOpen(d ? d.key : null);
     };
     sync();
+    // Arriving from a link to a day or folder: scroll down to it.
+    if (readAlbumHash(window.location.hash)) {
+      // (80px of room so the fixed top bar doesn't cover the album's name)
+      // The browser's own "put it back where it was" can win the race, so it's
+      // turned off here and the scroll is tried twice.
+      try { window.history.scrollRestoration = "manual"; } catch {}
+      const toGrid = () => {
+        const el = document.getElementById("grid");
+        if (!el) return;
+        // Only while they're still at the very top: never yank someone mid-scroll.
+        if (window.scrollY < 50) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "instant" });
+      };
+      const go = () => { setTimeout(toGrid, 300); setTimeout(toGrid, 1200); };
+      if (document.readyState === "complete") go();
+      else window.addEventListener("load", go, { once: true });
+    }
     window.addEventListener("hashchange", sync);
     window.addEventListener("popstate", sync);
     return () => {
@@ -65,8 +82,13 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
   const openDay = (e, key) => {
     e.preventDefault();
     window.history.pushState(null, "", hashOf(key));
+    setFolder(null);
     setOpen(key);
     topOfGrid();
+  };
+  // Picking a folder tab updates the address bar, so the link can be copied.
+  const folderTab = (dayKey) => (key) => {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search + albumHash(dayKey, key || null));
   };
   const allDays = () => {
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
@@ -85,7 +107,7 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
             <h2 className="pgal-day-title">{only.title}</h2>
           </header>
         )}
-        <PortalGallery items={only.items} title={title} videoPoster={videoPoster} groupWord="folder" />
+        <PortalGallery items={only.items} title={title} videoPoster={videoPoster} groupWord="folder" startFolder={folder} onTab={folderTab(only.key)} />
       </>
     );
   }
@@ -105,7 +127,7 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
             {[photos ? plural(photos, "photo") : "", films ? plural(films, "film") : "", day.folders.size ? plural(day.folders.size, "folder") : ""].filter(Boolean).join(" · ")}
           </p>
         </header>
-        <PortalGallery items={day.items} title={`${title} — ${day.title || "More"}`} videoPoster={videoPoster} groupWord="folder" />
+        <PortalGallery items={day.items} title={`${title} — ${day.title || "More"}`} videoPoster={videoPoster} groupWord="folder" startFolder={folder} onTab={folderTab(day.key)} />
       </>
     );
   }

@@ -12,12 +12,19 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // the middle and end of the day. Items are now dealt round-robin into
 // explicit columns (item i → column i % N), which keeps the masonry look
 // while reading left-to-right in true album order.
-export default function PortalGallery({ items, title, videoPoster = null, groupWord = "album" }) {
+import { albumSlug } from "../lib/albums";
+
+export default function PortalGallery({ items, title, videoPoster = null, groupWord = "album", startFolder = null, onTab = null }) {
   const [lightbox, setLightbox] = useState(null);
   // Folder tabs: null = everything; otherwise one group's key. A new set of
   // items (another day opened) starts back on "All".
   const [tab, setTab] = useState(null);
-  useEffect(() => setTab(null), [items]);
+  // A link can open on one folder (startFolder = its slug, see lib/albums.js).
+  useEffect(() => {
+    const hit = startFolder ? items.find((it) => it.section && albumSlug(it.section) === startFolder) : null;
+    setTab(hit ? hit.section : null);
+  }, [items, startFolder]);
+  const pickTab = (key) => { setTab(key); onTab?.(key); };
   const visibleRef = useRef(null); // indices the viewer's ‹ › walk through
   const [cols, setCols] = useState(3);
   const [saving, setSaving] = useState(null);
@@ -514,7 +521,7 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
     <div className={"pt-gal" + (selectMode ? " is-selecting" : "")}>
       {showTabs && (
         <nav className="pgal-tabs" aria-label={`${groupWord === "folder" ? "Folders" : "Albums"} in this ${groupWord === "folder" ? "day" : "gallery"}`}>
-          <button type="button" className={"pgal-tab" + (tab === null ? " is-on" : "")} aria-pressed={tab === null} onClick={() => setTab(null)}>
+          <button type="button" className={"pgal-tab" + (tab === null ? " is-on" : "")} aria-pressed={tab === null} onClick={() => pickTab(null)}>
             All <em>{items.length}</em>
           </button>
           {groups.map((g) => (
@@ -523,7 +530,7 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
               key={g.key || "·"}
               className={"pgal-tab" + (tab === g.key ? " is-on" : "")}
               aria-pressed={tab === g.key}
-              onClick={() => setTab(g.key)}
+              onClick={() => pickTab(g.key)}
             >
               {g.title || "More"} <em>{g.entries.length}</em>
             </button>

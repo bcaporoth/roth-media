@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from "react";
 import TypedConfirm from "./TypedConfirm";
-import { splitAlbum, joinAlbum, cleanPart } from "../lib/albums";
+import { splitAlbum, joinAlbum, cleanPart, albumHash } from "../lib/albums";
 
 async function api(payload) {
   const res = await fetch("/api/admin/gallery", {
@@ -47,6 +47,21 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const [msg, setMsg] = useState("");
   const [broken, setBroken] = useState(() => new Set());
   const [quick, setQuick] = useState(null); // filename awaiting its one-tap Delete / Keep answer
+
+  // "Copy link": the share link that opens straight on this day or folder.
+  const [copied, setCopied] = useState(""); // which album's link was just copied
+  const linkFor = (day, folder) => `https://rothmediaco.com/g/${gallery.share_token}${albumHash(day, folder)}`;
+  async function copyLink(key, day, folder) {
+    const url = linkFor(day, folder);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(key);
+      setMsg(`Link copied. Paste it in a text or email: ${url}`);
+      setTimeout(() => setCopied((c) => (c === key ? "" : c)), 2500);
+    } catch {
+      setMsg(`Copy this link: ${url}`);
+    }
+  }
 
   async function load() {
     try {
@@ -340,6 +355,11 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                       <button type="button" className="achip" disabled={busy} onClick={() => onAddTo?.(isTop ? TOP : D.day)}>
                         + Add photos
                       </button>
+                      {!isTop && gallery.share_token && (
+                        <button type="button" className={"achip" + (copied === `d:${D.day}` ? " is-on" : "")} onClick={() => copyLink(`d:${D.day}`, D.day, null)} title="Copies a link that opens right on this day">
+                          {copied === `d:${D.day}` ? "Copied ✓" : "🔗 Copy link"}
+                        </button>
+                      )}
                       <button type="button" className="achip" disabled={busy} onClick={() => startRename(dayR, isTop ? "" : D.day)}>
                         {isTop ? "Make this a day…" : "Rename"}
                       </button>
@@ -380,6 +400,11 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                               {!loose && (
                                 <button type="button" className="achip" disabled={busy} onClick={() => onAddTo?.(keyOf(D.day, F.folder))}>
                                   + Add
+                                </button>
+                              )}
+                              {!loose && !isTop && gallery.share_token && (
+                                <button type="button" className={"achip" + (copied === `f:${D.day}›${F.folder}` ? " is-on" : "")} onClick={() => copyLink(`f:${D.day}›${F.folder}`, D.day, F.folder)} title="Copies a link that opens right on this folder">
+                                  {copied === `f:${D.day}›${F.folder}` ? "Copied ✓" : "🔗 Link"}
                                 </button>
                               )}
                               <button type="button" className="achip" disabled={busy} onClick={() => startRename(fR, loose ? "" : F.folder)}>
