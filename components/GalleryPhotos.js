@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from "react";
 import TypedConfirm from "./TypedConfirm";
-import { splitAlbum, joinAlbum, cleanPart, albumHash } from "../lib/albums";
+import { splitAlbum, joinAlbum, cleanPart, albumLink } from "../lib/albums";
 
 async function api(payload) {
   const res = await fetch("/api/admin/gallery", {
@@ -50,7 +50,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
 
   // "Copy link": the share link that opens straight on this day or folder.
   const [copied, setCopied] = useState(""); // which album's link was just copied
-  const linkFor = (day, folder) => `https://rothmediaco.com/g/${gallery.share_token}${albumHash(day, folder)}`;
+  const linkFor = (day, folder) => albumLink(gallery.share_token, day, folder);
   async function copyLink(key, day, folder) {
     const url = linkFor(day, folder);
     try {

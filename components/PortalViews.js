@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteNav from "./SiteNav";
 import SiteFooter from "./SiteFooter";
 import Reveal from "./Reveal";
+import ShareAlbumLink from "./ShareAlbumLink";
 import PortalNav from "./PortalNav";
 import GalleryDays from "./GalleryDays";
 import ClientCalendar from "./ClientCalendar";
@@ -712,17 +713,7 @@ export function PortalPremiere({
           {(gallery.share_token || guestLink) && (
             <div className="pt-prem-strip">
               <div className={"cx-wrap pt-prem-strip-in" + (gallery.share_token && guestLink ? " pt-prem-strip-in--two" : "")}>
-                {gallery.share_token && (
-                  <div className="pt-share">
-                    <p className="cx-kick">Share</p>
-                    <p className="pt-share-text">
-                      Share this gallery with family &amp; friends — no login needed:{" "}
-                      <a href={`/g/${gallery.share_token}`}>
-                        rothmediaco.com/g/{gallery.share_token.slice(0, 8)}…
-                      </a>
-                    </p>
-                  </div>
-                )}
+                {gallery.share_token && <ShareAlbumLink shareToken={gallery.share_token} />}
 
                 {guestLink && (
                   <div className="pt-guest">

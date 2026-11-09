@@ -8,10 +8,11 @@ import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey, getDims, keyExists } from "../../../lib/r2";
 import { guestLinkForGallery } from "../../../lib/guest";
 import { onlineUntilText } from "../../../lib/gallery-access";
+import { readAlbumParam, sectionMatches, splitAlbum } from "../../../lib/albums";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const base = {
     robots: { index: false },
     openGraph: {
@@ -28,16 +29,32 @@ export async function generateMetadata({ params }) {
     const db = supabaseAdmin();
     const { data: gallery } = await db
       .from("galleries")
-      .select("title")
+      .select("id, title, cover_filename")
       .eq("share_token", token)
       .maybeSingle();
     if (!gallery) return base;
+    // A link to one album (?album=…) names that album and shows its photo
+    // in the preview; otherwise the gallery's cover (2026-11-09).
+    const albumQ = String((await searchParams)?.album || "");
+    const want = readAlbumParam(albumQ);
+    let albumTitle = "";
+    if (want) {
+      const { data: media } = await db.from("media").select("section").eq("gallery_id", gallery.id);
+      const hit = (media || []).find((m) => sectionMatches(m.section, want));
+      if (hit) {
+        const { day, folder } = splitAlbum(hit.section);
+        albumTitle = want.folder ? `${day} › ${folder}` : day;
+      }
+    }
+    const name = albumTitle ? `${albumTitle} — ${gallery.title}` : gallery.title;
+    const image = `https://rothmediaco.com/g/${token}/og${albumTitle ? `?album=${encodeURIComponent(albumQ)}` : ""}`;
+    const images = albumTitle || gallery.cover_filename ? [{ url: image }] : base.openGraph.images;
     // Layout template appends "— Roth Media" to <title>; og:title is verbatim.
     return {
       ...base,
-      title: gallery.title,
+      title: name,
       description: "Watch, view, and download your photos and films from Roth Media.",
-      openGraph: { ...base.openGraph, title: `${gallery.title} — Roth Media` },
+      openGraph: { ...base.openGraph, title: `${name} — Roth Media`, images },
     };
   } catch {
     return base;

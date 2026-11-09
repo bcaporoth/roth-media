@@ -12,9 +12,19 @@
 import "../app/theme/portal.css";
 import { useEffect, useMemo, useState } from "react";
 import PortalGallery from "./PortalGallery";
-import { splitAlbum, albumSlug, albumHash, readAlbumHash } from "../lib/albums";
+import { splitAlbum, albumSlug, albumParam, readAlbumUrl } from "../lib/albums";
 
-const hashOf = (key) => albumHash(key);
+// The open day/folder lives in the address bar as ?album=… (see lib/albums.js).
+// Every change is announced so the Share box above can follow along.
+function setAlbumUrl(param, title, push) {
+  const u = new URL(window.location.href);
+  if (param) u.searchParams.set("album", param);
+  else u.searchParams.delete("album");
+  u.hash = "";
+  window.history[push ? "pushState" : "replaceState"](null, "", u);
+  window.dispatchEvent(new CustomEvent("albumchange", { detail: { param, title } }));
+}
+const hrefOf = (key) => `?album=${albumParam(key)}`;
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 export default function GalleryDays({ items, title, videoPoster = null }) {
@@ -42,15 +52,16 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
   // (…--photos), so Back works and a link can land straight on either.
   useEffect(() => {
     const sync = () => {
-      const h = readAlbumHash(window.location.hash);
+      const h = readAlbumUrl(window.location);
       setFolder(h?.folder || null);
-      if (!picker) return;
-      const d = h ? days.find((x) => albumSlug(x.key) === h.day) : null;
-      setOpen(d ? d.key : null);
+      const d = h ? days.find((x) => albumSlug(x.key) === h.day) : picker ? null : days[0];
+      if (picker) setOpen(d ? d.key : null);
+      const f = d && h?.folder ? [...d.folders].find((x) => albumSlug(x) === h.folder) : null;
+      window.dispatchEvent(new CustomEvent("albumchange", { detail: { param: h && d ? albumParam(d.key, f) : null, title: h && d ? [d.title, f].filter(Boolean).join(" › ") : null } }));
     };
     sync();
     // Arriving from a link to a day or folder: scroll down to it.
-    if (readAlbumHash(window.location.hash)) {
+    if (readAlbumUrl(window.location)) {
       // (80px of room so the fixed top bar doesn't cover the album's name)
       // The browser's own "put it back where it was" can win the race, so it's
       // turned off here and the scroll is tried twice.
@@ -81,17 +92,19 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
   };
   const openDay = (e, key) => {
     e.preventDefault();
-    window.history.pushState(null, "", hashOf(key));
+    const d = days.find((x) => x.key === key);
+    setAlbumUrl(albumParam(key), d?.title || "More", true);
     setFolder(null);
     setOpen(key);
     topOfGrid();
   };
   // Picking a folder tab updates the address bar, so the link can be copied.
   const folderTab = (dayKey) => (key) => {
-    window.history.replaceState(null, "", window.location.pathname + window.location.search + albumHash(dayKey, key || null));
+    const d = days.find((x) => x.key === dayKey);
+    setAlbumUrl(picker || key ? albumParam(dayKey, key || null) : null, picker || key ? [d?.title, key].filter(Boolean).join(" › ") || "More" : null, false);
   };
   const allDays = () => {
-    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    setAlbumUrl(null, null, false);
     setOpen(null);
     topOfGrid();
   };
@@ -148,7 +161,7 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
             const cover = coverItem ? (coverItem.kind === "video" ? coverItem.thumbUrl || videoPoster : coverItem.thumbUrl) : videoPoster;
             const meta = [photos ? plural(photos, "photo") : "", films ? plural(films, "film") : ""].filter(Boolean).join(" · ");
             return (
-              <a key={d.key || "·"} href={hashOf(d.key)} className="pgal-album" onClick={(e) => openDay(e, d.key)}>
+              <a key={d.key || "·"} href={hrefOf(d.key)} className="pgal-album" onClick={(e) => openDay(e, d.key)}>
                 <span className="pgal-album-shot">
                   {cover ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
