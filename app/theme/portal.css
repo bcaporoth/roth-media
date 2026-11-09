@@ -301,7 +301,8 @@
 .pt-page .pt-share-text { color: var(--dim); font-size: 0.96rem; line-height: 1.55; max-width: 34rem; }
 /* Long album names wrap instead of running off a phone screen (2026-11-09). */
 .pt-page .pt-share > .pt-share-text { justify-self: stretch; max-width: min(34rem, 100%); }
-.pt-page .pt-share-copy { margin-top: 0.2rem; }
+.pt-page .pt-share-copy { margin-top: 0.5rem; max-width: 100%; white-space: normal; text-align: center; }
+.pt-page .pt-share-copy.is-done { background: var(--gold); border-color: var(--gold); color: #0b0a09; }
 .pt-page .pt-share-text a { display: block; width: max-content; max-width: 100%; padding: 0.7rem 0; color: var(--fg); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--gold); overflow-wrap: anywhere; }
 .pt-page .pt-guest-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.2rem; line-height: 1.25; letter-spacing: -0.01em; color: var(--fg); }
 .pt-page .pt-guest-sub { color: var(--dim); font-size: 0.94rem; line-height: 1.5; max-width: 34rem; }
