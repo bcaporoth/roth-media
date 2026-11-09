@@ -658,6 +658,7 @@ export function PortalPremiere({
           email={email}
           isAdmin={isAdmin}
           brand={hasBrand}
+          active="galleries"
           extra={
             zipUrl ? (
               <li className="pt-nav-extra">

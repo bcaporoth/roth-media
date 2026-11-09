@@ -7402,3 +7402,46 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .ccal-shoot-wrap { display: grid; gap: 0.4rem; }
 .ccal-daymove { justify-self: start; }
 .ccal-list li { flex-wrap: wrap; }
+
+/* Phone bottom tab bar (components/PortalNav.js): only inside the client
+   portal (.pt-root) on a phone — app/theme/portal.css shows it there. */
+.pnav-bottom { display: none; }
+
+/* ════ 3D pills on every signed-in page + Studio (2026-11-09) ════
+   Same raised look as the gallery pills: a hairline highlight on top, a
+   soft shadow under, a faint sheen; hover lifts 1px. Shadows are tuned for
+   the light Studio and the dark portal/Studio separately. */
+:is(.pt-root, .admin-shell) {
+  --pill-lift: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 1px 2px rgba(30, 22, 14, 0.12), 0 8px 18px -10px rgba(30, 22, 14, 0.35);
+  --pill-lift-hi: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 3px 8px rgba(30, 22, 14, 0.16), 0 14px 26px -12px rgba(30, 22, 14, 0.42);
+  --pill-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+}
+.pt-root, .admin-shell.is-dark {
+  --pill-lift: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7);
+  --pill-lift-hi: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 4px 10px rgba(0, 0, 0, 0.4), 0 18px 36px -16px rgba(0, 0, 0, 0.75);
+  --pill-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+}
+.pt-root.skin-light, .skin-light .pt-root {
+  --pill-lift: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 1px 3px rgba(40, 30, 20, 0.12), 0 10px 22px -12px rgba(40, 30, 20, 0.35);
+  --pill-lift-hi: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 3px 8px rgba(40, 30, 20, 0.16), 0 16px 32px -14px rgba(40, 30, 20, 0.4);
+  --pill-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+}
+:is(.pt-root, .admin-shell) :is(.achip, .abtn):not(select),
+.pt-root .portal-appbar .portal-signout, .portal-nav .portal-signout {
+  border-radius: 999px; box-shadow: var(--pill-lift); background-image: var(--pill-sheen);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s, color 0.2s, background-color 0.2s, opacity 0.2s;
+}
+/* Filled buttons get a brighter gloss on top */
+:is(.pt-root, .admin-shell) .abtn:not(.abtn-ghost) { background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 60%); }
+.pt-root .cx-btn { border-radius: 999px; box-shadow: var(--pill-lift); }
+.pt-root .cx-btn--light { background-image: linear-gradient(180deg, #ffffff 0%, var(--fg) 100%); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -1px 0 rgba(0, 0, 0, 0.12) inset, 0 3px 8px rgba(0, 0, 0, 0.35), 0 16px 32px -14px rgba(0, 0, 0, 0.7); }
+@media (hover: hover) {
+  :is(.pt-root, .admin-shell) :is(.achip, .abtn):not(select):not(:disabled):hover,
+  .pt-root .cx-btn:not(:disabled):hover, .pt-root .portal-appbar .portal-signout:hover, .portal-nav .portal-signout:hover {
+    transform: translateY(-1px); box-shadow: var(--pill-lift-hi);
+  }
+}
+:is(.pt-root, .admin-shell) :is(.achip, .abtn):active, .pt-root .cx-btn:active { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.pt-root, .admin-shell) :is(.achip, .abtn), .pt-root .cx-btn { transition: none; transform: none !important; }
+}

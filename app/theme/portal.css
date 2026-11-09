@@ -81,22 +81,37 @@
   .pt-root .portal-appbar .nav-links { gap: 0.9rem; }
   .pt-root .portal-appbar .nav-links li.pt-nav-extra { display: flex !important; }
 }
-/* Phone: two rows. Logo + Account + Sign out on top, the page tabs in a
-   full-width strip underneath (one row overlapped at 390px). The taller bar
-   is --nav-h inside .pt-root, so the page padding, sticky bars and
-   scroll margins below it all move down with it. */
+/* Phone (2026-11-09): like an app. Logo + Settings + Sign out stay on top;
+   the page tabs move to a bar along the bottom with icons (PortalNav renders
+   them a second time as .pnav-bottom). The bottom bar's height is
+   --tabbar-h, and the page leaves that much room at the end. */
 @media (max-width: 640px) {
-  .pt-root { --nav-h: 102px; }
-  .pt-root nav.portal-appbar { flex-wrap: wrap; align-content: flex-start; gap: 0; padding: 0; }
-  .pt-root .portal-appbar .brand { order: 0; height: 56px; margin-right: auto; padding-left: var(--gut); }
-  .pt-root .portal-appbar .nav-links { display: contents; }
-  .pt-root .portal-appbar .nav-links li.pnav-me { order: 1; height: 56px; }
-  .pt-root .portal-appbar .nav-links li.pnav-me:last-child { padding-right: var(--gut); }
-  .pt-root nav.portal-appbar::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
-  .pt-root .portal-appbar .nav-links li.pnav-tab { order: 3; flex: 1 1 25%; height: 46px; justify-content: center; border-top: 1px solid var(--line); }
-  .pt-root .portal-appbar .nav-links li.pnav-tab + li.pnav-tab { border-left: 1px solid var(--line); }
-  .pt-root .portal-appbar .nav-links li.pnav-tab a.pnav-link { justify-content: center; width: 100%; height: 100%; min-height: 0; padding: 0 0.4rem; border-bottom: 2px solid transparent; font-size: 0.9rem; }
-  .pt-root .portal-appbar .nav-links li.pnav-tab a.pnav-link.is-active { border-bottom-color: var(--gold); background: rgba(220, 189, 122, 0.06); }
+  :root { --tabbar-h: calc(62px + env(safe-area-inset-bottom, 0px)); }
+  .pt-root { --nav-h: 56px; }
+  .pt-root .portal-appbar .nav-links li.pnav-tab { display: none !important; }
+  .pt-root .pnav-bottom {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+    padding: 5px 4px env(safe-area-inset-bottom, 0px);
+    background: rgba(11, 10, 9, 0.94); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+    border-top: 1px solid var(--line); box-shadow: 0 -10px 30px -12px rgba(0, 0, 0, 0.6);
+  }
+  .pt-root .pnav-bt {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; min-width: 0;
+    color: var(--dim); text-decoration: none; -webkit-tap-highlight-color: transparent;
+    font: 600 0.68rem/1.1 var(--font-body), "Manrope", sans-serif; letter-spacing: 0.02em;
+  }
+  .pt-root .pnav-bt-ico { display: grid; place-items: center; width: 52px; height: 30px; border-radius: 999px; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+  .pt-root .pnav-bt-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pt-root .pnav-bt.is-active { color: var(--fg); }
+  /* The open page's icon sits in a little raised pill, same look as the gallery pills */
+  .pt-root .pnav-bt.is-active .pnav-bt-ico {
+    color: #14110e; background: linear-gradient(180deg, #ffffff 0%, var(--fg) 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -1px 0 rgba(0, 0, 0, 0.12) inset, 0 3px 8px rgba(0, 0, 0, 0.4);
+  }
+  .pt-root .pnav-bt:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px; border-radius: 12px; }
+  body:has(.pt-root .pnav-bottom) { padding-bottom: var(--tabbar-h); }
+  body:has(.pt-root .pnav-bottom) .studio-return { bottom: calc(var(--tabbar-h) + 12px); }
   .pt-root .portal-appbar .brand-text { display: inline; }
 }
 
@@ -385,6 +400,13 @@
   position: absolute; inset: auto 0 0 0; display: grid; gap: 0.25rem; padding: 2.6rem 0.9rem 0.9rem;
   background: linear-gradient(to top, rgba(11, 10, 9, 0.86), rgba(11, 10, 9, 0.4) 50%, rgba(11, 10, 9, 0));
 }
+/* Album names stay readable on any cover, even one with its own text on it
+   (2026-11-09): a taller, deeper fade and a soft shadow behind the words. */
+.pt-gal .pgal-album-body {
+  padding-top: 5.5rem;
+  background: linear-gradient(to top, rgba(8, 7, 6, 0.94) 0%, rgba(8, 7, 6, 0.78) 38%, rgba(8, 7, 6, 0.35) 72%, rgba(8, 7, 6, 0) 100%);
+}
+.pt-gal .pgal-album-title, .pt-gal .pgal-album-meta, .pt-gal .pgal-album-folders { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 2px 14px rgba(0, 0, 0, 0.55); }
 .pt-gal .pgal-album-title { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 1.1; letter-spacing: -0.02em; color: #f6f1e8; overflow-wrap: anywhere; }
 .pt-gal .pgal-album-meta { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pt-accent, var(--gold)); font-variant-numeric: tabular-nums; }
 .pt-gal .pgal-section { scroll-margin-top: calc(var(--pt-gal-top, var(--nav-h)) + 1.2rem); }
@@ -753,9 +775,17 @@ body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-
 .pt-root .portal-appbar .pnav-user-email { display: none; }
 .pt-root .portal-appbar .pnav-user-short { display: inline; }
 
-/* Phones with 5+ tabs (business clients): 3 per row, two rows, and the page
-   leaves room for both (2026-11-08 — the second row used to hang over the page). */
-@media (max-width: 640px) {
-  .pt-root:has(.portal-appbar .nav-links > li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab) { --nav-h: 148px; }
-  .pt-root:has(.portal-appbar .nav-links > li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab) .portal-appbar .nav-links li.pnav-tab { flex-basis: 33.33%; }
+/* "Select photos" sits at the end of the folder pills row instead of on a
+   row of its own (2026-11-09). Tablet and up only: on a phone three pills +
+   the button don't fit, so it keeps its own row there. While selecting, the
+   bar has more buttons, so it drops back to its own row. */
+@media (min-width: 641px) {
+  .pt-gal:not(.is-selecting) .pgal-tabs:has(+ .pgal-toolbar) { padding-right: 11.5rem; }
+  .pt-gal:not(.is-selecting) .pgal-tabs + .pgal-toolbar { margin-top: calc(-1.4rem - 44px); margin-bottom: 1.4rem; }
 }
+
+/* Sign out: a pill like every other button (beats the square rule above) */
+.pt-root nav.portal-appbar .portal-signout { border-radius: 999px; box-shadow: var(--pill-lift); background-image: var(--pill-sheen); }
+
+/* "0 selected" count: a pill like its neighbors */
+.pt-gal .pgal-tool-count { border-radius: 999px; }

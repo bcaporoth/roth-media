@@ -333,7 +333,7 @@
 .pt-shop .shop-msg { margin: 0; font-size: 0.9rem; color: #f6f1e8; }
 .pt-shop .shop-peek { display: none; }
 @media (max-width: 959px) {
-  .pt-shop .shop-peek { display: flex; justify-content: center; gap: 0.35rem; position: sticky; bottom: 14px; z-index: 20; margin: 0 auto; width: max-content; max-width: calc(100% - 2rem); padding: 0.7rem 1.2rem; border-radius: 999px; background: #f6f1e8; color: #14110e; text-decoration: none; font-size: 0.95rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); order: 2; }
+  .pt-shop .shop-peek { display: flex; justify-content: center; gap: 0.35rem; position: sticky; bottom: calc(14px + var(--tabbar-h, 0px)); z-index: 20; margin: 0 auto; width: max-content; max-width: calc(100% - 2rem); padding: 0.7rem 1.2rem; border-radius: 999px; background: #f6f1e8; color: #14110e; text-decoration: none; font-size: 0.95rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); order: 2; }
   .pt-shop .shop-cart { scroll-margin-top: 90px; order: 3; }
   .pt-shop .shop-main { order: 1; }
 }
