@@ -63,7 +63,9 @@ export default function WelcomeForm({ name: name0 = "", phone: phone0 = "", serv
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Save failed");
       // On to step 2: the details for the first service they picked.
-      window.location.assign(`/portal/brief?type=${encodeURIComponent(services[0])}&saved=1`);
+      // Business details live on "Your brand" (2026-11-08); other services get step 2 here.
+      const other = services.find((t) => t !== "business");
+      window.location.assign(other ? `/portal/brief?type=${encodeURIComponent(other)}&saved=1` : "/portal/brand");
     } catch (err) {
       setBusy(false);
       setError(`That didn't save (${err.message}). Try once more, or text me at 845-549-4425.`);

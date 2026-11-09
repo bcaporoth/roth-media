@@ -81,8 +81,10 @@ export default async function BriefPage({ searchParams }) {
 
   // Step 2: the details for each service they picked (plus any brief they
   // already had from before the welcome form existed).
-  const picked = TYPES.map((t) => t.id).filter((id) => (welcome?.services || []).includes(id) || byType[id]);
-  const services = picked.length ? picked : TYPES.map((t) => t.id);
+  // Business clients answer their business questions on "Your brand" now.
+  const picked = TYPES.map((t) => t.id).filter((id) => ((welcome?.services || []).includes(id) || byType[id]) && !(id === "business" && hasBrand));
+  if (!picked.length && hasBrand && welcome) redirect("/portal/brand");
+  const services = picked.length ? picked : TYPES.map((t) => t.id).filter((id) => !(id === "business" && hasBrand));
   const wanted = TYPES.some((t) => t.id === sp.type) && services.includes(sp.type) ? sp.type : "";
   const current = wanted || services.find((t) => !byType[t]) || services[0];
   const initialByType = Object.fromEntries(services.map((t) => [t, byType[t]?.answers || {}]));

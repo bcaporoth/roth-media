@@ -6,7 +6,9 @@ import { PortalFrame, PortalNotice } from "../../../components/PortalViews";
 import BrandPalette from "../../../components/BrandPalette";
 import { createSupabaseServer, portalConfigured } from "../../../lib/supabase";
 import { adminConfigured, supabaseAdmin, ADMIN_EMAIL } from "../../../lib/supabase-admin";
-import { loadBrand } from "../../../lib/brand-server";
+import { loadBrand, brandAction } from "../../../lib/brand-server";
+import { briefCarryOver } from "../../../lib/brand";
+import { briefsByType } from "../../../lib/intake";
 
 export const dynamic = "force-dynamic";
 
@@ -33,14 +35,24 @@ export default async function BrandPage() {
   const { data: client } = await db.from("clients").select("id, name").eq("email", email).maybeSingle();
   if (!client) return notice(<>Hi — I don&apos;t have your account set up yet.</>, <>You&apos;re signed in as {user.email}, but that email isn&apos;t linked to a client account. Text me at <a href="tel:+18455494425">845-549-4425</a> and I&apos;ll fix it.</>);
 
-  const b = await loadBrand(db, client.id);
+  let b = await loadBrand(db, client.id);
+  // Their business brief answers fill any still-empty spots here (one page now).
+  if (b.ready && b.palette) {
+    const { data: subs } = await db.from("submissions").select("id, kind, created_at, updated_at, fields, utm").eq("kind", "intake").eq("email", email);
+    const biz = briefsByType(subs || []).business;
+    const changes = biz ? briefCarryOver(b.palette.data || {}, biz.answers) : {};
+    if (Object.keys(changes).length) {
+      const r = await brandAction(db, client.id, { action: "save", changes }, "client").catch(() => null);
+      if (r?.ok) b = await loadBrand(db, client.id);
+    }
+  }
   if (!b.ready || !b.palette) return notice("Not open yet.", <>Your brand palette opens once I send it to you. Text me at <a href="tel:+18455494425">845-549-4425</a> if you were expecting it.</>);
 
   nav = <PortalNav email={user.email} isAdmin={isAdmin} active="brand" brand />;
   const name = b.palette.data?.business?.name || client.name;
   return (
     <PortalFrame nav={nav} className="pt-brand mx-page">
-      <PortalTop who={{ kick: "Your business portal", title: name || "Your business" }} page="Your brand" lede={<>Logo, colors, look, customers and goals, in one place. I plan every shoot, edit and caption for you from it. It saves as you go — skip anything and we&apos;ll cover it on a call.</>} />
+      <PortalTop who={{ kick: "Your business portal", title: name || "Your business" }} page="Your brand" lede={<>Your business, your look, your customers and your shoots, all in one place. I plan every shoot, script, edit and caption from it. It saves as you go — skip anything and we&apos;ll cover it on a call. <a href="/portal/brief?step=welcome">Edit your &ldquo;About you&rdquo; answers</a>.</>} />
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap">
           <BrandPalette mode="client" initial={b.palette} initialAssets={b.assets} />

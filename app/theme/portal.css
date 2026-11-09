@@ -748,3 +748,10 @@ body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-
    lives on the Settings page itself. */
 .pt-root .portal-appbar .pnav-user-email { display: none; }
 .pt-root .portal-appbar .pnav-user-short { display: inline; }
+
+/* Phones with 5+ tabs (business clients): 3 per row, two rows, and the page
+   leaves room for both (2026-11-08 — the second row used to hang over the page). */
+@media (max-width: 640px) {
+  .pt-root:has(.portal-appbar .nav-links > li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab) { --nav-h: 148px; }
+  .pt-root:has(.portal-appbar .nav-links > li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab ~ li.pnav-tab) .portal-appbar .nav-links li.pnav-tab { flex-basis: 33.33%; }
+}

@@ -250,7 +250,7 @@ export default async function PortalPage({ searchParams }) {
       brief = b ? { id: b.id, when: new Date(b.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) } : false;
       welcome = welcomeOf(data || []);
       const have = briefsByType(data || []);
-      missing = (welcome?.services || []).filter((t) => !have[t]);
+      missing = (welcome?.services || []).filter((t) => !have[t] && !(t === "business" && palette));
       place = clientAddresses({ subs: data || [] })[0]?.address || "";
     } catch { brief = null; }
   }

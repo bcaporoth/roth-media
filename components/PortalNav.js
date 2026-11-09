@@ -44,7 +44,7 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
             </Link>
           </li>
         )}
-        {!isAdmin && !isStaff && (
+        {!isAdmin && !isStaff && !biz && (
           <li className="pnav-tab">
             <Link className={cls("brief")} href="/portal/brief" title="Your shoot brief — the questions I plan the day from" aria-current={active === "brief" ? "page" : undefined}>
               Your brief
