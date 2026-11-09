@@ -7390,3 +7390,15 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .tc-fold > .scr-grid { padding-bottom: 0.7rem; }
 .tc .scr-field textarea { min-height: 0; }
 .tc-close { margin-top: 0.5rem; }
+/* Calendar: move / reschedule (components/ClientCalendar.js MoveForm). */
+.ccal-move { display: grid; gap: 0.6rem; margin-top: 0.6rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 12px; width: 100%; }
+.ccal-move-h { margin: 0; font-weight: 600; }
+.ccal-move-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.ccal-move-row label { display: grid; gap: 0.25rem; font-size: 0.85rem; }
+.ccal-move-row input { font: inherit; padding: 0.45rem 0.6rem; border: 1px solid var(--field-line, var(--line)); border-radius: 8px; background: transparent; color: inherit; color-scheme: dark; }
+.ccal-move-scope { display: grid; gap: 0.35rem; font-size: 0.92rem; }
+.ccal-move-scope label { display: flex; gap: 0.5rem; align-items: center; cursor: pointer; }
+.ccal-move-acts { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.ccal-shoot-wrap { display: grid; gap: 0.4rem; }
+.ccal-daymove { justify-self: start; }
+.ccal-list li { flex-wrap: wrap; }

@@ -61,6 +61,27 @@ function IdeaBox({ ev, clientId, onSaved }) {
   );
 }
 
+
+const MoveForm = ({ moving, setMoving, busy, onSave, label }) => (
+  <div className="ccal-move">
+    <p className="ccal-move-h">Move {label}</p>
+    <div className="ccal-move-row">
+      <label><span>New date</span><input type="date" value={moving.date} onChange={(e) => setMoving({ ...moving, date: e.target.value })} /></label>
+      <label><span>Time <small>optional</small></span><input type="time" value={moving.time} onChange={(e) => setMoving({ ...moving, time: e.target.value })} /></label>
+    </div>
+    {moving.ev?.repeat && (
+      <div className="ccal-move-scope" role="radiogroup" aria-label="Which dates">
+        <label><input type="radio" checked={moving.scope === "one"} onChange={() => setMoving({ ...moving, scope: "one" })} /> Just this one ({new Date(`${moving.ev.date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })})</label>
+        <label><input type="radio" checked={moving.scope === "all"} onChange={() => setMoving({ ...moving, scope: "all" })} /> All of them (every {moving.ev.repeat === "monthly" ? "month" : "week"})</label>
+      </div>
+    )}
+    <span className="ccal-move-acts">
+      <button type="button" className="abtn" onClick={onSave} disabled={busy || !moving.date}>{busy ? "Moving…" : "Move it"}</button>
+      <button type="button" className="achip" onClick={() => setMoving(null)} disabled={busy}>Cancel</button>
+    </span>
+  </div>
+);
+
 export default function ClientCalendar({ mode = "client", clientId = "", clientName = "", clientPhone = "", initialEvents = null, days = null, defaultLocation = "" }) {
   const studio = mode === "studio";
   const dayHref = (id) => (studio ? `/portal/admin/clients/${clientId}/days/${id}` : `/portal/days/${id}`);
@@ -107,6 +128,30 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
       setEvents((xs) => [...xs, ...expandEvents([j.event])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
       e.target.reset();
     } catch (x) { setErr(x.message); } finally { setBusy(false); }
+  }
+  // Reschedule (2026-11-08): pick a new date (and time). A repeating event asks
+  // "just this one" or "all of them"; Brandon can also move a shoot day.
+  const [moving, setMoving] = useState(null); // { key, ev?, day?, date, time, scope }
+  const [movingBusy, setMovingBusy] = useState(false);
+  function startMove(ev) { setMoving({ key: ev.id, ev, date: ev.date, time: ev.time || "", scope: ev.repeat ? "one" : "all" }); setErr(""); }
+  function startDayMove(d) { setMoving({ key: `day:${d.id}`, day: d, date: d.date, time: d.start_time || "", scope: "all" }); setErr(""); }
+  async function saveMove() {
+    if (!moving?.date) return;
+    setMovingBusy(true); setErr("");
+    try {
+      if (moving.day) {
+        const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-update", dayId: moving.day.id, patch: { date: moving.date, ...(moving.time ? { start_time: moving.time } : {}) } }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || "Couldn't move the shoot day");
+        window.location.reload();
+        return;
+      }
+      const j = await api({ op: "move", client_id: clientId, id: moving.ev.id, from: moving.ev.date, date: moving.date, time: moving.time, scope: moving.scope });
+      setEvents(j.events || []);
+      setDay(moving.date);
+      setCursor(new Date(Number(moving.date.slice(0, 4)), Number(moving.date.slice(5, 7)) - 1, 1));
+      setMoving(null);
+    } catch (x) { setErr(x.message); } finally { setMovingBusy(false); }
   }
   // Two taps, no popup (popups are blocked in some browsers): the first tap
   // turns the button into "Tap again to remove" for 4 seconds.
@@ -169,8 +214,10 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
                   {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
+                  {(studio || e.created_by === "client") && <button type="button" className={"achip" + (moving?.key === e.id ? " is-on" : "")} onClick={() => (moving?.key === e.id ? setMoving(null) : startMove(e))}>Move</button>}
                   {(studio || e.created_by === "client") && <button type="button" className={"achip achip-danger" + (armed === (e.base_id || e.id) ? " is-armed" : "")} onClick={() => remove(e)}>{armed === (e.base_id || e.id) ? (e.repeat ? `Tap again: removes every ${e.repeat === "monthly" ? "month" : "week"}` : "Tap again to remove") : "Remove"}</button>}
                 </span>
+                {moving?.key === e.id && <MoveForm moving={moving} setMoving={setMoving} busy={movingBusy} onSave={saveMove} label={`“${e.title}”`} />}
               </li>
             ))}
           </ul>
@@ -194,10 +241,15 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
           <div className="ccal-shoot">
             <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>A shoot day, with scripts</strong></p>
             {(shootByDay[day] || []).map((d) => (
-              <a key={d.id} className="ccal-shoot-row" href={dayHref(d.id)}>
-                <span><strong>🎬 {d.title}</strong><em>{d.scripts ? `${d.scripts} script${d.scripts === 1 ? "" : "s"}${d.ready ? ` · ${d.ready} ready` : ""}` : "No scripts yet"}</em></span>
-                <span className="abtn">Open the scripts →</span>
-              </a>
+              <div key={d.id} className="ccal-shoot-wrap">
+                <a className="ccal-shoot-row" href={dayHref(d.id)}>
+                  <span><strong>🎬 {d.title}</strong><em>{d.scripts ? `${d.scripts} script${d.scripts === 1 ? "" : "s"}${d.ready ? ` · ${d.ready} ready` : ""}` : "No scripts yet"}</em></span>
+                  <span className="abtn">Open the scripts →</span>
+                </a>
+                {studio && (moving?.key === `day:${d.id}`
+                  ? <MoveForm moving={moving} setMoving={setMoving} busy={movingBusy} onSave={saveMove} label="this shoot day" />
+                  : <button type="button" className="achip ccal-daymove" onClick={() => startDayMove(d)}>Move this shoot day</button>)}
+              </div>
             ))}
             <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
               {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}

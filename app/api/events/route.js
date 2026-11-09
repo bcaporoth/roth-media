@@ -28,11 +28,27 @@ async function who(request, body) {
   return { db, admin, clientId: c.id, clientName: c.name || email };
 }
 
+// Moved dates of repeating events, per client: one submissions row (kind
+// "event_skips", utm = { [eventId]: [dates] }) — no table change needed.
+async function loadSkips(db, clientId) {
+  const { data } = await db.from("submissions").select("id, utm").eq("kind", "event_skips").eq("email", `client:${clientId}`).limit(1).maybeSingle();
+  return { id: data?.id || null, skips: data?.utm && typeof data.utm === "object" ? data.utm : {} };
+}
+async function saveSkips(db, clientId, cur, skips) {
+  const row = { kind: "event_skips", email: `client:${clientId}`, utm: skips, subject: "Calendar: moved dates", summary: "Moved dates of repeating events", updated_at: new Date().toISOString() };
+  const q = cur.id ? db.from("submissions").update(row).eq("id", cur.id) : db.from("submissions").insert({ ...row, status: "archived", fields: [], source_path: "/portal/calendar" });
+  const { error } = await q;
+  if (error) throw new Error(error.message);
+}
+const addDays = (ymd, n) => { const [y, m, d] = ymd.split("-").map(Number); const t = new Date(y, m - 1, d + n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`; };
+const dayDiff = (a, b) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86400000);
+
 export async function GET(request) {
   const w = await who(request); if (w.error) return w.error;
   const { data, error } = await w.db.from("client_events").select(SELECT).eq("client_id", w.clientId).order("date").order("time");
   if (error) return bad(/relation .*client_events/i.test(error.message) ? "Run supabase/client-events.sql once in Supabase first." : error.message, 500);
-  return NextResponse.json({ events: expandEvents(data || []), admin: w.admin });
+  const { skips } = await loadSkips(w.db, w.clientId);
+  return NextResponse.json({ events: expandEvents(data || [], { skips }), admin: w.admin });
 }
 
 export async function POST(request) {
@@ -66,6 +82,52 @@ export async function POST(request) {
       } catch {}
     }
     return NextResponse.json({ ok: true, event: data });
+  }
+  // Reschedule (2026-11-08). scope "one" moves just this date of a repeating
+  // event (the date is skipped on the series, a one-off copy goes on the new
+  // date); "all" shifts the whole series by the same number of days.
+  if (op === "move") {
+    const to = String(body.date || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(to)) return bad("Pick the new date");
+    const time = /^\d{2}:\d{2}$/.test(String(body.time || "")) ? body.time : body.time === "" ? "" : null;
+    const { data: ev } = await db.from("client_events").select(SELECT).eq("id", rowId).eq("client_id", clientId).maybeSingle();
+    if (!ev) return bad("That date isn't on the calendar anymore", 404);
+    if (!admin && ev.created_by !== "client") return bad("Brandon added this one — send him a note to move it.", 403);
+    const from = String(body.id || "").includes("@") ? String(body.id).split("@")[1] : String(body.from || ev.date);
+    const now = new Date().toISOString();
+    let moved;
+    if (ev.repeat && body.scope === "one") {
+      const cur = await loadSkips(db, clientId);
+      const skips = { ...cur.skips, [ev.id]: [...new Set([...(cur.skips[ev.id] || []), from])] };
+      await saveSkips(db, clientId, cur, skips);
+      const copy = { client_id: clientId, date: to, time: time ?? ev.time, title: ev.title, note: ev.note, idea: ev.idea, source: ev.source, repeat: "", wants_shoot: ev.wants_shoot, created_by: ev.created_by };
+      const { data, error } = await db.from("client_events").insert(copy).select(SELECT).single();
+      if (error) return bad(error.message, 500);
+      moved = data;
+    } else {
+      const delta = dayDiff(from, to);
+      const patch = { date: ev.repeat ? addDays(ev.date, delta) : to, ...(time !== null ? { time } : {}), updated_at: now };
+      const { data, error } = await db.from("client_events").update(patch).eq("id", ev.id).eq("client_id", clientId).select(SELECT).single();
+      if (error) return bad(error.message, 500);
+      // Dates already moved on their own shift with the series.
+      if (ev.repeat && delta) {
+        const cur = await loadSkips(db, clientId);
+        if ((cur.skips[ev.id] || []).length) await saveSkips(db, clientId, cur, { ...cur.skips, [ev.id]: cur.skips[ev.id].map((d) => addDays(d, delta)) });
+      }
+      moved = data;
+    }
+    if (!admin && resendConfigured) {
+      const fmtD = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const profile = `https://rothmediaco.com/portal/admin/clients/${clientId}#calendar`;
+      const line = `${w.clientName} moved "${ev.title}" from ${fmtD(from)} to ${fmtD(to)}${ev.repeat ? (body.scope === "one" ? " (just that one)" : ` (every ${ev.repeat === "monthly" ? "month" : "week"} from now on)`) : ""}${moved.time ? ` · ${moved.time}` : ""}`;
+      try {
+        await sendEmail({ to: LEAD_ALERT_TO, subject: `Calendar: ${w.clientName} moved ${ev.title}`, text: `${line}\n\n${profile}` });
+        if (LEAD_SMS_TO) await sendEmail({ to: LEAD_SMS_TO, subject: "Client calendar", text: `${line}\n${profile}` });
+      } catch {}
+    }
+    const { data: all } = await db.from("client_events").select(SELECT).eq("client_id", clientId).order("date").order("time");
+    const { skips } = await loadSkips(db, clientId);
+    return NextResponse.json({ ok: true, events: expandEvents(all || [], { skips }) });
   }
   if (op === "followup") {
     if (!admin) return bad("Not authorized", 401);

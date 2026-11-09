@@ -16,6 +16,9 @@ export async function GET() {
     .or(`date.gte.${since.toISOString().slice(0, 10)},repeat.neq.`)
     .order("date").order("time");
   if (error) return NextResponse.json({ error: /relation .*client_events/i.test(error.message) ? "Run supabase/client-events.sql once in Supabase first." : error.message }, { status: 500 });
-  const events = expandEvents((data || []).map((e) => ({ ...e, clientName: e.clients?.name || e.clients?.email || "Client", clients: undefined })));
+  // Dates moved on their own (one occurrence of a repeating event) — every client's.
+  const { data: sk } = await supabaseAdmin().from("submissions").select("utm").eq("kind", "event_skips");
+  const skips = Object.assign({}, ...(sk || []).map((r) => (r.utm && typeof r.utm === "object" ? r.utm : {})));
+  const events = expandEvents((data || []).map((e) => ({ ...e, clientName: e.clients?.name || e.clients?.email || "Client", clients: undefined })), { skips });
   return NextResponse.json({ events });
 }
