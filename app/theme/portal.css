@@ -789,3 +789,13 @@ body:has(.pt-page, .sh-page) .cx-btn:active, .pt-gal .pgal-tool-btn:active, .pt-
 
 /* "0 selected" count: a pill like its neighbors */
 .pt-gal .pgal-tool-count { border-radius: 999px; }
+
+/* A photo or film open full screen (2026-11-09): the page behind it stays
+   still, and the phone tab bar + "← Studio" pill step out of the way. */
+html:has(.pt-gal .lightbox), body:has(.pt-gal .lightbox) { overflow: hidden; overscroll-behavior: none; }
+.pt-gal .lightbox { overscroll-behavior: contain; }
+/* The open photo lives inside <main> (z-index 2), and the footer is also
+   z-index 2 and later on the page, so near the bottom the footer painted over
+   the photo. While a photo is open, <main> sits above everything. */
+main:has(.pt-gal .lightbox) { z-index: 1000 !important; }
+body:has(.pt-gal .lightbox) .pnav-bottom, body:has(.pt-gal .lightbox) .studio-return { display: none !important; }

@@ -79,7 +79,8 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
       </ul>
     </nav>
     <nav className="pnav-bottom" aria-label="Pages">
-      {tabs.map((t) => (
+      {/* Studio stays off the phone bar: Brandon has the floating "← Studio" pill (2026-11-09). */}
+      {tabs.filter((t) => t.key !== "admin").map((t) => (
         <Link key={t.key} className={"pnav-bt" + (active === t.key ? " is-active" : "")} href={t.href} aria-current={active === t.key ? "page" : undefined}>
           <span className="pnav-bt-ico"><Ico name={t.icon} /></span>
           <span className="pnav-bt-label">{t.short}</span>
