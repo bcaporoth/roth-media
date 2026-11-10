@@ -60,8 +60,22 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
   const [heldItem, setHeldItem] = useState(null); // filename awaiting one more tap
   const heldRef = useRef(null); // { filename, file }
 
+  // Anything bigger than this never goes through the phone's memory: a film
+  // held in RAM while it downloads stalls for minutes with nothing on screen
+  // and can crash the tab. Those go straight to the phone's own download.
+  const SHARE_MAX_BYTES = 60 * 1024 * 1024;
+  const [savePct, setSavePct] = useState(null); // 0-100 while a file comes down
+  const saveAbortRef = useRef(null);
+
   const saveItem = async (e, item) => {
-    if (!touchShare || saving) return;
+    if (!touchShare) return; // desktop: the link itself downloads
+    if (saving) {
+      // A second tap on the busy button means "just download it": stop the
+      // fetch and let the link do a normal download. Other buttons wait.
+      if (saving === item.filename) saveAbortRef.current?.abort();
+      else e.preventDefault();
+      return;
+    }
     e.preventDefault();
 
     const held = heldRef.current;
@@ -79,16 +93,43 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
     setHeldItem(null);
 
     setSaving(item.filename);
+    setSavePct(0);
+    const ac = new AbortController();
+    saveAbortRef.current = ac;
     let file = null;
     try {
-      const res = await fetch(item.downloadUrl);
+      const res = await fetch(item.downloadUrl, { signal: ac.signal });
       if (!res.ok) throw new Error(`fetch ${res.status}`);
-      const blob = await res.blob();
+      const total = Number(res.headers.get("content-length")) || 0;
+      if (item.kind === "video" && (!total || total > SHARE_MAX_BYTES)) {
+        ac.abort();
+        throw new Error("too big for the share sheet");
+      }
+      // Read it in pieces so the button can show how far along it is.
+      let blob;
+      if (res.body && total) {
+        const reader = res.body.getReader();
+        const parts = [];
+        let got = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          parts.push(value);
+          got += value.length;
+          setSavePct(Math.min(99, Math.round((got / total) * 100)));
+        }
+        blob = new Blob(parts, { type: res.headers.get("content-type") || "" });
+      } else {
+        blob = await res.blob();
+      }
       const fallbackType = item.kind === "video" ? "video/mp4" : "image/jpeg";
       file = new File([blob], item.filename, { type: blob.type || fallbackType });
       if (!navigator.canShare({ files: [file] })) throw new Error("no file share");
       await navigator.share({ files: [file] });
     } catch (err) {
+      // The client tapped the busy button again: the link is already
+      // downloading it the normal way.
+      if (ac.signal.aborted && err?.name === "AbortError") return;
       // AbortError = the client closed the share sheet — not a failure.
       if (err?.name === "AbortError") return;
       if (err?.name === "NotAllowedError" && file) {
@@ -98,7 +139,9 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
       }
       window.location.href = item.downloadUrl;
     } finally {
+      saveAbortRef.current = null;
       setSaving(null);
+      setSavePct(null);
     }
   };
 
@@ -491,14 +534,14 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
         </button>
         {!selectMode && (
           <a
-            className="pgal-dl"
+            className={`pgal-dl${saving === item.filename ? " is-busy" : ""}${heldItem === item.filename ? " is-ready" : ""}`}
             href={item.downloadUrl}
             onClick={(e) => saveItem(e, item)}
             aria-label={`Save ${item.kind} ${i + 1}`}
             aria-busy={saving === item.filename}
             title={heldItem === item.filename ? "Tap again to save" : `Save this ${item.kind}`}
           >
-            {saving === item.filename ? "…" : heldItem === item.filename ? "Tap to save" : "↓"}
+            {saving === item.filename ? `${savePct ?? 0}%` : heldItem === item.filename ? "Tap to save" : "↓"}
           </a>
         )}
       </div>
@@ -648,14 +691,14 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
             <img src={current.webUrl} alt={`${title} — photo ${lightbox + 1}`} />
           )}
           <a
-            className="pgal-lightbox-dl"
+            className={`pgal-lightbox-dl${heldItem === current.filename ? " is-ready" : ""}`}
             href={current.downloadUrl}
             onClick={(e) => saveItem(e, current)}
             aria-busy={saving === current.filename}
             title={`Save this ${current.kind}`}
           >
             {saving === current.filename
-              ? "Saving…"
+              ? `Getting it ready… ${savePct ?? 0}%`
               : heldItem === current.filename
                 ? "Tap to save ↓"
                 : touchShare
