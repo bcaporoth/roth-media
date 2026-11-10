@@ -421,6 +421,11 @@
 .rm-cinema .cin-list span:not(.cin-flag) { color: var(--dim); font-size: 0.9rem; line-height: 1.5; }
 .rm-cinema .cin-list b { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
 .rm-cinema .cin-list + .cin-fine { margin-top: 1rem; }
+/* Packages that share a price: one row, price once, the choices listed under it. */
+.rm-cinema .cin-list b small { display: block; font-family: var(--font-body), sans-serif; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); text-align: right; margin-top: 0.2rem; }
+.rm-cinema .cin-pick { display: grid; gap: 0.55rem; margin-top: 0.45rem; }
+.rm-cinema .cin-pick p { margin: 0; padding-left: 0.85rem; border-left: 2px solid var(--line); color: var(--dim); font-size: 0.9rem; line-height: 1.45; }
+.rm-cinema .cin-pick i { display: block; font-style: normal; font-family: var(--font-display), sans-serif; font-weight: 600; font-size: 1rem; color: inherit; margin-bottom: 0.1rem; }
 .rm-cinema .cin-bizgrid .cin-offer { margin-top: 1.2rem; }
 .rm-cinema .cin-ideas { display: grid; gap: 1.1rem; }
 .rm-cinema .cin-ideas li { display: grid; gap: 0.2rem; padding-left: 1rem; border-left: 1px solid var(--gold); }

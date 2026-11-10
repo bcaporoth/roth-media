@@ -39,6 +39,18 @@ const bizFrom = Math.min(...BIZ.map((p) => p.price));
 // The business ad landing: pick a plan, the quote lands in their inbox instantly.
 const BIZ_QUOTE = "/go/business";
 // The three Content Day plans, in the instant-quote page's order (?pkg= pre-selects one there)
+// Price list rows (2026-11-10): packages that share a price sit in one row
+// with the price shown once, so the list doesn't read "$450 · $450 · $450".
+const BIZ_PICK = {
+  mini: "5 reels aimed at what you're promoting",
+  brand: "The Pinned Three: the first three posts on your Instagram, built to stay pinned",
+  always: "A Half Day every month · 5 reels + 10–20 photos · billed per shoot, pause anytime",
+};
+const BIZ_ROWS = BIZ.reduce((rows, p) => {
+  const row = rows.find((r) => r.price === p.price);
+  if (row) row.items.push(p); else rows.push({ price: p.price, items: [p] });
+  return rows;
+}, []);
 const BIZ_PLANS = ["mini", "brand", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
 
@@ -365,13 +377,26 @@ export default function CinemaHome() {
             <div className="cin-rise">
               <h3 className="cin-h3">The price list</h3>
               <ul className="cin-list">
-                {BIZ.map((p) => (
-                  <li key={p.id}>
+                {BIZ_ROWS.map(({ price, items }) => items.length === 1 ? (
+                  <li key={items[0].id}>
                     <div>
-                      <strong>{p.name}{p.popular && <span className="cin-flag">Most booked</span>}</strong>
-                      <span>{p.scope}. {p.get.slice(0, p.id === "day" ? 3 : 2).join(" · ")}{p.promise && <em className="cin-plan-promise"> {p.promise}</em>}</span>
+                      <strong>{items[0].name}{items[0].popular && <span className="cin-flag">Most booked</span>}</strong>
+                      <span>{items[0].scope}. {items[0].get.filter((g) => !/ of coverage at your place$/.test(g)).slice(0, 2).join(" · ")}{items[0].promise && <em className="cin-plan-promise"> {items[0].promise}</em>}</span>
                     </div>
-                    <b>{money(p.price)}</b>
+                    <b>{money(price)}</b>
+                  </li>
+                ) : (
+                  <li key={items[0].id} className="cin-list-group">
+                    <div>
+                      <strong>Half a day on site</strong>
+                      <span>Pick the one you need:</span>
+                      <div className="cin-pick">
+                        {items.map((p) => (
+                          <p key={p.id}><i>{p.name}</i>{BIZ_PICK[p.id] || p.scope}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <b>{money(price)}<small>each</small></b>
                   </li>
                 ))}
               </ul>
@@ -382,7 +407,7 @@ export default function CinemaHome() {
               {bizDeal && (
                 <p className="cin-offer">
                   <strong>Booked by {bizDeal.endsLabel}:</strong> the {bizDeal.label.toLowerCase()} takes {bizDeal.pct}% off —{" "}
-                  {BIZ.map((p) => `${p.name} ${money(applyDeal(p.price, bizDeal))}`).join(", ")}. Applied to your quote automatically.
+                  {BIZ_ROWS.map(({ price, items }) => `${items.map((p) => p.name).join(" / ")} ${money(applyDeal(price, bizDeal))}`).join(", ")}. Applied to your quote automatically.
                 </p>
               )}
             </div>
