@@ -27,7 +27,7 @@ function setAlbumUrl(param, title, push) {
 const hrefOf = (key) => `?album=${albumParam(key)}`;
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
-export default function GalleryDays({ items, title, videoPoster = null }) {
+export default function GalleryDays({ items, title, videoPoster = null, dayCovers = {} }) {
   // Days in first-appearance order. Each day's items keep their global order
   // and carry the FOLDER as their section, so PortalGallery groups by folder.
   const days = useMemo(() => {
@@ -156,7 +156,9 @@ export default function GalleryDays({ items, title, videoPoster = null }) {
           {days.map((d) => {
             const photos = d.items.filter((it) => it.kind !== "video").length;
             const films = d.items.length - photos;
+            // Brandon's pick from Studio first (lib/design.js cleanCovers), then the first photo.
             const coverItem =
+              (dayCovers?.[d.key] && d.items.find((it) => it.filename === dayCovers[d.key] && it.thumbUrl)) ||
               d.items.find((it) => it.kind !== "video" && it.thumbUrl) || d.items.find((it) => it.thumbUrl) || null;
             const cover = coverItem ? (coverItem.kind === "video" ? coverItem.thumbUrl || videoPoster : coverItem.thumbUrl) : videoPoster;
             const meta = [photos ? plural(photos, "photo") : "", films ? plural(films, "film") : ""].filter(Boolean).join(" · ");

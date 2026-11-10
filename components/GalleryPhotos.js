@@ -35,6 +35,7 @@ const keyOf = (day, folder) => joinAlbum(day, folder) || TOP;
 
 export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const [items, setItems] = useState(null);
+  const [dayCovers, setDayCovers] = useState({}); // { "Day name": filename } picked covers
   const [picked, setPicked] = useState(() => new Set());
   const [renaming, setRenaming] = useState(null); // { kind: "day"|"folder"|"top", day, folder }
   const [renameTo, setRenameTo] = useState("");
@@ -67,6 +68,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     try {
       const j = await api({ action: "list-media", galleryId: gallery.id });
       setItems(j.items || []);
+      setDayCovers(j.dayCovers || {});
     } catch (e) {
       setMsg(e.message);
       setItems([]);
@@ -122,6 +124,26 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const pickedFiles = items.filter((it) => picked.has(it.filename));
   const from = new Set(pickedFiles.map((it) => it.album || TOP));
   const onlyIn = from.size === 1 ? [...from][0] : null;
+  // Each day's cover: the pick if it's still there, else the first photo (lib/albums.js dayCoverItem).
+  const coverOf = (D) => {
+    const files = D.folders.flatMap((f) => f.files);
+    return (dayCovers[D.day] && files.find((f) => f.filename === dayCovers[D.day])) || files.find((f) => f.kind !== "video") || files[0] || null;
+  };
+  const coverSet = new Set(namedDays.map((D) => coverOf(D)?.filename).filter(Boolean));
+  const one = n === 1 ? pickedFiles[0] : null;
+  const oneDay = one ? splitAlbum(one.album).day : null;
+  const oneIsCover = Boolean(one && coverSet.has(one.filename));
+  const onePicked = Boolean(one && oneDay && dayCovers[oneDay] === one.filename);
+  async function setCover(day, filename) {
+    setBusy(true); setMsg("");
+    try {
+      const j = await api({ action: "set-day-cover", galleryId: gallery.id, day, filename });
+      setDayCovers(j.dayCovers || {});
+      setPicked(new Set());
+      setMsg(filename ? `That's now the cover of “${day}”. Clients see it on the album tile and in text previews.` : `“${day}” uses its first photo as the cover again.`);
+      onChanged?.();
+    } catch (e) { setMsg(e.message); } finally { setBusy(false); }
+  }
 
   // ── selection ──
   function toggle(filename) {
@@ -284,6 +306,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                 )}
                 {it.kind === "video" && showImg && <span className="gfiles-badge" aria-hidden="true">▶</span>}
                 {on && <span className="gfiles-tick" aria-hidden="true">✓</span>}
+                {coverSet.has(it.filename) && <span className="gfiles-cover">★ Cover</span>}
               </span>
               <span className="gfiles-name">{it.filename}</span>
             </button>
@@ -324,7 +347,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
       <p className="cover-picker-hint gph-hint">
         This is how the client sees “{gallery.title}”: {plural(items.length, "file")} in{" "}
         {namedDays.length === 0 ? "no day albums yet" : plural(namedDays.length, "day")}
-        {folderCount ? `, ${plural(folderCount, "folder")}` : ""}. <strong>Tap photos to select them</strong>, then move them to a day and folder, or remove them.
+        {folderCount ? `, ${plural(folderCount, "folder")}` : ""}. <strong>Tap photos to select them</strong>, then move them to a day and folder, or remove them. To change an album&apos;s cover, tap one photo, then <strong>★ Make it the cover</strong>.
       </p>
 
       <div className="gph-scroll">
@@ -444,6 +467,15 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
           ) : (
             <>
               <strong className="gph-count">{plural(n, "file")} selected</strong>
+              {one && oneDay && one.kind !== "video" && (
+                oneIsCover && !onePicked ? (
+                  <span className="cover-picker-hint">This is already the cover of “{oneDay}” (its first photo).</span>
+                ) : onePicked ? (
+                  <button type="button" className="achip" disabled={busy} onClick={() => setCover(oneDay, null)}>Use the first photo as the cover again</button>
+                ) : (
+                  <button type="button" className="abtn gph-coverbtn" disabled={busy} onClick={() => setCover(oneDay, one.filename)}>★ Make it the cover of “{oneDay}”</button>
+                )
+              )}
               <form className="gph-moveto gph-moveform" onSubmit={(e) => { e.preventDefault(); move(); }}>
                 <span className="gph-label">Move to</span>
                 <select

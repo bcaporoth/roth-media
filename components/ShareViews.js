@@ -175,7 +175,7 @@ export function SharedAlbum({
             )}
 
             <section id="grid" className="sh-grid">
-              <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} />
+              <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} dayCovers={gallery.design?.covers} />
               {children}
             </section>
 

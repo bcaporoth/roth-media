@@ -500,7 +500,7 @@ export async function POST(request) {
     if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
     const jpgName = (f) => f.replace(/\.[^.]+$/, "") + ".jpg";
     const [{ data: gallery }, { data: media }] = await Promise.all([
-      db.from("galleries").select("id, cover_filename").eq("id", galleryId).maybeSingle(),
+      db.from("galleries").select("id, cover_filename, design").eq("id", galleryId).maybeSingle(),
       db.from("media").select("filename, kind, position, section").eq("gallery_id", galleryId)
         .order("position", { ascending: true }),
     ]);
@@ -514,7 +514,24 @@ export async function POST(request) {
         thumbUrl: await signedUrl(photoKey(galleryId, "thumb", jpgName(m.filename))).catch(() => null),
       }))
     );
-    return NextResponse.json({ cover: gallery.cover_filename, items });
+    return NextResponse.json({ cover: gallery.cover_filename, dayCovers: resolveDesign(gallery.design).covers, items });
+  }
+
+  // Pick one day album's cover photo (or null to go back to its first photo).
+  if (body.action === "set-day-cover") {
+    const { galleryId } = body;
+    const day = cleanPart(body.day);
+    if (!isUuid(galleryId) || !day) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data: g } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
+    if (!g) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    const design = resolveDesign(g.design);
+    const covers = { ...design.covers };
+    if (body.filename) covers[day] = String(body.filename);
+    else delete covers[day];
+    const clean = resolveDesign({ ...design, covers });
+    const { error } = await db.from("galleries").update({ design: clean }).eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, dayCovers: clean.covers });
   }
 
   if (body.action === "set-cover") {
@@ -610,6 +627,14 @@ export async function POST(request) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       renamed += count ?? 0;
     }
+    // The day's chosen cover follows the new name.
+    const { data: g } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
+    const design = resolveDesign(g?.design);
+    if (design.covers[from]) {
+      const covers = { ...design.covers, [to]: design.covers[from] };
+      delete covers[from];
+      await db.from("galleries").update({ design: resolveDesign({ ...design, covers }) }).eq("id", galleryId);
+    }
     return NextResponse.json({ ok: true, day: to, renamed });
   }
 
@@ -645,7 +670,9 @@ export async function POST(request) {
   if (body.action === "set-design") {
     const { galleryId, design } = body;
     if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
-    const clean = resolveDesign(design); // whitelists font/mode/accent
+    // whitelists font/mode/accent; the day-album covers are kept as they are
+    const { data: cur } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
+    const clean = resolveDesign({ ...(design || {}), covers: resolveDesign(cur?.design).covers });
     const { error } = await db
       .from("galleries")
       .update({ design: clean })

@@ -7,7 +7,8 @@
 import { resolveShareToken } from "../../../../lib/share-aliases";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { r2Configured, signedUrl, photoKey } from "../../../../lib/r2";
-import { readAlbumParam, sectionMatches } from "../../../../lib/albums";
+import { readAlbumParam, sectionMatches, splitAlbum } from "../../../../lib/albums";
+import { resolveDesign } from "../../../../lib/design";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET(request, { params }) {
     const token = resolveShareToken((await params).token);
     if (!adminConfigured || !r2Configured || !/^[0-9a-f-]{36}$/.test(token)) return fallback();
     const db = supabaseAdmin();
-    const { data: g } = await db.from("galleries").select("id, cover_filename, premiere_enabled, reveal_at").eq("share_token", token).maybeSingle();
+    const { data: g } = await db.from("galleries").select("id, cover_filename, premiere_enabled, reveal_at, design").eq("share_token", token).maybeSingle();
     if (!g) return fallback();
     // Before a premiere's reveal, nothing leaves the server.
     if (g.premiere_enabled && g.reveal_at && new Date(g.reveal_at) > new Date()) return fallback();
@@ -29,7 +30,10 @@ export async function GET(request, { params }) {
     if (want) {
       const { data: media } = await db.from("media").select("filename, kind, section").eq("gallery_id", g.id).order("position", { ascending: true });
       const inAlbum = (media || []).filter((m) => sectionMatches(m.section, want));
-      const photo = inAlbum.find((m) => m.kind !== "video");
+      // A whole-day link uses the cover picked in Studio, if any.
+      const day = inAlbum[0] ? splitAlbum(inAlbum[0].section).day : null;
+      const pick = !want.folder && day ? resolveDesign(g.design).covers[day] : null;
+      const photo = (pick && inAlbum.find((m) => m.filename === pick && m.kind !== "video")) || inAlbum.find((m) => m.kind !== "video");
       const film = inAlbum.find((m) => m.kind === "video");
       if (photo) key = photoKey(g.id, "web", jpgName(photo.filename));
       else if (film) key = photoKey(g.id, "thumb", jpgName(film.filename));

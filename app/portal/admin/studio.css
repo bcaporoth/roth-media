@@ -585,3 +585,10 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 .cpn input:not([type="checkbox"]) { font: inherit; font-size: 0.95rem; padding: 0.6rem 0.75rem; min-height: 44px; border: 1px solid var(--field-line, var(--line)); border-radius: 10px; background: transparent; color: inherit; }
 .cpn input:disabled { opacity: 0.6; }
 .cpn input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f4f4f2; }
+
+/* Day album cover tag on a Studio thumbnail (2026-11-09) */
+.gfiles-cover { position: absolute; left: 0.35rem; top: 0.35rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #dcbd7a; color: #14110e; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+
+/* The selection bar never gets squished: in the scroll box its row could
+   shrink to 48px on a phone and the buttons spilled out of it (2026-11-09). */
+.gph-scroll { grid-auto-rows: max-content; }

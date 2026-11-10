@@ -744,7 +744,7 @@ export function PortalPremiere({
           )}
 
           <section id="grid" className="pt-prem-grid">
-            <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} />
+            <GalleryDays items={items} title={gallery.title} videoPoster={videoPoster} dayCovers={gallery.design?.covers} />
             {children}
           </section>
         </main>
