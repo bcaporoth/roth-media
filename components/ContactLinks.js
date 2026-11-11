@@ -27,7 +27,26 @@ function prettyPhone(n) {
   return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : n;
 }
 
+// The old-style copy works in browsers that refuse navigator.clipboard
+// (seen on the live site in the Claude browser pane, 2026-11-11). It has to
+// run right inside the click, so it goes first.
+function copyOldWay(text) {
+  try {
+    const t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+    document.body.appendChild(t);
+    t.select();
+    const ok = document.execCommand("copy");
+    t.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
 function copy(text) {
+  if (copyOldWay(text)) return Promise.resolve(true);
   try {
     return navigator.clipboard.writeText(text).then(() => true, () => false);
   } catch {
