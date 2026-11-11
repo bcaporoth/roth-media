@@ -98,7 +98,7 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
     saveAbortRef.current = ac;
     let file = null;
     try {
-      const res = await fetch(item.downloadUrl, { signal: ac.signal });
+      const res = await fetch(item.downloadUrl, { signal: ac.signal, cache: "no-store" });
       if (!res.ok) throw new Error(`fetch ${res.status}`);
       const total = Number(res.headers.get("content-length")) || 0;
       if (item.kind === "video" && (!total || total > SHARE_MAX_BYTES)) {
@@ -191,12 +191,18 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
     const files = new Array(chosen.length);
     let done = 0;
     let idx = 0;
+    let failed = false; // one photo failing stops the other workers too
     const worker = async () => {
-      while (idx < chosen.length) {
+      while (idx < chosen.length && !failed) {
         const i = idx++;
-        const res = await fetch(chosen[i].webUrl);
+        // "no-store": a photo the page already SHOWED (opened full screen, or
+        // the cover) sits in the browser's cache without the header that lets
+        // a script read it, so a normal fetch of it fails and the whole save
+        // fell back to one-by-one downloads. Always ask the server fresh.
+        const res = await fetch(chosen[i].webUrl, { cache: "no-store" });
         if (!res.ok) throw new Error(`fetch ${res.status}`);
         const blob = await res.blob();
+        if (failed) return;
         const base = chosen[i].filename.replace(/\.[^.]+$/, "");
         files[i] = new File([blob], `${base}.jpg`, {
           type: blob.type || "image/jpeg",
@@ -205,9 +211,14 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
         onProgress({ done, total: chosen.length, phase: "fetch" });
       }
     };
-    await Promise.all(
-      Array.from({ length: Math.min(4, chosen.length) }, worker)
-    );
+    try {
+      await Promise.all(
+        Array.from({ length: Math.min(4, chosen.length) }, worker)
+      );
+    } catch (err) {
+      failed = true;
+      throw err;
+    }
     return files;
   };
 
