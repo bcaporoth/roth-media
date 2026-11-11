@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DESIGN_ACCENTS } from "../lib/design";
 import { markAdminDevice } from "../lib/track";
+import ContactLinks from "./ContactLinks";
 // Every Studio screen's extra styles — imported here once, for all of them.
 import "../app/portal/admin/studio.css";
 
@@ -222,6 +223,7 @@ export default function StudioShell({ active, newCount = 0, kick, title, childre
         {title && <h1>{title}</h1>}
         {children}
       </main>
+      <ContactLinks />
     </div>
   );
 }

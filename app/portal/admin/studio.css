@@ -592,3 +592,7 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 /* The selection bar never gets squished: in the scroll box its row could
    shrink to 48px on a phone and the buttons spilled out of it (2026-11-09). */
 .gph-scroll { grid-auto-rows: max-content; }
+
+/* Text / Call / Email on a computer: what just happened (ContactLinks.js). */
+.contact-toast { position: fixed; left: 50%; bottom: calc(18px + var(--tabbar-h, 0px)); transform: translateX(-50%); z-index: 1200; width: max-content; max-width: min(34rem, calc(100vw - 32px)); margin: 0; padding: 0.8rem 1.1rem; border-radius: 14px; background: #f4f4f2; color: #1c1c1c; font-size: 0.92rem; line-height: 1.4; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.35); cursor: pointer; }
+.contact-toast a { color: inherit; font-weight: 700; text-decoration: underline; }

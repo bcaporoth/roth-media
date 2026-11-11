@@ -12,6 +12,7 @@ import BalanceList from "./BalanceList";
 import NotesThread from "./NotesThread";
 import ReviewButton from "./ReviewButton";
 import ClientLogin from "./ClientLogin";
+import { openContact } from "./ContactLinks";
 import { dueFor, STEPS, rebookText } from "../lib/after-delivery";
 import { referralText } from "../lib/referral-rules";
 import { usd } from "../lib/money-view";
@@ -75,8 +76,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       const r = await api("/api/admin/clients", { action: "intake-sent", email: c.email, name: c.name, phone: c.phone, type });
       if (!d.intakeSent) setD({ ...d, intakeSent: { id: r.id, created_at: new Date().toISOString(), utm: { type } }, stage: d.stage === "new" ? "intake_sent" : d.stage });
       if (how === "copy") await copy(link, "Intake link");
-      if (how === "sms") window.location.href = `sms:${c.phone.replace(/[^\d+]/g, "")}&body=${encodeURIComponent(`Hi ${c.name.split(" ")[0] || ""} — before our call, could you fill this in? Takes five minutes: ${link}`)}`;
-      if (how === "mail") window.location.href = `mailto:${c.email}?subject=${encodeURIComponent("Before we talk")}&body=${encodeURIComponent(`Hi ${c.name.split(" ")[0] || ""},\n\nBefore our call, could you fill this in? It takes about five minutes and means we skip the basics:\n${link}\n\n— Brandon`)}`;
+      if (how === "sms") openContact(`sms:${c.phone.replace(/[^\d+]/g, "")}&body=${encodeURIComponent(`Hi ${c.name.split(" ")[0] || ""} — before our call, could you fill this in? Takes five minutes: ${link}`)}`);
+      if (how === "mail") openContact(`mailto:${c.email}?subject=${encodeURIComponent("Before we talk")}&body=${encodeURIComponent(`Hi ${c.name.split(" ")[0] || ""},\n\nBefore our call, could you fill this in? It takes about five minutes and means we skip the basics:\n${link}\n\n— Brandon`)}`);
     } catch (err) { fail(err); }
   }
   async function newCall() {
@@ -431,7 +432,7 @@ function BrandCard({ client: c, initial, emailReady, say, fail, copy }) {
       const r = await ensure();
       const first = c.name.split(" ")[0] || "";
       if (how === "copy") await copy(r.link, "Brand palette link");
-      if (how === "sms") window.location.href = `sms:${c.phone.replace(/[^\d+]/g, "")}&body=${encodeURIComponent(`Hi ${first} — here's your brand palette: logo, colors, look and goals. The essentials take about ten minutes and it saves as you go: ${r.link}`)}`;
+      if (how === "sms") openContact(`sms:${c.phone.replace(/[^\d+]/g, "")}&body=${encodeURIComponent(`Hi ${first} — here's your brand palette: logo, colors, look and goals. The essentials take about ten minutes and it saves as you go: ${r.link}`)}`);
       if (how === "open") window.location.href = base;
     } catch (err) { fail(err); }
     setBusy(false);
