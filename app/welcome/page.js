@@ -13,20 +13,41 @@ const NEED = {
   engagement: ["Two outfits — one dressy, one you (I'll help you pick)", "A spot that means something, or I'll suggest three", "The ring, cleaned", "Anything you want in the frame — the dog, a sign, a blanket"],
   wedding: ["Your day-of timeline, as soon as you have one", "Your vendor list — planner, photographer or videographer, DJ", "The family shot list and the three moments you can't miss", "One point of contact for the day who isn't you two"],
   business: ["Your logo and brand colors", "What you want to promote — an offer, a dish, a service", "Any must-have shots, and anyone who'd rather not be on camera", "One point of contact for shoot day"],
+  event: ["The full schedule at least 48 hours before, including setup and teardown times, not just the public agenda", "The moments I can't miss: opening remarks, awards, speakers, a product reveal", "Anyone who needs extra coverage: owners, sponsors, special guests", "Any rooms or areas where cameras aren't allowed", "If there's more than one room at once, which rooms matter most", "One point of contact on the day"],
   family: ["Who's in the photos (and the kids' ages, if any)", "A couple of location ideas, or I'll suggest some", "What you're wearing, roughly — I'll help you coordinate", "Any must-have groupings"],
 };
 const WHEN = {
   engagement: ["Sneak peeks: within 48 hours", "Full gallery: within 2 weeks", "Save-the-date frames flagged in the gallery"],
   wedding: ["Sneak peek: within 48 hours", "Photo gallery: within 12 weeks", "Wedding film: within 12 weeks"],
   business: ["Sneak peek: within 48 hours", "Finished content: within 2 weeks", "One round of revisions included"],
+  event: ["Sneak peek: within 48 hours", "Finished videos: within 2 weeks", "One round of revisions included"],
   family: ["Sneak peeks: within 48 hours", "Full gallery: within 4 weeks", "A year of access in your client account, unlimited downloads"],
 };
+
+// What I bring to business and event shoots. Facts only. Add the drone
+// here once Brandon has his FAA Part 107 license (not before).
+const GEAR = [
+  ["Cinema cameras", "Clean, sharp footage in dim ballrooms, bright outdoor spaces and everything in between."],
+  ["Wireless mics", "A small clip-on mic for each speaker, plus a shotgun mic for the room, audience questions and panels."],
+  ["A gimbal", "Smooth, steady moving shots that follow people around without getting in the way."],
+  ["LED lights", "For dark rooms. Added to your quote when the space needs it."],
+];
+
+// What an event video is built from, so nothing is just random clips.
+const COVER = [
+  ["The place", "Outside, the entrance, the signs, the room before people arrive."],
+  ["The stage", "Speakers, awards and anything said into a microphone."],
+  ["The crowd", "Faces, reactions, applause."],
+  ["The in-between", "People talking, laughing, meeting each other."],
+  ["The details", "Your branding, the decor, the food, the products."],
+];
 
 // One real photo behind the title, matched to what they booked.
 const PHOTO = {
   wedding: { src: "/photos/25-wedding-the-veil-took-flight.jpg", alt: "A bride and groom in a field at sunset, her veil lifted by the wind" },
   engagement: { src: "/photos/24-wedding-a-world-of-their-own.jpg", alt: "A couple close together in golden light, in a world of their own" },
   business: { src: "/photos/42-gym-coach-and-client.jpg", alt: "A coach and her client talking between sets in a gym, in black and white" },
+  event: { src: "/photos/30-event-the-whole-town-showed-up.jpg", alt: "Finisher medals from a local 5K race" },
   family: { src: "/photos/07-senior-portrait-last-light.jpg", alt: "A senior portrait outdoors in the last light of the day" },
   "": { src: "/photos/40-wedding-just-married-mid-laugh.jpg", alt: "A just-married couple walking hand in hand, mid-laugh, in black and white" },
 };
@@ -34,7 +55,8 @@ const PHOTO = {
 export default async function WelcomePage({ searchParams }) {
   const sp = await searchParams;
   const want = sp?.for === "portraits" ? "family" : sp?.for;
-  const cat = ["wedding", "engagement", "business", "family"].includes(want) ? want : "";
+  const cat = ["wedding", "engagement", "business", "event", "family"].includes(want) ? want : "";
+  const biz = cat === "business" || cat === "event";
   const tel = PHONE.replace(/\D/g, "");
   const need = cat ? NEED[cat] : ["The short questionnaire, back within 3 days", "Any must-have shots or moments", "One point of contact for shoot day"];
   const when = cat ? WHEN[cat] : ["Sneak peek: within 48 hours", "Business content: within 2 weeks", "Portrait galleries: within 4 weeks", "Wedding photos & film: within 12 weeks"];
@@ -49,13 +71,13 @@ export default async function WelcomePage({ searchParams }) {
       <h2>The journey</h2>
       <ol>
         <li><strong>Hello.</strong> You reach out; you hear back from me the same day.</li>
-        <li><strong>First call.</strong> Fifteen minutes. I ask about {cat === "business" ? "your business" : "your day"} and what a win looks like.</li>
-        <li><strong>Your plan.</strong> A written plan and a firm price, the same day as the call.</li>
+        <li><strong>First call.</strong> Fifteen minutes. I ask about {cat === "business" ? "your business" : cat === "event" ? "your event" : "your day"} and what a win looks like.</li>
+        <li><strong>{biz ? "Your quote." : "Your plan."}</strong> {biz ? "A quote with three options to pick from. You pick one, sign and pay on one page." : "A written plan and a firm price, the same day as the call."}</li>
         <li><strong>Booked.</strong> {cat === "wedding" || !cat ? "Weddings hold the date with a 50% retainer; the balance is due 14 days before." : "Booking locks your date."} I send a short questionnaire so I show up knowing your story.</li>
-        <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : cat === "engagement" ? ", the spot and the start time (about two hours before sunset)" : ""}.</li>
-        <li><strong>Shoot day.</strong> I arrive early and I direct. You just show up as yourself.</li>
+        <li><strong>Prep.</strong> One to two weeks out we confirm the shot list{cat === "wedding" ? " and the timeline" : cat === "event" ? ", and you send me the full schedule at least 48 hours before" : cat === "engagement" ? ", the spot and the start time (about two hours before sunset)" : ""}.</li>
+        <li><strong>Shoot day.</strong> {cat === "event" ? "I arrive early and set up before your guests get there. You run your event; I get the shots." : "I arrive early and I direct. You just show up as yourself."}</li>
         <li><strong>Delivery.</strong> A sneak peek first, then everything in your own private online gallery — save straight to your phone.</li>
-        <li><strong>{cat === "business" ? "Know another owner?" : cat === "engagement" ? "Know another couple?" : "Know another bride?"}</strong> Once you&apos;ve booked you get a code to send {cat === "business" || cat === "engagement" ? "them" : "her"}. {cat === "business" || cat === "engagement" ? "They get" : "She gets"} $100 off, and you get $100 back. Every one you send, same deal.</li>
+        <li><strong>{biz ? "Know another owner?" : cat === "engagement" ? "Know another couple?" : "Know another bride?"}</strong> Once you&apos;ve booked you get a code to send {biz || cat === "engagement" ? "them" : "her"}. {biz || cat === "engagement" ? "They get" : "She gets"} $100 off, and you get $100 back. Every one you send, same deal.</li>
       </ol>
 
       <h2>When you&apos;ll get it</h2>
@@ -63,6 +85,26 @@ export default async function WelcomePage({ searchParams }) {
 
       <h2>What I need from you</h2>
       <ul>{need.map((n) => <li key={n}>{n}</li>)}</ul>
+
+      {cat === "event" && (
+        <>
+          <h2>What I film at your event</h2>
+          <p>Every event video is built from five kinds of shots, so it tells the whole story instead of being a pile of clips.</p>
+          <ul>{COVER.map(([t, d]) => <li key={t}><strong>{t}.</strong> {d}</li>)}</ul>
+          <h2>Bigger events</h2>
+          <p>
+            Some events need one camera. Some need three, plus extra lights and mics, or a second shooter for a second room.
+            We figure out what yours needs on the call, and your quote shows exactly what&apos;s included in each option.
+          </p>
+        </>
+      )}
+
+      {(biz || !cat) && (
+        <>
+          <h2>What I bring</h2>
+          <ul>{GEAR.map(([t, d]) => <li key={t}><strong>{t}.</strong> {d}</li>)}</ul>
+        </>
+      )}
 
       <h2>Three promises</h2>
       <ol>
