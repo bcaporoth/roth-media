@@ -28,7 +28,6 @@ const addon = (id) => ADDONS.business.find((a) => a.id === id);
 const PHONE = "845-549-4425";
 const SMS_HREF = "sms:+18455494425";
 const QUOTE = "/quote?for=business";
-const bizFrom = Math.min(...PACKAGES.business.map((p) => p.price));
 
 const IDEAS = [
   { who: "A restaurant", what: "Friday night at full tilt — the kitchen firing, plates hitting the pass, regulars mid-laugh. Ends on the dish everyone orders." },
@@ -45,26 +44,33 @@ function Arrow() {
   );
 }
 
+// Business + events are quote-first (2026-11-15): no prices on this page.
+const QUOTE_STEPS = [
+  { n: "01", title: "Tell me what you need", say: "Four quick questions: what you're trying to do, where it'll show up, how often, and your budget." },
+  { n: "02", title: "Get three options", say: "Built around your goal and your budget, with exactly what you get in each one." },
+  { n: "03", title: "Pick one, sign, pay", say: "All on one page. Paid in full, delivered within two weeks." },
+];
+
 const FAQS = [
   {
-    q: "What does a Content Day cost, and what do I get?",
-    a: `A Full Day is ${money(pkg("day").price)}: a full day of coverage at your business, and you walk away with 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. A Half Day is ${money(pkg("mini").price)}: 5 reels and 10–20 photos.`,
+    q: "What does it cost, and what do I get?",
+    a: "Every quote is built around what you need. Tell me what you're trying to do, where it'll show up, how often, and your budget, and I'll send three options with exactly what you get in each. You pick one, sign, and pay on one page.",
   },
   {
     q: "How fast do I get my content?",
-    a: `Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) is ${money(addon("rush").price)}; an extra revision round is ${money(addon("revision").price)}.`,
+    a: "Everything is delivered within two weeks, edited and sized to post. One round of revisions is included. Need it sooner? Rush delivery (one week) can go into your quote.",
   },
   {
     q: "Can I get more content from the same shoot?",
-    a: `Yes — the camera's already up, so it's edit time, not a second trip. 8 more reels are ${money(addon("reels").price)}, 20 more photos ${money(addon("photos").price)}, team headshots ${money(addon("headshots").price)}, and an extra hour or a second location ${money(addon("hour").price)}.`,
+    a: "Yes — the camera's already up, so it's edit time, not a second trip. More reels, more photos, team headshots, interviews, an extra hour or a second location can all go into your quote.",
   },
   {
     q: "Do you cover events?",
-    a: `Yes — Event Coverage is ${money(pkg("event").price)}: up to 3 hours of coverage, a 45–90 second highlight short, and a gallery of 50+ edited photos.`,
+    a: "Yes, events are quoted too. Tell me how big it is and what you need (coverage, interviews, a highlight video, photos), and the quote covers the hours, the gear, and a second shooter if it needs one.",
   },
   {
     q: "Can you run ads with the videos?",
-    a: `Yes — Facebook ads + lead generation is a ${money(addon("ads").price)} add-on: ads built from your videos, aimed at local customers, with leads sent straight to you.`,
+    a: "Yes — Facebook ads + lead generation can go into any quote: ads built from your videos, aimed at local customers, with leads sent straight to you.",
   },
   {
     q: "Can I use the videos in paid ads?",
@@ -72,7 +78,7 @@ const FAQS = [
   },
   {
     q: "Do you build websites too?",
-    a: `Yes — a full site built from your Content Day footage, photos, and words is ${money(addon("website").price)}, then ${money(addon("website").monthly)}/month to keep it running.`,
+    a: "Yes — a full site built from your footage, photos, and words can be part of your quote, with a monthly fee to keep it running.",
   },
 ];
 
@@ -85,7 +91,6 @@ const JSON_LD = {
   provider: { "@id": BUSINESS_ID, "@type": "ProfessionalService", name: "Roth Media", telephone: "+1-845-549-4425", email: EMAIL, url: "https://rothmediaco.com", sameAs: SAME_AS },
   areaServed: AREA_SERVED,
   audience: { "@type": "BusinessAudience", name: "Local businesses — shops, gyms, restaurants, builders, and makers" },
-  offers: PACKAGES.business.map((p) => ({ "@type": "Offer", name: p.name, price: p.price, priceCurrency: "USD", availability: "https://schema.org/InStock" })),
 };
 const CRUMBS_LD = breadcrumbLd([{ name: "Roth Media", path: "/" }, { name: "Business", path: "/business" }]);
 
@@ -127,7 +132,7 @@ export default function BusinessPage() {
               want to promote — for shops, gyms, restaurants, builders, and makers
               in Sayre, Athens, Waverly, Elmira, and Corning.
             </p>
-            <p className="bz-from"><span className="cx-kick cx-kick--dim">Content Days from</span> <b className="cx-num">{money(bizFrom)}</b></p>
+            <p className="bz-from"><span className="cx-kick cx-kick--dim">Pricing</span> <b className="cx-num">Custom quote</b></p>
             <div className="cx-cta-row">
               <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Build my quote <Arrow /></Link>
               <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>
@@ -188,34 +193,24 @@ export default function BusinessPage() {
         <section className="cx-section cx-band bz-prices" id="pricing">
           <div className="cx-wrap">
             <div className="cx-title cx-reveal">
-              <p className="cx-kick">The price list</p>
-              <h2 className="cx-h2">Real prices, up front.</h2>
+              <p className="cx-kick">Pricing</p>
+              <h2 className="cx-h2">Built around what you need.</h2>
             </div>
-            <div className={`bz-pkgs ${PACKAGES.business.length === 1 ? "one" : PACKAGES.business.length === 2 ? "two" : ""}`}>
-              {PACKAGES.business.map((p, i) => (
-                <Link key={p.id} href={QUOTE} className={`cx-card bz-pkg cx-reveal ${p.popular ? "cx-card--accent popular" : ""}`} style={{ transitionDelay: `${i * 90}ms` }}>
-                  <span className="bz-pkg-top">
-                    <span className="bz-pkg-name">{p.name}</span>
-                    {p.popular && <span className="cx-flag">Most booked</span>}
-                  </span>
-                  <span className="bz-pkg-price"><DealPrice price={p.price} category="business" packageId={p.id} />{p.per || ""} <small>starting at</small></span>
-                  <span className="bz-pkg-scope">{p.scope}</span>
-                  <span className="cx-kick bz-pkg-you">You get</span>
-                  <ul className="cx-list">{p.get.map((g) => <li key={g}>{g}</li>)}</ul>
-                  <span className="cx-link cx-link--caps bz-pkg-go">Build this quote <Arrow /></span>
+            <div className="bz-pkgs">
+              {QUOTE_STEPS.map((st, i) => (
+                <Link key={st.n} href={QUOTE} className={`cx-card bz-pkg cx-reveal ${i === 0 ? "cx-card--accent popular" : ""}`} style={{ transitionDelay: `${i * 90}ms` }}>
+                  <span className="bz-pkg-top"><span className="bz-pkg-name">{st.title}</span></span>
+                  <span className="bz-pkg-price">{st.n}</span>
+                  <span className="bz-pkg-scope">{st.say}</span>
+                  {i === 0 && <span className="cx-link cx-link--caps bz-pkg-go">Start <Arrow /></span>}
                 </Link>
               ))}
             </div>
             <div className="bz-price-notes cx-reveal">
               <p className="cx-fine">
-                Add what fits: {listedAddons("business").map((a) => `${a.name.toLowerCase()} (${a.from ? "from " : ""}+${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""})`).join(", ")}. Every add-on is priced in the quote builder.
+                Videos, photos, interviews, team headshots, extra lighting and mics, rush delivery, ads, even a website: anything can go into a quote. The price is in writing before we shoot.
               </p>
-              {deal && (
-                <p className="cx-offer">
-                  <strong>Booked by {deal.endsLabel}:</strong> the {deal.label.toLowerCase()} takes {deal.pct}% off —{" "}
-                  {PACKAGES.business.map((p) => `${p.name} ${money(applyDeal(p.price, deal))}`).join(", ")}. Applied to your quote automatically.
-                </p>
-              )}
+              <p className="cx-cta-row"><Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Get my quote <Arrow /></Link></p>
             </div>
           </div>
         </section>
@@ -288,7 +283,7 @@ export default function BusinessPage() {
             <h2 className="cx-h1 cx-h1--long">Your competitors are posting. Out-post them.</h2>
             <p className="cx-lede">No pressure, no surprises. You see the real number first. I&apos;ll be in touch within 24 hours.</p>
             <div className="cx-cta-row">
-              <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Get my instant quote <Arrow /></Link>
+              <Link href={QUOTE} className="cx-btn cx-btn--light cx-btn--lg">Get my quote <Arrow /></Link>
               <a href={CALENDLY} className="cx-btn cx-btn--ghost cx-btn--lg" target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>
               <a href={SMS_HREF} className="cx-link">or text {PHONE} <Arrow /></a>
             </div>

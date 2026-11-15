@@ -305,3 +305,14 @@
 /* "You can rely on a good time" lines */
 .qt-page .qt-rely { margin: 0.9rem 0 0; font-family: var(--font-display), "Syne", sans-serif; font-weight: 500; font-size: 1.02rem; color: var(--gold); }
 .qt-page .qt-promise { margin: 0 0 0.2rem; color: var(--fg); font-size: 0.98rem; line-height: 1.5; }
+
+/* ── Business quote form (BusinessAsk.js, 2026-11-15): four questions, no prices. ── */
+.ba-form { display: grid; gap: 2.4rem; }
+.ba-step { display: grid; gap: 0.7rem; }
+.ba-num { margin: 0; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--dim, #9a948a); font-weight: 600; }
+.ba-step .qt-q { margin: 0; }
+.ba-hint { margin: -0.2rem 0 0.2rem; }
+.ba-pills { flex-wrap: wrap; gap: 0.55rem; }
+.ba-pills .cx-pill { flex: 0 1 auto; white-space: normal; text-align: left; }
+.ba-step .qt-reach { margin-top: 0.6rem; }
+.ba-actions { display: grid; gap: 0.8rem; }

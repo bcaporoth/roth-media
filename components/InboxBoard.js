@@ -475,6 +475,7 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                       {busyProfile ? "Opening…" : "Open profile"}
                     </button>
                   )}
+                  {open.intel.lead && open.kind !== "booking" && <a className="abtn abtn-ghost" href={`/portal/admin/quotes?from=${open.id}`}>Build a quote</a>}
                   <a className="abtn abtn-ghost" href={planHref}>Plan shoot</a>
                   {open.intel.lead && open.status !== "booked" && (
                     <button type="button" className="abtn ix-book" onClick={bookIt} disabled={booking} title="Makes their client record, a calendar shoot, and (for business) a shoot day — then marks them Booked">

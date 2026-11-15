@@ -7,7 +7,6 @@ import { PACKAGES, money } from "../lib/packages";
 export const metadata = { title: "Page not found" };
 
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
-const bizFrom = Math.min(...PACKAGES.business.map((p) => p.price));
 
 function Arrow() {
   return (
@@ -40,7 +39,7 @@ export default function NotFound() {
             <ul className="mx-doors">
               <li><Link href="/"><strong>Home</strong><span>Films &amp; photographs, start to finish</span><Arrow /></Link></li>
               <li><Link href="/weddings"><strong>Weddings</strong><span><b>from {money(wedFrom)}</b></span><Arrow /></Link></li>
-              <li><Link href="/business"><strong>Business</strong><span><b>from {money(bizFrom)}</b></span><Arrow /></Link></li>
+              <li><Link href="/business"><strong>Business</strong><span><b>custom quote</b></span><Arrow /></Link></li>
               <li><Link href="/quote"><strong>Get a quote</strong><span>Real prices in about a minute</span><Arrow /></Link></li>
             </ul>
           </div>

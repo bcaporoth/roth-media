@@ -119,7 +119,15 @@ export default function CardPage() {
               <div key={c.id} className="mx-menu">
                 <h3 className="cx-kick">{MENU_LABEL[c.id] || c.title}</h3>
                 <div className="mx-menu-list">
-                  {PACKAGES[c.id].map((pkg) => (
+                  {/* Business + events are quote-first (2026-11-15): no package prices. */}
+                  {c.id === "business" ? (
+                    <CardLink className="mx-pkg" href="/quote?for=business" event="card_menu_business">
+                      <span className="mx-pkg-top"><strong>Custom quote</strong><b>3 options</b></span>
+                      <span className="mx-pkg-scope">Videos, photos, interviews, or your event, built around what you need.</span>
+                      <ul className="cx-list"><li>Four quick questions</li><li>A quote with three options to pick from</li><li>Pick one, sign and pay on one page</li></ul>
+                      <em className="mx-pkg-go">Get my quote <Arrow /></em>
+                    </CardLink>
+                  ) : PACKAGES[c.id].map((pkg) => (
                     <CardLink key={pkg.id} className="mx-pkg" href={`/quote?for=${c.id}`} event={`card_menu_${c.id}`}>
                       <span className="mx-pkg-top"><strong>{pkg.name}</strong><b><DealPrice price={pkg.price} category={c.id} packageId={pkg.id} /></b></span>
                       <span className="mx-pkg-scope">{pkg.scope}</span>

@@ -43,6 +43,7 @@ export const STUDIO_TABS = [
     href: "/portal/admin/pay",
     subs: [
       { key: "pay", label: "Payments", href: "/portal/admin/pay" },
+      { key: "quotes", label: "Quotes", href: "/portal/admin/quotes" },
       { key: "partners", label: "Partners", href: "/portal/admin/partners" },
       { key: "coupons", label: "Coupons", href: "/portal/admin/coupons" },
     ],

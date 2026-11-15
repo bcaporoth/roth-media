@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
   if (!c) return {};
   return {
     title: `Photographer & Videographer in ${c.name}, ${c.state}`,
-    description: `Wedding photography, cinematic wedding films, and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding photography from ${money(PACKAGES.wedding[0].price)}, brand video days from ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}. Instant quote.`,
+    description: `Wedding photography, cinematic wedding films, and Content Days for businesses in ${c.name}, ${c.state} — ${c.home ? "based right here" : `${c.drive} from Waverly`}. Real prices: wedding photography from ${money(PACKAGES.wedding[0].price)}, business video and photos quoted around what you need. Instant quote.`,
     alternates: { canonical: `/${c.slug}` },
   };
 }
@@ -46,7 +46,6 @@ export default async function CityPage({ params }) {
   if (!c) notFound();
 
   const film = PACKAGES.wedding.find((p) => p.popular) || PACKAGES.wedding[0];
-  const day = PACKAGES.business.find((p) => p.popular) || PACKAGES.business[0];
 
   const JSON_LD = businessLd({
     url: `https://rothmediaco.com/${c.slug}`,
@@ -58,7 +57,7 @@ export default async function CityPage({ params }) {
   const FAQS = [
     { q: `Do you travel to ${c.name}?`, a: `${c.home ? `Yes — I'm based in ${c.name}, so there's no travel at all` : `Yes — ${c.name} is ${c.drive} from Waverly`} and travel's included anywhere within an hour of Corning, Waverly, Sayre, or Athens. I also film in ${c.nearby.slice(0, 3).join(", ")}.` },
     { q: `How much does a wedding photographer or videographer cost in ${c.name}?`, a: `My prices are public. ${PACKAGES.wedding[0].name} starts at ${money(PACKAGES.wedding[0].price)}; ${film.name} — the full day — starts at ${money(film.price)}. You can build your exact quote online in two minutes.` },
-    { q: `What does a Content Day cost for a ${c.name} business?`, a: `A ${day.name} is ${money(day.price)} — a full day on site, 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos, delivered within two weeks and cleared for ads. A Half Day is ${money(Math.min(...PACKAGES.business.map((p) => p.price)))}.` },
+    { q: `What does business video cost for a ${c.name} business?`, a: `Every business quote is built around what you need. Tell me what you're trying to do, where it'll show up, how often, and your budget, and I'll send three options with exactly what you get in each. Content is delivered within two weeks and cleared for ads.` },
     { q: "When do we get everything?", a: "Wedding photos and films are delivered online within twelve weeks, with a sneak peek within 48 hours. Business content lands within two weeks, edited and sized to post." },
   ];
   const FAQ_LD = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
@@ -129,15 +128,12 @@ export default async function CityPage({ params }) {
         <section id="business" className="cx-section cx-section--rule">
           <div className="cx-wrap">
             <div className="cx-title cx-reveal">
-              <p className="cx-kick">Business · the price list</p>
+              <p className="cx-kick">Business · custom quotes</p>
               <h2 className="cx-h2">Brand video for {c.name} businesses</h2>
               <p className="cx-lede">{c.business}</p>
             </div>
-            <div className="cx-grid cx-grid--3 wd-pkgs cx-reveal">
-              {PACKAGES.business.map((p) => (
-                <WdPackageCard key={p.id} p={p} href="/quote?for=business" />
-              ))}
-            </div>
+            <p className="cx-lede cx-reveal">Tell me what you need in four quick questions, and I&apos;ll send a quote with three options to pick from.</p>
+            <p className="cx-cta-row cx-reveal"><Link href="/quote?for=business" className="cx-btn cx-btn--light cx-btn--lg">Get my business quote</Link></p>
             <p className="cx-fine wd-after cx-reveal"><Link href="/business" className="wd-inline">See the full business page →</Link></p>
           </div>
         </section>

@@ -3,6 +3,7 @@ import SiteNav from "../../components/SiteNav";
 import SiteFooter from "../../components/SiteFooter";
 import { stripeConfigured } from "../../lib/stripe";
 import QuoteFlow from "../../components/QuoteFlow";
+import BusinessAsk from "../../components/BusinessAsk";
 
 export const metadata = {
   title: "Get an Instant Quote",
@@ -27,6 +28,7 @@ export default async function QuotePage({ searchParams }) {
   const pkg = String(params?.pkg || "").replace(/[^a-z0-9-]/gi, "").slice(0, 30);
   const date = String(params?.date || "").replace(/[^\w ,.\/-]/g, "").trim().slice(0, 40);
   const hero = HERO[category];
+  const biz = category === "business";
 
   return (
     <>
@@ -39,11 +41,12 @@ export default async function QuotePage({ searchParams }) {
           </div>
           <div className="cx-hero-shade" />
           <div className="cx-wrap cx-hero-body">
-            <p className="cx-kick">Instant quote</p>
-            <h1 className="cx-h1 cx-h1--long">Build your quote in two minutes.</h1>
+            <p className="cx-kick">{biz ? "Your quote" : "Instant quote"}</p>
+            <h1 className="cx-h1 cx-h1--long">{biz ? "Tell me what you need." : "Build your quote in two minutes."}</h1>
             <p className="cx-lede">
-              Pick what you need and I&apos;ll walk you to a tailored starting
-              price, step by step. Real prices, no obligation.
+              {biz
+                ? "Four quick questions. I'll build a quote around them, with three options to pick from. No obligation."
+                : <>Pick what you need and I&apos;ll walk you to a tailored starting price, step by step. Real prices, no obligation.</>}
             </p>
             <p className="qt-rely">&ldquo;He made us so comfortable.&rdquo; &mdash; Kaitlyn, Google review</p>
           </div>
@@ -51,7 +54,7 @@ export default async function QuotePage({ searchParams }) {
 
         <section className="qt-stage">
           <div className="cx-wrap">
-            <QuoteFlow cinema initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />
+            {biz ? <BusinessAsk /> : <QuoteFlow cinema initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />}
           </div>
         </section>
       </main>

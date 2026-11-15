@@ -15,7 +15,6 @@ import { CITIES } from "../lib/cities";
 const PHONE_HREF = "tel:+18455494425";
 const SMS_HREF = "sms:+18455494425";
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
-const bizFrom = Math.min(...PACKAGES.business.map((p) => p.price));
 const portraitFrom = PACKAGES.family[0].price;
 
 function Arrow() {
@@ -36,7 +35,7 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
           <p className="cx-credits-say">“He made us so comfortable.” — Kaitlyn, Google review</p>
           <ul className="cx-enddoors">
             <li><Link href="/#date"><span>Weddings <small>from {money(wedFrom)}</small></span><b>Check my date <Arrow /></b></Link></li>
-            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>from {money(bizFrom)}</small></span><b>Book a 15-min call <Arrow /></b></a></li>
+            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>custom quote</small></span><b>Book a 15-min call <Arrow /></b></a></li>
             <li><a href={SMS_HREF}><span>Family &amp; portraits <small>from {money(portraitFrom)}</small></span><b>Text Brandon <Arrow /></b></a></li>
           </ul>
           <dl className="cx-roll">

@@ -365,3 +365,22 @@
 .pt-settings .ab-acts { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 .pt-settings .ab-form { display: grid; gap: 0.6rem; width: 100%; padding: 0.4rem 0 0.2rem; }
 .pt-settings .ab-form .cx-field { display: grid; gap: 0.3rem; }
+
+/* ── Quote page /q/<token> (QuoteOffer.js, 2026-11-15): pick, sign, pay. ── */
+.mx-page .mx-pa.qo { grid-template-columns: minmax(0, 1fr); max-width: 64rem; }
+.mx-page .qo-note { margin: 0; padding: 1rem 1.1rem; border-left: 3px solid var(--gold); background: var(--bg-2); line-height: 1.6; white-space: pre-line; }
+.mx-page .qo-when { margin: 0; }
+.mx-page .qo-opts { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); align-items: stretch; }
+.mx-page .qo-opts.is-one { grid-template-columns: minmax(0, 28rem); }
+.mx-page .qo-opt { position: relative; display: flex; flex-direction: column; gap: 0.45rem; text-align: left; padding: 1.3rem 1.2rem 1.2rem; background: var(--bg-2); border: 1px solid var(--line); border-radius: 2px; color: var(--fg); font: inherit; cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+.mx-page .qo-opt:disabled { cursor: default; }
+.mx-page .qo-opt:not(:disabled):hover { border-color: rgba(220, 189, 122, 0.6); }
+.mx-page .qo-opt.is-on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.mx-page .qo-flag { position: absolute; top: -0.7rem; left: 1rem; padding: 0.2rem 0.6rem; background: var(--gold); color: #1a1714; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; }
+.mx-page .qo-name { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 1.2rem; }
+.mx-page .qo-price { font-family: var(--font-display), "Syne", sans-serif; font-weight: 600; font-size: 2.1rem; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.mx-page .qo-time { color: var(--dim); font-size: 0.86rem; }
+.mx-page .qo-lines { margin: 0.4rem 0 0.6rem; padding: 0 0 0 1.1rem; display: grid; gap: 0.3rem; color: var(--dim); font-size: 0.95rem; line-height: 1.45; }
+.mx-page .qo-pick { margin-top: auto; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--dim); }
+.mx-page .qo-opt.is-on .qo-pick { color: var(--gold); }
+.mx-page .qo-done-list { margin: 0.8rem 0 0; padding-left: 1.1rem; }

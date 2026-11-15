@@ -22,7 +22,6 @@ import { PACKAGES, money } from "../lib/packages";
 const PHONE_HREF = "tel:+18455494425";
 const SMS_HREF = "sms:+18455494425";
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
-const bizFrom = Math.min(...PACKAGES.business.map((p) => p.price));
 const portraitFrom = PACKAGES.family[0].price;
 
 export default function SiteNav({ active = "", overHero = false, cta = { href: "/quote", label: "Get a quote" } }) {
@@ -71,7 +70,7 @@ export default function SiteNav({ active = "", overHero = false, cta = { href: "
         <summary aria-label="Menu"><span aria-hidden="true" /><span aria-hidden="true" /></summary>
         <nav className="cx-menu-panel" aria-label="Menu">
           <Link href="/weddings" aria-current={cur("weddings")}>Weddings <em>from {money(wedFrom)}</em></Link>
-          <Link href="/business" aria-current={cur("business")}>Business <em>from {money(bizFrom)}</em></Link>
+          <Link href="/business" aria-current={cur("business")}>Business <em>custom quote</em></Link>
           <Link href="/#families" aria-current={cur("portraits")}>Family &amp; portraits <em>from {money(portraitFrom)}</em></Link>
           <Link href="/#date">Check a wedding date <em>open Saturdays</em></Link>
           <Link href="/quote" aria-current={cur("quote")}>Get a quote <em>2 minutes</em></Link>

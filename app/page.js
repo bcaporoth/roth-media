@@ -33,30 +33,21 @@ const PHONE_HREF = "tel:+18455494425";
 const SMS_HREF = "sms:+18455494425";
 
 const [W_PHOTO, W_FILM] = PACKAGES.wedding;
-const BIZ = PACKAGES.business;
 const PORTRAIT = PACKAGES.family[0];
-const bizFrom = Math.min(...BIZ.map((p) => p.price));
-// The business ad landing: pick a plan, the quote lands in their inbox instantly.
-const BIZ_QUOTE = "/go/business";
-// The three Content Day plans, in the instant-quote page's order (?pkg= pre-selects one there)
-// Price list rows (2026-11-10): packages that share a price sit in one row
-// with the price shown once, so the list doesn't read "$450 · $450 · $450".
-const BIZ_PICK = {
-  mini: "5 reels aimed at what you're promoting",
-  always: "A Half Day every month · 5 reels + 10–20 photos · billed per shoot, pause anytime",
-};
-const BIZ_ROWS = BIZ.reduce((rows, p) => {
-  const row = rows.find((r) => r.price === p.price);
-  if (row) row.items.push(p); else rows.push({ price: p.price, items: [p] });
-  return rows;
-}, []);
-const BIZ_PLANS = ["mini", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
+// Business + events are quote-first (2026-11-15): no package prices on the
+// site. They answer four questions, Brandon sends three options.
+const BIZ_QUOTE = "/quote?for=business";
+const QUOTE_STEPS = [
+  { n: "01", title: "Tell me what you need", say: "Four quick questions: what you're trying to do, where it'll show up, how often, and your budget." },
+  { n: "02", title: "Get three options", say: "Built around your goal and your budget, with exactly what you get in each one." },
+  { n: "03", title: "Pick one, sign, pay", say: "All on one page. Paid in full, delivered within two weeks." },
+];
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
 
 const DOORS = [
   {
-    n: "01", id: "business", name: "Your business", sub: "Reels & photos, shot at your place",
-    from: bizFrom, cta: "Get my instant quote", href: BIZ_QUOTE, primary: true, jump: "See the work & plans",
+    n: "01", id: "business", name: "Your business", sub: "Videos & photos, shot at your place",
+    from: null, fromLabel: "Custom quote", cta: "Get my quote", href: BIZ_QUOTE, primary: true, jump: "See the work",
   },
   {
     n: "02", id: "weddings", name: "Weddings", sub: `Film ${money(W_FILM.price)} · Photography ${money(W_PHOTO.price)}`,
@@ -167,7 +158,6 @@ function Skip({ label, links }) {
 
 export default function CinemaHome() {
   const deal = autoDeal();
-  const bizDeal = autoDealFor("business", "day"); // null while the special skips business
   const bonus = autoBonus(); // the deadline bonus for weddings (lib/deals.js FREEBIES)
   const GUEST_ADDON = ADDONS.wedding.find((a) => a.id === "guest");
   const weddingAddons = ADDONS.wedding.filter((a) => !a.hidden);
@@ -203,8 +193,8 @@ export default function CinemaHome() {
         <details className="cin-menu">
           <summary aria-label="Menu"><span aria-hidden="true" /><span aria-hidden="true" /></summary>
           <nav className="cin-menu-panel" aria-label="Menu">
-            <Link href="/business">Business <em>from {money(bizFrom)}</em></Link>
-            <Link href={BIZ_QUOTE}>Instant business quote <em>pick a plan</em></Link>
+            <Link href="/business">Business <em>custom quote</em></Link>
+            <Link href={BIZ_QUOTE}>Business quote <em>4 quick questions</em></Link>
             <Link href="/weddings">Weddings <em>from {money(wedFrom)}</em></Link>
             <Link href="/quote?for=portraits">Family &amp; portraits <em>from {money(PORTRAIT.price)}</em></Link>
             <a href="#date">Check a wedding date <em>open Saturdays</em></a>
@@ -249,7 +239,7 @@ export default function CinemaHome() {
               front door — delivered in two weeks, sized to post. You never touch a camera.
             </p>
             <div className="cin-hero-cta">
-              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Get my instant quote <Arrow /></Link>
+              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Get my quote <Arrow /></Link>
               <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--ghost cin-btn--lg">Book a 15-min call</a>
             </div>
             <p className="cin-hero-where">
@@ -257,24 +247,23 @@ export default function CinemaHome() {
               <strong>Twin Tiers &amp; Finger Lakes</strong>. Weddings &amp; portraits too.
             </p>
           </div>
-          {/* The plans, right in the opening — each one lands on the instant quote with that plan picked */}
+          {/* How a quote works, right in the opening — each step opens the business quote form */}
           <div className="cin-hero-offer">
             {/* The ad — the same 30 seconds people see on Facebook, so the page picks up where the ad left off. */}
             <div className="cin-hero-ad cin-rise">
               <video src="/reels/roth-ad.mp4" poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
               <span className="cin-hero-ad-tag">30 sec · tap for sound</span>
             </div>
-            <p className="cin-lead-kick">Pick a plan · real prices</p>
+            <p className="cin-lead-kick">How a quote works</p>
             <ul className="cin-hero-planlist">
-              {BIZ_PLANS.map((p) => (
-                <li key={p.id}>
-                  <Link href={`${BIZ_QUOTE}?pkg=${p.id}`} className={p.popular ? "cin-plan is-popular" : "cin-plan"}>
+              {QUOTE_STEPS.map((st) => (
+                <li key={st.n}>
+                  <Link href={BIZ_QUOTE} className={st.n === "01" ? "cin-plan is-popular" : "cin-plan"}>
                     <span className="cin-plan-what">
-                      <strong>{p.name}{p.popular && <span className="cin-flag">Most booked</span>}</strong>
-                      <span>{p.scope}</span>
-                      {p.promise && <span className="cin-plan-promise">{p.promise}</span>}
+                      <strong>{st.title}</strong>
+                      <span>{st.say}</span>
                     </span>
-                    <span className="cin-plan-price">{money(p.price)}{p.id === "always" && <small>/mo</small>}</span>
+                    <span className="cin-plan-price">{st.n}</span>
                   </Link>
                 </li>
               ))}
@@ -292,7 +281,7 @@ export default function CinemaHome() {
                     <strong>{d.name}</strong>
                     <span>{d.sub}</span>
                   </span>
-                  <span className="cin-door-price"><small>from</small> {money(d.from)}</span>
+                  <span className="cin-door-price">{d.from ? <><small>from</small> {money(d.from)}</> : <small>{d.fromLabel}</small>}</span>
                   <span className="cin-door-jump">{d.jump} <ArrowDown /></span>
                 </a>
                 <a
@@ -331,7 +320,7 @@ export default function CinemaHome() {
               </div>
               <div className="cin-card-act">
                 {BIZ_REVIEW && <blockquote className="cin-quote-inline cin-rise">“{BIZ_REVIEW.quote}”<cite>{BIZ_REVIEW.name} · {BIZ_REVIEW.who} · {GOOGLE_RATING} on Google</cite></blockquote>}
-                <p className="cin-fromline"><span>Content Days from <b>{money(bizFrom)}</b></span></p>
+                <p className="cin-fromline"><span>Every quote is <b>built around you</b></span></p>
                 <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--light cin-btn--lg">Book a 15-minute call <Arrow /></a>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
               </div>
@@ -374,41 +363,23 @@ export default function CinemaHome() {
 
           <div className="cin-bizgrid">
             <div className="cin-rise">
-              <h3 className="cin-h3">The price list</h3>
+              <h3 className="cin-h3">How pricing works</h3>
               <ul className="cin-list">
-                {BIZ_ROWS.map(({ price, items }) => items.length === 1 ? (
-                  <li key={items[0].id}>
+                {QUOTE_STEPS.map((st) => (
+                  <li key={st.n}>
                     <div>
-                      <strong>{items[0].name}{items[0].popular && <span className="cin-flag">Most booked</span>}</strong>
-                      <span>{items[0].scope}. {items[0].get.filter((g) => !/ of coverage at your place$/.test(g)).slice(0, 2).join(" · ")}{items[0].promise && <em className="cin-plan-promise"> {items[0].promise}</em>}</span>
+                      <strong>{st.title}</strong>
+                      <span>{st.say}</span>
                     </div>
-                    <b>{money(price)}</b>
-                  </li>
-                ) : (
-                  <li key={items[0].id} className="cin-list-group">
-                    <div>
-                      <strong>Half a day on site</strong>
-                      <span>Pick the one you need:</span>
-                      <div className="cin-pick">
-                        {items.map((p) => (
-                          <p key={p.id}><i>{p.name}</i>{BIZ_PICK[p.id] || p.scope}</p>
-                        ))}
-                      </div>
-                    </div>
-                    <b>{money(price)}<small>each</small></b>
+                    <b>{st.n}</b>
                   </li>
                 ))}
               </ul>
               <p className="cin-fine">
-                Add what fits: {listedAddons("business").map((a) => `${a.name.toLowerCase()} +${money(a.price)}${a.monthly ? `, then ${money(a.monthly)}/mo` : ""}`).join(" · ")}.
-                The price is confirmed in writing before we shoot.
+                Videos, photos, interviews, team headshots, extra lighting and mics, rush delivery, ads, even a website:
+                anything can go into a quote. The price is in writing before we shoot.
               </p>
-              {bizDeal && (
-                <p className="cin-offer">
-                  <strong>Booked by {bizDeal.endsLabel}:</strong> the {bizDeal.label.toLowerCase()} takes {bizDeal.pct}% off —{" "}
-                  {BIZ_ROWS.map(({ price, items }) => `${items.map((p) => p.name).join(" / ")} ${money(applyDeal(price, bizDeal))}`).join(", ")}. Applied to your quote automatically.
-                </p>
-              )}
+              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg cin-bizquote">Get my quote <Arrow /></Link>
             </div>
             <div className="cin-rise">
               <h3 className="cin-h3">What would you promote?</h3>
@@ -420,7 +391,7 @@ export default function CinemaHome() {
           <div className="cin-cta-row cin-rise">
             <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--light cin-btn--lg">Book a 15-minute call <Arrow /></a>
             <a href={SMS_HREF} className="cin-btn cin-btn--ghost cin-btn--lg">Text Brandon</a>
-            <Link href="/quote?for=business" className="cin-link">or build a business quote <Arrow /></Link>
+            <Link href={BIZ_QUOTE} className="cin-link">or get a business quote <Arrow /></Link>
           </div>
           <Skip label="That’s the business chapter." links={[{ href: "#quote", text: "Skip to your number" }, { href: "#weddings", text: "Next: weddings" }]} />
         </section>
@@ -661,7 +632,7 @@ export default function CinemaHome() {
           <p className="cin-credits-say">“He made us so comfortable.” — Kaitlyn, Google review</p>
           <ul className="cin-enddoors">
             <li><a href="#date"><span>Weddings <small>from {money(wedFrom)}</small></span><b>Check my date <Arrow /></b></a></li>
-            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>from {money(bizFrom)}</small></span><b>Book a 15-min call <Arrow /></b></a></li>
+            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>custom quote</small></span><b>Book a 15-min call <Arrow /></b></a></li>
             <li><a href={SMS_HREF}><span>Family &amp; portraits <small>from {money(PORTRAIT.price)}</small></span><b>Text Brandon <Arrow /></b></a></li>
           </ul>
           <dl className="cin-roll">
@@ -684,11 +655,11 @@ export default function CinemaHome() {
         </div>
       </footer>
 
-      {/* Phone dock: instant business quote / text / call, always reachable, sits below the content */}
+      {/* Phone dock: business quote / text / call, always reachable, sits below the content */}
       <div className="cin-dock">
         <Link href={BIZ_QUOTE} className="cin-dock-main">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v11H3zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
-          Instant quote
+          Get a quote
         </Link>
         <a href={SMS_HREF} aria-label="Text Brandon">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>

@@ -115,7 +115,8 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
     setStep(n);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function pickCategory(id) { markStarted(id); setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
+  // Business + events are quote-first (2026-11-15): their own form, no packages.
+  function pickCategory(id) { if (id === "business") { window.location.href = "/quote?for=business"; return; } markStarted(id); setCategory(id); setPkgId(PACKAGES[id].length === 1 ? PACKAGES[id][0].id : ""); setAddons({}); jump(1); }
   const startedRef = useRef(false);
   function markStarted(id) { if (!startedRef.current) { startedRef.current = true; track("quote_started", { category: id }); } }
   function pickPackage(id) { markStarted(category); setPkgId(id); setAddons({}); }

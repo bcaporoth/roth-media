@@ -596,3 +596,67 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 /* Text / Call / Email on a computer: what just happened (ContactLinks.js). */
 .contact-toast { position: fixed; left: 50%; bottom: calc(18px + var(--tabbar-h, 0px)); transform: translateX(-50%); z-index: 1200; width: max-content; max-width: min(34rem, calc(100vw - 32px)); margin: 0; padding: 0.8rem 1.1rem; border-radius: 14px; background: #f4f4f2; color: #1c1c1c; font-size: 0.92rem; line-height: 1.4; font-weight: 500; box-shadow: 0 10px 30px rgba(0,0,0,0.35); cursor: pointer; }
 .contact-toast a { color: inherit; font-weight: 700; text-decoration: underline; }
+
+/* ── Studio → Money → Quotes (QuoteBuilder.js, 2026-11-15) ── */
+.qb { display: grid; gap: 1.2rem; }
+.qb-form { display: grid; gap: 1rem; }
+.qb-form textarea { width: 100%; }
+.qb-asked { border-left: 3px solid var(--clay, #b06a4f); padding: 0.6rem 0.9rem; background: color-mix(in srgb, currentColor 5%, transparent); border-radius: 0 10px 10px 0; }
+.qb-asked-title { margin: 0 0 0.4rem; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; opacity: 0.75; }
+.qb-asked dl { margin: 0; display: grid; gap: 0.3rem; }
+.qb-asked dl > div { display: grid; grid-template-columns: 9.5rem 1fr; gap: 0.6rem; font-size: 0.92rem; }
+.qb-asked dt { opacity: 0.65; }
+.qb-asked dd { margin: 0; }
+.qb-rate-line { margin: 0; }
+.qb-link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: 0.85rem; opacity: 0.8; }
+.qb-opts { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; }
+.qb-opt { display: grid; gap: 0.7rem; padding: 0.9rem; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: 16px; }
+.qb-opt.is-rec { border-color: var(--clay, #b06a4f); box-shadow: 0 0 0 1px var(--clay, #b06a4f) inset; }
+.qb-opt-head { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.qb-opt-label { flex: 1 1 8rem; min-width: 0; font-weight: 700; font-size: 1.05rem; }
+.qb-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.qb-line { display: grid; gap: 0.3rem; padding-bottom: 0.55rem; border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
+.qb-line-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.qb-line-name { font-weight: 600; font-size: 0.95rem; }
+.qb-qty { display: inline-flex; align-items: center; gap: 0.3rem; flex: none; }
+.qb-qty .achip { min-width: 2.1rem; padding-inline: 0.5rem; }
+.qb-qty input { width: 3.6rem; text-align: center; }
+.qb-line-meta { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.8rem; opacity: 0.75; align-items: baseline; }
+.qb-line-meta span { flex: 1 1 100%; }
+.qb-line-edit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.qb-line-edit label { display: grid; gap: 0.2rem; font-size: 0.75rem; }
+.qb-line-edit input { width: 100%; }
+.qb-line-edit small { grid-column: 1 / -1; opacity: 0.7; }
+.qb-add { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.qb-add select { flex: 1 1 10rem; min-width: 0; }
+.qb-opt-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; padding-top: 0.4rem; font-size: 0.82rem; }
+.qb-opt-foot span { opacity: 0.75; }
+.qb-opt-foot strong { font-size: 1.5rem; }
+.qb-made { display: grid; gap: 0.6rem; border-color: var(--clay, #b06a4f); }
+.qb-made-title, .qb-made-link { margin: 0; }
+.qb-made-link a { word-break: break-all; }
+.qb-card-opts { list-style: none; margin: 0.3rem 0; padding: 0; display: grid; gap: 0.25rem; }
+.qb-card-opts li { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.92rem; }
+.qb-card-opts li.is-picked { font-weight: 700; color: var(--clay, #b06a4f); }
+.qb-settings { display: grid; gap: 0.8rem; }
+.qb-rate .cpn-num { flex: 0 0 90px; }
+.qb-blocks { display: grid; gap: 0.6rem; }
+.qb-block { display: grid; grid-template-columns: minmax(9rem, 2fr) minmax(5rem, 1fr) repeat(3, minmax(4.5rem, 0.8fr)) auto auto; gap: 0.5rem; align-items: end; padding-bottom: 0.6rem; border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent); }
+.qb-block label { display: grid; gap: 0.2rem; font-size: 0.75rem; }
+.qb-block input { width: 100%; min-width: 0; }
+.qb-bprice { font-weight: 700; padding-bottom: 0.45rem; }
+@media (max-width: 720px) {
+  .qb-block { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .qb-block .qb-bname { grid-column: 1 / -1; }
+  .qb-asked dl > div { grid-template-columns: 1fr; gap: 0; }
+}
+.qb :is(input:not([type="checkbox"]), select, textarea) { font: inherit; font-size: 0.95rem; padding: 0.55rem 0.7rem; min-height: 44px; border: 1px solid var(--field-line, var(--line)); border-radius: 10px; background: transparent; color: inherit; }
+.qb select option { color: #1c1c1c; }
+.admin-shell.is-dark .qb select { color-scheme: dark; }
+.qb .qb-qty input { padding-inline: 0.2rem; min-height: 36px; }
+.qb .qb-qty .achip { min-height: 36px; }
+.qb .qb-opt-label { font-weight: 700; font-size: 1.05rem; }
+.qb-line-top { align-items: flex-start; }
+.qb-line-name { flex: 1 1 auto; min-width: 0; padding-top: 0.35rem; }
+.qb-opt-foot strong { white-space: nowrap; }
+.qb-opt-foot span { flex: 1 1 auto; min-width: 0; }
