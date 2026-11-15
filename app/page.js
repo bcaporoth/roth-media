@@ -43,7 +43,6 @@ const BIZ_QUOTE = "/go/business";
 // with the price shown once, so the list doesn't read "$450 · $450 · $450".
 const BIZ_PICK = {
   mini: "5 reels aimed at what you're promoting",
-  brand: "The Pinned Three: the first three posts on your Instagram, built to stay pinned",
   always: "A Half Day every month · 5 reels + 10–20 photos · billed per shoot, pause anytime",
 };
 const BIZ_ROWS = BIZ.reduce((rows, p) => {
@@ -51,7 +50,7 @@ const BIZ_ROWS = BIZ.reduce((rows, p) => {
   if (row) row.items.push(p); else rows.push({ price: p.price, items: [p] });
   return rows;
 }, []);
-const BIZ_PLANS = ["mini", "brand", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
+const BIZ_PLANS = ["mini", "day", "always"].map((id) => BIZ.find((p) => p.id === id)).filter(Boolean);
 const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
 
 const DOORS = [

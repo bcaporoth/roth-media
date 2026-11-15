@@ -48,7 +48,7 @@ function Arrow() {
 const FAQS = [
   {
     q: "What does a Content Day cost, and what do I get?",
-    a: `A Full Day is ${money(pkg("day").price)}: a full day of coverage at your business, and you walk away with 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. A Half Day is ${money(pkg("mini").price)}: 5 reels and 10–20 photos. A Brand Awareness Day is ${money(pkg("brand").price)}: the three pinned posts (who you are, why people trust you, how to buy) and 10–20 photos.`,
+    a: `A Full Day is ${money(pkg("day").price)}: a full day of coverage at your business, and you walk away with 9 vertical reels aimed at whatever you're promoting, your three pinned posts, and 15–30 edited photos, sized for your website, Instagram, Facebook, and TikTok. A Half Day is ${money(pkg("mini").price)}: 5 reels and 10–20 photos.`,
   },
   {
     q: "How fast do I get my content?",

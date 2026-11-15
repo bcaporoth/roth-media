@@ -9,13 +9,12 @@ export const revalidate = 3600;
 
 // Where business ads land. One job: get the quote into their inbox and a
 // call on the calendar before they close the tab. Pick plan → name, phone,
-// business, email → send. ?pkg=mini|brand|day|always pre-selects the plan.
+// business, email → send. ?pkg=mini|day|always pre-selects the plan.
 export default function BusinessAdPage() {
   const day = PACKAGES.business.find((p) => p.id === "day");
   const mini = PACKAGES.business.find((p) => p.id === "mini");
-  const brandDay = PACKAGES.business.find((p) => p.id === "brand");
   const always = PACKAGES.business.find((p) => p.id === "always");
-  const plans = [mini, brandDay, day, { ...always, per: "/mo" }].filter(Boolean).map(({ id, name, price, scope, popular, per }) => ({ id, name, price, scope, popular, per }));
+  const plans = [mini, day, { ...always, per: "/mo" }].filter(Boolean).map(({ id, name, price, scope, popular, per }) => ({ id, name, price, scope, popular, per }));
   return (
     <main className="cx-page cx-page--hero bz-page bz-go">
       <div className="bz-go-grid">
@@ -38,7 +37,6 @@ export default function BusinessAdPage() {
           </ul>
           <ul className="cx-rows bz-go-prices">
             <li className="cx-row"><span className="cx-row-name">{mini.name}</span><span className="cx-row-note">half day · 5 reels + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={mini.price} category="business" packageId={mini.id} /></strong></li>
-            {brandDay && <li className="cx-row"><span className="cx-row-name">{brandDay.name}</span><span className="cx-row-note">half day · the Pinned Three + 10–20 photos</span><strong className="cx-row-price"><DealPrice price={brandDay.price} category="business" packageId={brandDay.id} /></strong></li>}
             <li className="cx-row"><span className="cx-row-name">{day.name}</span><span className="cx-row-note">full day · 9 reels + Pinned Three + 15–30 photos · missed a shot? I come back free</span><strong className="cx-row-price"><DealPrice price={day.price} category="business" packageId={day.id} /></strong></li>
             <li className="cx-row"><span className="cx-row-name">{always.name}</span><span className="cx-row-note">a Half Day every month · pause or cancel anytime</span><strong className="cx-row-price"><DealPrice price={always.price} category="business" packageId={always.id} />/mo</strong></li>
           </ul>
