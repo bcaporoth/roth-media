@@ -109,6 +109,25 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
     fetch(`/api/events${studio && clientId ? `?client_id=${clientId}` : ""}`).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't load"); setEvents(j.events || []); }).catch((e) => setLoadErr(e.message));
   }, [initialEvents, studio, clientId]);
 
+  // Brandon's free days (lib/free-days.js): green on the grid. A client taps one
+  // and asks for it (it starts a shoot day, which tells Brandon); in Studio
+  // Brandon can mark or unmark the picked day right here.
+  const [free, setFree] = useState([]);
+  const [marked, setMarked] = useState([]);
+  useEffect(() => {
+    fetch("/api/free-days").then((r) => r.json()).then((j) => { if (j.ok) { setFree(j.open || []); setMarked(j.marked || []); } }).catch(() => {});
+  }, []);
+  const [freeBusy, setFreeBusy] = useState(false);
+  async function toggleFree(on) {
+    setFreeBusy(true); setErr("");
+    try {
+      const res = await fetch("/api/free-days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: day, on }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Couldn't save");
+      setFree(j.open || []); setMarked(j.marked || []);
+    } catch (x) { setErr(x.message); } finally { setFreeBusy(false); }
+  }
+
   const byDay = useMemo(() => { const m = {}; for (const e of events) (m[e.date] ||= []).push(e); return m; }, [events]);
   const cells = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
@@ -187,8 +206,9 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
       <div className="scal-grid ccal-grid" role="grid" aria-label={`${monthLabel} calendar`}>
         {DOW.map((d) => <div key={d} className="scal-dow">{d}</div>)}
         {cells.map((c, i) => c ? (
-          <button type="button" key={c} className={`scal-cell ccal-cell${c === today ? " is-today" : ""}${c === day ? " is-picked" : ""}`} onClick={() => setDay(c)} aria-pressed={c === day} aria-label={longDay(c)}>
+          <button type="button" key={c} className={`scal-cell ccal-cell${c === today ? " is-today" : ""}${c === day ? " is-picked" : ""}${free.includes(c) ? " is-free" : ""}`} onClick={() => setDay(c)} aria-pressed={c === day} aria-label={longDay(c) + (free.includes(c) ? (studio ? ", you are free" : ", Brandon is free") : "")}>
             <span className="scal-num">{Number(c.slice(-2))}</span>
+            {free.includes(c) && <span className="scal-free">✓ Free</span>}
             {(shootByDay[c] || []).map((d) => <span key={d.id} className="scal-ev is-shootday">🎬 {d.title}</span>)}
             {(byDay[c] || []).slice(0, 3).map((e) => <span key={e.id} className={`scal-ev ${e.created_by === "studio" ? "is-business" : "is-event"}${e.followup_at ? " is-followed" : ""}`}>{e.time ? `${fmt12(e.time).replace(":00", "")} ` : ""}{e.title}</span>)}
             {(byDay[c] || []).length > 3 && <span className="scal-num">+{byDay[c].length - 3} more</span>}
@@ -196,8 +216,11 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         ) : <div key={`b${i}`} className="scal-cell is-blank" />)}
       </div>
 
+      {free.length > 0 && <p className="inbox-hint ccal-freekey"><span className="scal-free">✓ Free</span> {studio ? "Days you marked free. They see these and can ask for one." : "Green days are the days Brandon is free to shoot. Tap one to ask for it."}</p>}
+
       <div className="ccal-day">
         <h4>{longDay(day)}</h4>
+        {free.includes(day) && <p className="ccal-freenote">{studio ? "You marked this day free. They can ask for it." : "Brandon is free this day."}</p>}
         {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing here yet — add what's happening below."}</p> : (
           <ul className="ccal-list">
             {dayEvents.map((e) => (
@@ -252,9 +275,12 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
               </div>
             ))}
             <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
-              {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
+              {starting ? "Starting…" : !studio && free.includes(day) ? `🎬 Ask for ${longDay(day).split(",").slice(0, 2).join(",")}` : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
             </button>
-            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
+            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : free.includes(day) ? "Brandon is free this day. Asking starts the day and its scripts page, and he gets a heads-up to confirm the time." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
+            {studio && day >= today && (marked.includes(day)
+              ? <button type="button" className="achip is-on ccal-freetoggle" disabled={freeBusy} onClick={() => toggleFree(false)}>✓ You&rsquo;re marked free this day · take it off</button>
+              : <button type="button" className="achip ccal-freetoggle" disabled={freeBusy} onClick={() => toggleFree(true)}>Mark me free this day (all clients see it)</button>)}
           </div>
         )}
       </div>

@@ -10,7 +10,7 @@
 // event opens that shoot right on the page. On its own page every event
 // links to /portal/admin/shoots?open=<id>.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { timing, fmt12, shiftTime } from "../lib/sun";
 
@@ -44,6 +44,34 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
     fetch("/api/admin/client-events").then((r) => r.json()).then((j) => setCevents(j.events || [])).catch(() => {});
   }, []);
   const cByDay = useMemo(() => { const m = {}; for (const e of cevents) (m[e.date] ||= []).push(e); return m; }, [cevents]);
+  // Free days (lib/free-days.js): the days Brandon marks open. They show green
+  // on every client's calendar until something lands on them. "Mark free days"
+  // turns the grid into a tap-to-toggle picker.
+  const [free, setFree] = useState({ marked: [], taken: {} });
+  const [marking, setMarking] = useState(false);
+  const [freeErr, setFreeErr] = useState("");
+  useEffect(() => {
+    fetch("/api/free-days").then((r) => r.json()).then((j) => { if (j.ok) setFree({ marked: j.marked || [], taken: j.taken || {} }); }).catch(() => {});
+  }, []);
+  const isFree = (k) => free.marked.includes(k);
+  // Saves go one at a time, in tap order, so quick taps on several days all stick.
+  const saving = useRef(Promise.resolve());
+  function toggleFree(k) {
+    const on = !isFree(k);
+    setFreeErr("");
+    setFree((f) => ({ ...f, marked: on ? [...new Set([...f.marked, k])] : f.marked.filter((d) => d !== k) })); // show it right away
+    saving.current = saving.current.then(async () => {
+      try {
+        const res = await fetch("/api/free-days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: k, on }) });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || "Couldn't save");
+        setFree((f) => ({ ...f, taken: j.taken || {} }));
+      } catch (e) {
+        setFreeErr(e.message);
+        setFree((f) => ({ ...f, marked: on ? f.marked.filter((d) => d !== k) : [...new Set([...f.marked, k])] }));
+      }
+    });
+  }
   const shoots = useMemo(() => (given ? given.filter((s) => s.status !== "cancelled") : fetched), [given, fetched]);
   const [error, setError] = useState("");
   const [cursor, setCursor] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
@@ -90,15 +118,21 @@ export default function StudioCalendar({ shoots: given = null, onOpen = null }) 
         <h3>{title}</h3>
         <button type="button" className="achip" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
         <button type="button" className="achip" onClick={() => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); }}>Today</button>
+        <button type="button" className={"achip scal-freebtn" + (marking ? " is-on" : "")} aria-pressed={marking} onClick={() => setMarking(!marking)}>{marking ? "Done marking" : "Mark free days"}</button>
       </div>
-      <div className="scal-grid" role="grid">
+      {marking && <p className="inbox-hint scal-freehint">Tap a day to mark it free. Tap it again to take it off. Free days show green on every client&rsquo;s calendar, and they can ask for one. A day stops showing as free once a shoot lands on it.</p>}
+      {freeErr && <p className="cform-error">{freeErr}</p>}
+      <div className={"scal-grid" + (marking ? " is-marking" : "")} role="grid">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="scal-dow">{d}</div>)}
         {cells.map((d, i) => {
           if (!d) return <div key={i} className="scal-cell is-blank" />;
           const k = iso(d), list = byDay[k] || [];
+          const fr = isFree(k), tk = fr && Boolean(free.taken[k]), can = marking && k >= today;
           return (
-            <div key={i} className={"scal-cell" + (k === today ? " is-today" : "") + (list.length ? " has-shoot" : "")}>
+            <div key={i} className={"scal-cell" + (k === today ? " is-today" : "") + (list.length ? " has-shoot" : "") + (fr ? (tk ? " is-free is-free-taken" : " is-free") : "") + (can ? " can-mark" : "")}
+              {...(can ? { role: "button", tabIndex: 0, "aria-pressed": fr, "aria-label": `${d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}: ${fr ? "free, tap to take off" : "tap to mark free"}`, onClick: (e) => { if (!e.target.closest("a")) toggleFree(k); }, onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleFree(k); } } } : {})}>
               <span className="scal-num">{d.getDate()}</span>
+              {fr && <span className="scal-free" title={tk ? `Marked free, but taken: ${free.taken[k].join(", ")}` : "Free: clients can ask for this day"}>{tk ? "Free · taken" : "✓ Free"}</span>}
               {list.map((s) => <Link key={s.id} href={shootHref(s)} onClick={go(s)} className={`scal-ev is-${s.kind}`} title={s.title}>{startOf(s) ? fmt12(startOf(s)).replace(":00", "") + " " : ""}{s.title}</Link>)}
               {(cByDay[k] || []).map((e) => <Link key={e.id} href={`/portal/admin/clients/${e.client_id}#calendar`} className={"scal-ev is-client" + (e.idea ? " has-idea" : "") + (e.wants_shoot ? " is-hot" : "")} title={`${e.clientName}: ${e.title}${e.wants_shoot ? " · wants content" : ""}${e.idea ? " · idea ready" : ""}`}>{e.wants_shoot ? "🔥 " : ""}{firstName(e.clientName)}: {e.title}</Link>)}
             </div>

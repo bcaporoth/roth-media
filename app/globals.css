@@ -7339,6 +7339,20 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
    "Start a shoot day" button. Dark Studio and the dark client portal get dark
    day boxes (the old cream tint read as gray blocks on charcoal). */
 .scal-ev.is-shootday { background: #f4f4f2; color: #111; font-weight: 600; }
+/* Free days (2026-11-16, lib/free-days.js): green = Brandon is free. */
+.scal-cell.is-free, .admin-shell.is-dark .scal-cell.is-free:not(.is-blank), .pt-cal .scal-cell.is-free:not(.is-blank), .pt-calendar .scal-cell.is-free:not(.is-blank) { background: rgba(74, 124, 89, 0.2); border-color: #4a7c59; }
+.scal-cell.is-free-taken, .admin-shell.is-dark .scal-cell.is-free-taken:not(.is-blank) { background: rgba(74, 124, 89, 0.07); border-style: dashed; }
+.scal-free { display: inline-block; justify-self: start; max-width: 100%; font-size: 0.68rem; line-height: 1.25; font-weight: 600; padding: 0.12rem 0.4rem; border-radius: 999px; background: #4a7c59; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.is-free-taken .scal-free { background: transparent; color: inherit; opacity: 0.7; border: 1px solid #4a7c59; }
+.scal-grid.is-marking .scal-cell.can-mark { cursor: pointer; outline: 1px dashed rgba(74, 124, 89, 0.7); outline-offset: -3px; }
+.scal-grid.is-marking .scal-cell.can-mark:hover, .scal-grid.is-marking .scal-cell.can-mark:focus-visible { box-shadow: inset 0 0 0 2px #4a7c59; }
+.scal-grid.is-marking .scal-cell:not(.can-mark):not(.is-blank) { opacity: 0.45; }
+.scal-freebtn { margin-left: auto; }
+.scal-freehint { margin: 0 0 0.6rem; }
+.ccal-freekey { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin: -0.8rem 0 1rem; }
+.ccal-freenote { margin: 0 0 0.6rem; padding: 0.5rem 0.75rem; border-radius: 10px; border: 1px solid #4a7c59; background: rgba(74, 124, 89, 0.16); font-weight: 500; }
+.ccal-freetoggle { justify-self: start; }
+@media (max-width: 640px) { .scal-free { font-size: 0.56rem; padding: 0.08rem 0.25rem; } .scal-freebtn { margin-left: 0; } }
 .ccal-shoot { display: grid; gap: 0.5rem; margin: 0.2rem 0 1rem; }
 .ccal-shoot-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: inherit; }
 .ccal-shoot-row:hover { border-color: var(--clay); }
@@ -7358,6 +7372,7 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .pt-calendar .ccal-cell.is-picked { background: #241c17; }
 /* Phones: month title on one line, "Today" never splits. */
 .scal-head .achip { white-space: nowrap; }
+.scal-head { flex-wrap: wrap; }
 @media (max-width: 520px) {
   .scal-head { gap: 0.4rem; }
   .scal-head h3 { font-size: 1.15rem; white-space: nowrap; }
