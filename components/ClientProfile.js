@@ -36,12 +36,17 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   const [type, setType] = useState(initial.type || "wedding");
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
   const [pasting, setPasting] = useState(false);
-  const [editing, setEditing] = useState(false); // contact details form, closed until asked for
+  const [deleting, setDeleting] = useState(false);
+  async function removeClient() {
+    if (!confirmTap(`Delete ${d.client.name || d.client.email}? Their profile and login are removed. This can't be undone.`)) return;
+    setDeleting(true);
+    try { await api("/api/admin/clients", { action: "remove", id: d.client.id }); window.location.href = "/portal/admin/clients"; } catch (err) { setDeleting(false); fail(err); }
+  }
   // One drawer open at a time: Shoot days · Paperwork · Notes · Galleries · Money.
   const [tab, setTab] = useState("days"); // the calendar lives on this tab, so everyone lands on it
   useEffect(() => {
     const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (h === "notes") setTab("notes"); else if (h === "galleries" || h === "login") setTab("gals"); else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
+    if (h === "notes") setTab("notes"); else if (h === "galleries") setTab("gals"); else if (h === "login" || h === "settings") setTimeout(() => document.getElementById("settings")?.scrollIntoView(), 300); else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
   }, []);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
@@ -66,9 +71,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
     if (f.email.trim() && f.email.trim().toLowerCase() !== c.email) patch.email = f.email.trim();
     if (f.phone !== c.phone) patch.phone = f.phone;
     if (f.notes !== c.notes) patch.notes = f.notes;
-    if (!Object.keys(patch).length) { say("Nothing to save"); setEditing(false); return; }
+    if (!Object.keys(patch).length) { say("Nothing to save"); return; }
     saveClient(patch);
-    setEditing(false);
   }
   const link = intakeUrl({ email: isNoEmail(c.email) ? "" : c.email, name: c.name, type });
   async function intakeSent(how) {
@@ -112,21 +116,10 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
-          <button type="button" className="achip" aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Cancel" : "Edit"}</button>
+          <button type="button" className="achip" onClick={() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
         </div>
       </div>
-      {editing && (
-        <form className="client-edit cprof-card" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
-          <div className="client-fields">
-            <label>Name<input name="name" defaultValue={c.name} /></label>
-            <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
-            <label>Phone<input name="phone" defaultValue={c.phone} /></label>
-          </div>
-          <label className="client-notes">Short description<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Who they are in a line — the bakery on Elmira St, gluten-free, owner Kaci…" /></label>
-          <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
-        </form>
-      )}
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
 
@@ -233,13 +226,6 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             )}
           </section>
 
-          <section className="cprof-card cprof-deliv cprof-gtab" id="login">
-            <div className="cprof-cardhead"><h2>Login</h2>
-              <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
-            </div>
-            <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
-          </section>
-
           {d.cart && (
             <section className="cprof-card cprof-deliv cprof-mtab" id="cart">
               <div className="cprof-cardhead"><h2>In their cart</h2><span className="gcard-meta">Updated {fmt(d.cart.updated_at || d.cart.created_at)} · from their Shop page</span></div>
@@ -265,6 +251,41 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           </section>
         </div>
       </div>
+
+      {/* Settings (2026-11-16, Brandon: "a settings box with the delete, their
+          password stuff and other profile stuff"). The page's footer, on every
+          tab: contact details, their login, and Delete at the very bottom. */}
+      <section className="cprof-card cprof-settings" id="settings" aria-labelledby="cprof-settings-h">
+        <div className="cprof-cardhead"><h2 id="cprof-settings-h">Settings</h2><span className="gcard-meta">Their details, their login, and deleting them</span></div>
+
+        <div className="cprof-set">
+          <h3>Contact details</h3>
+          <form className="client-edit" key={`${c.name}-${c.email}-${c.phone}`} onSubmit={saveForm}>
+            <div className="client-fields">
+              <label>Name<input name="name" defaultValue={c.name} /></label>
+              <label>Email<input name="email" type="email" placeholder="Add when you have it" defaultValue={isNoEmail(c.email) ? "" : c.email} /></label>
+              <label>Phone<input name="phone" defaultValue={c.phone} /></label>
+            </div>
+            <label className="client-notes">Short description<textarea name="notes" rows={2} defaultValue={c.notes} placeholder="Who they are in a line — the bakery on Elmira St, gluten-free, owner Kaci…" /></label>
+            <div className="gcard-actions"><button type="submit" className="abtn">Save details</button>{flash && <span className="cprof-setflash" role="status">{flash}</span>}{error && <span className="cform-error" role="alert">{error}</span>}</div>
+          </form>
+        </div>
+
+        <div className="cprof-set" id="login">
+          <div className="cprof-sethead"><h3>Login &amp; password</h3><button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button></div>
+          <ClientLogin key={c.email} client={c} account={d.account} onSaved={(account) => setD((x) => ({ ...x, account }))} />
+        </div>
+
+        <div className="cprof-set cprof-danger">
+          <h3>Delete this client</h3>
+          {d.galleries.filter((g) => !g.shared).length > 0 ? (
+            <p className="gcard-meta">{c.name || "This client"} owns {d.galleries.filter((g) => !g.shared).length} {d.galleries.filter((g) => !g.shared).length === 1 ? "gallery" : "galleries"}. Delete or move those first (Galleries tab), then you can delete the client.</p>
+          ) : (
+            <p className="gcard-meta">Takes {c.name || "them"} off your client list and deletes their login. This can&rsquo;t be undone.</p>
+          )}
+          <div><button type="button" className="abtn cprof-delete" disabled={deleting || d.galleries.filter((g) => !g.shared).length > 0} onClick={removeClient}>{deleting ? "Deleting…" : `Delete ${c.name || "this client"}`}</button></div>
+        </div>
+      </section>
     </div>
   );
 }
