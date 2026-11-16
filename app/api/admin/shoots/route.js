@@ -115,7 +115,11 @@ export async function GET() {
   }
   // Reference photos on checklist / playbook items go out with signed links.
   const withPhotos = async (rows, field) => Promise.all((rows || []).map(async (r) => ({ ...r, [field]: await signItemPhotos(r[field]) })));
+  // Projects (the job above the dates), so a shoot can be filed under one from
+  // a client's profile. Light list only; the project page loads the rest.
+  const { data: projects } = await db.from("projects").select("id, title, status, client_id, client_email").order("created_at", { ascending: true }).then((r) => r, () => ({ data: [] }));
   return NextResponse.json({
+    projects: projects || [],
     shoots: await withPhotos(shoots, "checklist"),
     delivery: { ready: deliveryReady },
     days,

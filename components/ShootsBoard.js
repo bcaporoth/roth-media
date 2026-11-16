@@ -394,11 +394,37 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
   const isBiz = type === "business";
   const toggleNew = () => { if (isBiz) { setNewDay((v) => !v); setShowNew(false); } else { setShowNew((v) => !v); setNewDay(false); } };
   const anyOpen = showNew || newDay;
+  // Projects (2026-11-16, Brandon: "a year-long project — all of the individual
+  // shoot days should belong to that project"). A project here is a `projects`
+  // row tied to this client; a shoot is filed under it with shoots.project_id
+  // (the Project picker on each row). The list groups by project.
+  const [newProj, setNewProj] = useState(false);
+  const [projBusy, setProjBusy] = useState(false);
+  const myProjects = (data?.projects || []).filter((p) => p.client_id === client.id || (email && (p.client_email || "").toLowerCase() === email));
+  const myIds = new Set(myProjects.map((p) => p.id));
+  const inProject = (p) => sorted.filter((s) => s.project_id === p.id);
+  const unfiled = sorted.filter((s) => !myIds.has(s.project_id));
+  const span = (list) => { const ds = list.map((s) => s.date).filter(Boolean).sort(); return !ds.length ? "no dates yet" : ds[0] === ds[ds.length - 1] ? fmtDate(ds[0]) : `${fmtDate(ds[0])} to ${fmtDate(ds[ds.length - 1])}`; };
+  async function createProject(e) {
+    e.preventDefault();
+    const title = String(new FormData(e.currentTarget).get("title") || "").trim();
+    if (!title) return;
+    setProjBusy(true);
+    try {
+      const res = await fetch("/api/admin/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "project-create", title, kind: type, client_id: client.id, client_name: client.name || "", client_email: client.email || "" }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Couldn't make the project");
+      setNewProj(false); await refresh(); sh.say(`Project “${title}” made. Use the Project picker on a shoot to file it.`);
+    } catch (err) { if (onFail) onFail(err); else alert(err.message); }
+    setProjBusy(false);
+  }
+  const row = (s) => <ShootRow key={s.id} s={s} day={dayByShoot[s.id]} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} projects={myProjects} />;
 
   return (
     <section className="cprof-card cprof-shoots">
       <div className="cprof-cardhead"><h2>Shoots{mine.length + loose.length > 0 && <em className="cprof-count">{mine.length + loose.length}</em>}</h2>
         <span className="gcard-actions">
+          <button type="button" className={"achip" + (newProj ? " is-on" : "")} onClick={() => setNewProj((v) => !v)} disabled={!data}>{newProj ? "Close" : "+ New project"}</button>
           <button type="button" className="abtn" onClick={toggleNew} disabled={!data}>{anyOpen ? "Close" : `+ ${PLAN_LABEL[type] || "Plan a shoot"}`}</button>
         </span>
       </div>
@@ -406,6 +432,13 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
       {error && <p className="cform-error">{error}</p>}
       {days === null && <p className="sm-sqlhint">Shoot days (the scripts) aren&apos;t set up yet — run <code>supabase/shoot-days.sql</code> once in the Supabase SQL editor.</p>}
       {!data && !error && <p className="gcard-meta">Loading…</p>}
+      {newProj && (
+        <form className="shoot-newproj" onSubmit={createProject}>
+          <label>Project name<input name="title" required maxLength={120} placeholder="2027 content year · Fall menu launch · The wedding" /></label>
+          <button type="submit" className="abtn" disabled={projBusy}>{projBusy ? "Making…" : "Make project"}</button>
+          <p className="gcard-meta">A project is a folder for shoot days. Make it, then pick it in the Project box on each shoot that belongs to it.</p>
+        </form>
+      )}
       {newDay && <NewDay client={client} onFail={onFail} />}
       {data && showNew && <NewShoot key={type} compact prefill={{ client_name: client.name, client_email: client.email, client_phone: client.phone, kind: type, address: pulled.address, notes: pulled.notes, brief_shots: pulled.shots }} leads={data.leads.filter((l) => (l.email || "").toLowerCase() === email)} guides={data.guides} busy={busy} onCreate={create} />}
       {data && mine.length === 0 && loose.length === 0 && !anyOpen && (
@@ -413,10 +446,23 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
           ? `Nothing planned yet. A Content Day is the scripts for a day of filming — reels, recipes, how-tos — written with ${client.name.split(" ")[0] || "them"}: they see and edit the same page from their portal. Give it a date and it lands on the calendar with your Content Day prep lists.`
           : `Nothing planned yet. Start one and the flow of the day, settings & reminders, shot list, poses and gear from your playbook come with it${brief ? ", with their brief pulled in — the one shot they can't miss leads the shot list" : ""}. All editable for this client.`}</p>
       )}
-      {data && mine.length > 0 && (
-        <ul className="shoot-list">
-          {sorted.map((s) => <ShootRow key={s.id} s={s} day={dayByShoot[s.id]} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} />)}
-        </ul>
+      {data && myProjects.map((p) => {
+        const list = inProject(p);
+        return (
+          <div key={p.id} className="shoot-proj">
+            <div className="shoot-projhead">
+              <span className="shoot-projname"><strong>📁 {p.title}</strong><em>{list.length} shoot{list.length === 1 ? "" : "s"} · {span(list)}</em></span>
+              <a className="achip" href={`/portal/admin/projects/${p.id}`}>Open project ↗</a>
+            </div>
+            {list.length ? <ul className="shoot-list">{list.map(row)}</ul> : <p className="gcard-meta shoot-projempty">Nothing filed here yet. Pick “{p.title}” in the Project box on a shoot below.</p>}
+          </div>
+        );
+      })}
+      {data && unfiled.length > 0 && (
+        <>
+          {myProjects.length > 0 && <span className="kick-sm shoot-unfiled">Not in a project</span>}
+          <ul className="shoot-list">{unfiled.map(row)}</ul>
+        </>
       )}
       {loose.length > 0 && (
         <div className="shoot-loose">
@@ -519,7 +565,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
 const NO_CLOCK = { ready: false, deliver: () => {} };
 const SAVE_LABEL = { saving: "Saving…", saved: "Saved ✓", retrying: "No signal — still trying. Your ticks are safe.", failed: "Couldn't save." };
-export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [] }) {
+export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [], projects = null }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
   const d = deliveryState(s);
@@ -618,6 +664,14 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
         </div>
       )}
       {!day && s.kind === "business" && s.status !== "done" && s.status !== "cancelled" && <StartScripts s={s} clientId={clientId} />}
+      {projects && projects.length > 0 && (
+        <label className="shoot-projpick"><span>Project</span>
+          <select className="achip" value={s.project_id || ""} disabled={busy} onChange={(e) => onUpdate(s.id, { project_id: e.target.value || null }, e.target.value ? "Filed under the project ✓" : "Taken out of the project ✓")}>
+            <option value="">Not in a project</option>
+            {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </select>
+        </label>
+      )}
       {!open && d.applies && d.owed && d.overdue && <div className="shoot-clock"><DeliveryChips d={d} done={false} /></div>}
 
       {open && dayMode && (
