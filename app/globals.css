@@ -5839,6 +5839,10 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .cprof-stages li { padding: 0.3rem 0.65rem; border: 1px solid var(--line); border-radius: 999px; opacity: 0.55; }
 .cprof-stages li.is-past { opacity: 0.85; text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.3); }
 .cprof-stages li.is-now { opacity: 1; background: var(--ink); color: var(--bone); border-color: var(--ink); }
+/* 2026-11-16: stage pills raised to match the tab row and buttons. */
+.cprof-stages li { background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 18px -12px rgba(0, 0, 0, 0.35); }
+.is-dark .cprof-stages li { background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7); }
+.cprof-stages li.is-now, .is-dark .cprof-stages li.is-now { background-image: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.16)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7); }
 .cprof-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.35); padding: 1rem; display: grid; gap: 0.75rem; }
 .is-dark .cprof-card { background: rgba(255, 255, 255, 0.04); }
 .cprof-cardhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.6rem; }
@@ -7246,6 +7250,11 @@ textarea.grow { overflow: hidden; }
 .cprof-headacts .achip { min-height: 2.3rem; padding: 0.4rem 0.85rem; font-size: 0.9rem; }
 .cprof-tabs { margin: 0.9rem 0 1.2rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .cprof-tabs .ifilter { font-size: 0.95rem; padding: 0.55rem 0.95rem; }
+/* 2026-11-16: the tab row is raised like the Email / Edit buttons; the open tab is the bright one. */
+.cprof-tabs .ifilter { background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.12), 0 8px 18px -12px rgba(0, 0, 0, 0.35); transition: transform 0.1s, box-shadow 0.15s; }
+.is-dark .cprof-tabs .ifilter { background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7); }
+.cprof-tabs .ifilter.is-on, .is-dark .cprof-tabs .ifilter.is-on { background-image: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.16)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7); }
+.cprof-tabs .ifilter:active { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); }
 .cprof-tabbody { display: grid; gap: 1rem; }
 .cprof-cols.is-hidden { display: none; }
 .cprof-cols.is-paper .cprof-deliv { display: none; }
