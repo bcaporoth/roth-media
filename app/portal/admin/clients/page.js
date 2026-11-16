@@ -58,7 +58,7 @@ export default async function ClientsPage() {
     for (const s of subs || []) (subsBy[(s.email || "").toLowerCase()] ||= []).push(s);
   } catch {}
   try {
-    const { data: shoots } = await db.from("shoots").select("kind, status, client_email");
+    const { data: shoots } = await db.from("shoots").select("kind, status, date, client_email");
     for (const s of shoots || []) (shootsBy[(s.client_email || "").toLowerCase()] ||= []).push(s);
   } catch {}
   // People who reached out (quote/contact/card/booking/intake) but aren't on the roster yet.

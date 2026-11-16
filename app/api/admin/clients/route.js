@@ -8,6 +8,7 @@ import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 import { findAuthUser, accountView } from "../../../../lib/auth-users";
 import { sendSetupCode } from "../../../../lib/setup-code";
+import { cleanAddressBook, addressKey } from "../../../../lib/client-addresses";
 
 export const dynamic = "force-dynamic";
 
@@ -384,6 +385,32 @@ export async function POST(request) {
   if (body.action === "call-delete") {
     if (!body.id) return bad("Bad request");
     const { error } = await db.from("submissions").delete().eq("id", body.id).eq("kind", "call");
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Studio → client profile → Addresses → Remove (2026-11-15). Takes a place
+  // off this client's address list: its key goes in the same `hidden` list
+  // their own Settings page uses (and it leaves their saved book if it was
+  // there). The shoot day's "Where" is not touched. undo: true puts it back
+  // (a saved-book entry comes back with the label it had).
+  if (body.action === "address-hide") {
+    const key = addressKey(body.address);
+    if (!body.id || key.length < 3) return bad("Bad request");
+    const { data: client } = await db.from("clients").select("email").eq("id", body.id).maybeSingle();
+    if (!client?.email) return bad("Client not found", 404);
+    const email = client.email.toLowerCase();
+    const { data: cur } = await db.from("submissions").select("id, utm").eq("kind", "addresses").eq("email", email).limit(1).maybeSingle();
+    const old = cleanAddressBook(cur?.utm || {});
+    let next;
+    if (body.undo) {
+      const book = body.restore?.address && !old.book.some((b) => addressKey(b.address) === key) ? [...old.book, body.restore] : old.book;
+      next = cleanAddressBook({ book, hidden: old.hidden.filter((k) => k !== key) });
+    } else {
+      next = cleanAddressBook({ book: old.book.filter((b) => addressKey(b.address) !== key), hidden: [...old.hidden, key] });
+    }
+    const row = { kind: "addresses", email, utm: next, fields: next.book.map((b) => [b.label || "Address", b.address]), subject: `Addresses — ${email}`, summary: `${next.book.length} saved address${next.book.length === 1 ? "" : "es"}`, updated_at: new Date().toISOString() };
+    const { error } = await (cur ? db.from("submissions").update(row).eq("id", cur.id) : db.from("submissions").insert({ ...row, status: "archived", source_path: "/portal/admin/clients" }));
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true });
   }

@@ -5831,7 +5831,7 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .stage-new { border-color: var(--clay); color: var(--clay); }
 .stage-intake_sent, .stage-intake { border-color: #b08a3a; color: #9a7628; }
 .stage-call { border-color: #6b5bd6; color: #5a4bc4; }
-.stage-booked, .stage-shot { border-color: #4a7c59; color: #4a7c59; }
+.stage-booked, .stage-shot, .stage-ongoing { border-color: #4a7c59; color: #4a7c59; }
 .stage-delivered { opacity: 0.65; }
 .cprof { display: grid; gap: 1rem; }
 .cprof-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.6rem; }
@@ -7146,7 +7146,17 @@ textarea.grow { overflow: hidden; }
 
 /* client profile — Inspo card */
 .cprof-inspo-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; }
-.cprof-inspo-add input { min-width: 0; min-height: 40px; }
+.cprof-inspo-add input { min-width: 0; min-height: 44px; }
+/* 2026-11-15: the link boxes were browser-default white. Now sunken wells that
+   sit with the raised buttons, and Add gets real depth instead of flat white. */
+.cprof-inspo-add input, #inspo .client-notes textarea { font: inherit; font-size: 0.95rem; color: inherit; padding: 0.55rem 1rem; border: 1px solid var(--field-line); border-radius: 999px; background: rgba(0, 0, 0, 0.04); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12); transition: border-color 0.15s, box-shadow 0.15s; }
+#inspo .client-notes textarea { border-radius: 14px; padding: 0.7rem 1rem; }
+.cprof-inspo-add input::placeholder, #inspo .client-notes textarea::placeholder { color: inherit; opacity: 0.5; }
+.cprof-inspo-add input:focus, #inspo .client-notes textarea:focus { outline: 2px solid var(--clay); outline-offset: 1px; }
+.is-dark .cprof-inspo-add input, .is-dark #inspo .client-notes textarea { border-color: rgba(255, 255, 255, 0.14); background: linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.26)); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 1px 0 rgba(255, 255, 255, 0.05); }
+.cprof-inspo-add .abtn { min-height: 44px; padding-inline: 1.3rem; background-image: linear-gradient(#ffffff, #d6d5d0 55%, #b9b8b2); border-color: #e9e8e4; box-shadow: inset 0 1px 0 #fff, inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 26px -14px rgba(0, 0, 0, 0.7); }
+.cprof-inspo-add .abtn:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); }
+.cprof-inspo-add .abtn:disabled { opacity: 0.55; }
 .cprof-inspo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
 .cprof-inspo-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; line-height: 1.35; }
 .cprof-inspo-list li a { font-weight: 600; word-break: break-all; }
@@ -7234,11 +7244,14 @@ textarea.grow { overflow: hidden; }
 .cprof-contactline { margin: 0; font-size: 1rem; }
 .cprof-desc { margin: 0.1rem 0 0; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.4; max-width: 60ch; }
 .cprof-headacts .achip { min-height: 2.3rem; padding: 0.4rem 0.85rem; font-size: 0.9rem; }
-.cprof-tabs { margin-top: 0.3rem; }
+.cprof-tabs { margin: 0.9rem 0 1.2rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line); }
 .cprof-tabs .ifilter { font-size: 0.95rem; padding: 0.55rem 0.95rem; }
 .cprof-tabbody { display: grid; gap: 1rem; }
 .cprof-cols.is-hidden { display: none; }
 .cprof-cols.is-paper .cprof-deliv { display: none; }
+/* Notes tab (2026-11-15): the two note cards only — private (left) and the shared thread (right). They left Paperwork. */
+.cprof-cols.is-paper .cprof-ntab { display: none; }
+.cprof-cols.is-notes .cprof-card:not(.cprof-ntab) { display: none; }
 /* Galleries tab = galleries + their login; Money tab = payments. One full-width column each. */
 .cprof-cols.is-gals .cprof-card:not(.cprof-gtab),
 .cprof-cols.is-money .cprof-card:not(.cprof-mtab) { display: none; }
@@ -7349,6 +7362,9 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .cprof-addr-main strong { font-weight: 500; overflow-wrap: anywhere; }
 .cprof-addr-main em { font-style: normal; font-size: 0.82rem; opacity: 0.65; }
 .cprof-addr-list a.abtn { text-decoration: none; }
+.cprof-addr-gone { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.6rem; font-size: 0.9rem; opacity: 0.85; overflow-wrap: anywhere; }
+.cprof-addr-x { opacity: 0.7; }
+.cprof-addr-x:hover { opacity: 1; }
 /* Calendar day panel: the two things you can do on a day, numbered. */
 .ccal-opt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.5rem; margin: 0.4rem 0 0.1rem; }
 .ccal-optn { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 999px; border: 1px solid currentColor; font-size: 0.75rem; font-weight: 700; opacity: 0.8; }

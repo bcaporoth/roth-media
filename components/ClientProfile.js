@@ -38,7 +38,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   const [pasting, setPasting] = useState(false);
   const [editing, setEditing] = useState(false); // contact details form, closed until asked for
   // One drawer open at a time: Shoot days · Paperwork · Notes · Galleries · Money.
-  const [tab, setTab] = useState(() => (initial.type === "business" || (initial.days || []).length ? "days" : "paper"));
+  const [tab, setTab] = useState("days"); // the calendar lives on this tab, so everyone lands on it
   useEffect(() => {
     const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
     if (h === "notes") setTab("notes"); else if (h === "galleries" || h === "login") setTab("gals"); else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
@@ -131,7 +131,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       {error && <p className="cform-error">{error}</p>}
 
       <ol className="cprof-stages" aria-label="Where they are">
-        {STAGES.map((s, i) => { const at = STAGES.findIndex((x) => x.key === d.stage); return <li key={s.key} className={i < at ? "is-past" : i === at ? "is-now" : ""}>{s.label}</li>; })}
+        {STAGES.filter((s) => s.key !== "ongoing" || d.stage === "ongoing").map((s, i) => { const at = STAGES.findIndex((x) => x.key === d.stage); return <li key={s.key} className={i < at ? "is-past" : i === at ? "is-now" : ""}>{s.label}</li>; })}
       </ol>
 
       {d.referral?.ready && (
@@ -144,16 +144,17 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       )}
 
 
-      <AddressBook list={d.addresses || []} copy={copy} />
-
-      {/* The calendar (passed in by the page) sits above the tabs. */}
-      {children}
-
+      {/* Tabs are the page's header row (2026-11-15, Brandon: "toward the top,
+          like the header, instead of randomly in the mid page"). Shoot days =
+          the calendar (passed in by the page), then the planned days, then
+          their addresses. */}
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
         {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
+
+      {tab === "days" && children}
 
       {tab === "days" && (
         <div className="cprof-tabbody">
@@ -163,15 +164,11 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
             <p className="sm-typehint" id="cprof-type-hint" title="Not a saved setting — it starts on whatever their last intake, call sheet or shoot was.">For the intake link, new call sheets and new shoots.</p>
           </div>
+          <AddressBook list={d.addresses || []} copy={copy} clientId={c.id} onFail={fail} onChange={(addresses) => setD((x) => ({ ...x, addresses }))} />
         </div>
       )}
 
-      {tab === "notes" && (
-        <div className="cprof-tabbody">
-        </div>
-      )}
-
-      <div className={"cprof-cols" + (tab === "paper" ? " is-paper" : tab === "gals" ? " is-gals" : tab === "money" ? " is-money" : " is-hidden")}>
+      <div className={"cprof-cols" + (tab === "paper" ? " is-paper" : tab === "notes" ? " is-notes" : tab === "gals" ? " is-gals" : tab === "money" ? " is-money" : " is-hidden")}>
         <div className="cprof-col cprof-ref">
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Initial inquiry{d.messages.length > 0 && <em className="cprof-count">{d.messages.length}</em>}</h2>
@@ -208,7 +205,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
         </div>
 
         <div className="cprof-col">
-          <section className="cprof-card" id="notes">
+          <section className="cprof-card cprof-ntab" id="notes">
             <div className="cprof-cardhead"><h2>Notes with {c.name.split(" ")[0] || "them"}</h2><span className="gcard-meta">They see this on their portal · you both get an email per note</span></div>
             <NotesThread role="brandon" clientId={c.id} clientName={c.name} />
           </section>
@@ -517,8 +514,8 @@ function InspoCard({ client: c, save }) {
     await persist(next);
   };
   return (
-    <section className="cprof-card" id="inspo">
-      <div className="cprof-cardhead"><h2>Inspo{links.length > 0 && <em className="cprof-count">{links.length}</em>}</h2><span className="gcard-meta">Only you see this · reels, videos, sites, ideas</span></div>
+    <section className="cprof-card cprof-ntab" id="inspo">
+      <div className="cprof-cardhead"><h2>Private notes &amp; inspo{links.length > 0 && <em className="cprof-count">{links.length}</em>}</h2><span className="gcard-meta">Only you see this · reels, videos, sites, ideas</span></div>
       <form onSubmit={addLink} className="cprof-inspo-add">
         <input type="url" inputMode="url" placeholder="Paste a link (reel, YouTube, site)…" value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} />
         <input type="text" placeholder="Why it's good / what to steal" value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
@@ -546,13 +543,39 @@ function InspoCard({ client: c, save }) {
 // Where they shoot (lib/client-addresses.js): every place from their briefs,
 // shoot days and the Shoots calendar, newest first. Directions opens Google
 // Maps (the Maps app on a phone).
-function AddressBook({ list, copy }) {
+// Remove (2026-11-15): takes a place off this client's list (Brandon: "I need
+// to be able to delete some of these"). It only hides it — the shoot day keeps
+// its "Where" — and the line that replaces it has an Undo.
+function AddressBook({ list, copy, clientId, onFail, onChange }) {
   const [all, setAll] = useState(false);
-  if (!list.length) return null;
+  const [gone, setGone] = useState(null); // { item, index } — the last one removed
+  const [busy, setBusy] = useState(false);
+  if (!list.length && !gone) return null;
   const shown = all ? list : list.slice(0, 3);
+  const remove = async (a) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api("/api/admin/clients", { action: "address-hide", id: clientId, address: a.address });
+      setGone({ item: a, index: list.indexOf(a) });
+      onChange(list.filter((x) => x !== a));
+    } catch (err) { onFail(err); }
+    setBusy(false);
+  };
+  const undo = async () => {
+    if (busy || !gone) return;
+    setBusy(true);
+    try {
+      await api("/api/admin/clients", { action: "address-hide", id: clientId, address: gone.item.address, undo: true, restore: gone.item.mine ? { label: gone.item.label, address: gone.item.address } : null });
+      const next = [...list]; next.splice(Math.min(gone.index, next.length), 0, gone.item);
+      onChange(next); setGone(null);
+    } catch (err) { onFail(err); }
+    setBusy(false);
+  };
   return (
     <section className="cprof-card cprof-addrs" aria-labelledby="cprof-addrs-h">
       <div className="cprof-cardhead"><h2 id="cprof-addrs-h">Addresses<em className="cprof-count">{list.length}</em></h2></div>
+      {gone && <p className="cprof-addr-gone" role="status">Removed “{gone.item.address}”. <button type="button" className="achip" onClick={undo} disabled={busy}>Undo</button></p>}
       <ul className="cprof-addr-list">
         {shown.map((a) => (
           <li key={a.address}>
@@ -560,6 +583,7 @@ function AddressBook({ list, copy }) {
             <span className="gcard-actions">
               <a className="abtn" href={directionsUrl(a.address)} target="_blank" rel="noopener noreferrer">Directions →</a>
               <button type="button" className="achip" onClick={() => copy(a.address, "Address")}>Copy</button>
+              <button type="button" className="achip cprof-addr-x" onClick={() => remove(a)} disabled={busy} aria-label={`Remove ${a.address} from this list`}>Remove</button>
             </span>
           </li>
         ))}
