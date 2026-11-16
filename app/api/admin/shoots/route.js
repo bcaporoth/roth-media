@@ -206,6 +206,11 @@ export async function POST(request) {
         ({ data, error } = await db.from("shoots").update(row).eq("id", id).select("*").single());
       }
       if (error) return bad(error.message, 500);
+      // A moved shoot takes its shoot day (the scripts page) with it, so the
+      // client's calendar and the day page show the new date too.
+      if (row.date !== undefined && cur && cur.date !== data.date) {
+        try { await db.from("shoot_days").update({ date: data.date || null, updated_at: new Date().toISOString() }).eq("shoot_id", id); } catch {}
+      }
       return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }
 

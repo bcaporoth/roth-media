@@ -7347,8 +7347,33 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .scal-grid.is-marking .scal-cell.can-mark { cursor: pointer; outline: 1px dashed rgba(74, 124, 89, 0.7); outline-offset: -3px; }
 .scal-grid.is-marking .scal-cell.can-mark:hover, .scal-grid.is-marking .scal-cell.can-mark:focus-visible { box-shadow: inset 0 0 0 2px #4a7c59; }
 .scal-grid.is-marking .scal-cell:not(.can-mark):not(.is-blank) { opacity: 0.45; }
-.scal-freebtn { margin-left: auto; }
+/* Drag a shoot to another day (2026-11-16). */
+.scal-ev[draggable="true"] { cursor: grab; }
+.scal-ev.is-dragging { opacity: 0.4; }
+.scal-cell.is-drop, .admin-shell.is-dark .scal-cell.is-drop:not(.is-blank) { border-color: var(--clay); box-shadow: inset 0 0 0 2px var(--clay); background: rgba(196, 120, 74, 0.14); }
+.scal-clear { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; margin: 0 0 0.6rem; padding-top: 0.6rem; border-top: 1px dashed rgba(74, 124, 89, 0.6); }
+.scal-clear .inbox-hint { margin: 0; }
+.scal-busybtn { margin-left: auto; }
+.scal-busybox { margin: 0 0 0.9rem; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.03); display: grid; gap: 0.6rem; }
+.scal-busybox .scal-freehint { margin: 0; }
+.scal-busylist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.scal-busylist li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 0.8rem; padding: 0.45rem 0.7rem; border: 1px solid var(--line); border-radius: 10px; }
+.scal-busylist em { font-style: normal; opacity: 0.7; }
+.scal-busyadd { display: grid; gap: 0.6rem; }
+.scal-busydays { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.scal-busydays .achip { min-width: 3.1rem; min-height: 36px; justify-content: center; }
+.scal-busybox .scal-hours { margin: 0; }
+.scal-busylabel { flex: 1 1 200px; }
+.scal-busylabel input { flex: 1; min-width: 0; font: inherit; font-size: 0.95rem; color: inherit; min-height: 40px; padding: 0.3rem 0.7rem; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 10px; background: rgba(0, 0, 0, 0.3); }
+.admin-shell:not(.is-dark) .scal-busylabel input { border-color: var(--field-line); background: transparent; }
+.scal-busy { display: inline-block; justify-self: start; max-width: 100%; font-size: 0.64rem; line-height: 1.25; padding: 0.1rem 0.35rem; border-radius: 999px; border: 1px solid rgba(240, 138, 126, 0.6); color: #f0a79e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { .scal-busybtn { margin-left: 0; } .scal-busy { font-size: 0.5rem; padding: 0.05rem 0.2rem; } }
 .scal-freehint { margin: 0 0 0.6rem; }
+.scal-freebox { margin: 0 0 0.9rem; padding: 0.8rem 0.9rem 0.3rem; border: 1px solid #4a7c59; border-radius: 14px; background: rgba(74, 124, 89, 0.1); }
+.scal-hours { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; margin: 0 0 0.6rem; }
+.scal-hours label { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+.scal-hours input[type="time"] { font: inherit; font-size: 0.95rem; color: inherit; color-scheme: dark; min-height: 40px; padding: 0.3rem 0.6rem; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 10px; background: rgba(0, 0, 0, 0.3); }
+.admin-shell:not(.is-dark) .scal-hours input[type="time"] { color-scheme: light; border-color: var(--field-line); background: transparent; }
 .ccal-freekey { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin: -0.8rem 0 1rem; }
 .ccal-freenote { margin: 0 0 0.6rem; padding: 0.5rem 0.75rem; border-radius: 10px; border: 1px solid #4a7c59; background: rgba(74, 124, 89, 0.16); font-weight: 500; }
 .ccal-freetoggle { justify-self: start; }

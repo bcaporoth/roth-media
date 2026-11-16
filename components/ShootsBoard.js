@@ -272,7 +272,7 @@ export default function ShootsBoard() {
 
       {showNew && <NewShoot prefill={prefill} leads={data.leads} guides={data.guides} busy={busy} onCreate={create} />}
 
-      {view === "month" && <StudioCalendar shoots={shoots} onOpen={reveal} />}
+      {view === "month" && <StudioCalendar shoots={shoots} onOpen={reveal} onMoved={sh.patch} />}
 
       {view === "owed" && <OwedPanel shoots={shoots} clock={clock} onOpen={reveal} onBulk={deliverBulk} full />}
 

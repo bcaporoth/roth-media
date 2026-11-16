@@ -114,8 +114,12 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
   // Brandon can mark or unmark the picked day right here.
   const [free, setFree] = useState([]);
   const [marked, setMarked] = useState([]);
+  const [freeTimes, setFreeTimes] = useState({});
+  const [busyByDay, setBusyByDay] = useState({}); // { date: [{ from, to }] } — hours he is not free on a free day
+  const busyText = (d) => (busyByDay[d] || []).map((b) => `${fmt12(b.from)} to ${fmt12(b.to)}`).join(", ");
+  const freeHours = (d) => { const w = freeTimes[d]; return !w ? "" : w.from && w.to ? `${fmt12(w.from)} to ${fmt12(w.to)}` : w.from ? `from ${fmt12(w.from)}` : `until ${fmt12(w.to)}`; };
   useEffect(() => {
-    fetch("/api/free-days").then((r) => r.json()).then((j) => { if (j.ok) { setFree(j.open || []); setMarked(j.marked || []); } }).catch(() => {});
+    fetch("/api/free-days").then((r) => r.json()).then((j) => { if (j.ok) { setFree(j.open || []); setMarked(j.marked || []); setFreeTimes(j.times || {}); setBusyByDay(j.busyOn || j.openBusy || {}); } }).catch(() => {});
   }, []);
   const [freeBusy, setFreeBusy] = useState(false);
   async function toggleFree(on) {
@@ -124,7 +128,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
       const res = await fetch("/api/free-days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: day, on }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't save");
-      setFree(j.open || []); setMarked(j.marked || []);
+      setFree(j.open || []); setMarked(j.marked || []); setFreeTimes(j.times || {}); setBusyByDay(j.busyOn || j.openBusy || {});
     } catch (x) { setErr(x.message); } finally { setFreeBusy(false); }
   }
 
@@ -220,7 +224,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
 
       <div className="ccal-day">
         <h4>{longDay(day)}</h4>
-        {free.includes(day) && <p className="ccal-freenote">{studio ? "You marked this day free. They can ask for it." : "Brandon is free this day."}</p>}
+        {free.includes(day) && <p className="ccal-freenote">{studio ? `You marked this day free${freeHours(day) ? `, ${freeHours(day)}` : ""}. They can ask for it.` : `Brandon is free this day${freeHours(day) ? `, ${freeHours(day)}` : ""}.`}{busyText(day) ? ` Not free: ${busyText(day)}.` : ""}</p>}
         {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing here yet — add what's happening below."}</p> : (
           <ul className="ccal-list">
             {dayEvents.map((e) => (
