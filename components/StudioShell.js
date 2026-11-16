@@ -17,7 +17,7 @@ import "../app/portal/admin/studio.css";
 // before the refresh no longer applies. Picking Light again in Look is remembered.
 const LOOK_KEY = "rm-admin-look-2";
 
-// Seven tabs that fit a phone. A tab with `subs` shows them as a second row
+// Eight tabs that fit a phone. A tab with `subs` shows them as a second row
 // while you're inside it. `key` in a sub is the `active` name its page passes
 // to StudioShell — every page keeps the URL and the `active` it always had.
 // Galleries first — it's where Brandon spends his time (2026-11-07); Studio already lands there.
@@ -31,10 +31,12 @@ export const STUDIO_TABS = [
     subs: [
       { key: "shoots", label: "List", href: "/portal/admin/shoots" },
       { key: "projects", label: "Projects", href: "/portal/admin/projects" },
-      { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
       { key: "playbook", label: "Playbook", href: "/portal/admin/playbook" },
     ],
   },
+  // Its own tab since 2026-11-16: Brandon kept losing it under Shoots, and it
+  // is where he marks the free days every client's calendar shows.
+  { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
   { key: "inbox", label: "Inbox", href: "/portal/admin/inbox" },
   { key: "today", label: "Today", href: "/portal/admin/today" },
   {
