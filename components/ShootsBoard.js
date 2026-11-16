@@ -236,6 +236,9 @@ export default function ShootsBoard() {
     if (!wanted || !data) return;
     const s = data.shoots.find((x) => x.id === wanted.id);
     if (!s) { setWanted(null); return; }
+    // A shoot with a day page opens there (one layer), on its Prep tab.
+    const dd = (data.days || []).find((x) => x.shoot_id === s.id);
+    if (dd?.href) { window.location.href = `${dd.href}#prep`; return; }
     setView(isPast(s) ? "done" : "upcoming");
     setOpenId(s.id);
     const t = setTimeout(() => { document.getElementById(`shoot-${s.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setWanted(null); }, 60);
@@ -484,6 +487,25 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
   );
 }
 
+// The shoot's prep, times, notes and delivery, on its own — what the day page
+// shows under "Prep & details". Same rows, same saves, as the Shoots list.
+export function ShootPanel({ shootId }) {
+  const sh = useShoots();
+  const { data, error, busy, flash, refresh, clock } = sh;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refresh(); }, []);
+  const s = (data?.shoots || []).find((x) => x.id === shootId);
+  return (
+    <div className="shoot-panel">
+      {flash && <p className="clients-flash">{flash}</p>}
+      {error && <p className="cform-error">{error}</p>}
+      {!data && !error && <p className="gcard-meta">Loading prep…</p>}
+      {data && !s && <p className="gcard-meta">This day isn&rsquo;t on the Shoots calendar any more, so there are no prep lists for it.</p>}
+      {s && <ul className="shoot-list"><ShootRow embedded s={s} open onToggle={() => {}} onUpdate={sh.update} onRemove={sh.remove} onRelocate={sh.relocate} onPatched={sh.patch} onSay={sh.say} clock={clock} busy={busy} galleries={data.galleries} guides={data.guides} playbook={data.playbook} /></ul>}
+    </div>
+  );
+}
+
 // Plan a Content Day: creates the shoot day (scripts page) and opens it.
 // Dated, it's put on the Shoots calendar at the same time.
 function NewDay({ client: c, onFail }) {
@@ -565,7 +587,7 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
 const NO_CLOCK = { ready: false, deliver: () => {} };
 const SAVE_LABEL = { saving: "Saving…", saved: "Saved ✓", retrying: "No signal — still trying. Your ticks are safe.", failed: "Couldn't save." };
-export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [], projects = null }) {
+export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpdate, onRemove, onRelocate, onPatched, onSay, clock = NO_CLOCK, busy, galleries, guides, playbook = [], projects = null, embedded = false }) {
   const t = useMemo(() => timing(s), [s]);
   const n = daysOut(s.date);
   const d = deliveryState(s);
@@ -649,22 +671,30 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
   const [crew, setCrew] = useState(false);
   const flowSorted = (list) => [...list.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...list.filter((c) => !c.time)];
 
+  // Open in place only when there is no day page to go into (or this IS the day page).
+  const shown = embedded || (open && !day);
   return (
-    <li id={`shoot-${s.id}`} className={"shoot" + (open ? " is-open" : "") + (open && dayMode ? " is-day" : "") + ` is-${s.status}`}>
+    <li id={`shoot-${s.id}`} className={"shoot" + (embedded ? " is-embedded" : "") + (shown ? " is-open" : "") + (open && dayMode ? " is-day" : "") + ` is-${s.status}`}>
+      {/* One layer (2026-11-16, Brandon: "see the day and then go into it"): a
+          shoot that has a day page is a link straight into it — scripts and prep
+          live there, nothing unfolds here. Shoots without one still open in place. */}
+      {embedded ? null : day ? (
+        <a className="shoot-row shoot-row-go" href={day.href}>
+          <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
+          <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""} · {day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready` : ""}{!s.address ? " · no address yet" : ""}</em></span>
+          <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
+          <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
+        </a>
+      ) : (
       <button type="button" className="shoot-row" onClick={onToggle} aria-expanded={open}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
         <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.project_id ? " · part of a project" : ""}{!s.address ? " · no address yet" : ""}</em></span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>
-      {day && (
-        <div className="shoot-daylink">
-          <a className="abtn shoot-daybtn" href={day.href}>▶ Open the scripts (T-chart) →</a>
-          <span className="gcard-meta">{day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready to film` : " — nothing written yet"} · shared with {first}</span>
-        </div>
       )}
-      {!day && s.kind === "business" && s.status !== "done" && s.status !== "cancelled" && <StartScripts s={s} clientId={clientId} />}
-      {projects && projects.length > 0 && (
+      {!embedded && !day && s.kind === "business" && s.status !== "done" && s.status !== "cancelled" && <StartScripts s={s} clientId={clientId} />}
+      {!embedded && projects && projects.length > 0 && (
         <label className="shoot-projpick"><span>Project</span>
           <select className="achip" value={s.project_id || ""} disabled={busy} onChange={(e) => onUpdate(s.id, { project_id: e.target.value || null }, e.target.value ? "Filed under the project ✓" : "Taken out of the project ✓")}>
             <option value="">Not in a project</option>
@@ -674,7 +704,7 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
       )}
       {!open && d.applies && d.owed && d.overdue && <div className="shoot-clock"><DeliveryChips d={d} done={false} /></div>}
 
-      {open && dayMode && (
+      {shown && dayMode && (
         <div className="shoot-detail shoot-day">
           <div className="sday-strip">
             <div><span className="kick-sm">Start</span><strong>{t.start ? fmt12(t.start) : "TBD"}</strong></div>
@@ -723,7 +753,7 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
         </div>
       )}
 
-      {open && !dayMode && (
+      {shown && !dayMode && (
         <div className="shoot-detail">
           <div className="shoot-facts">
             {usesSun(s.kind) && <div><span className="kick-sm">Sunset there</span><strong>{t.sunset ? fmt12(t.sunset) : "—"}</strong><em>golden hour from {t.golden ? fmt12(t.golden) : "—"}</em></div>}

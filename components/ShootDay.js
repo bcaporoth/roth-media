@@ -14,10 +14,14 @@
 //   + Add        — a kind picker; Brandon can ask Claude to draft it
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
 import AddressInput from "./AddressInput";
+// Brandon's prep lists for the day (Studio only) — loaded when he opens that tab,
+// so the client's copy of this page never downloads it.
+const ShootPanel = dynamic(() => import("./ShootsBoard").then((m) => m.ShootPanel), { ssr: false, loading: () => <p className="gcard-meta">Loading prep…</p> });
 import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
@@ -51,6 +55,10 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const [addError, setAddError] = useState("");
   const [tool, setTool] = useState(""); // "" | plan | import | send
   const [more, setMore] = useState(false); // Brandon's less-used tools, folded away
+  // One page for the whole day (2026-11-16): Scripts | Prep & details. Prep is
+  // the calendar shoot's lists, times, notes and delivery — Studio only.
+  const [pane, setPane] = useState("scripts");
+  useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#prep") setPane("prep"); }, []);
   const [allKinds, setAllKinds] = useState(false);
   const [filming, setFilming] = useState(null); // index into the running order, or null
   const [busy, setBusy] = useState(false);
@@ -192,6 +200,15 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       <DayHeader day={day} role={me} onSaved={(patch) => setDay((d) => ({ ...d, ...patch }))} onError={fail} total={total} ready={ready} count={scripts.length} />
       {me === "client" && <QuickTips scripts={scripts} client={day.client} />}
 
+      {me === "brandon" && day.shoot_id && (
+        <div className="pbook-kinds cprof-tabs sday-panes" role="tablist" aria-label="This day">
+          <button type="button" role="tab" aria-selected={pane === "scripts"} className={"ifilter" + (pane === "scripts" ? " is-on" : "")} onClick={() => setPane("scripts")}>Scripts{scripts.length ? <em className="ifilter-n"> {scripts.length}</em> : null}</button>
+          <button type="button" role="tab" aria-selected={pane === "prep"} className={"ifilter" + (pane === "prep" ? " is-on" : "")} onClick={() => setPane("prep")}>Prep &amp; details</button>
+        </div>
+      )}
+      {me === "brandon" && day.shoot_id && pane === "prep" && <ShootPanel shootId={day.shoot_id} />}
+
+      <div className={"sday-scripts" + (pane === "prep" && me === "brandon" && day.shoot_id ? " is-hidden" : "")}>
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
@@ -279,6 +296,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
         </div>
       </section>
+      </div>
     </div>
   );
 }

@@ -7412,6 +7412,16 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .cprof-addr-main em { font-style: normal; font-size: 0.82rem; opacity: 0.65; }
 .cprof-addr-list a.abtn { text-decoration: none; }
 .cprof-addr-gone { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.6rem; font-size: 0.9rem; opacity: 0.85; overflow-wrap: anywhere; }
+/* One page per day (2026-11-16): Scripts | Prep & details on the day page. */
+.shoot-row-go { text-decoration: none; }
+.shoot-row-go::after, .cprof .shoot-row-go::after { content: "Open day →"; white-space: nowrap; }
+.shoot-row-go::before { background: var(--clay); color: #fff; }
+.is-dark .shoot-row-go::before { background: var(--clay); color: #fff; }
+.sday-scripts.is-hidden { display: none; }
+.sday-panes { margin: 1rem 0 1.2rem; }
+.shoot-panel .shoot-list { margin: 0; }
+.shoot.is-embedded { border: 0; background: none; padding: 0; box-shadow: none; }
+.shoot.is-embedded > .shoot-detail { padding: 0; border: 0; }
 /* Projects on a client's Shoots list (2026-11-16): a project is a folder of shoots. */
 .shoot-proj { display: grid; gap: 0.6rem; padding: 0.9rem; margin: 0 0 1rem; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.03); }
 .shoot-projhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
