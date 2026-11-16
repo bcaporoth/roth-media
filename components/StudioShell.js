@@ -31,7 +31,7 @@ export const STUDIO_TABS = [
     subs: [
       { key: "shoots", label: "List", href: "/portal/admin/shoots" },
       { key: "projects", label: "Projects", href: "/portal/admin/projects" },
-      { key: "calendar", label: "Month", href: "/portal/admin/calendar" },
+      { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
       { key: "playbook", label: "Playbook", href: "/portal/admin/playbook" },
     ],
   },

@@ -254,7 +254,7 @@ export default function ShootsBoard() {
   if (!data && !error) return <p className="portal-empty">Loading…</p>;
   if (error && !data) return <p className="portal-empty">{error}</p>;
 
-  const tabs = [["upcoming", "Upcoming", upcoming.length], ["owed", "Owed", owed.length], ["done", "Done", past.length], ["month", "Month", null]];
+  const tabs = [["upcoming", "Upcoming", upcoming.length], ["owed", "Owed", owed.length], ["done", "Done", past.length], ["month", "Calendar", null]];
   return (
     <div className="shoots">
       <div className="atoolbar shoots-bar">
