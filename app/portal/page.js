@@ -268,7 +268,7 @@ export default async function PortalPage({ searchParams }) {
   // content and their brand on one page.
   if (palette) {
     const plan = adminConfigured ? await loadPublishedPlan(supabaseAdmin(), client.id) : null;
-    const days = adminConfigured ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
+    const days = adminConfigured ? await listDays(supabaseAdmin(), client.id, { forClient: true }).catch(() => null) : null;
     const months = adminConfigured ? await publishedMonths(supabaseAdmin(), client.id).catch(() => []) : [];
     const unpaid = months.find((m) => !m.paid_at && m.pay_url && m.price_cents > 0);
     if (unpaid) todo.push({ who: "you", text: `${unpaid.label} content — pay link ready`, href: "#months" });
@@ -301,7 +301,7 @@ export default async function PortalPage({ searchParams }) {
   }
 
   // Their shoot days (the scripts) — shown on the calendar and as their own list.
-  const personalDays = adminConfigured && !isAdmin ? await listDays(supabaseAdmin(), client.id).catch(() => null) : null;
+  const personalDays = adminConfigured && !isAdmin ? await listDays(supabaseAdmin(), client.id, { forClient: true }).catch(() => null) : null;
 
   // No name yet (a brand-new sign-up) → "Hi, there." — never "Hi, There."
   const first = (client.name || "").trim().split(/\s+/)[0];

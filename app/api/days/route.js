@@ -3,6 +3,7 @@ import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
 import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
+import { standInEmail } from "../../../lib/no-email";
 import { loadPlaybook } from "../../../lib/playbook";
 import { baselineScripts } from "../../../lib/baseline-day";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
@@ -30,7 +31,9 @@ async function syncShoot(db, day, next) {
   let shootId = day.shoot_id || null;
   try {
     const row = { title: next.title, kind: "business", client_name: day.client?.name || "", client_email: day.client?.email || "", date: next.date, start_time: next.start_time || "", address: next.location || "" };
-    if (shootId) await db.from("shoots").update(row).eq("id", shootId);
+    // An existing shoot keeps its own kind and client (a wedding's day page must
+    // not turn the wedding into a "business" shoot) — only the day's facts move.
+    if (shootId) await db.from("shoots").update({ title: row.title, date: row.date, start_time: row.start_time, address: row.address }).eq("id", shootId);
     else {
       let checklist = [];
       try { const { lists } = await loadPlaybook(db); checklist = checklistFromPlaybook(lists, "business"); } catch {}
@@ -93,6 +96,38 @@ export async function POST(request) {
         await syncShoot(db, { id: data.id, shoot_id: null, client: who || {} }, { ...patch });
       }
       return NextResponse.json({ ok: true, id: data.id });
+    }
+
+    // One layer everywhere (2026-11-16): any shoot opens into a day page. Finds
+    // the shoot's day, or makes one — on the client the shoot names (matched by
+    // email, then by name; added to the roster if they are new).
+    if (body.action === "day-for-shoot") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      if (!isUuid(body.shootId)) return bad("Bad shoot");
+      const { data: sh } = await db.from("shoots").select("id, title, date, start_time, address, client_name, client_email, client_phone").eq("id", body.shootId).maybeSingle();
+      if (!sh) return bad("Shoot not found", 404);
+      const { data: have } = await db.from("shoot_days").select("id, client_id").eq("shoot_id", sh.id).limit(1).maybeSingle();
+      if (have) return NextResponse.json({ ok: true, id: have.id, clientId: have.client_id });
+      const email = String(sh.client_email || "").trim().toLowerCase();
+      const name = String(sh.client_name || "").replace(/\s+/g, " ").trim().slice(0, 80);
+      let client = null;
+      if (email) ({ data: client } = await db.from("clients").select("id, email").eq("email", email).maybeSingle());
+      if (!client && name) {
+        const { data: byName } = await db.from("clients").select("id, email").ilike("name", name).limit(2);
+        if ((byName || []).length === 1) client = byName[0];
+      }
+      if (!client) {
+        if (!email && !name) return bad("Add a client name to this shoot first (Edit details), then open the day.");
+        const { data: made, error: cErr } = await db.from("clients").insert({ email: email || standInEmail(name), name: name || email.split("@")[0], ...(sh.client_phone ? { phone: String(sh.client_phone).slice(0, 40) } : {}) }).select("id, email").single();
+        if (cErr) throw new Error(cErr.message);
+        client = made;
+      }
+      // A shoot with no email joins that client's list (profiles match shoots by email).
+      if (!email && client.email) await db.from("shoots").update({ client_email: client.email }).eq("id", sh.id);
+      const patch = cleanDayPatch({ title: sh.title || "Shoot day", date: sh.date || "", start_time: sh.start_time || "", location: sh.address || "" });
+      const { data: day, error: dErr } = await db.from("shoot_days").insert({ client_id: client.id, shoot_id: sh.id, ...patch }).select("id").single();
+      if (dErr) throw new Error(dErr.message);
+      return NextResponse.json({ ok: true, id: day.id, clientId: client.id });
     }
 
     // Everything else needs a day this person may open.

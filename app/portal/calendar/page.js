@@ -29,7 +29,7 @@ export default async function CalendarPage() {
       db.from("clients").select("id, name").eq("email", email).maybeSingle(),
       email === ADMIN_EMAIL ? false : emailHasBrand(db, email),
     ]);
-    if (client) days = await listDays(db, client.id).catch(() => null);
+    if (client) days = await listDays(db, client.id, { forClient: true }).catch(() => null);
   }
   const who = adminConfigured ? await portalWho(supabaseAdmin(), email) : { kick: "Client portal", title: "Hi, there." };
   const nav = <PortalNav email={user.email} isAdmin={email === ADMIN_EMAIL} active="calendar" brand={hasBrand} />;

@@ -57,7 +57,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const [more, setMore] = useState(false); // Brandon's less-used tools, folded away
   // One page for the whole day (2026-11-16): Scripts | Prep & details. Prep is
   // the calendar shoot's lists, times, notes and delivery — Studio only.
-  const [pane, setPane] = useState("scripts");
+  // A wedding / portrait day with nothing scripted opens on Prep — that is the work there.
+  const [pane, setPane] = useState(() => (role === "brandon" && initial.shoot_id && initial.shoot_kind && initial.shoot_kind !== "business" && !(initial.scripts || []).length ? "prep" : "scripts"));
   useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#prep") setPane("prep"); }, []);
   const [allKinds, setAllKinds] = useState(false);
   const [filming, setFilming] = useState(null); // index into the running order, or null

@@ -239,13 +239,18 @@ export default function ShootsBoard() {
     // A shoot with a day page opens there (one layer), on its Prep tab.
     const dd = (data.days || []).find((x) => x.shoot_id === s.id);
     if (dd?.href) { window.location.href = `${dd.href}#prep`; return; }
-    setView(isPast(s) ? "done" : "upcoming");
-    setOpenId(s.id);
-    const t = setTimeout(() => { document.getElementById(`shoot-${s.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setWanted(null); }, 60);
-    return () => clearTimeout(t);
+    // No day page yet: make it and go in. If that can't be done, open it here.
+    let off = false;
+    if (opening.current === s.id) return; // already on its way
+    opening.current = s.id;
+    fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-for-shoot", shootId: s.id }) })
+      .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "no day"); if (!off) window.location.href = `/portal/admin/clients/${j.clientId}/days/${j.id}#prep`; })
+      .catch(() => { opening.current = null; if (off) return; setView(isPast(s) ? "done" : "upcoming"); setOpenId(s.id); setWanted(null); });
+    return () => { off = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted, data]);
   const reveal = (id) => setWanted({ id });
+  const opening = useRef(null);
 
   const dayOf = (s) => (data.days || []).find((d) => d.shoot_id === s.id) || null;
   const rowProps = (s) => ({ s, day: dayOf(s), clientId: (data.clientByEmail || {})[(s.client_email || "").toLowerCase()] || null, open: openId === s.id, onToggle: () => setOpenId(openId === s.id ? null : s.id), onUpdate: sh.update, onRemove: sh.remove, onRelocate: sh.relocate, onPatched: sh.patch, onSay: sh.say, clock, busy, galleries: data.galleries, guides: data.guides, playbook: data.playbook });
@@ -671,6 +676,20 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
   const [crew, setCrew] = useState(false);
   const flowSorted = (list) => [...list.filter((c) => c.time).sort((a, b) => a.time.localeCompare(b.time)), ...list.filter((c) => !c.time)];
 
+  // One layer everywhere: a shoot with no day page yet gets one the moment it is
+  // opened (the server finds or adds its client), then we go straight in. Only
+  // if that can't be done (no client on the shoot) does it unfold here instead.
+  const [going, setGoing] = useState(false);
+  async function openDay() {
+    if (open) { onToggle(); return; }
+    setGoing(true);
+    try {
+      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-for-shoot", shootId: s.id }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Couldn't open the day");
+      window.location.href = `/portal/admin/clients/${j.clientId}/days/${j.id}${s.kind === "business" ? "" : "#prep"}`;
+    } catch (e) { setGoing(false); if (onSay) onSay(e.message); onToggle(); }
+  }
   // Open in place only when there is no day page to go into (or this IS the day page).
   const shown = embedded || (open && !day);
   return (
@@ -686,14 +705,13 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
           <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
         </a>
       ) : (
-      <button type="button" className="shoot-row" onClick={onToggle} aria-expanded={open}>
+      <button type="button" className={"shoot-row" + (open ? "" : " shoot-row-go")} onClick={openDay} disabled={going} aria-expanded={open}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
         <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.project_id ? " · part of a project" : ""}{!s.address ? " · no address yet" : ""}</em></span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>
       )}
-      {!embedded && !day && s.kind === "business" && s.status !== "done" && s.status !== "cancelled" && <StartScripts s={s} clientId={clientId} />}
       {!embedded && projects && projects.length > 0 && (
         <label className="shoot-projpick"><span>Project</span>
           <select className="achip" value={s.project_id || ""} disabled={busy} onChange={(e) => onUpdate(s.id, { project_id: e.target.value || null }, e.target.value ? "Filed under the project ✓" : "Taken out of the project ✓")}>
@@ -828,26 +846,6 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
 // A business shoot with no script day yet: one tap makes the day (tied to
 // this calendar entry) and opens the T-chart page. Needs the client on file
 // so the owner can see the same page from their portal.
-function StartScripts({ s, clientId }) {
-  const [busy, setBusy] = useState(false);
-  async function start() {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/days", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "day-create", clientId, shootId: s.id, title: s.title, date: s.date || "", start_time: s.start_time || "09:00", location: s.address || "" }) });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || "Couldn't start the day");
-      window.location.href = `/portal/admin/clients/${clientId}/days/${j.id}`;
-    } catch (e) { setBusy(false); alert(e.message); }
-  }
-  return (
-    <div className="shoot-daylink">
-      {clientId
-        ? <button type="button" className="abtn shoot-daybtn" disabled={busy} onClick={start}>{busy ? "Starting…" : "▶ Start the scripts (T-chart) →"}</button>
-        : <a className="abtn shoot-daybtn" href="/portal/admin/clients">Add {s.client_name ? s.client_name.split(" ")[0] : "them"} as a client to start scripts →</a>}
-      <span className="gcard-meta">{clientId ? "Opens the plan page — what they'll say, what you'll shoot." : "Scripts live on the client's page so they can see them too."}</span>
-    </div>
-  );
-}
 
 // Crew link: the QR a second shooter scans to get /crew/<token> — the same
 // flow, reminders and shot list, ticks shared both ways. No login.
