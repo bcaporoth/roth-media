@@ -278,7 +278,7 @@ export default function ShootsBoard() {
       </div>
       {error && <p className="cform-error">{error}</p>}
 
-      {showNew && <NewShoot prefill={prefill} leads={data.leads} guides={data.guides} busy={busy} onCreate={create} />}
+      {showNew && <NewShoot prefill={prefill} leads={data.leads} clients={data.clients || []} guides={data.guides} busy={busy} onCreate={create} />}
 
       {view === "month" && <StudioCalendar shoots={shoots} onOpen={reveal} onMoved={sh.patch} />}
 
@@ -340,8 +340,9 @@ function OwedPanel({ shoots, clock, onOpen, onBulk, tucked = false, full = false
         {shown.map(({ shoot, d }) => (
           <li key={shoot.id} className={d.overdue ? "is-over" : ""}>
             <button type="button" className="owed-title" onClick={() => onOpen(shoot.id)}>
-              <strong>{shoot.title}</strong>
-              <em>{fmtDate(shoot.date)} · {KIND_LABEL[shoot.kind]}</em>
+              {/* Who it's for comes first: "Content day" alone doesn't say whose. */}
+              <strong>{shoot.client_name || shoot.title}</strong>
+              <em>{shoot.client_name ? `${shoot.title} · ` : ""}{fmtDate(shoot.date)} · {KIND_LABEL[shoot.kind]}</em>
             </button>
             <DeliveryChips d={d} />
             <DeliveryButtons s={shoot} d={d} clock={clock} />
@@ -537,7 +538,7 @@ function NewDay({ client: c, onFail }) {
   );
 }
 
-function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = false }) {
+function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = false, clients = [] }) {
   const [lead, setLead] = useState("");
   const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
   const [more, setMore] = useState(false);
@@ -549,6 +550,22 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
   function pickLead(id) {
     setLead(id);
+  // "Who is it for": search every client, not only the recent inquiries.
+  const [who, setWho] = useState("");
+  const [picked, setPicked] = useState(null);
+  const found = (() => {
+    const q = who.trim().toLowerCase();
+    if (!q) return [];
+    return clients.filter((c) => !/@no-email\./.test(c.email) ? `${c.name} ${c.email}`.toLowerCase().includes(q) : c.name.toLowerCase().includes(q)).slice(0, 8);
+  })();
+  function pickClient(c) {
+    setPicked(c); setWho(""); setLead("");
+    setF((s) => ({ ...s, client_name: c.name || "", client_email: /@no-email\./.test(c.email) ? "" : c.email || "", client_phone: c.phone || "" }));
+  }
+  function clearClient() {
+    setPicked(null);
+    setF((s) => ({ ...s, client_name: "", client_email: "", client_phone: "" }));
+  }
     const l = leads.find((x) => x.id === id);
     if (!l) return;
     const k = /engage/i.test(l.summary) ? "engagement" : /wedding/i.test(l.summary) ? "wedding" : /family/i.test(l.summary) ? "family" : /document|film/i.test(l.summary) ? "documentary" : /business|content/i.test(l.summary) ? "business" : "other";
@@ -559,8 +576,8 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
   return (
     <form className="shoot-new" onSubmit={(e) => { e.preventDefault(); onCreate({ ...f, title: f.title.trim() || autoTitle, kind, submission_id: lead || null, brief_shots: briefShots }); }}>
       {(!compact || leads.length > 0) && (
-        <label className="wide">Start from {compact ? "their inquiry" : "a lead"} (optional)
-          <select value={lead} onChange={(e) => pickLead(e.target.value)}>
+        <label className="wide">{compact ? "Start from their inquiry (optional)" : "Or start from a recent inquiry (optional)"}
+          <select value={lead} onChange={(e) => { setPicked(null); pickLead(e.target.value); }}>
             <option value="">— pick one to prefill name, phone, address —</option>
             {leads.map((l) => <option key={l.id} value={l.id}>{l.name || l.email} · {l.summary}{l.address ? ` · ${l.address}` : ""}</option>)}
           </select>
@@ -568,6 +585,23 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
       )}
       <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
+      {!compact && (
+        <div className="wide shoot-who">
+          {picked ? (
+            <p className="shoot-who-picked">For <strong>{picked.name || picked.email}</strong> <button type="button" className="achip" onClick={clearClient}>Change</button></p>
+          ) : (
+            <label>Who is it for? Search your clients
+              <input type="search" value={who} onChange={(e) => setWho(e.target.value)} placeholder="Type a name or email" autoComplete="off" />
+            </label>
+          )}
+          {!picked && who.trim() && (
+            <ul className="shoot-who-list">
+              {found.map((c) => <li key={c.id}><button type="button" onClick={() => pickClient(c)}><strong>{c.name || c.email}</strong>{c.name && c.email && !/@no-email\./.test(c.email) ? <em>{c.email}</em> : null}</button></li>)}
+              {found.length === 0 && <li className="shoot-who-none">No client by that name. Type their name in the Client box below.</li>}
+            </ul>
+          )}
+        </div>
+      )}
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
       <label className="wide">Address / place<AddressInput value={f.address} onChange={(v) => setF((x) => ({ ...x, address: v }))} placeholder="Type a place — St. Mary's Corning, Apples and Moore…" /></label>
       {!compact && !f.client_name && !more && <label className="wide">Client<input value={f.client_name} onChange={set("client_name")} placeholder="Who it's for" /></label>}

@@ -96,7 +96,7 @@ export async function GET() {
   // shoot's email belongs to — so the Shoots page can open or start one.
   const [{ data: dayRows }, { data: clientRows }] = await Promise.all([
     db.from("shoot_days").select("id, client_id, shoot_id, title, date, status").not("shoot_id", "is", null),
-    db.from("clients").select("id, email"),
+    db.from("clients").select("id, email, name, phone"),
   ]);
   const scriptCounts = {};
   if ((dayRows || []).length) {
@@ -126,6 +126,8 @@ export async function GET() {
     clientByEmail,
     leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
     galleries: galleries || [],
+    // Every client, for the "who is it for" search on New shoot.
+    clients: (clientRows || []).filter((c) => c.name || c.email).map((c) => ({ id: c.id, name: c.name || "", email: c.email || "", phone: c.phone || "" })),
     guides: { ...GUIDES, __base: GEAR_BASE },
     playbook: await withPhotos(playbook.lists, "items"),
   });

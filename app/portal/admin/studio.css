@@ -666,3 +666,12 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 .qb-line-name { flex: 1 1 auto; min-width: 0; padding-top: 0.35rem; }
 .qb-opt-foot strong { white-space: nowrap; }
 .qb-opt-foot span { flex: 1 1 auto; min-width: 0; }
+
+/* New shoot: "Who is it for?" search over every client (2026-11-17). */
+.shoot-who { display: grid; gap: 0.4rem; min-width: 0; }
+.shoot-who-picked { margin: 0; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.shoot-who-list { list-style: none; margin: 0; padding: 0.25rem; border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 0.15rem; }
+.shoot-who-list button { width: 100%; min-height: 44px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.6rem; text-align: left; background: none; border: 0; border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; color: inherit; cursor: pointer; }
+.shoot-who-list button:hover, .shoot-who-list button:focus-visible { background: rgba(128, 128, 128, 0.16); }
+.shoot-who-list em { font-style: normal; font-size: 0.82rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.shoot-who-none { padding: 0.5rem 0.6rem; font-size: 0.88rem; color: var(--ink-soft); }
