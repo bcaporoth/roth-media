@@ -8,7 +8,7 @@ import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 import { findAuthUser, accountView } from "../../../../lib/auth-users";
 import { sendSetupCode } from "../../../../lib/setup-code";
-import { cleanAddressBook, addressKey } from "../../../../lib/client-addresses";
+import { cleanAddressBook, addressKey, clientAddresses } from "../../../../lib/client-addresses";
 
 export const dynamic = "force-dynamic";
 
@@ -387,6 +387,34 @@ export async function POST(request) {
     const { error } = await db.from("submissions").delete().eq("id", body.id).eq("kind", "call");
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true });
+  }
+
+  // A client's address bank (lib/client-addresses.js), for New shoot's
+  // "their saved places" and the profile. "addresses" lists it; "address-add"
+  // saves a new place to their book (and un-hides it if it was removed).
+  if (body.action === "addresses" || body.action === "address-add") {
+    if (!body.id) return bad("Bad request");
+    const { data: client } = await db.from("clients").select("id, email").eq("id", body.id).maybeSingle();
+    if (!client?.email) return bad("Client not found", 404);
+    const email = client.email.toLowerCase();
+    if (body.action === "address-add") {
+      const address = String(body.address || "").replace(/\s+/g, " ").trim();
+      const key = addressKey(address);
+      if (key.length < 3) return bad("Type the address first.");
+      const { data: cur } = await db.from("submissions").select("id, utm").eq("kind", "addresses").eq("email", email).limit(1).maybeSingle();
+      const old = cleanAddressBook(cur?.utm || {});
+      const book = old.book.some((b) => addressKey(b.address) === key) ? old.book : [...old.book, { label: String(body.label || ""), address }];
+      const next = cleanAddressBook({ book, hidden: old.hidden.filter((k) => k !== key) });
+      const row = { kind: "addresses", email, utm: next, fields: next.book.map((b) => [b.label || "Address", b.address]), subject: `Addresses — ${email}`, summary: `${next.book.length} saved address${next.book.length === 1 ? "" : "es"}`, updated_at: new Date().toISOString() };
+      const { error } = await (cur ? db.from("submissions").update(row).eq("id", cur.id) : db.from("submissions").insert({ ...row, status: "archived", source_path: "/portal/admin/clients" }));
+      if (error) return bad(error.message, 500);
+    }
+    const [{ data: subs }, { data: days }, { data: shoots }] = await Promise.all([
+      db.from("submissions").select("kind, fields, utm, created_at, updated_at").in("kind", ["intake", "addresses"]).eq("email", email),
+      db.from("shoot_days").select("title, date, location, updated_at").eq("client_id", client.id).then((r) => r, () => ({ data: [] })),
+      db.from("shoots").select("title, date, address").ilike("client_email", email).then((r) => r, () => ({ data: [] })),
+    ]);
+    return NextResponse.json({ ok: true, addresses: clientAddresses({ subs: subs || [], days: days || [], shoots: shoots || [] }) });
   }
 
   // Studio → client profile → Addresses → Remove (2026-11-15). Takes a place

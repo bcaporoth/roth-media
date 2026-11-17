@@ -20,6 +20,7 @@ import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latest
 import { confirmTap } from "../lib/confirm-tap";
 import { callOf, callLabel, callLink } from "../lib/call";
 import CopyButton from "./CopyButton";
+import AddressInput from "./AddressInput";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -49,7 +50,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   const [tab, setTab] = useState("days"); // the calendar lives on this tab, so everyone lands on it
   useEffect(() => {
     const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (h === "notes") setTab("notes"); else if (h === "galleries") setTab("gals"); else if (h === "login" || h === "settings") setTimeout(() => document.getElementById("settings")?.scrollIntoView(), 300); else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
+    if (h === "notes") setTab("notes"); else if (h === "galleries") setTab("gals"); else if (h === "login" || h === "settings") { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView(), 300); } else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
   }, []);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
@@ -147,7 +148,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
           <a className="achip" href={quoteHref}>Build a quote</a>
-          <button type="button" className="achip" onClick={() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Edit</button>
+          <button type="button" className="achip" onClick={() => { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
         </div>
       </div>
@@ -160,9 +161,21 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
 
-      <ol className="cprof-stages" aria-label="Where they are">
-        {STAGES.filter((s) => s.key !== "ongoing" || d.stage === "ongoing").map((s, i) => { const at = STAGES.findIndex((x) => x.key === d.stage); return <li key={s.key} className={i < at ? "is-past" : i === at ? "is-now" : ""}>{s.label}</li>; })}
-      </ol>
+      {/* Where they are: one progress bar (2026-11-17, Brandon: the stage
+          bubbles made the page look cluttered). The fill runs red → yellow →
+          green across the whole track and shows only up to their stage. */}
+      {(() => {
+        const list = STAGES.filter((s) => s.key !== "ongoing" || d.stage === "ongoing");
+        const at = Math.max(0, list.findIndex((x) => x.key === d.stage));
+        return (
+          <div className="cprof-prog" role="group" aria-label={`Where they are: step ${at + 1} of ${list.length}, ${list[at].label}`} style={{ "--prog": `${((at + 1) / list.length) * 100}%` }}>
+            <ol className="cprof-prog-steps">
+              {list.map((s, i) => <li key={s.key} className={i < at ? "is-past" : i === at ? "is-now" : ""} aria-current={i === at ? "step" : undefined}><span>{s.label}</span></li>)}
+            </ol>
+            <p className="cprof-prog-now">Step {at + 1} of {list.length} · <strong>{list[at].label}</strong>{list[at + 1] ? ` · next: ${list[at + 1].label}` : ""}</p>
+          </div>
+        );
+      })()}
 
       {d.referral?.ready && (
         <p className="gcard-meta cprof-referral">
@@ -179,7 +192,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           the calendar (passed in by the page), then the planned days, then
           their addresses. */}
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
-        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null]].map(([k, label, n]) => (
+        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
@@ -303,8 +316,10 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       </div>
 
       {/* Settings (2026-11-16, Brandon: "a settings box with the delete, their
-          password stuff and other profile stuff"). The page's footer, on every
-          tab: contact details, their login, and Delete at the very bottom. */}
+          password stuff and other profile stuff"). Its own tab since 2026-11-17
+          (Brandon: "this shouldn't be in their galleries section"): contact
+          details, their login, and Delete at the very bottom. */}
+      {tab === "settings" && (
       <section className="cprof-card cprof-settings" id="settings" aria-labelledby="cprof-settings-h">
         <div className="cprof-cardhead"><h2 id="cprof-settings-h">Settings</h2><span className="gcard-meta">Their details, their login, and deleting them</span></div>
 
@@ -336,6 +351,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           <div><button type="button" className="abtn cprof-delete" disabled={deleting || d.galleries.filter((g) => !g.shared).length > 0} onClick={removeClient}>{deleting ? "Deleting…" : `Delete ${c.name || "this client"}`}</button></div>
         </div>
       </section>
+      )}
     </div>
   );
 }
@@ -621,8 +637,21 @@ function AddressBook({ list, copy, clientId, onFail, onChange }) {
   const [all, setAll] = useState(false);
   const [gone, setGone] = useState(null); // { item, index } — the last one removed
   const [busy, setBusy] = useState(false);
-  if (!list.length && !gone) return null;
+  // Add a place by hand (2026-11-17): it joins their bank, and New shoot
+  // offers it when this client is picked.
+  const [adding, setAdding] = useState(false);
+  const [place, setPlace] = useState({ label: "", address: "" });
   const shown = all ? list : list.slice(0, 3);
+  const add = async (e) => {
+    e.preventDefault();
+    if (busy || place.address.trim().length < 3) return;
+    setBusy(true);
+    try {
+      const j = await api("/api/admin/clients", { action: "address-add", id: clientId, address: place.address, label: place.label });
+      onChange(j.addresses || list); setPlace({ label: "", address: "" }); setAdding(false);
+    } catch (err) { onFail(err); }
+    setBusy(false);
+  };
   const remove = async (a) => {
     if (busy) return;
     setBusy(true);
@@ -645,7 +674,15 @@ function AddressBook({ list, copy, clientId, onFail, onChange }) {
   };
   return (
     <section className="cprof-card cprof-addrs" aria-labelledby="cprof-addrs-h">
-      <div className="cprof-cardhead"><h2 id="cprof-addrs-h">Addresses<em className="cprof-count">{list.length}</em></h2></div>
+      <div className="cprof-cardhead"><h2 id="cprof-addrs-h">Addresses<em className="cprof-count">{list.length}</em></h2><button type="button" className="achip" aria-expanded={adding} onClick={() => setAdding(!adding)}>{adding ? "Close" : "+ Add a place"}</button></div>
+      {adding && (
+        <form className="cprof-addr-add" onSubmit={add}>
+          <label>Address or place<AddressInput value={place.address} onChange={(v) => setPlace((x) => ({ ...x, address: v }))} placeholder="Type a place or address" /></label>
+          <label>What to call it (optional)<input value={place.label} onChange={(e) => setPlace((x) => ({ ...x, label: e.target.value }))} placeholder="The shop, the farm, home" maxLength={60} /></label>
+          <button type="submit" className="abtn" disabled={busy || place.address.trim().length < 3}>{busy ? "Saving…" : "Save this place"}</button>
+        </form>
+      )}
+      {list.length === 0 && !adding && <p className="gcard-meta">No places saved yet.</p>}
       {gone && <p className="cprof-addr-gone" role="status">Removed “{gone.item.address}”. <button type="button" className="achip" onClick={undo} disabled={busy}>Undo</button></p>}
       <ul className="cprof-addr-list">
         {shown.map((a) => (

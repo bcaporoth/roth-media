@@ -675,3 +675,46 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 .shoot-who-list button:hover, .shoot-who-list button:focus-visible { background: rgba(128, 128, 128, 0.16); }
 .shoot-who-list em { font-style: normal; font-size: 0.82rem; color: var(--ink-soft); overflow-wrap: anywhere; }
 .shoot-who-none { padding: 0.5rem 0.6rem; font-size: 0.88rem; color: var(--ink-soft); }
+
+/* Address bank (2026-11-17): a picked client's saved places on New shoot,
+   and "+ Add a place" on the client profile. */
+.shoot-places { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; min-width: 0; }
+.shoot-places { border: 1px dashed var(--line); border-radius: 10px; padding: 0.6rem 0.7rem; }
+.shoot-places-h { font-size: 0.8rem; font-weight: 600; flex: 1 1 100%; }
+.shoot-places-none { font-size: 0.85rem; color: var(--ink-soft); flex: 1 1 100%; }
+.shoot-places-save { display: flex; flex-wrap: wrap; gap: 0.4rem; flex: 1 1 100%; align-items: center; }
+.shoot-places-save input { flex: 1 1 12rem; min-width: 0; min-height: 44px; font: inherit; font-size: 1rem; border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.7rem; background: transparent; color: inherit; }
+.shoot-places .achip { min-height: 44px; max-width: 100%; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.cprof-addr-add { display: grid; gap: 0.7rem; margin: 0 0 0.9rem; }
+.cprof-addr-add label { display: grid; gap: 0.3rem; font-size: 0.82rem; font-weight: 600; min-width: 0; }
+.cprof-addr-add input { font: inherit; font-size: 1rem; font-weight: 400; min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem 0.7rem; background: transparent; color: inherit; }
+.cprof-addr-add .abtn { justify-self: start; min-height: 44px; }
+.shoot-places-add { border-style: dashed; }
+.shoot-places-new { display: grid; gap: 0.5rem; flex: 1 1 100%; min-width: 0; }
+.shoot-places-new input { width: 100%; box-sizing: border-box; min-height: 44px; font: inherit; font-size: 1rem; border: 1px solid var(--line); border-radius: 10px; padding: 0.4rem 0.7rem; background: transparent; color: inherit; }
+.shoot-places-newacts { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.shoot-places-newacts .abtn, .shoot-places-newacts .achip { min-height: 44px; }
+
+/* Client profile: Settings is its own tab now (2026-11-17), so it sits right under the tabs. */
+.cprof .cprof-settings { margin-top: 0.4rem; }
+
+/* Client profile: "where they are" as one progress bar (2026-11-17). The
+   gradient covers the whole track; clip-path shows it only up to --prog, so
+   the bar starts red, turns yellow, and ends green as they move along. */
+.cprof-prog { display: grid; gap: 0.35rem; min-width: 0; }
+.cprof-prog-steps { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-radius: 999px; overflow: hidden; background: rgba(128, 128, 128, 0.2); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35); }
+.cprof-prog-steps::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #e0564f 0%, #e9a94a 30%, #e8cf52 52%, #9ecb5a 76%, #4fb06c 100%); clip-path: inset(0 calc(100% - var(--prog, 0%)) 0 0); transition: clip-path 0.5s ease; }
+.cprof-prog-steps li { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 0.25rem 0.4rem; text-align: center; font-size: 0.78rem; line-height: 1.15; color: var(--ink-soft); }
+.cprof-prog-steps li + li { border-left: 1px solid rgba(0, 0, 0, 0.22); }
+.cprof-prog-steps li.is-past, .cprof-prog-steps li.is-now { color: #17170f; font-weight: 600; }
+.cprof-prog-steps li.is-now { font-weight: 800; }
+.cprof-prog-now { display: none; margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.cprof-prog-now strong { color: var(--ink); font-weight: 700; }
+@media (max-width: 640px) {
+  /* No room for seven names inside the bar on a phone: the bar goes slim and
+     the line under it says where they are. */
+  .cprof-prog-steps li { min-height: 16px; padding: 0; }
+  .cprof-prog-steps li span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .cprof-prog-now { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .cprof-prog-steps::before { transition: none; } }

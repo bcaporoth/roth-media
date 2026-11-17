@@ -548,12 +548,46 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
     if (!q) return [];
     return clients.filter((c) => !/@no-email\./.test(c.email) ? `${c.name} ${c.email}`.toLowerCase().includes(q) : c.name.toLowerCase().includes(q)).slice(0, 8);
   })();
+  // The picked client's address bank: tap one to fill "Address / place".
+  const [places, setPlaces] = useState([]);
   function pickClient(c) {
-    setPicked(c); setWho(""); setLead("");
+    setPicked(c); setWho(""); setLead(""); setPlaces([]);
+    fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "addresses", id: c.id }) })
+      .then((r) => r.json()).then((j) => setPlaces(j.addresses || [])).catch(() => {});
     setF((s) => ({ ...s, client_name: c.name || "", client_email: /@no-email\./.test(c.email) ? "" : c.email || "", client_phone: c.phone || "" }));
   }
+  // Save the typed address into the picked client's bank, with a name.
+  const [placeName, setPlaceName] = useState("");
+  const [savingPlace, setSavingPlace] = useState(false);
+  const [placeErr, setPlaceErr] = useState("");
+  const whoFirst = String(picked?.name || picked?.email || "Their").trim().split(/\s+/)[0];
+  // "+ Add a new place": its own little form inside the saved-places box.
+  const [addPlace, setAddPlace] = useState(false);
+  const [newPlace, setNewPlace] = useState({ address: "", label: "" });
+  // address/label default to what is typed in "Address / place" + its name box.
+  async function savePlace(address = f.address, label = placeName) {
+    if (!picked || savingPlace) return;
+    const clean = String(address || "").replace(/\s+/g, " ").trim();
+    if (clean.length < 3) { setPlaceErr("Type the address first."); return; }
+    setSavingPlace(true); setPlaceErr("");
+    try {
+      const res = await fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "address-add", id: picked.id, address: clean, label }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "That didn't save");
+      setPlaces(j.addresses || []); setPlaceName(""); setNewPlace({ address: "", label: "" }); setAddPlace(false);
+      // The place just saved becomes this shoot's address.
+      const saved = (j.addresses || []).find((a) => a.address.toLowerCase() === clean.toLowerCase());
+      if (saved) setF((x) => ({ ...x, address: saved.address }));
+    } catch (e) { setPlaceErr(e.message); }
+    setSavingPlace(false);
+  }
+  // Typing a name that isn't a client yet: it becomes the name on the shoot.
+  function typeWho(v) {
+    setWho(v);
+    setF((s) => ({ ...s, client_name: v, client_email: "", client_phone: "" }));
+  }
   function clearClient() {
-    setPicked(null);
+    setPicked(null); setPlaces([]);
     setF((s) => ({ ...s, client_name: "", client_email: "", client_phone: "" }));
   }
   const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
@@ -580,14 +614,14 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
           {picked ? (
             <p className="shoot-who-picked">For <strong>{picked.name || picked.email}</strong> <button type="button" className="achip" onClick={clearClient}>Change</button></p>
           ) : (
-            <label>Who is it for? Search your clients
-              <input type="search" value={who} onChange={(e) => setWho(e.target.value)} placeholder="Type a name or email" autoComplete="off" />
+            <label>Who is it for?
+              <input type="search" value={who} onChange={(e) => typeWho(e.target.value)} placeholder="Type a name. Your clients show up as you type." autoComplete="off" />
             </label>
           )}
           {!picked && who.trim() && (
             <ul className="shoot-who-list">
               {found.map((c) => <li key={c.id}><button type="button" onClick={() => pickClient(c)}><strong>{c.name || c.email}</strong>{c.name && c.email && !/@no-email\./.test(c.email) ? <em>{c.email}</em> : null}</button></li>)}
-              {found.length === 0 && <li className="shoot-who-none">No client by that name. Type their name in the Client box below.</li>}
+              {found.length === 0 && <li className="shoot-who-none">Not a client yet. The shoot will be saved under “{who.trim()}”.</li>}
             </ul>
           )}
         </div>
@@ -604,7 +638,31 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
       <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
       <label className="wide">Address / place<AddressInput value={f.address} onChange={(v) => setF((x) => ({ ...x, address: v }))} placeholder="Type a place — St. Mary's Corning, Apples and Moore…" /></label>
-      {!compact && !f.client_name && !more && <label className="wide">Client<input value={f.client_name} onChange={set("client_name")} placeholder="Who it's for" /></label>}
+      {picked && (
+        <div className="wide shoot-places">
+          <span className="shoot-places-h">{whoFirst}'s saved places</span>
+          {places.length === 0 && <span className="shoot-places-none">None saved yet. Add one here and it is one tap next time.</span>}
+          {places.slice(0, 8).map((a) => <button type="button" key={a.address} className={"achip" + (f.address === a.address ? " achip-primary" : "")} onClick={() => setF((x) => ({ ...x, address: a.address }))}>{a.label ? `${a.label} · ` : ""}{a.address}</button>)}
+          {f.address.trim().length >= 3 && !places.some((a) => a.address === f.address.trim()) && (
+            <span className="shoot-places-save">
+              <input value={placeName} onChange={(e) => setPlaceName(e.target.value)} placeholder="Name it (the shop, the farm)" maxLength={60} aria-label="Name for this place" />
+              <button type="button" className="achip" onClick={() => savePlace()} disabled={savingPlace}>{savingPlace ? "Saving…" : `Save to ${whoFirst}'s places`}</button>
+            </span>
+          )}
+          {!addPlace && <button type="button" className="achip shoot-places-add" onClick={() => { setAddPlace(true); setPlaceErr(""); }}>+ Add a new place</button>}
+          {addPlace && (
+            <span className="shoot-places-new" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); savePlace(newPlace.address, newPlace.label); } }}>
+              <AddressInput name="new_place" value={newPlace.address} onChange={(v) => setNewPlace((x) => ({ ...x, address: v }))} placeholder="The new address or place" autoFocus />
+              <input value={newPlace.label} onChange={(e) => setNewPlace((x) => ({ ...x, label: e.target.value }))} placeholder="Name it (the shop, the farm)" maxLength={60} aria-label="Name for the new place" />
+              <span className="shoot-places-newacts">
+                <button type="button" className="abtn" onClick={() => savePlace(newPlace.address, newPlace.label)} disabled={savingPlace || newPlace.address.trim().length < 3}>{savingPlace ? "Saving…" : "Save this place"}</button>
+                <button type="button" className="achip" onClick={() => setAddPlace(false)}>Cancel</button>
+              </span>
+            </span>
+          )}
+          {placeErr && <span className="shoot-places-none" role="alert">{placeErr}</span>}
+        </div>
+      )}
       <div className="wide shoot-new-foot">
         <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Add shoot${f.client_name || f.title ? ` · ${f.title.trim() || autoTitle}` : ""}`}</button>
         <button type="button" className="achip" aria-expanded={more} onClick={() => setMore(!more)}>{more ? "Less" : "More… (title, sunset time, contact, notes)"}</button>
