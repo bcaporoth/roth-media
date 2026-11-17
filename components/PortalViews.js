@@ -9,7 +9,7 @@ import GalleryDays from "./GalleryDays";
 import ClientCalendar from "./ClientCalendar";
 import GuestInvite from "./GuestInvite";
 import NotesThread from "./NotesThread";
-import CopyButton from "./CopyButton";
+import GiftLinkCopy from "./GiftLinkCopy";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
 import { titleSize, mediaCounts } from "../lib/gallery-title";
 
@@ -459,7 +459,7 @@ function GiftCards({ gifts, name }) {
           <p className="pt-gift-what">
             {gifts.used
               ? `Used on ${gifts.used}.`
-              : "Off your first paid shoot with Roth Media. Nothing to type: it comes off your quote."}
+              : `${gifts.from ? `A gift from ${gifts.from}. ` : ""}Use it when you want: tick it on any quote from Brandon.`}
           </p>
           {!gifts.used && <a className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn" href="/quote?for=business">Ask for a quote <Arrow /></a>}
         </article>
@@ -468,8 +468,8 @@ function GiftCards({ gifts, name }) {
             <p className="pt-gift-for">{f.kick}</p>
             <p className="pt-gift-amt">${gifts.amount}</p>
             <p className="pt-gift-what">{f.body}</p>
-            <a className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn" href={`sms:?&body=${encodeURIComponent(f.sms)}`}>{f.button} <Arrow /></a>
-            <CopyButton className="cx-btn cx-btn--ghost pt-gift-copy" text={f.link} label="Copy the link" done="Link copied ✓" />
+            <GiftLinkCopy link={f.link} />
+            <a className="pt-gift-text" href={`sms:?&body=${encodeURIComponent(f.sms)}`}>{f.button} <Arrow /></a>
           </article>
         )}
       </div>

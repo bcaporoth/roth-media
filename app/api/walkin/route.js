@@ -8,7 +8,7 @@ import { ensureBrand } from "../../../lib/brand-server";
 import { ensureReferralCode } from "../../../lib/referrals";
 import { isNoEmail } from "../../../lib/no-email";
 import { clip } from "../../../lib/visitor";
-import { WALKIN_GIFT, loadWalkin, walkinKeyOk } from "../../../lib/walkin";
+import { WALKIN_GIFT, giftGiver, loadWalkin, walkinKeyOk } from "../../../lib/walkin";
 
 export const dynamic = "force-dynamic";
 const bad = (error, status = 422) => NextResponse.json({ error }, { status });
@@ -26,7 +26,10 @@ export async function POST(request) {
   if (!adminConfigured) return bad("This isn't switched on yet. Text Brandon at 845-549-4425.", 503);
   const b = await request.json().catch(() => ({}));
   if (b.website) return bad("Bad request", 400);
-  if (!walkinKeyOk(b.k)) return bad("This page opens from Brandon's QR code. Ask him to show it again.", 403);
+  // Two ways in: Brandon's QR (the key), or a friend's gift link (their code).
+  const giver = b.gift ? await giftGiver(supabaseAdmin(), b.gift) : null;
+  if (b.gift && !giver) return bad("This gift link isn't working. Ask whoever sent it to copy the link again.", 403);
+  if (!giver && !walkinKeyOk(b.k)) return bad("This page opens from Brandon's QR code. Ask him to show it again.", 403);
 
   const name = clip(b.name, 120).trim();
   const business = clip(b.business, 160).trim();
@@ -35,6 +38,8 @@ export async function POST(request) {
   if (!name) return bad("Add your name");
   if (!business) return bad("Add your business name");
   if (!EMAIL_RE.test(email) || isNoEmail(email) || email === ADMIN_EMAIL) return bad("Add your email. It is how you sign in.");
+
+  if (giver && giver.email === email) return bad("That is your own gift link. Send it to another business owner.");
 
   const db = supabaseAdmin();
   try {
@@ -60,20 +65,29 @@ export async function POST(request) {
 
     // First scan only: the walk-in row, the gallery, and a heads-up to Brandon.
     if (!(await loadWalkin(db, email))) {
-      const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-      const { data: g } = await db.from("galleries").insert({ client_id: client.id, title: business, event_date: today }).select("id").single();
-      const fields = [["name", name], ["business", business], ["email", email], ["phone", phone], ["gift card", `$${WALKIN_GIFT}, not used yet`]].filter(([, v]) => v);
+      // A walk-in gets a gallery for the video Brandon just shot; a gifted
+      // friend has no video yet, so no empty gallery.
+      let g = null;
+      if (!giver) {
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+        ({ data: g } = await db.from("galleries").insert({ client_id: client.id, title: business, event_date: today }).select("id").single());
+      }
+      const giverLine = giver ? `${giver.name || giver.email}${giver.business ? ` (${giver.business})` : ""}` : "";
+      const fields = [["name", name], ["business", business], ["email", email], ["phone", phone], ["gift card", `$${WALKIN_GIFT}, not used yet`], ["gifted by", giverLine]].filter(([, v]) => v);
       const row = {
         kind: "walkin", status: "new", name, email, ...(phone ? { phone } : {}),
-        subject: `Walk-in — ${name} · ${business}`,
-        summary: `Scanned your walk-in QR · ${business}`,
-        fields, source_path: "/walkin",
-        utm: { type: "business", business, galleryId: g?.id || null, gift: { amount: WALKIN_GIFT, usedAt: null } },
+        subject: giver ? `Gifted — ${name} · ${business} (from ${giver.first})` : `Walk-in — ${name} · ${business}`,
+        summary: giver ? `Opened a gift card from ${giverLine} · ${business}` : `Scanned your walk-in QR · ${business}`,
+        fields, source_path: giver ? "/gift" : "/walkin",
+        utm: {
+          type: "business", business, galleryId: g?.id || null, source: giver ? "gift" : "qr",
+          gift: { amount: WALKIN_GIFT, usedAt: null, ...(giver ? { from: giver.code, fromName: giver.first, fromBusiness: giver.business } : {}) },
+        },
       };
       const { error } = await db.from("submissions").insert(row);
       if (error) throw new Error(error.message);
       if (resendConfigured) {
-        try { await sendEmail({ to: LEAD_ALERT_TO, ...leadAlertEmail({ kind: "walk-in", name, email, phone, subject: `New walk-in — ${name} · ${business}`, summary: "Scanned your walk-in QR. Their gallery is ready for your upload.", fields }) }); } catch {}
+        try { await sendEmail({ to: LEAD_ALERT_TO, ...leadAlertEmail({ kind: giver ? "gift" : "walk-in", name, email, phone, subject: giver ? `New gifted owner — ${name} · ${business} (from ${giver.first})` : `New walk-in — ${name} · ${business}`, summary: giver ? `Opened a gift card from ${giverLine}.` : "Scanned your walk-in QR. Their gallery is ready for your upload.", fields }) }); } catch {}
       }
     }
 

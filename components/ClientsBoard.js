@@ -51,7 +51,7 @@ export default function ClientsBoard({ initial, emailReady }) {
       if (stage && c.stage !== stage) return false;
       if (type && c.type !== type) return false;
       if (!q) return true;
-      return [c.name, c.email, c.phone, STAGE_LABEL[c.stage], TYPE_LABEL[c.type], c.walkin ? "walk-in walkin" : "", ...(c.galleries || []).map((g) => g.title)].join(" ").toLowerCase().includes(q);
+      return [c.name, c.email, c.phone, STAGE_LABEL[c.stage], TYPE_LABEL[c.type], c.walkin ? "walk-in walkin" : "", c.gifted ? "gifted gift" : "", ...(c.galleries || []).map((g) => g.title)].join(" ").toLowerCase().includes(q);
     });
   }, [clients, query, stage, type]);
   const stageCounts = useMemo(() => { const n = {}; for (const c of clients) n[c.stage] = (n[c.stage] || 0) + 1; return n; }, [clients]);
@@ -191,7 +191,7 @@ export default function ClientsBoard({ initial, emailReady }) {
               <div className="client-row">
                 {c.lead ? <span className="client-leaddot" title="Inquired — not on the roster yet" /> : <input type="checkbox" checked={!!checked[c.id]} onChange={(e) => setChecked({ ...checked, [c.id]: e.target.checked })} aria-label={`Select ${isNoEmail(c.email) ? c.name || "client" : c.email}`} />}
                 <button type="button" className="client-main" onClick={() => c.lead ? openLead(c) : setOpen(isOpen ? null : c.id)}>
-                  <strong>{c.name || (isNoEmail(c.email) ? "Unnamed" : c.email)} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}{c.walkin && <span className="itag">Walk-in</span>}</strong>
+                  <strong>{c.name || (isNoEmail(c.email) ? "Unnamed" : c.email)} <span className={`itag stage-${c.stage}`}>{STAGE_LABEL[c.stage]}</span>{c.type && <span className="itag">{TYPE_LABEL[c.type]}</span>}{c.walkin && <span className="itag">Walk-in</span>}{c.gifted && <span className="itag">Gifted</span>}</strong>
                   <span className="gcard-meta">{isNoEmail(c.email) ? "no email yet" : c.email}{c.phone ? ` · ${c.phone}` : ""}</span>
                   <span className="gcard-meta">
                     {c.lead ? `Inquired ${fmt(c.created_at)} · not on the roster yet` : null}

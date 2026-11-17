@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import LegalPage from "../../../components/LegalPage";
+import { isAdminRequest } from "../../../lib/admin-guard";
 import QuoteOffer from "../../../components/QuoteOffer";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { stripe, stripeConfigured } from "../../../lib/stripe";
 import { recordBooking } from "../../../lib/booking";
 import { getQuoteByToken, patchQuote } from "../../../lib/quotes-server";
-import { isAdminRequest } from "../../../lib/admin-guard";
 import { aboutTime, lineLabel, money, quoteTotals, quoteExpired, quoteExpiry, QUOTE_DAYS } from "../../../lib/quotes";
 import "../../theme/walkin.css";
+import { creditsFor } from "../../../lib/walkin";
 
 export const metadata = { title: "Your quote", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -68,9 +69,12 @@ export default async function QuotePage({ params, searchParams }) {
   }
 
   // Everything the page needs, already priced on the server.
+  // A gift card or credit on their account (lib/walkin.js): theirs to tick,
+  // off by default. Unticked, it stays on their account for another time.
+  const credit = (await creditsFor(db, q.email))[0] || null;
   const options = (q.options || []).map((o, i) => {
-    const t = quoteTotals(o, q);
-    return { i, label: o.label, total: t.total, list: t.list, off: t.off, onSite: t.shootMin ? aboutTime(t.shootMin) : "", lines: o.lines.map(lineLabel) };
+    const t = quoteTotals(o, { rate: q.rate });
+    return { i, label: o.label, total: t.total, canUse: Boolean(credit) && t.total - credit.amount >= 5, onSite: t.shootMin ? aboutTime(t.shootMin) : "", lines: o.lines.map(lineLabel) };
   });
   const many = options.length > 1;
   return (
@@ -79,7 +83,7 @@ export default async function QuotePage({ params, searchParams }) {
         {many ? "Pick the one that fits, read the agreement, type your name, and pay." : "Read the agreement, type your name, and pay."} It all happens on this page. Good through {longDay(quoteExpiry(q))}.
       </p>
       <QuoteOffer token={q.token} options={options} recommended={q.recommended ?? 0} picked={Number.isInteger(q.picked) ? q.picked : null}
-        credit={q.credit?.label || ""} note={q.note || ""} when={q.when || ""} business={q.business || ""} name={q.name} checkout={stripeConfigured} />
+        credit={credit ? { amount: credit.amount, label: credit.label } : null} creditOn={Boolean(q.credit && credit)} note={q.note || ""} when={q.when || ""} business={q.business || ""} name={q.name} checkout={stripeConfigured} />
     </LegalPage>
   );
 }

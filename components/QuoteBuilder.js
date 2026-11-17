@@ -176,7 +176,6 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
     try { const j = await api({ action: "credits", email: e }); setCredits(j.credits || []); } catch { setCredits([]); }
   }
   useEffect(() => { if (prefill?.email) findCredits(prefill.email); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const sameCredit = (a, b) => Boolean(a && b && a.kind === b.kind && a.code === b.code);
 
   function setOption(i, o) { setQ((x) => ({ ...x, options: x.options.map((y, j) => (j === i ? o : y)) })); }
 
@@ -246,16 +245,9 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
           <label className="cpn-f"><span>Shoot date or timing <small>shows on the quote</small></span><input value={q.when} onChange={set("when")} placeholder="Saturday, December 6 · early December · to be set together" /></label>
 
           {credits.length > 0 && (
-            <div className="qb-credits">
-              <p className="qb-asked-title">They have money to use</p>
-              <div className="gcard-actions">
-                {credits.map((c) => {
-                  const on = sameCredit(q.credit, c);
-                  return <button type="button" key={c.kind + c.code} className={"achip" + (on ? " is-on" : "")} aria-pressed={on} onClick={() => setQ((x) => ({ ...x, credit: on ? null : c }))}>{on ? "✓ " : ""}Take {money(c.amount)} off · {c.label}</button>;
-                })}
-              </div>
-              <p className="gcard-meta">{q.credit ? `${money(q.credit.amount)} comes off whichever option they pick. It is only spent when they pay.` : "Tap one to take it off this quote. Only one per quote."}{credits.some((c) => c.kind === "referral") ? " With a friend's link, the friend earns $100 when this is paid." : ""}</p>
-            </div>
+            <p className="gcard-meta qb-credits">
+              <strong>They have {credits.map((c) => `${money(c.amount)} (${c.label})`).join(" and ")} to use.</strong> You don&apos;t take it off here. They can tick it on the quote page if they want to use it, or keep it for later.
+            </p>
           )}
 
           <p className="gcard-meta qb-rate-line">Priced at <strong>{money(rate)} an hour</strong> for shooting and editing, plus flat extras. <button type="button" className="qb-link" onClick={() => setShowSettings(true)}>Change blocks & rate</button></p>
@@ -292,7 +284,7 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
                   <strong>{x.business || x.name}</strong>
                   <span className={`cpn-status is-${st.key === "paid" ? "live" : st.key === "sent" || st.key === "signed" ? "soon" : "ended"}`}>{st.label}</span>
                 </div>
-                <p className="gcard-meta">{x.business ? `${x.name} · ` : ""}{x.email} · made {day(x.sentAt || x.createdAt)}{x.credit ? ` · ${money(x.credit.amount)} off (${x.credit.label})` : ""}</p>
+                <p className="gcard-meta">{x.business ? `${x.name} · ` : ""}{x.email} · made {day(x.sentAt || x.createdAt)}{x.credit ? ` · they used ${money(x.credit.amount)} (${x.credit.label})` : ""}</p>
                 <ul className="qb-card-opts">
                   {(x.options || []).map((o, k) => (
                     <li key={k} className={x.picked === k ? "is-picked" : ""}>

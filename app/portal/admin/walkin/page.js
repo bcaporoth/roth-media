@@ -17,7 +17,7 @@ export const metadata = {
 };
 
 // Studio → More → Walk-in (lib/walkin.js). One code on the screen: hold the
-// phone up, the owner scans it and taps "I walked in".
+// phone up, the owner scans it and taps "Claim my free gallery".
 export default async function WalkinAdminPage() {
   const user = await requireAdminPage();
   const db = supabaseAdmin();
@@ -38,7 +38,7 @@ export default async function WalkinAdminPage() {
           <div className="wk-studio-side">
             <p className="inbox-hint">
               Show this to the owner. They scan it, type their name, business and email, and tap
-              &ldquo;I walked in&rdquo;. They land signed in on their portal with an empty gallery,
+              &ldquo;Claim my free gallery&rdquo;. They land signed in on their portal with an empty gallery,
               a ${WALKIN_GIFT} gift card for them and a ${WALKIN_GIFT} card to pass to a friend.
               They show up in Clients and the Inbox as a walk-in, ready for your upload.
             </p>

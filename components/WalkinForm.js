@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 
-export default function WalkinForm({ k, gift = 100 }) {
+export default function WalkinForm({ k = "", gift = 100, giftCode = "", from = "" }) {
   const [status, setStatus] = useState("idle"); // idle | going | sent | signin | error
   const [err, setErr] = useState("");
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ export default function WalkinForm({ k, gift = 100 }) {
     const d = Object.fromEntries(new FormData(e.currentTarget).entries());
     setStatus("going"); setErr(""); setEmail(String(d.email || "").trim());
     try {
-      const res = await fetch("/api/walkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...d, k }) });
+      const res = await fetch("/api/walkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...d, k, gift: giftCode }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "That didn't work. Try again.");
       if (j.go) { window.location.assign(j.go); return; }
@@ -39,16 +39,26 @@ export default function WalkinForm({ k, gift = 100 }) {
     <form className="wk-form" onSubmit={onSubmit}>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="cform-honey" aria-hidden="true" />
       <ul className="wk-gets">
-        <li><strong>Your gallery.</strong> The video Brandon shot shows up in your account.</li>
-        <li><strong>A ${gift} gift card for you.</strong> It comes off your first paid shoot.</li>
-        <li><strong>A ${gift} gift card for a friend.</strong> Pass it to another local business.</li>
+        {giftCode ? (
+          <>
+            <li><strong>A ${gift} gift card, from {from}.</strong> Use it on any paid shoot with Roth Media, when you choose.</li>
+            <li><strong>Roth Media</strong> is Brandon Roth: video and photo for local businesses in the Twin Tiers.</li>
+            <li><strong>A ${gift} gift card to pass on.</strong> You get one to give another local business too.</li>
+          </>
+        ) : (
+          <>
+            <li><strong>Your free gallery.</strong> The video Brandon shot shows up in your account.</li>
+            <li><strong>A ${gift} gift card for you.</strong> Use it on any paid shoot, when you choose.</li>
+            <li><strong>A ${gift} gift card for a friend.</strong> Pass it to another local business.</li>
+          </>
+        )}
       </ul>
       <label className="mx-field"><span className="cx-label">Your name *</span><input className="cx-input" name="name" required autoComplete="name" /></label>
       <label className="mx-field"><span className="cx-label">Your business *</span><input className="cx-input" name="business" required autoComplete="organization" /></label>
       <label className="mx-field"><span className="cx-label">Email * <small>this is how you sign in</small></span><input className="cx-input" name="email" type="email" required autoComplete="email" inputMode="email" /></label>
       <label className="mx-field"><span className="cx-label">Phone <small>optional</small></span><input className="cx-input" name="phone" type="tel" autoComplete="tel" /></label>
       {status === "error" && <p className="cx-error" role="alert">{err}</p>}
-      <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>{status === "going" ? "Opening your account…" : "I walked in"}</button>
+      <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>{status === "going" ? "Opening your account…" : giftCode ? `Get my $${gift} gift card` : "Claim my free gallery"}</button>
       <p className="cx-help">Tapping the button makes your free Roth Media account. No password to pick right now. <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a></p>
     </form>
   );

@@ -9,20 +9,24 @@ import { agreementText } from "../lib/agreements";
 
 const money = (n) => `$${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
-export default function QuoteOffer({ token, options, recommended = 0, picked = null, credit = "", note = "", when = "", business = "", name = "", checkout = true }) {
+export default function QuoteOffer({ token, options, recommended = 0, picked = null, credit = null, creditOn = false, note = "", when = "", business = "", name = "", checkout = true }) {
   const [sel, setSel] = useState(picked ?? (options[recommended] ? recommended : 0));
   const [status, setStatus] = useState("idle");
   const [err, setErr] = useState("");
   const o = options.find((x) => x.i === sel) || options[0];
   const many = options.length > 1;
-  const text = agreementText("shoot", { client_name: name, business, period: when, amount_cents: o.total * 100, lines: o.off ? [...o.lines, `${money(o.off)} off: ${credit} (${money(o.list)} before)`] : o.lines });
+  // Their gift card: off unless they tick it. Not ticked = it stays on their account.
+  const [use, setUse] = useState(creditOn);
+  const off = credit && use && o.canUse ? credit.amount : 0;
+  const pay = o.total - off;
+  const text = agreementText("shoot", { client_name: name, business, period: when, amount_cents: pay * 100, lines: off ? [...o.lines, `${money(off)} off: ${credit.label} (${money(o.total)} before)`] : o.lines });
 
   async function onSubmit(e) {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.currentTarget).entries());
     setStatus("going"); setErr("");
     try {
-      const res = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, option: o.i, signature: d.signature, agree: Boolean(d.agree), website: d.website }) });
+      const res = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, option: o.i, useCredit: off > 0, signature: d.signature, agree: Boolean(d.agree), website: d.website }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Something went wrong");
       if (j.url) { window.location.assign(j.url); return; }
@@ -31,7 +35,7 @@ export default function QuoteOffer({ token, options, recommended = 0, picked = n
   }
 
   if (status === "signed") {
-    return <div className="mx-done" role="status"><p className="mx-done-title">Signed, thank you.</p><p>Online payment isn&apos;t switched on yet, so Brandon will text you a way to pay {money(o.total)}.</p></div>;
+    return <div className="mx-done" role="status"><p className="mx-done-title">Signed, thank you.</p><p>Online payment isn&apos;t switched on yet, so Brandon will text you a way to pay {money(pay)}.</p></div>;
   }
 
   return (
@@ -50,7 +54,6 @@ export default function QuoteOffer({ token, options, recommended = 0, picked = n
                 {x.i === recommended && many && <span className="qo-flag">Recommended</span>}
                 <span className="qo-name">{x.label}</span>
                 <span className="qo-price">{money(x.total)}</span>
-                {x.off > 0 && <span className="qo-off"><s>{money(x.list)}</s> {money(x.off)} off · {credit}</span>}
                 {x.onSite && <span className="qo-time">{x.onSite} on site</span>}
                 <ul className="qo-lines">{x.lines.map((l, k) => <li key={k}>{l}</li>)}</ul>
                 {many && <span className="qo-pick">{on ? "✓ Picked" : "Pick this one"}</span>}
@@ -73,10 +76,20 @@ export default function QuoteOffer({ token, options, recommended = 0, picked = n
         </div>
       </section>
 
+      {credit && o.canUse && (
+        <label className={"qo-gift" + (use ? " is-on" : "")}>
+          <input type="checkbox" checked={use} onChange={(e) => setUse(e.target.checked)} />
+          <span>
+            <strong>Use my {money(credit.amount)} gift card on this</strong>
+            <small>{use ? `${money(o.total)} becomes ${money(pay)}.` : "Leave it unticked to keep it for another time."} {credit.label}.</small>
+          </span>
+        </label>
+      )}
+
       <div className="mx-pa-pay">
         {status === "error" && <p className="cx-error" role="alert">{err}</p>}
         <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>
-          {status === "going" ? "Opening secure checkout…" : checkout ? `Sign and pay ${money(o.total)}` : "Sign"}
+          {status === "going" ? "Opening secure checkout…" : checkout ? `Sign and pay ${money(pay)}` : "Sign"}
         </button>
         <p className="cx-help">{many ? `${o.label}, paid in full. ` : "Paid in full. "}Secure checkout by Stripe: card, Apple Pay or Google Pay. Receipt by email.</p>
       </div>

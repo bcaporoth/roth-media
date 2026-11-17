@@ -6,6 +6,7 @@ import { TEXT_VERSION, agreementText } from "../../../lib/agreements";
 import { getQuoteByToken, patchQuote } from "../../../lib/quotes-server";
 import { lineLabel, money, quoteTotals, quoteExpired, QUOTE_DAYS } from "../../../lib/quotes";
 import { clip } from "../../../lib/visitor";
+import { creditsFor } from "../../../lib/walkin";
 
 export const dynamic = "force-dynamic";
 const bad = (msg, status = 422) => NextResponse.json({ error: msg }, { status });
@@ -29,10 +30,14 @@ export async function POST(request) {
   const signature = clip(b.signature, 120);
   if (!b.agree || signature.length < 2) return bad("Type your name to sign, and check the box");
 
-  const priced = quoteTotals(option, q);
+  // Their gift card / credit, only if they ticked the box — looked up here,
+  // never taken from the browser. Not ticked = it stays on their account.
+  let credit = b.useCredit ? (await creditsFor(db, q.email))[0] || null : null;
+  if (credit && quoteTotals(option, { rate: q.rate }).total - credit.amount < 5) credit = null;
+  const priced = quoteTotals(option, { rate: q.rate, credit });
   const total = priced.total;
   const lines = option.lines.map(lineLabel);
-  if (priced.off) lines.push(`${money(priced.off)} off: ${q.credit.label} (${money(priced.list)} before)`);
+  if (priced.off) lines.push(`${money(priced.off)} off: ${credit.label} (${money(priced.list)} before)`);
   const now = new Date().toISOString();
   const base = {
     kind: "shoot", client_name: q.name, client_email: q.email, client_phone: q.phone || "",
@@ -55,7 +60,7 @@ export async function POST(request) {
   if (q.agreementId && q.agreementId !== ag.id) {
     try { await db.from("agreements").update({ status: "void" }).eq("id", q.agreementId).neq("status", "paid"); } catch {}
   }
-  await patchQuote(db, q.id, { status: "signed", picked: idx, total, agreementId: ag.id, agreementToken: ag.token, signedName: signature, signedAt: now });
+  await patchQuote(db, q.id, { status: "signed", picked: idx, total, credit, agreementId: ag.id, agreementToken: ag.token, signedName: signature, signedAt: now });
   if (!stripeConfigured) return NextResponse.json({ signed: true, url: "" });
 
   const origin = new URL(request.url).origin;

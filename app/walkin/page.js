@@ -3,7 +3,7 @@ import WalkinForm from "../../components/WalkinForm";
 import "../theme/walkin.css";
 import { walkinKeyOk, WALKIN_GIFT } from "../../lib/walkin";
 
-export const metadata = { title: "I walked in", robots: { index: false } };
+export const metadata = { title: "Claim your free gallery", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 // Where Brandon's walk-in QR lands (Studio → More → Walk-in). Three boxes

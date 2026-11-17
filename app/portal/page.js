@@ -16,7 +16,7 @@ import { unreadFor } from "../../lib/notes-server";
 import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief, welcomeOf, briefsByType, TYPE_LABEL } from "../../lib/intake";
-import { loadWalkin } from "../../lib/walkin";
+import { loadWalkin, giftLink } from "../../lib/walkin";
 import { referralCodeFor } from "../../lib/referrals";
 import { referralLink, referralPitch } from "../../lib/referral-rules";
 import "../theme/walkin.css";
@@ -286,7 +286,9 @@ export default async function PortalPage({ searchParams }) {
         gifts = {
           amount: Number(w.utm.gift.amount),
           used: w.utm.gift.usedAt ? new Date(w.utm.gift.usedAt).toLocaleDateString("en-US", { month: "long", day: "numeric" }) : "",
-          friend: code ? { code, link: referralLink(code, "business"), kick: pitch.kick, title: pitch.title, body: pitch.body, button: pitch.button, sms: pitch.text(code) } : null,
+          from: w.utm.gift.from ? [w.utm.gift.fromName, w.utm.gift.fromBusiness].filter(Boolean).join(" at ") : "",
+          // Same words as the referral program; the link lands on "You've been gifted".
+          friend: code ? { code, link: giftLink(code), kick: pitch.kick, title: pitch.title, body: pitch.body, button: pitch.button, sms: pitch.text(code).replace(referralLink(code, "business"), giftLink(code)) } : null,
         };
       }
     }
