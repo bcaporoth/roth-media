@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import "../../../../../../theme/journey.css";
 import PortalNav from "../../../../../../../components/PortalNav";
 import StudioShell from "../../../../../../../components/StudioShell";
 import StudioFooter from "../../../../../../../components/StudioFooter";

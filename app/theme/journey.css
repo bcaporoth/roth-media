@@ -13,3 +13,12 @@
 .ba-work-list { margin: 0; padding: 0 0 0 1.3rem; display: grid; gap: 0.6rem; font-size: 0.98rem; line-height: 1.5; }
 .ba-work-list li::marker { color: var(--gold, #d9b56a); font-weight: 700; }
 .ba-work-foot { margin: 1rem 0 0; font-size: 0.95rem; opacity: 0.8; }
+
+/* Shoot day page: room between the button rows, the More tools and the
+   running order (2026-11-17, Brandon: "very concentrated and overlaps"). */
+.sday-scripts:not(.is-hidden) { display: grid; gap: 1.1rem; min-width: 0; }
+.sday-scripts > .sday-more { margin-top: 0; padding: 0.7rem 0.8rem; border: 1px solid var(--line, rgba(246, 241, 232, 0.16)); border-radius: 12px; gap: 0.6rem; }
+.sday-delete { margin-left: auto; }
+.sday-delete.is-armed { background: #c0392b; border-color: #c0392b; color: #fff; }
+.sday-delete-warn { flex: 1 1 100%; margin: 0; font-size: 0.88rem; color: #e0736a; }
+@media (max-width: 560px) { .sday-delete { margin-left: 0; } }

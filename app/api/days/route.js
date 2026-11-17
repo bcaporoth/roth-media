@@ -154,6 +154,9 @@ export async function POST(request) {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       const { error } = await db.from("shoot_days").delete().eq("id", day.id);
       if (error) throw new Error(error.message);
+      // withShoot: also take its entry off the Shoots calendar, so the day
+      // doesn't come straight back when that shoot is opened.
+      if (body.withShoot && day.shoot_id) await db.from("shoots").delete().eq("id", day.shoot_id).then((r) => r, () => null);
       return NextResponse.json({ ok: true });
     }
 

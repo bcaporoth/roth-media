@@ -115,6 +115,21 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     clearTimeout(armTimer.current); setArmed(null);
     try { await api({ action: "script-delete", dayId: day.id, scriptId: s.id }); setScripts((x) => x.filter((y) => y.id !== s.id)); if (open === s.id) setOpen(null); say("Removed"); } catch (e) { fail(e); }
   }
+  // Delete the whole day (More → Delete this day). Same two taps. It takes the
+  // day, its scripts and its spot on the Shoots calendar, then goes back.
+  const [dayArmed, setDayArmed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const dayTimer = useRef(null);
+  async function removeDay() {
+    if (!dayArmed) {
+      setDayArmed(true);
+      clearTimeout(dayTimer.current);
+      dayTimer.current = setTimeout(() => setDayArmed(false), 6000);
+      return;
+    }
+    clearTimeout(dayTimer.current); setDayArmed(false); setDeleting(true);
+    try { await api({ action: "day-delete", dayId: day.id, withShoot: true }); window.location.href = backHref; } catch (e) { setDeleting(false); fail(e); }
+  }
   async function duplicate(s) {
     try { const r = await api({ action: "script-duplicate", dayId: day.id, scriptId: s.id }); setScripts((x) => [...x, r.script]); setOpen(r.script.id); say("Copied — rename it"); } catch (e) { fail(e); }
   }
@@ -231,6 +246,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         <div className="sday-tools sday-more">
           <button type="button" className={"achip" + (tool === "plan" ? " is-on" : "")} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Plan the day with Claude</button>
           <button type="button" className={"achip" + (tool === "import" ? " is-on" : "")} onClick={() => setTool(tool === "import" ? "" : "import")}>Import from content plan</button>
+          <button type="button" className={"achip achip-danger sday-delete" + (dayArmed ? " is-armed" : "")} onClick={removeDay} disabled={deleting}>{deleting ? "Deleting…" : dayArmed ? "Tap again to delete for good" : "Delete this day"}</button>
+          {dayArmed && <p className="sday-delete-warn" role="alert">This deletes the day{scripts.length ? `, its ${scripts.length} script${scripts.length === 1 ? "" : "s"}` : ""}{day.shoot_id ? " and its spot on your Shoots calendar" : ""}. It can’t be undone.</p>}
         </div>
       )}
       {tool === "plan" && <PlanDayBox aiReady={aiReady} busy={busy} onGo={planDay} onCancel={() => setTool("")} existing={scripts.length} />}
