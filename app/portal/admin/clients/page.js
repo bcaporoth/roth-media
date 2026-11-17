@@ -84,6 +84,7 @@ export default async function ClientsPage() {
       account: accounts[key] || null,
       stage: clientStage({ subs, shoots, galleries }),
       type: clientType({ subs, shoots }),
+      walkin: subs.some((s) => s.kind === "walkin"),
       lastTouch: subs[0]?.created_at || null,
     };
   }).sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));

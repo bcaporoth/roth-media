@@ -7,6 +7,7 @@ import { newLeadCount } from "../../../../lib/studio-data";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { getQuoteSettings, listQuotes } from "../../../../lib/quotes-server";
 import { DEFAULT_BLOCKS, DEFAULT_RATE } from "../../../../lib/quotes";
+import "../../../theme/walkin.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Quotes — Studio", robots: { index: false } };

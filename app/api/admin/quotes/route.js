@@ -3,6 +3,7 @@ import { isAdminRequest } from "../../../../lib/admin-guard";
 import { adminConfigured, supabaseAdmin } from "../../../../lib/supabase-admin";
 import { cleanQuote, createQuote, getQuoteSettings, listQuotes, patchQuote, quoteProblem, saveQuoteSettings } from "../../../../lib/quotes-server";
 import { quoteSendCopy } from "../../../../lib/quotes";
+import { creditsFor } from "../../../../lib/walkin";
 
 export const dynamic = "force-dynamic";
 const bad = (error, status = 422) => NextResponse.json({ error }, { status });
@@ -23,6 +24,7 @@ export async function POST(request) {
   try {
     if (body.action === "list") return NextResponse.json({ ok: true, quotes: await listQuotes(db), settings: await getQuoteSettings(db) });
     if (body.action === "settings") return NextResponse.json({ ok: true, settings: await saveQuoteSettings(db, body) });
+    if (body.action === "credits") return NextResponse.json({ ok: true, credits: await creditsFor(db, body.email) });
     if (body.action === "create") {
       const q = cleanQuote(body.quote || {});
       const problem = quoteProblem(q);

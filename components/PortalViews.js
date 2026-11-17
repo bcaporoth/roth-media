@@ -9,6 +9,7 @@ import GalleryDays from "./GalleryDays";
 import ClientCalendar from "./ClientCalendar";
 import GuestInvite from "./GuestInvite";
 import NotesThread from "./NotesThread";
+import CopyButton from "./CopyButton";
 import { KIND_LABEL, STATUSES, STATUS_LABEL } from "../lib/content-plan";
 import { titleSize, mediaCounts } from "../lib/gallery-title";
 
@@ -319,6 +320,7 @@ export function PortalBusinessHome({
   months = [],
   clientId = "",
   place = "",
+  gifts = null,
 }) {
   const hasHosted = hostedGalleries.length > 0;
   const hasLinks = galleries.length > 0;
@@ -417,6 +419,8 @@ export function PortalBusinessHome({
         )}
       </section>
 
+      {gifts && <GiftCards gifts={gifts} name={name} />}
+
       {months.length > 0 && <MonthsSection months={months} />}
 
       {plan && <PlanSection plan={plan} />}
@@ -435,6 +439,41 @@ export function PortalBusinessHome({
         <a href="tel:+18455494425">845-549-4425</a>.
       </p>
     </PortalFrame>
+  );
+}
+
+// A walk-in's two gift cards (lib/walkin.js): theirs comes off a quote in
+// Studio; the friend's is their ordinary referral link, in the words the
+// referral program already uses (lib/referral-rules.js).
+function GiftCards({ gifts, name }) {
+  const f = gifts.friend;
+  return (
+    <section id="gifts" className="cx-wrap pt-gifts" aria-labelledby="pt-gifts-h">
+      <div className="pt-biz-sechead">
+        <h2 id="pt-gifts-h" className="cx-kick">Your gift cards</h2>
+      </div>
+      <div className="pt-biz-grid">
+        <article className={"pt-gift" + (gifts.used ? " is-used" : "")}>
+          <p className="pt-gift-for">For {name || "you"}</p>
+          <p className="pt-gift-amt">${gifts.amount}</p>
+          <p className="pt-gift-what">
+            {gifts.used
+              ? `Used on ${gifts.used}.`
+              : "Off your first paid shoot with Roth Media. Nothing to type: it comes off your quote."}
+          </p>
+          {!gifts.used && <a className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn" href="/quote?for=business">Ask for a quote <Arrow /></a>}
+        </article>
+        {f && (
+          <article className="pt-gift pt-gift--friend">
+            <p className="pt-gift-for">{f.kick}</p>
+            <p className="pt-gift-amt">${gifts.amount}</p>
+            <p className="pt-gift-what">{f.body}</p>
+            <a className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn" href={`sms:?&body=${encodeURIComponent(f.sms)}`}>{f.button} <Arrow /></a>
+            <CopyButton className="cx-btn cx-btn--ghost pt-gift-copy" text={f.link} label="Copy the link" done="Link copied ✓" />
+          </article>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -9,13 +9,13 @@ import { agreementText } from "../lib/agreements";
 
 const money = (n) => `$${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
-export default function QuoteOffer({ token, options, recommended = 0, picked = null, note = "", when = "", business = "", name = "", checkout = true }) {
+export default function QuoteOffer({ token, options, recommended = 0, picked = null, credit = "", note = "", when = "", business = "", name = "", checkout = true }) {
   const [sel, setSel] = useState(picked ?? (options[recommended] ? recommended : 0));
   const [status, setStatus] = useState("idle");
   const [err, setErr] = useState("");
   const o = options.find((x) => x.i === sel) || options[0];
   const many = options.length > 1;
-  const text = agreementText("shoot", { client_name: name, business, period: when, amount_cents: o.total * 100, lines: o.lines });
+  const text = agreementText("shoot", { client_name: name, business, period: when, amount_cents: o.total * 100, lines: o.off ? [...o.lines, `${money(o.off)} off: ${credit} (${money(o.list)} before)`] : o.lines });
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -50,6 +50,7 @@ export default function QuoteOffer({ token, options, recommended = 0, picked = n
                 {x.i === recommended && many && <span className="qo-flag">Recommended</span>}
                 <span className="qo-name">{x.label}</span>
                 <span className="qo-price">{money(x.total)}</span>
+                {x.off > 0 && <span className="qo-off"><s>{money(x.list)}</s> {money(x.off)} off · {credit}</span>}
                 {x.onSite && <span className="qo-time">{x.onSite} on site</span>}
                 <ul className="qo-lines">{x.lines.map((l, k) => <li key={k}>{l}</li>)}</ul>
                 {many && <span className="qo-pick">{on ? "✓ Picked" : "Pick this one"}</span>}

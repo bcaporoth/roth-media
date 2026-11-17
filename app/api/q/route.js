@@ -4,7 +4,7 @@ import { stripe, stripeConfigured } from "../../../lib/stripe";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { TEXT_VERSION, agreementText } from "../../../lib/agreements";
 import { getQuoteByToken, patchQuote } from "../../../lib/quotes-server";
-import { lineLabel, money, optionTotals, quoteExpired, QUOTE_DAYS } from "../../../lib/quotes";
+import { lineLabel, money, quoteTotals, quoteExpired, QUOTE_DAYS } from "../../../lib/quotes";
 import { clip } from "../../../lib/visitor";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +29,10 @@ export async function POST(request) {
   const signature = clip(b.signature, 120);
   if (!b.agree || signature.length < 2) return bad("Type your name to sign, and check the box");
 
-  const total = optionTotals(option, q.rate).total;
+  const priced = quoteTotals(option, q);
+  const total = priced.total;
   const lines = option.lines.map(lineLabel);
+  if (priced.off) lines.push(`${money(priced.off)} off: ${q.credit.label} (${money(priced.list)} before)`);
   const now = new Date().toISOString();
   const base = {
     kind: "shoot", client_name: q.name, client_email: q.email, client_phone: q.phone || "",

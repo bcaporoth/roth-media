@@ -6,8 +6,8 @@
 // own Messages or Gmail — nothing sends on its own). Blocks & rate live in
 // the panel at the bottom. Math in lib/quotes.js; saved via /api/admin/quotes.
 
-import { useMemo, useState } from "react";
-import { aboutTime, lineLabel, money, optionTotals, quoteExpired, quoteExpiry, QUOTE_DAYS } from "../lib/quotes";
+import { useEffect, useMemo, useState } from "react";
+import { aboutTime, lineLabel, money, optionTotals, quoteTotals, quoteExpired, quoteExpiry, QUOTE_DAYS } from "../lib/quotes";
 import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
@@ -23,6 +23,7 @@ const blankQuote = (prefill = {}) => ({
   business: prefill.business || "", when: prefill.when || "", note: "", recommended: 1,
   options: LABELS.map((label) => ({ label, lines: [] })),
   from: prefill.from || "",
+  credit: null,
 });
 const lineFrom = (b) => ({ block: b.id, name: b.name, unit: b.unit, qty: 1, shoot: b.shoot, edit: b.edit, flat: b.flat });
 const day = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
@@ -164,7 +165,18 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
   const set = (k) => (e) => setQ((x) => ({ ...x, [k]: e.target.value }));
   const rate = settings.rate;
   const filled = q.options.filter((o) => o.lines.length);
-  const totals = useMemo(() => q.options.map((o) => optionTotals(o, rate)), [q.options, rate]);
+  const totals = useMemo(() => q.options.map((o) => quoteTotals(o, { rate, credit: q.credit })), [q.options, rate, q.credit]);
+
+  // Gift cards and credits this person can use (walk-in gift card, a
+  // friend's link, a thank-you credit). Looked up from their email.
+  const [credits, setCredits] = useState([]);
+  async function findCredits(email) {
+    const e = String(email || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setCredits([]); return; }
+    try { const j = await api({ action: "credits", email: e }); setCredits(j.credits || []); } catch { setCredits([]); }
+  }
+  useEffect(() => { if (prefill?.email) findCredits(prefill.email); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const sameCredit = (a, b) => Boolean(a && b && a.kind === b.kind && a.code === b.code);
 
   function setOption(i, o) { setQ((x) => ({ ...x, options: x.options.map((y, j) => (j === i ? o : y)) })); }
 
@@ -180,6 +192,7 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
       setList(j.quotes);
       setMade({ url: j.url, copy: j.copy, phone: q.phone, email: q.email, name: q.name });
       setQ(blankQuote());
+      setCredits([]);
     } catch (e2) { setErr(e2.message); }
     finally { setBusy(false); }
   }
@@ -224,13 +237,26 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
           )}
           <div className="cpn-row">
             <label className="cpn-f"><span>Name *</span><input value={q.name} onChange={set("name")} required /></label>
-            <label className="cpn-f"><span>Email * <small>the receipt goes here</small></span><input type="email" value={q.email} onChange={set("email")} required /></label>
+            <label className="cpn-f"><span>Email * <small>the receipt goes here</small></span><input type="email" value={q.email} onChange={(e) => setQ((x) => ({ ...x, email: e.target.value, credit: null }))} onBlur={(e) => findCredits(e.target.value)} required /></label>
           </div>
           <div className="cpn-row">
             <label className="cpn-f"><span>Phone</span><input type="tel" value={q.phone} onChange={set("phone")} /></label>
             <label className="cpn-f"><span>Business</span><input value={q.business} onChange={set("business")} /></label>
           </div>
           <label className="cpn-f"><span>Shoot date or timing <small>shows on the quote</small></span><input value={q.when} onChange={set("when")} placeholder="Saturday, December 6 · early December · to be set together" /></label>
+
+          {credits.length > 0 && (
+            <div className="qb-credits">
+              <p className="qb-asked-title">They have money to use</p>
+              <div className="gcard-actions">
+                {credits.map((c) => {
+                  const on = sameCredit(q.credit, c);
+                  return <button type="button" key={c.kind + c.code} className={"achip" + (on ? " is-on" : "")} aria-pressed={on} onClick={() => setQ((x) => ({ ...x, credit: on ? null : c }))}>{on ? "✓ " : ""}Take {money(c.amount)} off · {c.label}</button>;
+                })}
+              </div>
+              <p className="gcard-meta">{q.credit ? `${money(q.credit.amount)} comes off whichever option they pick. It is only spent when they pay.` : "Tap one to take it off this quote. Only one per quote."}{credits.some((c) => c.kind === "referral") ? " With a friend's link, the friend earns $100 when this is paid." : ""}</p>
+            </div>
+          )}
 
           <p className="gcard-meta qb-rate-line">Priced at <strong>{money(rate)} an hour</strong> for shooting and editing, plus flat extras. <button type="button" className="qb-link" onClick={() => setShowSettings(true)}>Change blocks & rate</button></p>
 
@@ -266,12 +292,12 @@ export default function QuoteBuilder({ initial = [], settings: initialSettings, 
                   <strong>{x.business || x.name}</strong>
                   <span className={`cpn-status is-${st.key === "paid" ? "live" : st.key === "sent" || st.key === "signed" ? "soon" : "ended"}`}>{st.label}</span>
                 </div>
-                <p className="gcard-meta">{x.business ? `${x.name} · ` : ""}{x.email} · made {day(x.sentAt || x.createdAt)}</p>
+                <p className="gcard-meta">{x.business ? `${x.name} · ` : ""}{x.email} · made {day(x.sentAt || x.createdAt)}{x.credit ? ` · ${money(x.credit.amount)} off (${x.credit.label})` : ""}</p>
                 <ul className="qb-card-opts">
                   {(x.options || []).map((o, k) => (
                     <li key={k} className={x.picked === k ? "is-picked" : ""}>
                       <span>{o.label}{x.recommended === k ? " ★" : ""}{x.picked === k ? " · picked" : ""}</span>
-                      <b>{money(optionTotals(o, x.rate).total)}</b>
+                      <b>{money(quoteTotals(o, x).total)}</b>
                     </li>
                   ))}
                 </ul>

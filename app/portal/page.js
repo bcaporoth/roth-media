@@ -16,6 +16,10 @@ import { unreadFor } from "../../lib/notes-server";
 import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief, welcomeOf, briefsByType, TYPE_LABEL } from "../../lib/intake";
+import { loadWalkin } from "../../lib/walkin";
+import { referralCodeFor } from "../../lib/referrals";
+import { referralLink, referralPitch } from "../../lib/referral-rules";
+import "../theme/walkin.css";
 
 export const dynamic = "force-dynamic";
 
@@ -272,6 +276,21 @@ export default async function PortalPage({ searchParams }) {
     const months = adminConfigured ? await publishedMonths(supabaseAdmin(), client.id).catch(() => []) : [];
     const unpaid = months.find((m) => !m.paid_at && m.pay_url && m.price_cents > 0);
     if (unpaid) todo.push({ who: "you", text: `${unpaid.label} content — pay link ready`, href: "#months" });
+    // Walk-ins (lib/walkin.js): their gift card and the one to pass on.
+    let gifts = null;
+    if (adminConfigured && !isAdmin) {
+      const w = await loadWalkin(supabaseAdmin(), user.email);
+      if (w?.utm?.gift?.amount > 0) {
+        const code = await referralCodeFor(supabaseAdmin(), user.email);
+        const pitch = referralPitch("business");
+        gifts = {
+          amount: Number(w.utm.gift.amount),
+          used: w.utm.gift.usedAt ? new Date(w.utm.gift.usedAt).toLocaleDateString("en-US", { month: "long", day: "numeric" }) : "",
+          friend: code ? { code, link: referralLink(code, "business"), kick: pitch.kick, title: pitch.title, body: pitch.body, button: pitch.button, sms: pitch.text(code) } : null,
+        };
+      }
+    }
+    if (gifts && !gifts.used) todo.unshift({ who: "you", text: `You have a $${gifts.amount} gift card, and one to give a friend`, href: "#gifts" });
     const b = brandSummary(palette);
     if (b.done < b.of) todo.push({ who: "you", text: `Your brand: ${b.done} of ${b.of} essentials filled in`, href: "/portal/brand" });
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -292,6 +311,7 @@ export default async function PortalPage({ searchParams }) {
         plan={plan}
         days={days || []}
         months={months}
+        gifts={gifts}
         next={todo}
         clientName={client.name || ""}
         clientId={client.id}

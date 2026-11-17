@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { submitLead } from "../lib/submit-lead";
 import { track } from "../lib/track";
 import { ASK } from "../lib/quotes";
+import { isReferralCode, REFERRAL_AMOUNT } from "../lib/referral-rules";
 
 function Pills({ label, options, value, onChange, many = false }) {
   const on = (o) => (many ? value.includes(o) : value === o);
@@ -35,6 +36,14 @@ export default function BusinessAsk() {
   const [sentName, setSentName] = useState("");
   useEffect(() => { if (status === "sent") topRef.current?.scrollIntoView({ block: "start" }); }, [status]);
 
+  // Came in through a friend's link (?ref=FRIEND-NAME-1234): say so, and file
+  // the code with the request so Brandon can take the $100 off the quote.
+  const [friend, setFriend] = useState("");
+  useEffect(() => {
+    try { const c = String(new URLSearchParams(window.location.search).get("ref") || "").trim().toUpperCase(); if (isReferralCode(c)) setFriend(c); } catch {}
+  }, []);
+  const friendName = friend ? (() => { const s = friend.split("-")[1] || ""; return s.charAt(0) + s.slice(1).toLowerCase(); })() : "";
+
   const started = useRef(false);
   const touch = () => { if (!started.current) { started.current = true; track("quote_started", { category: "business" }); } };
 
@@ -57,6 +66,7 @@ export default function BusinessAsk() {
       ["when", String(data.when || "").trim()],
       ["anything else", String(data.notes || "").trim()],
       ["best way to reach", data.reach || ""],
+      ["friend code", friend],
       ["first name", data.firstName], ["last name", data.lastName], ["email", data.email], ["phone", data.phone],
     ].filter(([, v]) => String(v || "").trim());
     try {
@@ -91,6 +101,12 @@ export default function BusinessAsk() {
   return (
     <form className="qt-form ba-form" onSubmit={submit} onInput={touch} ref={topRef}>
       <input type="text" name="_honey" className="cform-honey qt-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+      {friend && (
+        <div className="qt-friend" role="status">
+          <strong>{friendName} sent you ${REFERRAL_AMOUNT} off.</strong>
+          <span>It&apos;s already on your quote. Nothing to type.</span>
+        </div>
+      )}
 
       <section className="ba-step">
         <p className="ba-num">01</p>

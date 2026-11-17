@@ -6,7 +6,8 @@ import { stripe, stripeConfigured } from "../../../lib/stripe";
 import { recordBooking } from "../../../lib/booking";
 import { getQuoteByToken, patchQuote } from "../../../lib/quotes-server";
 import { isAdminRequest } from "../../../lib/admin-guard";
-import { aboutTime, lineLabel, money, optionTotals, quoteExpired, quoteExpiry, QUOTE_DAYS } from "../../../lib/quotes";
+import { aboutTime, lineLabel, money, quoteTotals, quoteExpired, quoteExpiry, QUOTE_DAYS } from "../../../lib/quotes";
+import "../../theme/walkin.css";
 
 export const metadata = { title: "Your quote", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -68,8 +69,8 @@ export default async function QuotePage({ params, searchParams }) {
 
   // Everything the page needs, already priced on the server.
   const options = (q.options || []).map((o, i) => {
-    const t = optionTotals(o, q.rate);
-    return { i, label: o.label, total: t.total, onSite: t.shootMin ? aboutTime(t.shootMin) : "", lines: o.lines.map(lineLabel) };
+    const t = quoteTotals(o, q);
+    return { i, label: o.label, total: t.total, list: t.list, off: t.off, onSite: t.shootMin ? aboutTime(t.shootMin) : "", lines: o.lines.map(lineLabel) };
   });
   const many = options.length > 1;
   return (
@@ -78,7 +79,7 @@ export default async function QuotePage({ params, searchParams }) {
         {many ? "Pick the one that fits, read the agreement, type your name, and pay." : "Read the agreement, type your name, and pay."} It all happens on this page. Good through {longDay(quoteExpiry(q))}.
       </p>
       <QuoteOffer token={q.token} options={options} recommended={q.recommended ?? 0} picked={Number.isInteger(q.picked) ? q.picked : null}
-        note={q.note || ""} when={q.when || ""} business={q.business || ""} name={q.name} checkout={stripeConfigured} />
+        credit={q.credit?.label || ""} note={q.note || ""} when={q.when || ""} business={q.business || ""} name={q.name} checkout={stripeConfigured} />
     </LegalPage>
   );
 }
