@@ -124,10 +124,10 @@ export async function GET() {
     delivery: { ready: deliveryReady },
     days,
     clientByEmail,
-    leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
-    galleries: galleries || [],
     // Every client, for the "who is it for" search on New shoot.
     clients: (clientRows || []).filter((c) => c.name || c.email).map((c) => ({ id: c.id, name: c.name || "", email: c.email || "", phone: c.phone || "" })),
+    leads: (leads || []).map((l) => ({ ...l, address: addressFromFields(l.fields), when: dateFromFields(l.fields), fields: undefined })),
+    galleries: galleries || [],
     guides: { ...GUIDES, __base: GEAR_BASE },
     playbook: await withPhotos(playbook.lists, "items"),
   });

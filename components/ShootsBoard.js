@@ -540,16 +540,6 @@ function NewDay({ client: c, onFail }) {
 
 function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = false, clients = [] }) {
   const [lead, setLead] = useState("");
-  const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
-  const [more, setMore] = useState(false);
-  const [f, setF] = useState({ title: "", client_name: prefill?.client_name || "", client_email: prefill?.client_email || "", client_phone: prefill?.client_phone || "", date: "", start_time: "", time_note: "", address: prefill?.address || "", notes: prefill?.notes || "" });
-  const briefShots = prefill?.brief_shots || [];
-  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
-  // The title writes itself: "Nicole — Family". Editable under More.
-  const autoTitle = `${f.client_name || (lead ? "" : "")}${f.client_name ? " — " : ""}${guides[kind]?.label || "Shoot"}`.trim();
-
-  function pickLead(id) {
-    setLead(id);
   // "Who is it for": search every client, not only the recent inquiries.
   const [who, setWho] = useState("");
   const [picked, setPicked] = useState(null);
@@ -566,6 +556,16 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
     setPicked(null);
     setF((s) => ({ ...s, client_name: "", client_email: "", client_phone: "" }));
   }
+  const [kind, setKind] = useState(prefill?.kind && guides[prefill.kind] ? prefill.kind : "wedding");
+  const [more, setMore] = useState(false);
+  const [f, setF] = useState({ title: "", client_name: prefill?.client_name || "", client_email: prefill?.client_email || "", client_phone: prefill?.client_phone || "", date: "", start_time: "", time_note: "", address: prefill?.address || "", notes: prefill?.notes || "" });
+  const briefShots = prefill?.brief_shots || [];
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  // The title writes itself: "Nicole — Family". Editable under More.
+  const autoTitle = `${f.client_name || (lead ? "" : "")}${f.client_name ? " — " : ""}${guides[kind]?.label || "Shoot"}`.trim();
+
+  function pickLead(id) {
+    setLead(id);
     const l = leads.find((x) => x.id === id);
     if (!l) return;
     const k = /engage/i.test(l.summary) ? "engagement" : /wedding/i.test(l.summary) ? "wedding" : /family/i.test(l.summary) ? "family" : /document|film/i.test(l.summary) ? "documentary" : /business|content/i.test(l.summary) ? "business" : "other";
@@ -575,16 +575,6 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
 
   return (
     <form className="shoot-new" onSubmit={(e) => { e.preventDefault(); onCreate({ ...f, title: f.title.trim() || autoTitle, kind, submission_id: lead || null, brief_shots: briefShots }); }}>
-      {(!compact || leads.length > 0) && (
-        <label className="wide">{compact ? "Start from their inquiry (optional)" : "Or start from a recent inquiry (optional)"}
-          <select value={lead} onChange={(e) => { setPicked(null); pickLead(e.target.value); }}>
-            <option value="">— pick one to prefill name, phone, address —</option>
-            {leads.map((l) => <option key={l.id} value={l.id}>{l.name || l.email} · {l.summary}{l.address ? ` · ${l.address}` : ""}</option>)}
-          </select>
-        </label>
-      )}
-      <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
-      <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       {!compact && (
         <div className="wide shoot-who">
           {picked ? (
@@ -602,6 +592,16 @@ function NewShoot({ leads, guides, busy, onCreate, prefill = null, compact = fal
           )}
         </div>
       )}
+      {(!compact || leads.length > 0) && (
+        <label className="wide">{compact ? "Start from their inquiry (optional)" : "Or start from a recent inquiry (optional)"}
+          <select value={lead} onChange={(e) => { setPicked(null); pickLead(e.target.value); }}>
+            <option value="">— pick one to prefill name, phone, address —</option>
+            {leads.map((l) => <option key={l.id} value={l.id}>{l.name || l.email} · {l.summary}{l.address ? ` · ${l.address}` : ""}</option>)}
+          </select>
+        </label>
+      )}
+      <label>Type<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(guides).filter(([k]) => !k.startsWith("__")).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select></label>
+      <label>Date<input type="date" value={f.date} onChange={set("date")} /></label>
       <label>Start time<input type="time" value={f.start_time} onChange={set("start_time")} /></label>
       <label className="wide">Address / place<AddressInput value={f.address} onChange={(v) => setF((x) => ({ ...x, address: v }))} placeholder="Type a place — St. Mary's Corning, Apples and Moore…" /></label>
       {!compact && !f.client_name && !more && <label className="wide">Client<input value={f.client_name} onChange={set("client_name")} placeholder="Who it's for" /></label>}
