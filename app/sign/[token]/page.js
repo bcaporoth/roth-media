@@ -62,7 +62,7 @@ export default async function SignPage({ params, searchParams }) {
   const intro = row.kind === "invoice"
     ? `One amount, one button. Pay by card, Apple Pay or Google Pay.`
     : row.sign_required && row.status !== "signed"
-    ? row.kind === "shoot" ? `Read it (three minutes), type your name to sign, and pay the package — that locks your date.` : `Read it (two minutes), type your name to sign, and pay this month's amount — all on this page.`
+    ? row.kind === "shoot" ? `Take your time looking it over (about three minutes). When you're ready, type your name to sign and pay the package. That locks in your date.` : `Take your time looking it over (about two minutes). When you're ready, type your name to sign and pay this month's amount, all on this page.`
     : `You've already signed — this is this month's payment.`;
 
   return (
