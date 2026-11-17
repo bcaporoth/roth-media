@@ -6,7 +6,7 @@ import { GUIDES } from "../../../../../lib/shoot-guides";
 import { signItemPhotos } from "../../../../../lib/r2";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Prep sheet — Studio", robots: { index: false } };
+export const metadata = { title: "Prep sheet — Command Center", robots: { index: false } };
 
 // /portal/admin/shoots/print?id=<shoot>  → that shoot's sheet (its own gear + shots + notes)
 // /portal/admin/shoots/print?kind=wedding → the blank guide for a type

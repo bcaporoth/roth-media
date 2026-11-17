@@ -33,8 +33,8 @@ export default function StudioReturn() {
 
   if (!href) return null;
   return (
-    <a className="studio-return" href={href} aria-label="Back to Studio">
-      <span aria-hidden="true">←</span> Studio
+    <a className="studio-return" href={href} aria-label="Back to Command Center">
+      <span aria-hidden="true">←</span> Command Center
     </a>
   );
 }

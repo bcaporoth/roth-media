@@ -14,7 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Stats — Studio",
+  title: "Stats — Command Center",
   robots: { index: false },
 };
 
@@ -299,7 +299,7 @@ export default async function StatsPage({ searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="stats" newCount={newCount} kick="Studio" title="Stats" wide>
+      <StudioShell active="stats" newCount={newCount} kick="Command Center" title="Stats" wide>
         <StatsBoard data={data} />
       </StudioShell>
       <StudioFooter />

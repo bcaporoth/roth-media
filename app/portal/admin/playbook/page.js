@@ -6,7 +6,7 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { newLeadCount } from "../../../../lib/studio-data";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Playbook — Studio", robots: { index: false } };
+export const metadata = { title: "Playbook — Command Center", robots: { index: false } };
 
 export default async function PlaybookPage() {
   const user = await requireAdminPage();
@@ -14,7 +14,7 @@ export default async function PlaybookPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="playbook" newCount={newCount} kick="Studio" title="Playbook" wide>
+      <StudioShell active="playbook" newCount={newCount} kick="Command Center" title="Playbook" wide>
         <p className="inbox-hint">Your reusable lists: gear, shot lists, the flow of the day, poses and prompts. Lists marked “auto” get copied onto every new shoot of that type; any list can be pulled into a shoot by hand.</p>
         <PlaybookBoard />
       </StudioShell>

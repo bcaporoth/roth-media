@@ -8,7 +8,7 @@ import { newLeadCount } from "../../../../lib/studio-data";
 import { listReleases } from "../../../../lib/projects-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Vault — Studio", robots: { index: false } };
+export const metadata = { title: "Vault — Command Center", robots: { index: false } };
 
 // Studio → More → Vault: every signed release, newest first — the name, the
 // kind, the signature, and the exact words they agreed to. Print any one.
@@ -18,7 +18,7 @@ export default async function VaultPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="vault" newCount={newCount} kick="Studio" title="Vault" wide>
+      <StudioShell active="vault" newCount={newCount} kick="Command Center" title="Vault" wide>
         <VaultList initial={releases} />
       </StudioShell>
       <StudioFooter />

@@ -6,7 +6,7 @@ import { requireAdminPage } from "../../../../lib/admin-guard";
 import { newLeadCount } from "../../../../lib/studio-data";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Shoots — Studio", robots: { index: false } };
+export const metadata = { title: "Shoots — Command Center", robots: { index: false } };
 
 export default async function ShootsPage() {
   const user = await requireAdminPage();
@@ -14,7 +14,7 @@ export default async function ShootsPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="shoots" newCount={newCount} kick="Studio" title="Shoots" wide>
+      <StudioShell active="shoots" newCount={newCount} kick="Command Center" title="Shoots" wide>
         <ShootsBoard />
       </StudioShell>
       <StudioFooter />

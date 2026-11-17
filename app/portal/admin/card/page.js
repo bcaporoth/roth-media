@@ -11,7 +11,7 @@ import { CARD_QR_URL } from "../../../../lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Card & QR — Studio",
+  title: "Card & QR — Command Center",
   robots: { index: false },
 };
 
@@ -37,7 +37,7 @@ export default async function CardAdminPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="card" newCount={newCount} kick="Studio" title="Card & QR">
+      <StudioShell active="card" newCount={newCount} kick="Command Center" title="Card & QR">
         <div className="astats">
           <div className="astat">
             <strong>{scans30.count ?? 0}</strong>

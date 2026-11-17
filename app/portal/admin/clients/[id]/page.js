@@ -20,7 +20,7 @@ import { isNoEmail } from "../../../../../lib/no-email";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Client — Studio", robots: { index: false } };
+export const metadata = { title: "Client — Command Center", robots: { index: false } };
 
 // One client, everything the site knows about them: intake answers, call
 // sheets, shoots, galleries, payments, messages. Joined by email.
@@ -108,7 +108,7 @@ export default async function ClientPage({ params }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="clients" newCount={newCount} kick="Studio · Clients" title={client.name || client.email}>
+      <StudioShell active="clients" newCount={newCount} kick="Command Center · Clients" title={client.name || client.email}>
         {/* Calendar first (2026-11-08): their dates, shoot days (🎬 → scripts) and
             "Start a shoot day" all live here, right under who they are. */}
         <ClientProfile initial={data} emailReady={resendConfigured}>

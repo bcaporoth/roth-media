@@ -11,7 +11,7 @@ import { clientStage, clientType, INQUIRY_KINDS } from "../../../../lib/intake";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Clients — Studio",
+  title: "Clients — Command Center",
   robots: { index: false },
 };
 
@@ -94,7 +94,7 @@ export default async function ClientsPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="clients" newCount={newCount} kick="Studio" title="Clients">
+      <StudioShell active="clients" newCount={newCount} kick="Command Center" title="Clients">
         <ClientsBoard initial={initial} emailReady={resendConfigured} />
       </StudioShell>
       <StudioFooter />

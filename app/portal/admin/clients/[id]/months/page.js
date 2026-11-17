@@ -12,7 +12,7 @@ import { stripeConfigured } from "../../../../../../lib/stripe";
 import { monthKey, isMonth, ensureMonth, listMonths, refreshPaid } from "../../../../../../lib/months-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Months — Studio", robots: { index: false } };
+export const metadata = { title: "Months — Command Center", robots: { index: false } };
 
 // Studio → Clients → profile → Months (the retainer). ?m=YYYY-MM opens a month.
 export default async function ClientMonthsPage({ params, searchParams }) {
@@ -34,7 +34,7 @@ export default async function ClientMonthsPage({ params, searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="clients" newCount={newCount} kick={`Studio · Clients · ${client.name || client.email}`} title="Months">
+      <StudioShell active="clients" newCount={newCount} kick={`Command Center · Clients · ${client.name || client.email}`} title="Months">
         <p className="gcard-meta"><a className="achip" href={`/portal/admin/clients/${client.id}`}>← {client.name || "Client"}</a></p>
         {err
           ? <p className="sm-sqlhint">{/content_months/.test(err) ? <>Months aren&apos;t set up yet — run <code>supabase/content-months.sql</code> once in the Supabase SQL editor.</> : err}</p>

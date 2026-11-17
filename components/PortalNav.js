@@ -41,7 +41,7 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
     !isAdmin && !isStaff && !biz && { key: "brief", href: "/portal/brief", full: "Your brief", short: "Brief", icon: "brief", title: "Your shoot brief — the questions I plan the day from" },
     !isAdmin && !isStaff && { key: "shop", href: "/portal/shop", full: "Shop", short: "Shop", icon: "shop", title: "Packages and extras you can book — your cart, pay, or ask" },
     !isAdmin && !isStaff && { key: "calendar", href: "/portal/calendar", full: "Your calendar", short: "Calendar", icon: "calendar", title: "What's coming up at your business — I plan content around it" },
-    isAdmin && { key: "admin", href: "/portal/admin/inbox", full: "Studio", short: "Studio", icon: "studio" },
+    isAdmin && { key: "admin", href: "/portal/admin/inbox", full: "Command Center", short: "Command", icon: "studio" },
   ].filter(Boolean);
   return (
     <>

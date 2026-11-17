@@ -13,7 +13,7 @@ import { unreadForBrandon } from "../../../../lib/notes-server";
 import { afterDeliveryList } from "../../../../lib/after-delivery";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Today — Studio", robots: { index: false } };
+export const metadata = { title: "Today — Command Center", robots: { index: false } };
 
 const LEAD_KINDS = ["quote", "card", "contact", "promo"];
 
@@ -125,7 +125,7 @@ export default async function TodayPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="today" newCount={newCount} kick="Studio" title="Today">
+      <StudioShell active="today" newCount={newCount} kick="Command Center" title="Today">
         <TodayBoard view={view} />
       </StudioShell>
       <StudioFooter />

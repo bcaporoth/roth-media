@@ -10,7 +10,7 @@ import { ensureBrand } from "../../../../../../lib/brand-server";
 import { aiConfigured, loadPlanState } from "../../../../../../lib/content-plan-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Content plan — Studio", robots: { index: false } };
+export const metadata = { title: "Content plan — Command Center", robots: { index: false } };
 
 // Studio → Clients → profile → Content plan. Opening it opens a brand
 // palette for them if they don't have one yet (the plan is stored on it),
@@ -34,7 +34,7 @@ export default async function ClientPlanPage({ params }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="clients" newCount={newCount} kick={`Studio · Clients · ${client.name || client.email}`} title="Content plan">
+      <StudioShell active="clients" newCount={newCount} kick={`Command Center · Clients · ${client.name || client.email}`} title="Content plan">
         {setupError
           ? <p className="sm-sqlhint">{setupError}</p>
           : <ContentPlanEditor client={{ id: client.id, name: client.name }} initial={state || {}} aiReady={aiConfigured} />}

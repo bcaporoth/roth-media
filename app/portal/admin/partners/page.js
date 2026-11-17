@@ -13,7 +13,7 @@ import { monthStats, partnerAgreement, reportUrl, thisMonth, prevMonth, monthLab
 import { money } from "../../../../lib/packages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Partners — Studio", robots: { index: false } };
+export const metadata = { title: "Partners — Command Center", robots: { index: false } };
 
 const STATUS = { new: "New", contacted: "Contacted", booked: "Joined", lost: "Lost" };
 const nextMonth = (m) => { const [y, mo] = m.split("-").map(Number); return mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, "0")}`; };
@@ -31,7 +31,7 @@ export default async function PartnersAdmin({ searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="partners" newCount={newCount} kick="Studio" title="Partners">
+      <StudioShell active="partners" newCount={newCount} kick="Command Center" title="Partners">
         <div className="atoolbar">
           <Link className="abtn abtn-ghost" href={`/portal/admin/partners?m=${prevMonth(month)}`}>← {monthLabel(prevMonth(month))}</Link>
           <strong className="pm-label">{monthLabel(month)}</strong>

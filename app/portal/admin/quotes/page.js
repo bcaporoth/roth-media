@@ -10,7 +10,7 @@ import { DEFAULT_BLOCKS, DEFAULT_RATE } from "../../../../lib/quotes";
 import "../../../theme/walkin.css";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Quotes — Studio", robots: { index: false } };
+export const metadata = { title: "Quotes — Command Center", robots: { index: false } };
 
 // Labels on an Inbox row that are contact details, not what they asked for.
 const SKIP = /^(first name|last name|email|phone|name|what it's for|pay link|best way to reach)/i;
@@ -49,7 +49,7 @@ export default async function QuotesAdmin({ searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="quotes" newCount={newCount} kick="Studio · Money" title="Quotes">
+      <StudioShell active="quotes" newCount={newCount} kick="Command Center · Money" title="Quotes">
         {error && <p className="cform-error">{error}</p>}
         <QuoteBuilder initial={quotes} settings={settings} prefill={prefill} asked={asked} />
       </StudioShell>

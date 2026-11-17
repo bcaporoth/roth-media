@@ -9,7 +9,7 @@ import { r2Configured, signedUrl, photoKey } from "../../../../../lib/r2";
 import { newLeadCount } from "../../../../../lib/studio-data";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Gallery — Studio", robots: { index: false } };
+export const metadata = { title: "Gallery — Command Center", robots: { index: false } };
 
 // Studio → one gallery's own page. The dashboard card is a glance; this is
 // where you actually work on it: rename, albums, cover, design, sending.
@@ -61,7 +61,7 @@ export default async function AdminGalleryPage({ params, searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="galleries" newCount={newCount} kick="Studio · Galleries" title={gallery.title}>
+      <StudioShell active="galleries" newCount={newCount} kick="Command Center · Galleries" title={gallery.title}>
         <GalleryPage gallery={gallery} tab={typeof sp.tab === "string" ? sp.tab : "photos"} />
       </StudioShell>
       <StudioFooter />

@@ -11,7 +11,7 @@ import { newLeadCount } from "../../../../../../lib/studio-data";
 import { loadBrand, ensureBrand } from "../../../../../../lib/brand-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Brand palette — Studio", robots: { index: false } };
+export const metadata = { title: "Brand palette — Command Center", robots: { index: false } };
 
 // Studio → Clients → profile → Brand palette. The same form the client
 // fills in, editable, with your own note under each section.
@@ -31,7 +31,7 @@ export default async function ClientBrandPage({ params }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="clients" newCount={newCount} kick={`Studio · Clients · ${client.name || client.email}`} title="Brand palette">
+      <StudioShell active="clients" newCount={newCount} kick={`Command Center · Clients · ${client.name || client.email}`} title="Brand palette">
         <div className="gcard-actions bp-studio-bar">
           <Link className="achip" href={`/portal/admin/clients/${client.id}`}>← {client.name || "Client"}</Link>
           {b.palette && <a className="achip" href={`/portal/admin/clients/${client.id}/brand/sheet`} target="_blank" rel="noreferrer">Brand sheet ↗</a>}

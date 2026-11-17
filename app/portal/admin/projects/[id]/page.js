@@ -10,7 +10,7 @@ import { loadProject } from "../../../../../lib/projects-server";
 import { listStaff } from "../../../../../lib/staff-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Project — Studio", robots: { index: false } };
+export const metadata = { title: "Project — Command Center", robots: { index: false } };
 
 export default async function ProjectPage({ params }) {
   const user = await requireAdminPage();

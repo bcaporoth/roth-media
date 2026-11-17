@@ -10,7 +10,7 @@ import { CALENDLY } from "../../../../lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Calendar — Studio",
+  title: "Calendar — Command Center",
   robots: { index: false },
 };
 
@@ -21,7 +21,7 @@ export default async function CalendarPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="calendar" newCount={newCount} kick="Studio" title="Calendar" wide>
+      <StudioShell active="calendar" newCount={newCount} kick="Command Center" title="Calendar" wide>
         <div className="atoolbar scal-links">
           <Link className="abtn" href="/portal/admin/shoots">+ New shoot</Link>
           <a className="abtn abtn-ghost" href={CALENDLY} target="_blank" rel="noreferrer">Your booking link ↗</a>

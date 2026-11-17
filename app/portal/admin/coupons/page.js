@@ -9,7 +9,7 @@ import { listCoupons } from "../../../../lib/coupons-server";
 import { PACKAGES, CATEGORIES } from "../../../../lib/packages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Coupons — Studio", robots: { index: false } };
+export const metadata = { title: "Coupons — Command Center", robots: { index: false } };
 
 // Studio → Money → Coupons (2026-11-08): make a code, pick what it takes off
 // and what it covers, pause or delete it. Works on the quote page, the pay
@@ -26,7 +26,7 @@ export default async function CouponsAdmin() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="coupons" newCount={newCount} kick="Studio · Money" title="Coupons">
+      <StudioShell active="coupons" newCount={newCount} kick="Command Center · Money" title="Coupons">
         {error && <p className="cform-error">{error}</p>}
         <CouponsBoard initial={coupons} menu={menu} />
       </StudioShell>

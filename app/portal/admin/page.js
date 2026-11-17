@@ -11,7 +11,7 @@ import { newLeadCount } from "../../../lib/studio-data";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Galleries — Studio",
+  title: "Galleries — Command Center",
   robots: { index: false },
 };
 
@@ -85,7 +85,7 @@ export default async function AdminPage() {
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
 
-      <StudioShell active="galleries" newCount={newCount} kick="Studio" title="Galleries">
+      <StudioShell active="galleries" newCount={newCount} kick="Command Center" title="Galleries">
         <AdminDashboard galleries={items} />
       </StudioShell>
       <StudioFooter />

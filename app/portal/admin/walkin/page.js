@@ -12,7 +12,7 @@ import "../../../theme/walkin.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Walk-in — Studio",
+  title: "Walk-in — Command Center",
   robots: { index: false },
 };
 
@@ -32,7 +32,7 @@ export default async function WalkinAdminPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="walkin" newCount={newCount} kick="Studio" title="Walk-in">
+      <StudioShell active="walkin" newCount={newCount} kick="Command Center" title="Walk-in">
         <section className="wk-studio" aria-label="Walk-in QR code">
           <div className="wk-studio-code" dangerouslySetInnerHTML={{ __html: svg }} role="img" aria-label="Walk-in QR code" />
           <div className="wk-studio-side">

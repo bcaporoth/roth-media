@@ -8,7 +8,7 @@ import { newLeadCount } from "../../../../lib/studio-data";
 import { listProjects } from "../../../../lib/projects-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Projects — Studio", robots: { index: false } };
+export const metadata = { title: "Projects — Command Center", robots: { index: false } };
 
 // Studio → Projects: the jobs above the dates — a documentary, a wedding
 // with its engagement session — each holding its shoot days, people, story
@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="projects" newCount={newCount} kick="Studio" title="Projects" wide>
+      <StudioShell active="projects" newCount={newCount} kick="Command Center" title="Projects" wide>
         <ProjectsList initial={projects} />
       </StudioShell>
       <StudioFooter />

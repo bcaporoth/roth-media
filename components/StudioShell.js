@@ -37,7 +37,15 @@ export const STUDIO_TABS = [
   // Its own tab since 2026-11-16: Brandon kept losing it under Shoots, and it
   // is where he marks the free days every client's calendar shows.
   { key: "calendar", label: "Calendar", href: "/portal/admin/calendar" },
-  { key: "inbox", label: "Inbox", href: "/portal/admin/inbox" },
+  {
+    key: "inbox",
+    label: "Inbox",
+    href: "/portal/admin/inbox",
+    subs: [
+      { key: "inbox", label: "Inquiries", href: "/portal/admin/inbox" },
+      { key: "followups", label: "Follow-ups", href: "/portal/admin/followups" },
+    ],
+  },
   { key: "today", label: "Today", href: "/portal/admin/today" },
   {
     key: "money",
@@ -86,7 +94,7 @@ export function StudioTabs({ active, newCount = 0, lookOpen = false, onLook = nu
   const subs = (tab?.subs || []).filter((s) => !s.look || onLook);
   return (
     <>
-      <nav className={"stabs stabs-7" + (subs.length ? " has-subs" : "")} aria-label="Studio sections" ref={ref}>
+      <nav className={"stabs stabs-7" + (subs.length ? " has-subs" : "")} aria-label="Command Center sections" ref={ref}>
         {STUDIO_TABS.map((t) => (
           <Link
             key={t.key}

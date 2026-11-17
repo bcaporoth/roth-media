@@ -1,0 +1,55 @@
+/* Command Center → Inbox → Follow-ups (components/FollowUps.js, 2026-11-17).
+   Its own file on purpose: another session edits globals.css. */
+.nu { display: grid; gap: 1.1rem; min-width: 0; }
+.nu-lede { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+.nu-h { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.nu-counts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; }
+.nu-pill { border: 1px solid var(--line); border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.85rem; font-weight: 600; }
+.nu-pill.is-late { border-color: #c0392b; color: #c0392b; }
+.nu-pill.is-due { border-color: #b08a3a; color: #b08a3a; }
+.nu-err { margin: 0; color: #c0392b; font-weight: 600; }
+.nu-ok { margin: 0; color: #4a7c59; font-weight: 600; }
+.nu-card { min-width: 0; }
+
+.nu label { display: grid; gap: 0.3rem; font-size: 0.82rem; font-weight: 600; min-width: 0; }
+.nu input, .nu select, .nu textarea { font: inherit; font-size: 1rem; font-weight: 400; min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem 0.7rem; background: transparent; color: inherit; }
+.nu textarea { line-height: 1.5; resize: vertical; }
+.nu input:focus, .nu select:focus, .nu textarea:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+.admin-shell.is-dark .nu input, .admin-shell.is-dark .nu select { color-scheme: dark; }
+.admin-shell.is-dark .nu select option { color: #111; }
+
+.nu-add { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.nu-add .abtn { grid-column: 1 / -1; justify-self: start; min-height: 44px; }
+
+.nu-list { display: grid; gap: 0.8rem; min-width: 0; }
+.nu-person.is-stopped { opacity: 0.65; }
+.nu-person-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; }
+.nu-person-head > div:first-child { display: grid; gap: 0.25rem; min-width: 0; justify-items: start; }
+.nu-person-acts { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.nu-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.nu-step { border: 1px solid var(--line); border-radius: 12px; padding: 0.7rem 0.8rem; display: grid; gap: 0.55rem; min-width: 0; }
+.nu-step.is-late { border-color: #c0392b; }
+.nu-step.is-due { border-color: #b08a3a; }
+.nu-step.is-sent, .nu-step.is-skipped { opacity: 0.7; }
+.nu-step-top { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.nu-step-n { font-weight: 700; }
+.nu-tag.is-late { border-color: #c0392b; color: #c0392b; }
+.nu-tag.is-due { border-color: #b08a3a; color: #b08a3a; }
+.nu-tag.is-sent { border-color: #4a7c59; color: #4a7c59; }
+.nu-step-acts { display: flex; align-items: end; gap: 0.5rem; flex-wrap: wrap; }
+.nu-step-acts .abtn, .nu-step-acts .achip, .nu-person-acts .achip, .nu-tabs .achip { min-height: 44px; }
+.nu-date { flex: 0 1 11rem; }
+.nu-read { border-left: 3px solid var(--line); padding: 0.2rem 0 0.2rem 0.8rem; display: grid; gap: 0.4rem; }
+.nu-read p { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+
+.nu-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.nu-word { display: grid; gap: 0.55rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.nu-word h3 { margin: 0; font-size: 1rem; }
+.nu-word .inbox-hint { margin: 0; }
+.nu-save { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.nu-save .abtn { min-height: 44px; }
+
+@media (max-width: 560px) {
+  .nu-add { grid-template-columns: minmax(0, 1fr); }
+  .nu-date { flex: 1 1 100%; }
+}

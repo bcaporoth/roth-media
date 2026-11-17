@@ -198,7 +198,7 @@ export async function POST(request) {
       if (me.role !== "brandon") return bad("Not authorized", 403);
       if (!aiConfigured) return bad("Claude isn't set up on this server (ANTHROPIC_API_KEY).", 503);
       const { data: pal } = await db.from("brand_palettes").select("data").eq("client_id", day.client_id).maybeSingle();
-      if (!pal) return bad("They don't have a brand page yet — open it from their Studio profile first.", 422);
+      if (!pal) return bad("They don't have a brand page yet — open it from their Command Center profile first.", 422);
       const b = pal.data?.business || {};
       const PINS = [
         { n: 1, title: "Pinned #1: Who we are", ask: "who they are, what they do, where, since when, and why they started", answer: b.pinned_who },

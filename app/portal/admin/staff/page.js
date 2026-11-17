@@ -8,7 +8,7 @@ import { newLeadCount } from "../../../../lib/studio-data";
 import { listStaff } from "../../../../lib/staff-server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Staff — Studio", robots: { index: false } };
+export const metadata = { title: "Staff — Command Center", robots: { index: false } };
 
 export default async function StaffPage() {
   const user = await requireAdminPage();
@@ -16,7 +16,7 @@ export default async function StaffPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="staff" newCount={newCount} kick="Studio" title="Staff" wide>
+      <StudioShell active="staff" newCount={newCount} kick="Command Center" title="Staff" wide>
         <StaffBoard initial={staff} />
       </StudioShell>
       <StudioFooter />

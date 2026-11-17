@@ -16,7 +16,7 @@ import AgreementSender from "../../../../components/AgreementSender";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Payments — Studio",
+  title: "Payments — Command Center",
   robots: { index: false },
 };
 
@@ -58,7 +58,7 @@ export default async function PayAdminPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="pay" newCount={newCount} kick="Studio" title="Payments">
+      <StudioShell active="pay" newCount={newCount} kick="Command Center" title="Payments">
         <div className="atoolbar">
           <a className="abtn" href="https://dashboard.stripe.com/payments" target="_blank" rel="noreferrer">
             Stripe payments ↗

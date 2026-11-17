@@ -9,7 +9,7 @@ import { SECTIONS, COLOR_ROLES, VIBE_SLIDERS, fieldsFor } from "../../../../../.
 import { normHex, hexToRgb, hexToCmyk, inkOn } from "../../../../../../../lib/brand-color";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Brand sheet — Studio", robots: { index: false } };
+export const metadata = { title: "Brand sheet — Command Center", robots: { index: false } };
 
 const fmt = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
 const ROLE = Object.fromEntries(COLOR_ROLES.map((r) => [r.id, r.label]));

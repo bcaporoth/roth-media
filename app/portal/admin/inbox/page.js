@@ -11,7 +11,7 @@ import { unreadForBrandon } from "../../../../lib/notes-server";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Inbox — Studio",
+  title: "Inbox — Command Center",
   robots: { index: false },
 };
 
@@ -66,7 +66,7 @@ export default async function InboxPage() {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="inbox" newCount={newCount} kick="Studio" title="Inbox">
+      <StudioShell active="inbox" newCount={newCount} kick="Command Center" title="Inbox">
         {clientNotes.length > 0 && (
           <section className="ix-notes" aria-label="Notes from clients">
             <h2 className="kick-sm">Notes from clients — {clientNotes.length} waiting on you</h2>
