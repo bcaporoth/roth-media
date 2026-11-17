@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { adminConfigured, supabaseAdmin } from "../../../lib/supabase-admin";
 import { resendConfigured, sendEmail } from "../../../lib/resend";
-import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText } from "../../../lib/studio-emails";
+import { LEAD_ALERT_TO, LEAD_SMS_TO, leadAlertEmail, leadSmsText, thanksEmail, businessWelcomeEmail } from "../../../lib/studio-emails";
+import { callLink, businessOf } from "../../../lib/call";
+import { leadCategory } from "../../../lib/lead-intel";
 import { parseEventDates } from "../../../lib/event-dates";
 import { clip, visitorId } from "../../../lib/visitor";
 import { priceQuote } from "../../../lib/booking";
@@ -16,6 +18,9 @@ import { money } from "../../../lib/packages";
 export const dynamic = "force-dynamic";
 
 const KINDS = new Set(["quote", "promo", "card", "contact", "intake", "home"]);
+// Inquiry forms whose sender gets the automatic thank-you email. Not the
+// giveaway (promo) and not the questionnaire (intake).
+const THANKS_KINDS = new Set(["quote", "card", "home"]);
 
 // Every site form posts here: the submission is saved to the Studio inbox
 // and Brandon gets an instant alert. The response says whether the alert
@@ -67,6 +72,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Add a name, email, or phone." }, { status: 422 });
 
   let stored = false;
+  let subId = ""; // handed back so the call picker can mark this inquiry "Call booked"
   if (adminConfigured) {
     const db = supabaseAdmin();
     // An intake fills in the "link sent" placeholder Brandon created, if there is one.
@@ -75,10 +81,11 @@ export async function POST(request) {
       const { data } = await db.from("submissions").select("id").eq("kind", "intake_sent").eq("email", sub.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
       placeholder = data;
     }
-    const { error } = placeholder
-      ? await db.from("submissions").update({ ...sub, status: "new", read_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", placeholder.id)
-      : await db.from("submissions").insert(sub);
+    const { data: saved, error } = placeholder
+      ? await db.from("submissions").update({ ...sub, status: "new", read_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", placeholder.id).select("id").maybeSingle()
+      : await db.from("submissions").insert(sub).select("id").maybeSingle();
     stored = !error;
+    subId = saved?.id || placeholder?.id || "";
   }
 
   // Intake → their calendar: the "anything on the calendar we should shoot
@@ -162,8 +169,22 @@ ${cq.cat.id === "business" ? `<tr><td style="padding:20px 28px 0;"><p style="mar
           text: `Hi ${fn},\n\n${cq.pkg.name} — ${friendAmt || money(cq.total)}${cq.pkg.per || ""}\n\nYou get:\n${get.map((g) => `• ${g}`).join("\n")}\n\n${dueLine}${friendOff}\n\nNext: a 15-minute call. Book it: ${CALENDLY}\n\nYour pay link (keep this email): ${clientPayLink}${giveLine}\n\nOr just text me back.\n\nBrandon · Roth Media · rothmediaco.com`,
         });
       } catch {}
+    } else if (THANKS_KINDS.has(sub.kind) && sub.email) {
+      // Every other inquiry gets the thank-you, with the link to pick a call
+      // time (the catch for anyone who didn't book right after the form).
+      try {
+        const link = subId ? callLink(subId) : CALENDLY;
+        // A business gets the welcome version (what working together looks like).
+        // The form itself says what it is (every form sends `category`); the
+        // word-guess is only the fallback for a form that left it blank.
+        const cat = ["wedding", "engagement", "business", "family"].includes(body.category) ? body.category : leadCategory(sub);
+        const mail = cat === "business"
+          ? businessWelcomeEmail({ name: sub.name, email: sub.email, business: businessOf(sub), link })
+          : thanksEmail({ name: sub.name, email: sub.email, link });
+        await sendEmail({ to: sub.email, ...mail });
+      } catch {}
     }
   }
 
-  return NextResponse.json({ ok: stored || emailed, stored, emailed });
+  return NextResponse.json({ ok: stored || emailed, stored, emailed, id: subId });
 }

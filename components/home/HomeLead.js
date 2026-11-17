@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { submitLead } from "../../lib/submit-lead";
 import { track } from "../../lib/track";
+import { CALENDLY } from "../../lib/site";
 
 const FOR = [["business", "My business"], ["wedding", "A wedding"], ["family", "Family photos"], ["", "Not sure yet"]];
 const CONTACT = [["text", "Text"], ["call", "Call"], ["email", "Email"]];
@@ -24,7 +25,7 @@ export default function HomeLead() {
     setStatus("sending");
     const catLabel = picked;
     try {
-      await submitLead({
+      const res = await submitLead({
         kind: "home",
         category: cat,
         name: d.name, email: d.email, phone: d.phone,
@@ -37,7 +38,7 @@ export default function HomeLead() {
         ],
       });
       track("home_lead_sent", { category: cat, pref });
-      setSent({ ...d, cat });
+      setSent({ ...d, cat, sid: res.id });
       setStatus("sent");
     } catch { setStatus("error"); }
   }
@@ -51,6 +52,7 @@ export default function HomeLead() {
         <p className="cin-lead-sub">Want to skip a call&apos;s worth of questions? Five minutes now and our first conversation is all about you — dates, what it&apos;s for, the one shot you can&apos;t miss.</p>
         <a className="cin-btn cin-btn--light cin-lead-next" href={`/intake?${q.toString()}`}>Go a step further → the questionnaire</a>
         <p className="cin-lead-fine">Already filled in: your name and contact. Nothing to retype.</p>
+        <a className="cin-btn cin-btn--ghost cin-lead-next" href={sent.sid ? `/call?i=${sent.sid}` : CALENDLY} onClick={() => track("book_call_click", { from: "home-lead" })}>Or pick a time for our call</a>
       </div>
     );
   }

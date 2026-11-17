@@ -41,8 +41,11 @@ export async function GET(request) {
     }
     // A business shoot day hanging off this shoot: the scripts.
     try {
-      const { data: day } = await db.from("shoot_days").select("id, title, client_id").eq("shoot_id", s.id).maybeSingle();
+      const { data: day } = await db.from("shoot_days").select("id, title, client_id, status").eq("shoot_id", s.id).maybeSingle();
       if (day) {
+        // Did the client get their day-before confirmation this morning (app/api/cron/confirm)?
+        const { data: conf } = await db.from("site_events").select("id").eq("name", "day_confirm_sent").eq("path", "/portal/days/" + day.id).eq("data->>date", tomorrow).limit(1);
+        lines.push(conf?.length ? "Client confirmation: sent this morning" : day.status === "locked" ? "Client confirmation: NOT sent (no email on file, emails turned off, or the send failed). Text them tonight." : "Client confirmation: not sent, the day isn't marked Locked in. Text them tonight.");
         const { data: scripts } = await db.from("scripts").select("title, kind, status, minutes").eq("day_id", day.id).order("position", { ascending: true });
         lines.push(`${day.title} — ${(scripts || []).length} script${(scripts || []).length === 1 ? "" : "s"}, ${(scripts || []).filter((x) => x.status !== "draft").length} ready:\n` + (scripts || []).map((x) => `  • ${x.title || x.kind} (${x.minutes}m, ${x.status})`).join("\n") + `\nFilm mode: https://rothmediaco.com/portal/admin/clients/${day.client_id}/days/${day.id}`);
       }

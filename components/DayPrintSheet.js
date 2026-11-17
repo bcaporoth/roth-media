@@ -26,7 +26,12 @@ export default function DayPrintSheet({ day, tips = false }) {
       </header>
 
       {day.notes && <section className="sprint-notes"><h2 className="dprint-h2">Day notes</h2><p>{day.notes}</p></section>}
-      {tips && <section className="sprint-notes"><h2 className="dprint-h2">Quick tips for on camera</h2><ol className="sday-tips-list">{TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}</ol></section>}
+      {(day.flow || []).length > 0 && (
+        <section className="sprint-notes"><h2 className="dprint-h2">Flow of the day</h2>
+          <ol className="dprint-order">{day.flow.map((f, i) => <li key={i}><span className="sprint-box" /><span className="dprint-at">{f.time ? fmt12(f.time) : ""}</span><strong>{f.text}</strong></li>)}</ol>
+        </section>
+      )}
+      {tips && (order.length > 0 || !day.shoot_kind || day.shoot_kind === "business") && <section className="sprint-notes"><h2 className="dprint-h2">Quick tips for on camera</h2><ol className="sday-tips-list">{TALENT_TIPS.map((t, i) => <li key={i}>{t}</li>)}</ol></section>}
 
       <section>
         <h2 className="dprint-h2">Running order</h2>

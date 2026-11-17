@@ -9,6 +9,10 @@
       "schedule": "30 12 * * *"
     },
     {
+      "path": "/api/cron/confirm",
+      "schedule": "0 14 * * *"
+    },
+    {
       "path": "/api/cron/tomorrow",
       "schedule": "0 23 * * *"
     },

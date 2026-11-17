@@ -1,0 +1,15 @@
+/* The client journey (2026-11-17): the flow of the day on the client's shoot
+   day page. Kept out of globals.css on purpose (another session edits it). */
+.sday-flow { margin: 1.4rem 0; padding: 1.1rem 1.2rem; border: 1px solid var(--line, rgba(246, 241, 232, 0.16)); border-radius: 12px; background: rgba(246, 241, 232, 0.03); }
+.sday-flow-h { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.7rem; }
+.sday-flow-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.sday-flow-list li { display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); gap: 0.8rem; font-size: 0.98rem; line-height: 1.45; }
+.sday-flow-at { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--gold, #d9b56a); white-space: nowrap; }
+@media (max-width: 480px) { .sday-flow-list li { grid-template-columns: 4.6rem minmax(0, 1fr); gap: 0.6rem; } }
+
+/* The business welcome: "What it's like to work with me" under the call picker. */
+.ba-work { margin: 1.6rem 0 0; padding: 1.1rem 1.2rem; border: 1px solid var(--line, rgba(246, 241, 232, 0.16)); border-radius: 12px; background: rgba(246, 241, 232, 0.03); text-align: left; }
+.ba-work-h { font-family: var(--font-display), "Syne", sans-serif; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.8rem; }
+.ba-work-list { margin: 0; padding: 0 0 0 1.3rem; display: grid; gap: 0.6rem; font-size: 0.98rem; line-height: 1.5; }
+.ba-work-list li::marker { color: var(--gold, #d9b56a); font-weight: 700; }
+.ba-work-foot { margin: 1rem 0 0; font-size: 0.95rem; opacity: 0.8; }

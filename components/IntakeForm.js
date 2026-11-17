@@ -32,6 +32,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [sid, setSid] = useState(""); // this intake's id, so a booked call shows in Studio
 
   const questions = type ? INTAKE[type].filter((it) => !(skipWelcomeAsked && ASKED_IN_WELCOME.test(it.q))) : [];
   // The three shot questions render as one block where the first of them sits.
@@ -70,7 +71,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
       return;
     }
     try {
-      await submitLead({
+      const res = await submitLead({
         kind: "intake",
         type,
         name, email, phone,
@@ -79,6 +80,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
         fields: [["for", type], ...fields],
       });
       track("intake_sent", { category: type });
+      setSid(res.id);
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -113,7 +115,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
           <p className="mx-done-title">Got it — thank you.</p>
           <p>I&apos;ll read this before we talk, so the call is about you and not about forms.</p>
         </div>
-        <BookCall name={name} email={email} from="intake" />
+        <BookCall name={name} email={email} from="intake" sid={sid} />
       </div>
     );
   }

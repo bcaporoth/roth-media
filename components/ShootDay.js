@@ -181,6 +181,9 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const order = runningOrder(day, scripts);
   const total = totalMinutes(scripts);
   const ready = scripts.filter((s) => s.status !== "draft").length;
+  // A wedding or portrait client with no scripts sees the day itself (when,
+  // where, the flow, talking points) and none of the script tools.
+  const lite = me === "client" && Boolean(day.shoot_kind) && day.shoot_kind !== "business" && scripts.length === 0;
   // What's waiting on whoever is looking: a note from the other person that
   // hasn't been answered, and scripts still in draft.
   const threadOf = (s) => (Array.isArray(s.thread) ? s.thread : []);
@@ -198,8 +201,15 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         {error && <span className="cform-error" role="alert">{error}</span>}
       </div>
 
-      <DayHeader day={day} role={me} onSaved={(patch) => setDay((d) => ({ ...d, ...patch }))} onError={fail} total={total} ready={ready} count={scripts.length} />
-      {me === "client" && <QuickTips scripts={scripts} client={day.client} />}
+      <DayHeader day={day} role={me} onSaved={(patch) => setDay((d) => ({ ...d, ...patch }))} onError={fail} total={total} ready={ready} count={scripts.length} lite={lite} />
+      {/* The itinerary, for the client: Brandon's "Flow of the day" list, once the day is locked in. */}
+      {me === "client" && (day.flow || []).length > 0 && (
+        <section className="sday-flow" aria-label="Flow of the day">
+          <h2 className="sday-flow-h">Flow of the day</h2>
+          <ol className="sday-flow-list">{day.flow.map((f, i) => <li key={i}><span className="sday-flow-at">{f.time ? fmt12(f.time) : ""}</span><span>{f.text}</span></li>)}</ol>
+        </section>
+      )}
+      {me === "client" && !lite && <QuickTips scripts={scripts} client={day.client} />}
 
       {me === "brandon" && day.shoot_id && (
         <div className="pbook-kinds cprof-tabs sday-panes" role="tablist" aria-label="This day">
@@ -209,7 +219,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       )}
       {me === "brandon" && day.shoot_id && pane === "prep" && <ShootPanel shootId={day.shoot_id} />}
 
-      <div className={"sday-scripts" + (pane === "prep" && me === "brandon" && day.shoot_id ? " is-hidden" : "")}>
+      <div className={"sday-scripts" + ((pane === "prep" && me === "brandon" && day.shoot_id) || lite ? " is-hidden" : "")}>
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
@@ -343,7 +353,7 @@ function QuickTips({ scripts, client, compact = false }) {
   );
 }
 
-function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
+function DayHeader({ day, role, onSaved, onError, total, ready, count, lite = false }) {
   const [edit, setEdit] = useState(false);
   const [notes, setNotes] = useState(day.notes || "");
   const [busy, setBusy] = useState(false);
@@ -401,14 +411,14 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count }) {
               {(day.reminders || []).length > 0 && <details className="sday-remind"><summary>📷 My camera reminders ({day.reminders.length})</summary><ul>{day.reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
             </div>
           )}
-          <dl className="sday-stats">
+          {!lite && <dl className="sday-stats">
             <div><dt>Scripts</dt><dd>{count}</dd></div>
             <div><dt>Filming</dt><dd>{fmtMins(total)}{win.wraps && <small className="sday-wraps"> · wraps {fmt12(win.wraps)}</small>}</dd></div>
             {win.available !== null && (
               <div className={win.over > 0 ? "is-over" : ""}><dt>Window</dt><dd>{fmtMins(win.available)}{win.over > 0 ? <small className="sday-wraps"> · {fmtMins(win.over)} over</small> : win.over < 0 ? <small className="sday-wraps"> · {fmtMins(-win.over)} spare</small> : null}</dd></div>
             )}
             <div><dt>Ready</dt><dd>{ready} of {count}</dd></div>
-          </dl>
+          </dl>}
         </>
       )}
       <label className="sday-notes">

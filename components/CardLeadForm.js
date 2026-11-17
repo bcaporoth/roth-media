@@ -22,7 +22,7 @@ export default function CardLeadForm() {
     const isEmail = contact.includes("@");
     setStatus("sending");
     try {
-      await submitLead({
+      const res = await submitLead({
         kind: "card",
         category: what === "A wedding" ? "wedding" : what === "My business" ? "business" : what === "Family photos" ? "family" : "",
         name: data.name,
@@ -38,7 +38,7 @@ export default function CardLeadForm() {
         ],
       });
       track("card_lead_sent", { what });
-      setWho({ name: data.name, email: isEmail ? contact : "" });
+      setWho({ name: data.name, email: isEmail ? contact : "", sid: res.id });
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -49,7 +49,7 @@ export default function CardLeadForm() {
     return (
       <div role="status">
         <div className="mx-done"><p className="mx-done-title">Got it — I usually reply the same day. Want to skip the wait?</p></div>
-        <BookCall name={who.name} email={who.email} from="card" dark />
+        <BookCall name={who.name} email={who.email} from="card" sid={who.sid} dark />
       </div>
     );
   }

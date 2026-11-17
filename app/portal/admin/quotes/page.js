@@ -39,6 +39,12 @@ export default async function QuotesAdmin({ searchParams }) {
         asked = fields.filter(([k, v]) => !SKIP.test(String(k)) && String(v || "").trim()).slice(0, 14).map(([k, v]) => [String(k), String(v)]);
       }
     }
+    // From a client profile with no inquiry on file: just who they are.
+    const cid = String(sp?.client || "");
+    if (!prefill && /^[0-9a-f-]{36}$/.test(cid)) {
+      const { data: c } = await db.from("clients").select("name, email, phone").eq("id", cid).maybeSingle();
+      if (c) prefill = { from: "", name: c.name || "", email: c.email || "", phone: c.phone || "", business: "", when: "" };
+    }
   }
   return (
     <>

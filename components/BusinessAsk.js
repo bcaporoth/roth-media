@@ -6,6 +6,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { submitLead } from "../lib/submit-lead";
+import BookCall from "./BookCall";
+import { WORK_TITLE, WORK_STEPS } from "../lib/call";
 import { track } from "../lib/track";
 import { ASK } from "../lib/quotes";
 import { isReferralCode, REFERRAL_AMOUNT } from "../lib/referral-rules";
@@ -34,6 +36,7 @@ export default function BusinessAsk() {
   const [status, setStatus] = useState("idle");
   const [missing, setMissing] = useState("");
   const [sentName, setSentName] = useState("");
+  const [who, setWho] = useState({ name: "", email: "", sid: "" }); // for the call picker after the form
   useEffect(() => { if (status === "sent") topRef.current?.scrollIntoView({ block: "start" }); }, [status]);
 
   // Came in through a friend's link (?ref=FRIEND-NAME-1234): say so, and file
@@ -70,7 +73,7 @@ export default function BusinessAsk() {
       ["first name", data.firstName], ["last name", data.lastName], ["email", data.email], ["phone", data.phone],
     ].filter(([, v]) => String(v || "").trim());
     try {
-      await submitLead({
+      const res = await submitLead({
         kind: "quote",
         category: "business",
         name,
@@ -82,6 +85,7 @@ export default function BusinessAsk() {
       });
       track("quote_sent", { category: "business" });
       setSentName(String(data.firstName || "").trim());
+      setWho({ name, email: String(data.email || ""), sid: res.id, business });
       setStatus("sent");
     } catch {
       setStatus("error");
@@ -92,8 +96,14 @@ export default function BusinessAsk() {
     return (
       <div className="qt-sent ba-sent" role="status" ref={topRef}>
         <p className="cx-kick">Request sent</p>
-        <h2 className="cx-h2">Got it{sentName ? `, ${sentName}` : ""}.</h2>
-        <p className="cx-lede">I'll look at what you need and send you a quote with three options to pick from. Questions before then? Text 845-549-4425.</p>
+        <h2 className="cx-h2">Welcome{sentName ? `, ${sentName}` : ""}.</h2>
+        <p className="cx-lede">I have your form and I'm looking at it now. The next step is a quick call so I can hear about {who.business || "your business"}.</p>
+        <BookCall name={who.name} email={who.email} from="business-ask" sid={who.sid} dark />
+        <section className="ba-work" aria-label={WORK_TITLE}>
+          <h3 className="ba-work-h">{WORK_TITLE}</h3>
+          <ol className="ba-work-list">{WORK_STEPS.map(([t, d]) => <li key={t}><strong>{t}</strong> {d}</li>)}</ol>
+          <p className="ba-work-foot">Questions before then? Text <a href="sms:+18455494425">845-549-4425</a>.</p>
+        </section>
       </div>
     );
   }

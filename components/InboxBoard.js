@@ -15,6 +15,8 @@ import { LOST_REASONS, lostReasonLabel, inboxIntel, inboxSort, dateConflicts, re
 // a follow-up date, a "lost because" reason and a date-clash warning.
 
 import { LEAD_STATUSES as STATUS, FORM_KIND_LABEL as KIND_LABEL } from "../lib/studio-labels";
+import { callLabel, callLink } from "../lib/call";
+import CopyButton from "./CopyButton";
 
 const FILTERS = [
   { key: "open", label: "Active" },
@@ -392,6 +394,7 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                 <span className="irow-tags">
                   {it.intel.followDue && <span className="itag ix-flag">{it.intel.followUp === today ? "Due today" : "Follow-up overdue"}</span>}
                   {it.intel.overdue && <span className="itag ix-flag">Overdue</span>}
+                  {it.intel.call && <span className="itag itag-booked">{callLabel(it.intel.call)}</span>}
                   <span className="itag">{KIND_LABEL[it.kind] || it.kind}</span>
                   <span className={`itag itag-${it.intel.status}`}>{it.intel.status}</span>
                   {it.intel.open && (
@@ -438,6 +441,13 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                 </div>
               )}
 
+              {/* The call step (lib/call.js): booked through the picker, or the link to send. */}
+              {open.intel.call ? (
+                <p className="gcard-meta ix-call"><strong>{callLabel(open.intel.call)}</strong> · they picked it {when(open.intel.call.bookedAt)} · <a href="https://calendly.com/app/scheduled_events/user/me" target="_blank" rel="noreferrer">Open Calendly</a></p>
+              ) : open.intel.open ? (
+                <p className="gcard-meta ix-call">No call booked yet. <CopyButton className="achip" text={callLink(open.id)} label="Copy their call link" /></p>
+              ) : null}
+
               {clashes.length > 0 && (
                 <p className={"ix-clash" + (clashes.every((c) => c.mine) ? " is-mine" : "")}>
                   {clashes.every((c) => c.mine)
@@ -477,6 +487,12 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                   )}
                   {open.intel.lead && open.kind !== "booking" && <a className="abtn abtn-ghost" href={`/portal/admin/quotes?from=${open.id}`}>Build a quote</a>}
                   <a className="abtn abtn-ghost" href={planHref}>Plan shoot</a>
+                  {/* A paid quote lands here as a "booking" row: the same one tap makes the shoot and the day. */}
+                  {open.kind === "booking" && !booked && (
+                    <button type="button" className="abtn ix-book" onClick={bookIt} disabled={booking} title="Makes the calendar shoot and (for business) the shoot day">
+                      {booking ? "Making it…" : "Plan their shoot day"}
+                    </button>
+                  )}
                   {open.intel.lead && open.status !== "booked" && (
                     <button type="button" className="abtn ix-book" onClick={bookIt} disabled={booking} title="Makes their client record, a calendar shoot, and (for business) a shoot day — then marks them Booked">
                       {booking ? "Booking…" : "✓ Book it"}

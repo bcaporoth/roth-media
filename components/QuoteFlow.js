@@ -154,7 +154,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
     };
     const { _subject, _template, ...fieldRows } = rows;
     try {
-      await submitLead({
+      const res = await submitLead({
         kind: "quote",
         category,
         cart: { category, packageId: pkg.id, addons: chosen.map((a) => a.id), code: typed },
@@ -165,7 +165,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
         summary: `${catTitle} · ${pkg.name} · ${money(estimate)}${pkg.per || ""}`,
         fields: Object.entries(fieldRows),
       });
-      setSent({ name: pkg.name, total: money(estimate) + (pkg.per || ""), who: `${data.firstName} ${data.lastName}`.trim(), email: data.email });
+      setSent({ name: pkg.name, total: money(estimate) + (pkg.per || ""), who: `${data.firstName} ${data.lastName}`.trim(), email: data.email, sid: res.id });
       track("quote_sent", { category, package: pkg.id, total: estimate });
       setStatus("sent");
     } catch {
@@ -205,7 +205,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
           {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
           {friend > 0 && viaFriend ? ` ${friendName}'s ${friend} off is on it.` : ""}
         </p>
-        <BookCall name={sent.who} email={sent.email} from="quote" />
+        <BookCall name={sent.who} email={sent.email} from="quote" sid={sent.sid} />
       </div>
     );
   }
@@ -416,7 +416,7 @@ export default function QuoteFlow({ initialCategory = "", checkout = false, code
           {sent.name} for {catTitle.toLowerCase().replace(/^(a|my|an) /, "your ")}, starting at {sent.total}. I have the details and I'll be in touch soon.
           {friend > 0 && viaFriend ? ` ${friendName}'s ${friend} off is on it.` : ""}
         </p>
-        <BookCall name={sent.who} email={sent.email} from="quote" />
+        <BookCall name={sent.who} email={sent.email} from="quote" sid={sent.sid} />
       </div>
     );
   }

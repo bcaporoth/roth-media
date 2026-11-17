@@ -1,4 +1,5 @@
 import "../theme/quote.css";
+import "../theme/journey.css";
 import SiteNav from "../../components/SiteNav";
 import SiteFooter from "../../components/SiteFooter";
 import { stripeConfigured } from "../../lib/stripe";

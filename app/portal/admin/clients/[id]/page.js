@@ -86,6 +86,8 @@ export default async function ClientPage({ params }) {
     calls: all.filter((s) => s.kind === "call"),
     messages: all.filter((s) => !["intake", "intake_sent", "call", "cart", "addresses", "quote_offer", "quote_settings"].includes(s.kind)),
     cart: all.find((s) => s.kind === "cart") || null, // their Shop cart (lib/shop.js)
+    // Quotes sent to them (Studio → Money → Quotes), newest first.
+    quotes: all.filter((s) => s.kind === "quote_offer" && s.utm?.status !== "deleted").map((s) => ({ id: s.id, created_at: s.created_at, summary: s.summary || "", status: s.utm?.status || "sent", token: s.utm?.token || "", paid: s.utm?.paid || 0, viewedAt: s.utm?.viewedAt || null })),
     shoots: shoots || [],
     galleries,
     payments: payments || [],

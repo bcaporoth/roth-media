@@ -3,7 +3,7 @@ import Link from "next/link";
 import PrintButton from "../../../../../components/PrintButton";
 import DayPrintSheet from "../../../../../components/DayPrintSheet";
 import { supabaseAdmin } from "../../../../../lib/supabase-admin";
-import { whoAmI, canOpen, loadDay } from "../../../../../lib/scripts-server";
+import { whoAmI, canOpen, loadDay, dayForClient } from "../../../../../lib/scripts-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Shoot day — print", robots: { index: false } };
@@ -20,7 +20,7 @@ export default async function PortalDayPrintPage({ params }) {
         <Link href={`/portal/days/${dayId}`}>← Back to the day</Link>
         <PrintButton /><span className="sprint-bar-hint">⌘P / Ctrl+P → Save as PDF</span>
       </nav>
-      <DayPrintSheet day={day} tips />
+      <DayPrintSheet day={me.role === "brandon" ? day : dayForClient(day)} tips />
     </div>
   );
 }

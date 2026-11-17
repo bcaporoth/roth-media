@@ -18,6 +18,8 @@ import { referralText } from "../lib/referral-rules";
 import { usd } from "../lib/money-view";
 import { CALL, TYPES, TYPE_LABEL, STAGE_LABEL, STAGES, intakeUrl, typeOf, latestBrief, INTAKE } from "../lib/intake";
 import { confirmTap } from "../lib/confirm-tap";
+import { callOf, callLabel, callLink } from "../lib/call";
+import CopyButton from "./CopyButton";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -36,6 +38,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   const [type, setType] = useState(initial.type || "wedding");
   const [openCall, setOpenCall] = useState(initial.calls[0]?.id || null);
   const [pasting, setPasting] = useState(false);
+  const [planning, setPlanning] = useState(false);
   const [deleting, setDeleting] = useState(false);
   async function removeClient() {
     if (!confirmTap(`Delete ${d.client.name || d.client.email}? Their profile and login are removed. This can't be undone.`)) return;
@@ -104,6 +107,27 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
     try { await api("/api/admin/clients", { action: "call-delete", id: call.id }); setD({ ...d, calls: d.calls.filter((x) => x.id !== call.id) }); } catch (err) { fail(err); }
   }
 
+  // Their newest inquiry or brief, and the call they booked from it (if any).
+  const forms = [...d.messages, ...d.intakes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const bookedCall = forms.map(callOf).find(Boolean) || null;
+  const inquiry = forms.find((s) => ["quote", "home", "card", "contact", "intake", "walkin"].includes(s.kind)) || null;
+  // Quotes: build one from their inquiry (same pre-fill the Inbox uses), and
+  // once one is paid with no shoot on the books, one tap plans the day.
+  const quotes = d.quotes || [];
+  const quoteHref = inquiry && inquiry.kind !== "walkin" ? "/portal/admin/quotes?from=" + inquiry.id : "/portal/admin/quotes?client=" + c.id;
+  const paidQuote = quotes.find((q) => q.status === "paid") || null;
+  const needsDay = paidQuote && !(d.shoots || []).length && !(d.days || []).length;
+  const planFrom = inquiry || d.messages.find((m) => m.kind === "booking") || null;
+  const quoteState = (q) => (q.status === "paid" ? "Paid $" + Number(q.paid || 0).toLocaleString("en-US") : q.status === "signed" ? "Signed, not paid yet" : q.status === "void" ? "Voided" : q.viewedAt ? "Opened" : "Sent");
+  async function planDay() {
+    if (!planFrom || planning) return;
+    setPlanning(true);
+    try {
+      const r = await api("/api/admin/book", { id: planFrom.id });
+      window.location.assign(r.dayId ? "/portal/admin/clients/" + r.clientId + "/days/" + r.dayId : "/portal/admin/shoots#shoot-" + r.shootId);
+    } catch (err) { fail(err); setPlanning(false); }
+  }
+
   return (
     <div className="cprof">
       <div className="cprof-head cprof-head2">
@@ -111,15 +135,28 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           <p className="cprof-wholine"><span className={`itag stage-${d.stage}`}>{STAGE_LABEL[d.stage]}</span> <span className="gcard-meta">client since {fmt(c.created_at)}</span></p>
           <p className="cprof-contactline">{isNoEmail(c.email) ? <em>no email yet</em> : c.email}{c.phone ? ` · ${c.phone}` : ""}</p>
           {c.notes && <p className="cprof-desc">{c.notes}</p>}
+          {/* The call step (lib/call.js): did they pick a time yet? */}
+          {bookedCall ? (
+            <p className="gcard-meta cprof-call"><strong>{callLabel(bookedCall)}</strong> · <a href="https://calendly.com/app/scheduled_events/user/me" target="_blank" rel="noreferrer">Open Calendly</a></p>
+          ) : inquiry && ["new", "intake_sent", "intake"].includes(d.stage) ? (
+            <p className="gcard-meta cprof-call">No call booked yet. <CopyButton className="achip" text={callLink(inquiry.id)} label="Copy their call link" /></p>
+          ) : null}
         </div>
         <div className="gcard-actions cprof-headacts">
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
+          <a className="achip" href={quoteHref}>Build a quote</a>
           <button type="button" className="achip" onClick={() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
         </div>
       </div>
+      {needsDay && planFrom && (
+        <p className="ix-booked cprof-paid" role="status">
+          <strong>Paid.</strong> Plan their shoot day next.{" "}
+          <button type="button" className="abtn" onClick={planDay} disabled={planning}>{planning ? "Making it…" : "Plan their shoot day"}</button>
+        </p>
+      )}
       {flash && <p className="clients-flash">{flash}</p>}
       {error && <p className="cform-error">{error}</p>}
 
@@ -235,6 +272,19 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             </section>
           )}
 
+          <section className="cprof-card cprof-mtab" id="quotes">
+            <div className="cprof-cardhead"><h2>Quotes{quotes.length > 0 && <em className="cprof-count">{quotes.length}</em>}</h2>
+              <a className="achip" href={quoteHref}>+ Build a quote</a>
+            </div>
+            {quotes.length === 0 && <p className="gcard-meta">No quotes sent yet.</p>}
+            {quotes.map((q) => (
+              <p key={q.id} className="gcard-meta cprof-quote">
+                <span className={"itag " + (q.status === "paid" ? "itag-booked" : q.status === "signed" ? "itag-contacted" : "")}>{quoteState(q)}</span>{" "}
+                {q.summary} · {fmt(q.created_at)}{" "}
+                {q.token && <a href={"/q/" + q.token} target="_blank" rel="noreferrer">Open their page</a>}
+              </p>
+            ))}
+          </section>
           <section className="cprof-card cprof-deliv cprof-mtab" id="money">
             <div className="cprof-cardhead"><h2>Payments{bookings.length + d.payments.length > 0 && <em className="cprof-count">{bookings.length + d.payments.length}</em>}</h2>
               {owedCents > 0 && <span className="gcard-meta">{usd(owedCents)} still due</span>}

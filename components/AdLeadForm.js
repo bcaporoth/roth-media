@@ -36,7 +36,7 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
     setStatus("sending");
     try {
       const tag = picked ? ` · ${picked.name}` : plans.length ? " · help me pick" : "";
-      await submitLead({
+      const res = await submitLead({
         kind: "quote", category,
         name: d.name, email: d.email || "", phone: d.phone,
         subject: `Ad lead — ${d.name} · ${label}${tag}${d.extra ? ` · ${d.extra}` : ""}`,
@@ -45,15 +45,15 @@ export default function AdLeadForm({ category, label, cta, extra, plans = [], em
         ...(picked ? { cart: { category, packageId: picked.id, addons: [], code: ref } } : {}),
       });
       track("ad_lead_sent", { category });
-      setWho({ name: d.name, email: d.email || "" });
+      setWho({ name: d.name, email: d.email || "", sid: res.id, quoted: Boolean(picked) });
       setStatus("sent");
     } catch { setStatus("error"); }
   }
   if (status === "sent") {
     return (
       <div className="golead-done" role="status">
-        <p>{who.email ? "Done — your quote, what you get, and your pay link are in your inbox. I’ll text you today." : "Got it! I’ll text you today."} Want to skip the back-and-forth? Grab a 15-minute call:</p>
-        <BookCall name={who.name} email={who.email} from={`go-${category}`} />
+        <p>{who.email && who.quoted ? "Done — your quote, what you get, and your pay link are in your inbox. I’ll text you today." : "Got it! I’ll text you today."} Want to skip the back-and-forth? Grab a 15-minute call:</p>
+        <BookCall name={who.name} email={who.email} from={`go-${category}`} sid={who.sid} />
       </div>
     );
   }

@@ -1,10 +1,11 @@
 import "../../../theme/misc.css";
+import "../../../theme/journey.css";
 import { redirect, notFound } from "next/navigation";
 import PortalNav from "../../../../components/PortalNav";
 import { PortalFrame } from "../../../../components/PortalViews";
 import ShootDay from "../../../../components/ShootDay";
 import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { whoAmI, canOpen, loadDay } from "../../../../lib/scripts-server";
+import { whoAmI, canOpen, loadDay, dayForClient } from "../../../../lib/scripts-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Shoot day", robots: { index: false } };
@@ -24,7 +25,7 @@ export default async function PortalShootDayPage({ params }) {
     <PortalFrame nav={nav} className="pt-day mx-page">
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap">
-          <ShootDay initial={day} role="client" backHref="/portal" backLabel="Your portal" printHref={`/portal/days/${dayId}/print`} />
+          <ShootDay initial={dayForClient(day)} role="client" backHref="/portal" backLabel="Your portal" printHref={`/portal/days/${dayId}/print`} />
         </div>
       </section>
     </PortalFrame>
