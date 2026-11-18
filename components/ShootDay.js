@@ -53,7 +53,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   const [open, setOpen] = useState(() => (initial.scripts?.length === 1 ? initial.scripts[0].id : null));
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState("");
-  const [tool, setTool] = useState(""); // "" | plan | import | send
+  // "" | plan | import | send. An empty day opens on "Tell Claude what to film".
+  const [tool, setTool] = useState(() => (role === "brandon" && !(initial.scripts || []).length ? "plan" : ""));
   const [more, setMore] = useState(false); // Brandon's less-used tools, folded away
   // One page for the whole day (2026-11-16): Scripts | Prep & details. Prep is
   // the calendar shoot's lists, times, notes and delivery — Studio only.
@@ -238,13 +239,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       <div className="sday-tools">
         {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
+        {me === "brandon" && <button type="button" className={"achip sday-tellbtn" + (tool === "plan" ? " is-on" : "")} aria-expanded={tool === "plan"} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Tell Claude what to film</button>}
         {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">🖨 Print</a>}
         {me === "brandon" && aiReady && <button type="button" className="achip" onClick={() => { if (!scripts.some((s) => /^Pinned #[123]\b/.test(s.title || "")) || confirmTap("Rewrite the three Pinned posts with Claude from their brand page? It keeps what's good and fills in what's thin.")) writePinned(); }} disabled={busy}>✦ Write the Pinned Three</button>}
         {me === "brandon" && <button type="button" className={"achip" + (more ? " is-on" : "")} aria-expanded={more} onClick={() => setMore(!more)}>⋯ More</button>}
       </div>
       {me === "brandon" && more && (
         <div className="sday-tools sday-more">
-          <button type="button" className={"achip" + (tool === "plan" ? " is-on" : "")} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Plan the day with Claude</button>
           <button type="button" className={"achip" + (tool === "import" ? " is-on" : "")} onClick={() => setTool(tool === "import" ? "" : "import")}>Import from content plan</button>
           <button type="button" className={"achip achip-danger sday-delete" + (dayArmed ? " is-armed" : "")} onClick={removeDay} disabled={deleting}>{deleting ? "Deleting…" : dayArmed ? "Tap again to delete for good" : "Delete this day"}</button>
           {dayArmed && <p className="sday-delete-warn" role="alert">This deletes the day{scripts.length ? `, its ${scripts.length} script${scripts.length === 1 ? "" : "s"}` : ""}{day.shoot_id ? " and its spot on your Shoots calendar" : ""}. It can’t be undone.</p>}
@@ -291,7 +292,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         </div>
         {scripts.length === 0 && (
           <p className="sday-empty">
-            {me === "brandon" ? "Add the first script below — a reel, a recipe, a how-to. Claude can draft it from their brand and brief, then you both shape it." : "Nothing on the board yet. Add an idea below — even a one-line title — and Brandon picks it up from there."}
+            {me === "brandon" ? "Nothing here yet. Tell Claude what to film (above) and it makes one card for each reel. Or add a T-chart yourself below." : "Nothing on the board yet. Add an idea below — even a one-line title — and Brandon picks it up from there."}
           </p>
         )}
         <ol className="sday-list">
@@ -401,7 +402,7 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count, lite = fa
           <label>Start<input type="time" name="start_time" defaultValue={day.start_time || ""} /></label>
           <label>End<input type="time" name="end_time" defaultValue={day.end_time || ""} /></label>
           <label className="wide">Where{role === "brandon" ? <AddressInput name="location" defaultValue={day.location} placeholder="Type the place — their shop, the church…" /> : <input name="location" defaultValue={day.location} placeholder="The shop, the kitchen, out front…" />}</label>
-          <label>Status<select name="status" defaultValue={day.status}>{DAY_STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
+          <label>Status<select name="status" defaultValue={day.status}>{DAY_STATUSES.filter((s) => s.id !== "delivered" || day.status === "delivered").map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
           <div className="gcard-actions"><button type="submit" className="abtn" disabled={busy}>Save</button><button type="button" className="achip" onClick={() => setEdit(false)}>Cancel</button></div>
         </form>
       ) : (
@@ -526,34 +527,32 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
         <input className="scr-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Name this ${KIND_LABEL[kind].toLowerCase()}`} maxLength={140} />
         <div className="scr-meta">
           {kind === "tchart"
-            ? <span className="scr-kindtag">T-chart{body.style ? ` · ${STYLE_LABEL[body.style]}` : ""}</span>
+            ? null
             : <button type="button" className="achip scr-convert" onClick={() => { setBody((b) => toTchart(kind, b)); setKind("tchart"); }}>Turn this {KIND_LABEL[kind].toLowerCase()} into a T-chart</button>}
-          <label>Status<select value={status} onChange={(e) => setStatus(e.target.value)}>{STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
-          <label>Minutes to film<input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>
+          <label>Status<select value={status} onChange={(e) => setStatus(e.target.value)}>{/* No "Delivered" to pick (2026-11-17, Brandon: not needed right now); one already set to it still shows. */}{STATUSES.filter((s) => s.id !== "delivered" || status === "delivered").map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
+          {kind !== "tchart" && <label>Minutes to film<input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>}
           <span className={`scr-state is-${state}`}>{state === "saved" ? `Saved ✓ · last by ${who(script.updated_by)} ${when(script.updated_at)}` : state === "saving" ? "Saving…" : state === "stale" ? "Not saved" : "Unsaved…"}</span>
         </div>
       </div>
 
       {role === "brandon" && (kind === "tchart" || !isCard(kind)) && (
         <div className="scr-ai">
-          {asking ? (
-            <div className="scr-ai-box">
-              <label>What's the idea? <em>(one line is enough — Claude reads their brand palette, brief and the notes below too)</em>
-                <textarea rows={2} value={idea} onChange={(e) => setIdea(e.target.value)} placeholder={kind === "recipe" ? "Her sourdough sandwich loaf, start to finish, with the crumb reveal" : kind === "howto" ? "How to tell real gluten-free from “made in a shared kitchen”" : "The one thing people drive 40 minutes for"} />
-              </label>
-              <div className="gcard-actions">
-                <button type="button" className="abtn" disabled={busy || !aiReady} onClick={askClaude}>{busy ? "Drafting… (up to a minute)" : "Draft it"}</button>
-                <button type="button" className="achip" onClick={() => setAsking(false)}>Cancel</button>
-                {!aiReady && <span className="gcard-meta">Claude isn't set up on this server.</span>}
-              </div>
+          {/* Always showing (2026-11-17, Brandon: "I tell it everything I need
+              and then it writes up the script"). Claude also gets what is
+              already typed on this card, the notes, their brand page and brief. */}
+          <div className="scr-ai-box">
+            <label>Tell Claude what you want in this one <em>Say it messy: what it's about, who's in it, what has to be said. It also reads what's already on this card, their brand page and their brief.</em>
+              <textarea rows={4} value={idea} onChange={(e) => setIdea(e.target.value)} placeholder={kind === "recipe" ? "Her sourdough sandwich loaf, start to finish, with the crumb reveal" : kind === "howto" ? "How to tell real gluten-free from “made in a shared kitchen”" : "The one thing people drive 40 minutes for. Kaci on camera, at the counter, 30 seconds."} />
+            </label>
+            <div className="gcard-actions">
+              <button type="button" className="abtn" disabled={busy || !aiReady} onClick={askClaude}>{busy ? "Writing… (up to a minute)" : body.steps.length || (body.scenes || []).length ? "✦ Rewrite the script" : "✦ Write the script"}</button>
+              {!aiReady && <span className="gcard-meta">Claude isn't set up on this computer. It works on the live site.</span>}
             </div>
-          ) : (
-            <button type="button" className="achip" onClick={() => setAsking(true)}>✦ {body.steps.length || body.scenes.length ? "Rewrite with Claude" : "Ask Claude to draft this"}</button>
-          )}
+          </div>
         </div>
       )}
 
-      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} onPrompt={() => setPrompting(true)} />}
+      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} onPrompt={() => setPrompting(true)} extra={<label className="scr-field scr-mins"><span>Minutes to film</span><input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>} />}
       {prompting && <Teleprompter title={title || "T-chart"} items={promptItems(kind, cleanBody(body))} onClose={() => setPrompting(false)} />}
       {kind === "questions" && <QuestionsEditor body={body} setBody={setBody} />}
       {kind === "questions" && <div className="scr-grid"><Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={2} ph="Where this happens, who answers, anything to set up first" wide /></div>}
@@ -619,8 +618,8 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
       </details>
       </>}
 
-      <div className="scr-thread" id={"notes-" + script.id}>
-        <h3>Notes between you</h3>
+      <details className="scr-thread scr-threadfold" id={"notes-" + script.id} open={thread.length > 0}>
+        <summary><h3>Notes between you{thread.length ? ` · ${thread.length}` : ""}</h3></summary>
         {thread.length === 0 && <p className="gcard-meta">Questions, changes, “can we do this instead” — it all goes here so the script stays the script.</p>}
         <ul>
           {thread.map((t, i) => (
@@ -631,7 +630,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={role === "brandon" ? "A note for them…" : "A note for Brandon…"} maxLength={2000} />
           <button type="submit" className="abtn" disabled={busy || !note.trim()}>Post note</button>
         </form>
-      </div>
+      </details>
 
       <div className="gcard-actions scr-foot">
         <button type="button" className="achip" onClick={onDuplicate}>Duplicate</button>
@@ -657,22 +656,30 @@ function Field({ label, v, on, rows = 2, ph = "", wide = false }) {
 // ✦ Plan the day: a theme + how many of each kind → Claude writes them all.
 function PlanDayBox({ aiReady, busy, onGo, onCancel, existing }) {
   const [theme, setTheme] = useState("");
-  const [counts, setCounts] = useState({ reel: 3, howto: 1, recipe: 0, manual: 0, promo: 0, photos: 1 });
+  // One number up front (reels); the other kinds sit behind "Other kinds".
+  const [counts, setCounts] = useState({ reel: 3, howto: 0, recipe: 0, manual: 0, promo: 0, photos: 0 });
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const num = (k) => (e) => setCounts({ ...counts, [k]: Math.max(0, Math.min(8, Number(e.target.value) || 0)) });
   return (
-    <div className="sday-box">
-      <label className="sday-boxlabel">What's this day about? <em>Claude reads their brand palette and brief too{existing ? `, and won't repeat the ${existing} already here` : ""}.</em>
-        <textarea rows={2} value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Holiday pre-orders: the three best sellers, how to order, and one 'why we're different' piece. Kaci's happy on camera." />
+    <div className="sday-box sday-tell">
+      <label className="sday-boxlabel">Tell Claude what you want to film <em>Say it messy. It makes one card for each reel, and you fix them after. It reads their brand page and brief too{existing ? `, and won't repeat the ${existing} already here` : ""}.</em>
+        <textarea rows={4} value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Three reels for holiday pre-orders: the best sellers, how to order, and one on why we're different. Kaci's happy on camera." />
       </label>
       <div className="sday-counts">
-        {KINDS.filter((k) => k.id !== "other" && !isCard(k.id)).map((k) => (
-          <label key={k.id}><span>{k.label}</span><input type="number" min={0} max={8} value={counts[k.id]} onChange={(e) => setCounts({ ...counts, [k.id]: Math.max(0, Math.min(8, Number(e.target.value) || 0)) })} /></label>
-        ))}
+        <label><span>How many reels?</span><input type="number" min={0} max={8} value={counts.reel} onChange={num("reel")} /></label>
       </div>
+      <details className="tc-fold sday-otherkinds">
+        <summary>Other kinds<em> · how-to, recipe, promo video, photo set</em></summary>
+        <div className="sday-counts">
+          {KINDS.filter((k) => k.id !== "other" && k.id !== "reel" && !isCard(k.id)).map((k) => (
+            <label key={k.id}><span>{k.label}</span><input type="number" min={0} max={8} value={counts[k.id] || 0} onChange={num(k.id)} /></label>
+          ))}
+        </div>
+      </details>
       <div className="gcard-actions">
-        <button type="button" className="abtn" disabled={busy || !aiReady || !total} onClick={() => onGo(theme, counts)}>{busy ? "Writing the day… (a minute or two)" : `Write ${total} script${total === 1 ? "" : "s"}`}</button>
-        <button type="button" className="achip" onClick={onCancel} disabled={busy}>Cancel</button>
-        {!aiReady && <span className="gcard-meta">Claude isn't set up on this server.</span>}
+        <button type="button" className="abtn" disabled={busy || !aiReady || !total} onClick={() => onGo(theme, counts)}>{busy ? "Writing the cards… (a minute or two)" : `✦ Write ${total} card${total === 1 ? "" : "s"}`}</button>
+        <button type="button" className="achip" onClick={onCancel} disabled={busy}>Close</button>
+        {!aiReady && <span className="gcard-meta">Claude isn't set up on this computer. It works on the live site.</span>}
       </div>
     </div>
   );

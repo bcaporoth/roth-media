@@ -38,13 +38,13 @@ function PlanField({ label, value, onChange, rows = 1, placeholder = "", wide = 
   );
 }
 
-export function TChartEditor({ body, setBody, onPrompt }) {
+export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
   const set = (k, v) => setBody((b) => ({ ...b, [k]: v }));
   const style = body.style || "";
   const secsTotal = tchartSecs(body);
-  const [moreOpen] = useState(() => Boolean(body.broll?.length || body.caption));
-  const planFilled = [body.goal && "for", body.on_camera && "who", body.where && "where", body.length && "length", body.needs?.length && "ready"].filter(Boolean);
-  const [planOpen] = useState(false);
+  // The one fold: closed when the card opens, so the script is what you see.
+  const [restOpen] = useState(false);
+  const restFilled = [body.goal && "what it's for", body.on_camera && "who", body.where && "where", body.length && "length", body.needs?.length && "what to have ready", body.notes && "notes", body.broll?.length && "B-roll", body.caption && "caption", (body.questions || []).length && "interview questions"].filter(Boolean);
   const [askOpen, setAskOpen] = useState(() => (body.questions || []).length > 0 || style === "questions");
   const [filter, setFilter] = useState(""); // "" | talent | place | thing
   const scenes = body.scenes || [];
@@ -63,25 +63,11 @@ export function TChartEditor({ body, setBody, onPrompt }) {
 
   return (
     <div className="tc">
-      <div className="tc-plan">
-        <div className="tc-style" role="group" aria-label="What kind of piece">
-          <span className="kick-sm">What kind of piece?</span>
-          {STYLES.map((t) => (
-            <button key={t.id} type="button" className={"achip" + (style === t.id ? " is-on" : "")} aria-pressed={style === t.id} onClick={() => set("style", style === t.id ? "" : t.id)}>{t.label}</button>
-          ))}
-        </div>
-        <PlanField label="The hook" value={body.hook} onChange={(v) => set("hook", v)} placeholder={HOOK_PH[style] || "The first words or first thing on screen"} wide />
-        {/* The rest of the plan, folded (2026-11-08, Brandon: "too much to look at"). */}
-        <details className="tc-fold" open={planOpen}>
-          <summary>Details{planFilled.length ? <em> · {planFilled.join(", ")}</em> : <em> · what it&apos;s for, who, where, length, what to have ready</em>}</summary>
-          <div className="scr-grid">
-            <PlanField label="What it's for" value={body.goal} onChange={(v) => set("goal", v)} placeholder="Trust, proof, craving, teaching, or selling one thing" />
-            <PlanField label="Who's on camera" value={body.on_camera} onChange={(v) => set("on_camera", v)} placeholder="Who's in it" />
-            <PlanField label="Where" value={body.where} onChange={(v) => set("where", v)} placeholder="The spot, the light" />
-            <PlanField label="Finished length" value={body.length} onChange={(v) => set("length", v)} placeholder={style === "photos" ? "How many photos" : "30–45s"} />
-            <PlanField label={NEEDS_LABEL[style] || "What to have ready"} value={(body.needs || []).join("\n")} onChange={(v) => set("needs", v.split("\n"))} placeholder={NEEDS_PH[style] || "One per line"} wide />
-          </div>
-        </details>
+      {/* Only what a script needs is showing (2026-11-17, Brandon: "a lot on
+          these cards… confusing what is literally only necessary"): the hook,
+          the scenes, the closing line. Everything else is in one fold below. */}
+      <div className="tc-plan tc-plan-min">
+        <PlanField label="The hook: the first words or first thing on screen" value={body.hook} onChange={(v) => set("hook", v)} placeholder={HOOK_PH[style] || "The first words or first thing on screen"} wide />
       </div>
 
       <div className="sday-sechead">
@@ -143,22 +129,34 @@ export function TChartEditor({ body, setBody, onPrompt }) {
       {scenes.length > 0 && !filter && <button type="button" className="achip" onClick={() => addScene(scenes.length - 1)}>+ Add a scene</button>}
       {filter && <p className="gcard-meta">Showing only lines where the viewer sees <strong>{SEE_LABEL[filter].toLowerCase()}</strong>. <button type="button" className="rm-linkbtn" onClick={() => setFilter("")}>Show all</button></p>}
 
-      {askOpen ? (
-        <QuestionsEditor body={body} setBody={setBody} />
-      ) : (
-        <button type="button" className="achip tc-askbtn" onClick={() => setAskOpen(true)}>+ Interview questions</button>
-      )}
-
       <div className="scr-grid tc-close">
-        <PlanField label="Call to action" value={body.cta} onChange={(v) => set("cta", v)} placeholder="One ask: stop in, order, book, follow" />
-        <PlanField label="Notes" value={body.notes} onChange={(v) => set("notes", v)} placeholder="Timing, safety, shoot this first" />
+        <PlanField label="Call to action: the closing line" value={body.cta} onChange={(v) => set("cta", v)} placeholder="One ask: stop in, order, book, follow" wide />
       </div>
-      <details className="tc-fold" open={moreOpen}>
-        <summary>B-roll &amp; caption{body.broll?.length || body.caption ? <em> · {[body.broll?.length && `${body.broll.length} B-roll`, body.caption && "caption"].filter(Boolean).join(", ")}</em> : null}</summary>
+
+      <details className="tc-fold tc-rest" open={restOpen}>
+        <summary>More for this card{restFilled.length ? <em> · filled in: {restFilled.join(", ")}</em> : <em> · kind of piece, who and where, length, B-roll, caption, interview questions</em>}</summary>
+        <div className="tc-style" role="group" aria-label="What kind of piece">
+          <span className="kick-sm">What kind of piece?</span>
+          {STYLES.map((t) => (
+            <button key={t.id} type="button" className={"achip" + (style === t.id ? " is-on" : "")} aria-pressed={style === t.id} onClick={() => set("style", style === t.id ? "" : t.id)}>{t.label}</button>
+          ))}
+        </div>
         <div className="scr-grid">
+          <PlanField label="What it's for" value={body.goal} onChange={(v) => set("goal", v)} placeholder="Trust, proof, craving, teaching, or selling one thing" />
+          <PlanField label="Who's on camera" value={body.on_camera} onChange={(v) => set("on_camera", v)} placeholder="Who's in it" />
+          <PlanField label="Where" value={body.where} onChange={(v) => set("where", v)} placeholder="The spot, the light" />
+          <PlanField label="Finished length" value={body.length} onChange={(v) => set("length", v)} placeholder={style === "photos" ? "How many photos" : "30–45s"} />
+          <PlanField label={NEEDS_LABEL[style] || "What to have ready"} value={(body.needs || []).join("\n")} onChange={(v) => set("needs", v.split("\n"))} placeholder={NEEDS_PH[style] || "One per line"} wide />
+          <PlanField label="Notes" value={body.notes} onChange={(v) => set("notes", v)} placeholder="Timing, safety, shoot this first" />
+          {extra}
           <PlanField label="B-roll to grab" value={(body.broll || []).join("\n")} onChange={(v) => set("broll", v.split("\n"))} placeholder="One per line" />
           <PlanField label="Caption" value={body.caption} onChange={(v) => set("caption", v)} placeholder="1–3 lines + hashtags" />
         </div>
+        {askOpen ? (
+          <QuestionsEditor body={body} setBody={setBody} />
+        ) : (
+          <button type="button" className="achip tc-askbtn" onClick={() => setAskOpen(true)}>+ Interview questions</button>
+        )}
       </details>
     </div>
   );

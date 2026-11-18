@@ -50,7 +50,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   const [tab, setTab] = useState("days"); // the calendar lives on this tab, so everyone lands on it
   useEffect(() => {
     const h = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (h === "notes") setTab("notes"); else if (h === "galleries") setTab("gals"); else if (h === "login" || h === "settings") { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView(), 300); } else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("days");
+    if (h === "notes") setTab("notes"); else if (h === "galleries") setTab("gals"); else if (h === "login" || h === "settings") { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView(), 300); } else if (h === "money" || h === "payments") setTab("money"); else if (h === "shoots" || h === "days") setTab("shoots"); else if (h === "calendar") setTab("days");
   }, []);
   const [paste, setPaste] = useState({ text: "", date: "" });
   const c = d.client;
@@ -192,14 +192,22 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           the calendar (passed in by the page), then the planned days, then
           their addresses. */}
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
-        {[["days", "Shoot days", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
+        {[["days", "Calendar", null], ["shoots", "Shoots", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
 
       {tab === "days" && children}
 
+      {/* Calendar tab (2026-11-17, Brandon: "this page will be for calendar and
+          scheduling the shoot"): the calendar above, their places under it.
+          Their shoots and shoot days have their own tab. */}
       {tab === "days" && (
+        <div className="cprof-tabbody">
+          <AddressBook list={d.addresses || []} copy={copy} clientId={c.id} onFail={fail} onChange={(addresses) => setD((x) => ({ ...x, addresses }))} />
+        </div>
+      )}
+      {tab === "shoots" && (
         <div className="cprof-tabbody">
           <ClientShoots client={c} type={type} brief={brief} days={d.days} onFail={fail} />
           <div className="cprof-type">
@@ -207,7 +215,6 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             {TYPES.map((t) => <button key={t.id} type="button" aria-pressed={type === t.id} aria-describedby="cprof-type-hint" className={"ifilter" + (type === t.id ? " is-on" : "")} onClick={() => setType(t.id)}>{t.label}</button>)}
             <p className="sm-typehint" id="cprof-type-hint" title="Not a saved setting — it starts on whatever their last intake, call sheet or shoot was.">For the intake link, new call sheets and new shoots.</p>
           </div>
-          <AddressBook list={d.addresses || []} copy={copy} clientId={c.id} onFail={fail} onChange={(addresses) => setD((x) => ({ ...x, addresses }))} />
         </div>
       )}
 

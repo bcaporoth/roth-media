@@ -22,3 +22,48 @@
 .sday-delete.is-armed { background: #c0392b; border-color: #c0392b; color: #fff; }
 .sday-delete-warn { flex: 1 1 100%; margin: 0; font-size: 0.88rem; color: #e0736a; }
 @media (max-width: 560px) { .sday-delete { margin-left: 0; } }
+
+/* Running order row buttons (↑ ↓ ×): the mark sits dead centre (2026-11-17,
+   Brandon: "x isn't centered"). The × had a min-width but no centring. */
+.sday-rowactions .achip { justify-content: center; text-align: center; }
+.sday-rowactions .sday-rowx:not(.is-armed) { width: 2.4rem; min-width: 2.4rem; padding: 0; }
+.sday-rowactions .sday-rowx:not(.is-armed) { display: inline-grid; place-items: center; line-height: 1; padding-bottom: 0.12em; }
+
+/* Script cards take their status colour (2026-11-17, Brandon: "the whole card
+   should change color"): Draft amber, Ready to film green, Filmed blue,
+   Delivered quiet grey. A tint over the card, a matching edge and a stripe
+   down the left. background-image, so the card's own background stays. */
+.sday-list .sday-row { --st: transparent; --st-tint: transparent; background-image: linear-gradient(var(--st-tint), var(--st-tint)); box-shadow: inset 5px 0 0 var(--st); transition: border-color 0.25s ease, box-shadow 0.25s ease; }
+/* Draft: stripe and edge only. An amber wash over the dark card read as brown, which Brandon doesn't want. */
+.sday-list .sday-row.is-draft { --st: #e0a63c; --st-tint: transparent; border-color: rgba(224, 166, 60, 0.6); }
+.sday-list .sday-row.is-ready { --st: #4fb06c; --st-tint: rgba(79, 176, 108, 0.13); border-color: rgba(79, 176, 108, 0.75); }
+.sday-list .sday-row.is-filmed { --st: #5a9be0; --st-tint: rgba(90, 155, 224, 0.11); border-color: rgba(90, 155, 224, 0.65); }
+.sday-list .sday-row.is-delivered { --st: #8a8a90; --st-tint: rgba(138, 138, 144, 0.08); border-color: rgba(138, 138, 144, 0.5); }
+.sday-list .sday-row .sday-status.is-draft { border-color: #e0a63c; color: #e0a63c; }
+.sday-list .sday-row .sday-status.is-ready { border-color: #4fb06c; color: #4fb06c; }
+.sday-list .sday-row .sday-status.is-filmed { border-color: #5a9be0; color: #5a9be0; }
+@media (prefers-reduced-motion: reduce) { .sday-list .sday-row { transition: none; } }
+
+/* Script card, stripped down (2026-11-17): title, status, "Tell Claude", the
+   hook, the scenes, the closing line. The rest is one fold; the notes thread
+   is a fold too until someone writes in it. */
+.scr-ai-box textarea, .sday-tell textarea { min-height: 6.5rem; line-height: 1.5; font-size: 1rem; }
+.scr-ai-box { border-style: solid; }
+.tc-plan.tc-plan-min { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.tc-rest { margin-top: 0.4rem; }
+.tc-rest[open] { display: grid; gap: 0.9rem; }
+.tc-rest > summary, .scr-threadfold > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.tc-rest > summary em { font-style: normal; opacity: 0.7; font-size: 0.85rem; }
+.scr-threadfold > summary { list-style: none; }
+.scr-threadfold > summary::-webkit-details-marker { display: none; }
+.scr-threadfold > summary::before { content: "▸"; }
+.scr-threadfold[open] > summary::before { content: "▾"; }
+.scr-threadfold > summary h3 { margin: 0; display: inline; }
+.scr-mins input { font: inherit; font-size: 1rem; min-height: 44px; width: 7rem; padding: 0.4rem 0.6rem; border: 1px solid var(--field-line, var(--line)); border-radius: 10px; background: transparent; color: inherit; }
+.sday-tellbtn { border-color: var(--gold, #d9b56a); }
+.sday-otherkinds > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 0.4rem; }
+.sday-otherkinds > summary em { font-style: normal; opacity: 0.7; font-size: 0.85rem; }
+.sday-otherkinds[open] { display: grid; gap: 0.6rem; }
+
+/* Number boxes in the "Tell Claude what to film" box: tall enough to tap. */
+.sday-tell .sday-counts input { min-height: 44px; }
