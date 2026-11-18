@@ -19,6 +19,7 @@ const ICONS = {
   shop: <><path d="M5.5 8h13l-1 12h-11z" /><path d="M9 10V7a3 3 0 0 1 6 0v3" /></>,
   calendar: <><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
   studio: <><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></>,
+  chat: <path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5V16.5a2 2 0 0 1-2-2z" />,
   crew: <path d="M3.5 7a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />,
 };
 const Ico = ({ name }) => (
@@ -37,10 +38,11 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
       ? { key: "crew", href: "/portal/crew", full: "My projects", short: "Projects", icon: "crew" }
       : { key: "galleries", href: isAdmin ? "/portal?galleries=1" : "/portal", full: biz ? "Home" : "Galleries", short: biz ? "Home" : "Galleries", icon: biz ? "home" : "photos" },
     biz && { key: "brand", href: "/portal/brand", full: "Your brand", short: "Brand", icon: "brand", title: "Your logo, colors, customers and goals" },
-    biz && { key: "days", href: "/portal#days", full: "Shoot days", short: "Shoots", icon: "days", title: "The scripts we film from" },
+    biz && { key: "days", href: "/portal?tab=shoots", full: "Shoot days", short: "Shoots", icon: "days", title: "The scripts we film from" },
     !isAdmin && !isStaff && !biz && { key: "brief", href: "/portal/brief", full: "Your brief", short: "Brief", icon: "brief", title: "Your shoot brief — the questions I plan the day from" },
     !isAdmin && !isStaff && { key: "shop", href: "/portal/shop", full: "Shop", short: "Shop", icon: "shop", title: "Packages and extras you can book — your cart, pay, or ask" },
     !isAdmin && !isStaff && { key: "calendar", href: "/portal/calendar", full: "Your calendar", short: "Calendar", icon: "calendar", title: "What's coming up at your business — I plan content around it" },
+    !isAdmin && !isStaff && { key: "chat", href: "/portal/chat", full: "Chat", short: "Chat", icon: "chat", title: "Chat with Brandon: questions, dates, ideas" },
     isAdmin && { key: "admin", href: "/portal/admin/inbox", full: "Command Center", short: "Command", icon: "studio" },
   ].filter(Boolean);
   return (

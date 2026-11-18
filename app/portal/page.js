@@ -17,6 +17,7 @@ import { publishedMonths } from "../../lib/months-server";
 import { normHex } from "../../lib/brand-color";
 import { latestBrief, welcomeOf, briefsByType, TYPE_LABEL } from "../../lib/intake";
 import { loadWalkin, giftLink } from "../../lib/walkin";
+import { loadPortalAgreements } from "../../lib/portal-agreements";
 import { referralCodeFor } from "../../lib/referrals";
 import { referralLink, referralPitch } from "../../lib/referral-rules";
 import "../theme/walkin.css";
@@ -263,7 +264,7 @@ export default async function PortalPage({ searchParams }) {
   const todo = [];
   if (adminConfigured && !isAdmin) {
     const unread = await unreadFor(supabaseAdmin(), client.id, "client").catch(() => 0);
-    if (unread) todo.push({ who: "brandon", text: `${unread} new note${unread === 1 ? "" : "s"} from Brandon`, href: "#notes" });
+    if (unread) todo.push({ who: "brandon", text: `${unread} new message${unread === 1 ? "" : "s"} from Brandon`, href: "/portal/chat" });
     if (!welcome && brief === false) todo.push({ who: "you", text: "Start here: tell me about you and what you're after (about 3 minutes)", href: "/portal/brief" });
     else if (missing.length) todo.push({ who: "you", text: `Fill in your ${TYPE_LABEL[missing[0]].toLowerCase()} details${missing.length > 1 ? ` (${missing.length} left)` : ""}`, href: `/portal/brief?type=${missing[0]}` });
   }
@@ -275,7 +276,7 @@ export default async function PortalPage({ searchParams }) {
     const days = adminConfigured ? await listDays(supabaseAdmin(), client.id, { forClient: true }).catch(() => null) : null;
     const months = adminConfigured ? await publishedMonths(supabaseAdmin(), client.id).catch(() => []) : [];
     const unpaid = months.find((m) => !m.paid_at && m.pay_url && m.price_cents > 0);
-    if (unpaid) todo.push({ who: "you", text: `${unpaid.label} content — pay link ready`, href: "#months" });
+    if (unpaid) todo.push({ who: "you", text: `${unpaid.label} content — pay link ready`, href: "/portal?tab=gallery#months" });
     // Walk-ins (lib/walkin.js): their gift card and the one to pass on.
     let gifts = null;
     if (adminConfigured && !isAdmin) {
@@ -292,7 +293,11 @@ export default async function PortalPage({ searchParams }) {
         };
       }
     }
-    if (gifts && !gifts.used) todo.unshift({ who: "you", text: `You have a $${gifts.amount} gift card, and one to give a friend`, href: "#gifts" });
+    if (gifts && !gifts.used) todo.unshift({ who: "you", text: `You have a $${gifts.amount} gift card, and one to give a friend`, href: "/portal?tab=gifts#gifts" });
+    // Agreements tab: what they need to sign, and what they already signed.
+    const agreements = adminConfigured && !isAdmin ? await loadPortalAgreements(supabaseAdmin(), user.email).catch(() => []) : [];
+    const toSign = agreements.filter((x) => x.state === "todo").length;
+    if (toSign) todo.unshift({ who: "you", text: toSign === 1 ? `1 thing to sign: ${agreements.find((x) => x.state === "todo").title}` : `${toSign} things waiting for you to sign or pay`, href: "/portal?tab=agreements" });
     const b = brandSummary(palette);
     if (b.done < b.of) todo.push({ who: "you", text: `Your brand: ${b.done} of ${b.of} essentials filled in`, href: "/portal/brand" });
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -314,6 +319,8 @@ export default async function PortalPage({ searchParams }) {
         days={days || []}
         months={months}
         gifts={gifts}
+        agreements={agreements}
+        tab={typeof sp?.tab === "string" ? sp.tab : "calendar"}
         next={todo}
         clientName={client.name || ""}
         clientId={client.id}

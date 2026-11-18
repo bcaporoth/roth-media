@@ -46,7 +46,7 @@ export default function NotesThread({ role, clientId = null, clientName = "", co
   }
 
   if (notes === null) return <p className="nt-hint">Loading…</p>;
-  if (!ready) return <p className="nt-hint">{me === "brandon" ? "Run supabase/client-notes.sql once in the Supabase SQL editor to turn notes on." : "Notes aren't switched on yet — text me in the meantime."}</p>;
+  if (!ready) return <p className="nt-hint">{me === "brandon" ? "Run supabase/client-notes.sql once in the Supabase SQL editor to turn notes on." : "Chat isn't switched on yet. Text Brandon at 845-549-4425 in the meantime."}</p>;
 
   return (
     <div className={"nt" + (compact ? " is-compact" : "")}>
@@ -54,7 +54,7 @@ export default function NotesThread({ role, clientId = null, clientName = "", co
         <p className="nt-hint">
           {me === "brandon"
             ? `Nothing yet. Anything you write here lands in ${clientName.split(" ")[0] || "their"} portal and their inbox, in your words.`
-            : "Ask anything, any time — a date, a swap, an idea. Brandon gets an email the moment you send it and answers here."}
+            : "No messages yet. Write your first one below. Brandon gets an email the moment you send it and answers here."}
         </p>
       )}
       <ul className="nt-list">
@@ -67,7 +67,7 @@ export default function NotesThread({ role, clientId = null, clientName = "", co
         <li ref={endRef} aria-hidden="true" />
       </ul>
       <form className="nt-form" onSubmit={send}>
-        <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} maxLength={4000} placeholder={me === "brandon" ? `A note for ${clientName.split(" ")[0] || "them"}…` : "A note for Brandon…"} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") send(e); }} />
+        <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} maxLength={4000} placeholder={me === "brandon" ? `A note for ${clientName.split(" ")[0] || "them"}…` : "Write a message to Brandon…"} onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") send(e); }} />
         <div className="nt-actions">
           <button type="submit" className="abtn" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send"}</button>
           {msg && <span className="nt-status" role="status">{msg}</span>}
