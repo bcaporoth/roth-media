@@ -79,3 +79,15 @@
 .sday-progress-bar span { display: block; height: 100%; border-radius: 999px; background-color: #4fb06c; background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%); background-size: 40% 100%; background-repeat: no-repeat; transition: width 0.5s ease; animation: sday-progress-shine 1.4s linear infinite; }
 @keyframes sday-progress-shine { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 @media (prefers-reduced-motion: reduce) { .sday-progress-bar span { animation: none; transition: none; } }
+
+/* Script card: the add-scene buttons are big and bright (2026-11-17, Brandon:
+   "this add scene is too inconspicuous, I miss it all the time"). */
+.tc-addscene { display: block; width: 100%; min-height: 48px; margin-top: 0.6rem; font-size: 0.95rem; text-align: center; }
+.tc-addscene-first { margin-bottom: 0.4rem; }
+
+/* Scenes: a read-only strip that says the hook already goes first. */
+.tc-opens { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.6rem; margin: 0; padding: 0.55rem 0.75rem; border: 1px dashed var(--field-line, var(--line)); border-radius: 10px; font-size: 0.92rem; line-height: 1.45; min-width: 0; overflow-wrap: anywhere; }
+.tc-opens-tag { flex: none; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px; background: rgba(79, 176, 108, 0.18); color: #4fb06c; font-weight: 600; }
+.tc-opens em { font-style: normal; opacity: 0.7; }
+.tc-opens strong { font-weight: 600; }
+.admin-shell.is-dark .tc-opens { border-color: rgba(255, 255, 255, 0.22); }

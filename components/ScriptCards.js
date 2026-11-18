@@ -81,8 +81,20 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
           ))}
         </span>}
       </div>
-      {scenes.length === 0 && (
-        <p className="gcard-meta">Label a scene, then one line per beat: the <strong>words</strong> on the left, what the <strong>viewer sees</strong> on the right — tagged talent, place, thing or text on screen. <button type="button" className="rm-linkbtn" onClick={() => addScene(-1)}>Add the first scene</button></p>
+      {scenes.length === 0 && (<>
+        <p className="gcard-meta">Label a scene, then one line per beat: the <strong>words</strong> on the left, what the <strong>viewer sees</strong> on the right — tagged talent, place, thing or text on screen.</p>
+        <button type="button" className="abtn tc-addscene tc-addscene-first" onClick={() => addScene(-1)}>+ Add the first scene</button>
+      </>)}
+      {/* The hook is already line one in the teleprompter and Film mode. Say so
+          here, so nobody types it again as scene 1 line 1 (Brandon 2026-11-18:
+          "doing it two times? redundant no?"). */}
+      {scenes.length > 0 && !filter && (
+        <p className="tc-opens">
+          <span className="tc-opens-tag">Goes first</span>
+          {(body.hook || "").trim()
+            ? <span><strong>{body.hook.trim()}</strong> <em>Your hook, from the box above. Do not type it again. Scene 1 starts after it.</em></span>
+            : <span><em>Your hook goes first. Type it in the box above, not here. Scene 1 starts after it.</em></span>}
+        </p>
       )}
       {scenes.map((sc, i) => {
         const shown = sc.lines.map((l, k) => ({ l, k })).filter(({ l }) => !filter || l.tag === filter);
@@ -103,7 +115,7 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
               {shown.map(({ l, k }) => (
                 <div key={k} className={"tc-row" + (l.done ? " is-done" : "")} role="row">
                   <label className="tc-done" title="Filmed"><input type="checkbox" checked={Boolean(l.done)} onChange={(e) => setLine(i, k, { done: e.target.checked })} /><span>{k + 1}</span></label>
-                  <Grow className="tc-say" value={l.say} onChange={(v) => setLine(i, k, { say: v })} rows={2} placeholder="The exact words — or (no talking)" ariaLabel={`Line ${k + 1}: what's said`} />
+                  <Grow className="tc-say" value={l.say} onChange={(v) => setLine(i, k, { say: v })} rows={2} placeholder={i === 0 && k === 0 ? "What's said right after the hook — or (no talking)" : "The exact words — or (no talking)"} ariaLabel={`Line ${k + 1}: what's said`} />
                   <div className="tc-see">
                     <span className="tc-seehead">
                       <select value={l.tag} onChange={(e) => setLine(i, k, { tag: e.target.value })} aria-label={`Line ${k + 1}: what's on camera`}>
@@ -126,7 +138,7 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
           </section>
         );
       })}
-      {scenes.length > 0 && !filter && <button type="button" className="achip" onClick={() => addScene(scenes.length - 1)}>+ Add a scene</button>}
+      {scenes.length > 0 && !filter && <button type="button" className="abtn tc-addscene" onClick={() => addScene(scenes.length - 1)}>+ Add a scene</button>}
       {filter && <p className="gcard-meta">Showing only lines where the viewer sees <strong>{SEE_LABEL[filter].toLowerCase()}</strong>. <button type="button" className="rm-linkbtn" onClick={() => setFilter("")}>Show all</button></p>}
 
       <div className="scr-grid tc-close">
