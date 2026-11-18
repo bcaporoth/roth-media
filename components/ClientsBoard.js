@@ -9,7 +9,6 @@ import { isNoEmail } from "../lib/no-email";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { STAGES, STAGE_LABEL, TYPES, TYPE_LABEL } from "../lib/intake";
-import ClientLogin from "./ClientLogin";
 import { confirmTap } from "../lib/confirm-tap";
 
 async function api(payload) {
@@ -98,20 +97,6 @@ export default function ClientsBoard({ initial, emailReady }) {
     if (d.notes !== undefined && d.notes !== c.notes) patch.notes = d.notes;
     if (!Object.keys(patch).length) { say("Nothing to save"); return; }
     save(c, patch);
-  }
-  async function galleryReady(c, g) {
-    if (!confirmTap(`Email ${c.email} that "${g.title}" is ready?`)) return;
-    try { await api({ action: "gallery-ready", clientId: c.id, galleryId: g.id }); say("Sent"); } catch (err) { fail(err); }
-  }
-  async function addMember(g) {
-    const email = window.prompt(`Who else should see "${g.title}"? Their email:`);
-    if (!email) return;
-    const name = window.prompt("Their name (optional):") || "";
-    try { await api({ action: "add-member", galleryId: g.id, email, name }); await refresh(); say("Added — they log in with their own email"); } catch (err) { fail(err); }
-  }
-  async function removeMember(g, m) {
-    if (!confirmTap(`Remove ${m.name || m.email} from "${g.title}"?`)) return;
-    try { await api({ action: "remove-member", galleryId: g.id, clientId: m.id }); await refresh(); say("Removed"); } catch (err) { fail(err); }
   }
   async function remove(c) {
     if (!confirmTap(`Remove ${c.name || c.email} from the roster?`)) return;
@@ -222,32 +207,7 @@ export default function ClientsBoard({ initial, emailReady }) {
                     <div className="gcard-actions"><button type="submit" className="abtn">Save</button></div>
                   </form>
 
-                  <div className="kick-sm">Galleries</div>
-                  {c.galleries.length === 0 && <p className="gcard-meta">None yet.</p>}
-                  <ul className="client-galleries">
-                    {c.galleries.map((g) => (
-                      <li key={g.id + (g.shared ? "-s" : "")}>
-                        <span><strong>{g.title}</strong> <span className="gcard-meta">· {g.media_count || 0} items{g.event_date ? ` · ${fmt(g.event_date)}` : ""}{g.shared ? " · shared with them" : ""}</span></span>
-                        <span className="gcard-actions">
-                          <button type="button" className="achip" onClick={() => copy(`https://rothmediaco.com/g/${g.share_token}`, "Share link")}>Copy link</button>
-                          <a className="achip" href={`/portal/gallery/${g.id}`}>Open</a>
-                          <button type="button" className="achip" disabled={!emailReady || isNoEmail(c.email)} title={isNoEmail(c.email) ? "Add their email first" : ""} onClick={() => galleryReady(c, g)}>Email &quot;it&apos;s ready&quot;</button>
-                        </span>
-                        {!g.shared && (
-                          <span className="client-members">
-                            <span className="gcard-meta">Also on this gallery:</span>
-                            {(g.members || []).map((m) => (
-                              <span key={m.id} className="itag">{m.name || m.email} <button type="button" aria-label={`Remove ${m.email}`} onClick={() => removeMember(g, m)}>×</button></span>
-                            ))}
-                            <button type="button" className="achip" onClick={() => addMember(g)}>+ Add someone</button>
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="kick-sm">Login</div>
-                  <ClientLogin key={c.email} client={c} account={c.account} onSaved={() => refresh()} />
+                  {/* Galleries, the people on them, and login & password live on the full profile only. 2026-11-18, Brandon. */}
                   <div className="gcard-actions">
                     <button type="button" className="achip" onClick={() => copy("https://rothmediaco.com/portal", "Portal link")}>Copy portal link</button>
                     {c.email_opt_out && <button type="button" className="achip" onClick={() => resubscribe(c)}>Re-subscribe</button>}
