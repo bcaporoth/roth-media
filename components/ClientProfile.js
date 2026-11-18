@@ -200,13 +200,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
       {tab === "days" && children}
 
       {/* Calendar tab (2026-11-17, Brandon: "this page will be for calendar and
-          scheduling the shoot"): the calendar above, their places under it.
-          Their shoots and shoot days have their own tab. */}
-      {tab === "days" && (
-        <div className="cprof-tabbody">
-          <AddressBook list={d.addresses || []} copy={copy} clientId={c.id} onFail={fail} onChange={(addresses) => setD((x) => ({ ...x, addresses }))} />
-        </div>
-      )}
+          scheduling the shoot"): only the calendar. Their shoots have their own
+          tab, and their addresses sit in Settings with their other details. */}
       {tab === "shoots" && (
         <div className="cprof-tabbody">
           <ClientShoots client={c} type={type} brief={brief} days={d.days} onFail={fail} />
@@ -326,6 +321,11 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           password stuff and other profile stuff"). Its own tab since 2026-11-17
           (Brandon: "this shouldn't be in their galleries section"): contact
           details, their login, and Delete at the very bottom. */}
+      {tab === "settings" && (
+        <div className="cprof-tabbody">
+          <AddressBook list={d.addresses || []} copy={copy} clientId={c.id} onFail={fail} onChange={(addresses) => setD((x) => ({ ...x, addresses }))} />
+        </div>
+      )}
       {tab === "settings" && (
       <section className="cprof-card cprof-settings" id="settings" aria-labelledby="cprof-settings-h">
         <div className="cprof-cardhead"><h2 id="cprof-settings-h">Settings</h2><span className="gcard-meta">Their details, their login, and deleting them</span></div>
