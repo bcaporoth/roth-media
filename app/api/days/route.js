@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
-import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart } from "../../../lib/scripts";
+import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart, scriptFromTemplate } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { standInEmail } from "../../../lib/no-email";
 import { loadPlaybook } from "../../../lib/playbook";
@@ -243,6 +243,21 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, script: data });
     }
 
+    // A Playbook shot list dropped onto the day as its own card (Brandon only).
+    if (body.action === "template-add") {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      if (!isUuid(body.listId)) return bad("Pick a shot list");
+      const { data: list, error: e1 } = await db.from("playbook").select("title, notes, items, section").eq("id", body.listId).maybeSingle();
+      if (e1) throw new Error(e1.message);
+      if (!list || list.section !== "shots") return bad("That shot list is gone", 404);
+      const tpl = scriptFromTemplate(list);
+      if (!tpl.body.scenes.length) return bad("That shot list is empty. Add shots to it in the Playbook first.");
+      const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
+      const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, ...cleanScriptPatch(tpl), created_by: me.role, updated_by: me.role }).select("*").single();
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, script: data });
+    }
+
     const script = isUuid(body.scriptId) ? day.scripts.find((s) => s.id === body.scriptId) : null;
     if (["script-save", "script-delete", "script-note", "script-draft"].includes(body.action) && !script) return bad("Script not found", 404);
 
@@ -255,6 +270,12 @@ export async function POST(request) {
         const q = Number(body.question);
         if (!Number.isInteger(q) || !b.questions[q]) return bad("Bad question");
         b.questions[q] = { ...b.questions[q], done };
+      } else if (body.broll !== undefined) {
+        const i = Number(body.broll);
+        if (!Number.isInteger(i) || !b.broll[i]) return bad("Bad B-roll shot");
+        const got = new Set(b.broll_done || []);
+        if (done) got.add(b.broll[i]); else got.delete(b.broll[i]);
+        b.broll_done = [...got];
       } else if (body.scene !== undefined) {
         const sc = Number(body.scene), ln = Number(body.line);
         if (!Number.isInteger(sc) || !b.scenes[sc] || !Number.isInteger(ln) || !b.scenes[sc].lines[ln]) return bad("Bad line");

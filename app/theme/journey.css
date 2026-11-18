@@ -91,3 +91,57 @@
 .tc-opens em { font-style: normal; opacity: 0.7; }
 .tc-opens strong { font-weight: 600; }
 .admin-shell.is-dark .tc-opens { border-color: rgba(255, 255, 255, 0.22); }
+
+.tc-oncenote { margin: 0.3rem 0 0; }
+
+/* Shot list: the whole day grouped by what the camera is on, at the foot of
+   the shoot day page (2026-11-18). */
+.shotlist { margin-top: 1.6rem; padding: 1rem 1rem 1.1rem; border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 0.8rem; min-width: 0; max-width: 100%; }
+.shotlist-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.4rem 1rem; }
+.shotlist-head h2 { margin: 0 0 0.2rem; }
+.shotlist-head .gcard-meta { margin: 0; }
+.shotlist-count { margin: 0; font-size: 0.95rem; white-space: nowrap; }
+.shotlist-count strong { font-size: 1.5rem; font-weight: 600; }
+.shotlist-bar { height: 8px; border-radius: 999px; background: rgba(127, 127, 127, 0.22); overflow: hidden; }
+.shotlist-bar span { display: block; height: 100%; border-radius: 999px; background: #4fb06c; transition: width 0.25s ease; }
+.shotlist-toggle { justify-self: start; }
+.shotlist-allgot { margin: 0; font-weight: 600; color: #4fb06c; }
+.shotlist-group { border: 1px solid var(--line); border-radius: 12px; border-left: 4px solid var(--sl, #8a8a8a); min-width: 0; }
+.shotlist-talent { --sl: #4fb06c; }
+.shotlist-place { --sl: #4a90d9; }
+.shotlist-thing { --sl: #d96a8a; }
+.shotlist-text { --sl: #6b5bd6; }
+.shotlist-broll { --sl: #2bb3b1; }
+.shotlist-grouphead { display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 48px; padding: 0.5rem 0.8rem; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shotlist-tag { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--sl); }
+.shotlist-groupcount { font-size: 0.85rem; opacity: 0.75; }
+.shotlist-arrow { margin-left: auto; opacity: 0.7; }
+.shotlist-items { list-style: none; margin: 0; padding: 0 0.8rem 0.5rem; display: grid; }
+.shotlist-item { display: grid; gap: 0.15rem; padding: 0.55rem 0; border-top: 1px solid var(--line); min-width: 0; }
+.shotlist-item label { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: 0.6rem; align-items: start; cursor: pointer; }
+.shotlist-item input { width: 1.35rem; height: 1.35rem; margin: 0.1rem 0 0; accent-color: #4fb06c; }
+.shotlist-text { display: grid; gap: 0.15rem; min-width: 0; overflow-wrap: anywhere; }
+.shotlist-see { font-size: 0.95rem; line-height: 1.45; }
+.shotlist-say { font-size: 0.82rem; opacity: 0.7; }
+.shotlist-item.is-done .shotlist-see, .shotlist-item.is-done .shotlist-say { text-decoration: line-through; opacity: 0.5; }
+.shotlist-card { justify-self: start; margin-left: 2.2rem; padding: 0; background: none; border: 0; color: inherit; font: inherit; font-size: 0.75rem; opacity: 0.6; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.shotlist-none { padding: 0.5rem 0; font-size: 0.88rem; opacity: 0.7; border-top: 1px solid var(--line); }
+.tc-tag-broll.is-on { background: #2bb3b1 !important; border-color: #2bb3b1 !important; color: #fff !important; }
+.tc-row.is-landed { outline: 2px solid #4fb06c; outline-offset: 4px; border-radius: 8px; background: rgba(79, 176, 108, 0.12); transition: background 0.4s ease; }
+/* Shot list: skits fold inside each group. */
+.shotlist-skit { border-top: 1px solid var(--line); min-width: 0; }
+.shotlist-skithead { display: flex; align-items: center; gap: 0.55rem; width: 100%; min-height: 46px; padding: 0.45rem 0.8rem; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shotlist-skithead .shotlist-arrow { margin-left: 0; color: var(--sl); opacity: 1; flex: none; }
+.shotlist-skitname { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.shotlist-skithead .shotlist-groupcount { flex: none; white-space: nowrap; }
+.shotlist-skit.is-allgot .shotlist-skitname { opacity: 0.55; }
+.shotlist-skit.is-allgot .shotlist-groupcount { color: #4fb06c; opacity: 1; }
+.shotlist-skit .shotlist-items { padding-left: 1.6rem; }
+
+/* Use a shot list: the picker on the shoot day, and A/B chips in the Playbook. */
+.stpl { margin-top: 0.8rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 0.6rem; min-width: 0; }
+.stpl-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.stpl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+.stpl-pick { display: grid; gap: 0.15rem; width: 100%; min-height: 56px; text-align: left; height: auto; white-space: normal; border-radius: 14px; padding: 0.6rem 0.9rem; }
+.stpl-pick strong { font-weight: 600; overflow-wrap: anywhere; }
+.stpl-pick em { font-style: normal; font-size: 0.8rem; opacity: 0.7; }

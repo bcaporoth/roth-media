@@ -16,7 +16,7 @@
 // the same autosave as the rest of the script — ShootDay owns the body.
 
 import { useEffect, useRef, useState } from "react";
-import { SEE_TAGS, SEE_LABEL, STYLES, NEEDS_LABEL, blankLine, blankScene, blankQuestion, sceneLines, tchartSecs } from "../lib/scripts";
+import { SEE_TAGS, SEE_LABEL, STYLES, NEEDS_LABEL, blankLine, blankScene, blankQuestion, sceneLines, tchartSecs, saysSame } from "../lib/scripts";
 import { confirmTap } from "../lib/confirm-tap";
 
 function Grow({ value, onChange, rows = 2, placeholder = "", className = "", ariaLabel = "" }) {
@@ -50,6 +50,11 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
   const scenes = body.scenes || [];
   const all = sceneLines(body);
   const counts = Object.fromEntries(SEE_TAGS.map((t) => [t.id, all.filter((l) => l.tag === t.id).length]));
+
+  // Said-twice checks, so the card can tell him it is fine (read once).
+  const spokenLines = all.filter((l) => (l.say || "").trim());
+  const hookTwice = spokenLines.length > 0 && saysSame(body.hook, spokenLines[0].say);
+  const ctaTwice = spokenLines.length > 0 && saysSame(body.cta, spokenLines[spokenLines.length - 1].say);
 
   const setScenes = (fn) => setBody((b) => ({ ...b, scenes: fn(b.scenes || []) }));
   const setScene = (i, patch) => setScenes((sc) => sc.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -92,7 +97,9 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
         <p className="tc-opens">
           <span className="tc-opens-tag">Goes first</span>
           {(body.hook || "").trim()
-            ? <span><strong>{body.hook.trim()}</strong> <em>Your hook, from the box above. Do not type it again. Scene 1 starts after it.</em></span>
+            ? (hookTwice
+              ? <span><strong>{body.hook.trim()}</strong> <em>Your hook. Line 1 below says the same words. That is okay: it is only read once. Keep line 1 for what the camera sees.</em></span>
+              : <span><strong>{body.hook.trim()}</strong> <em>Your hook, from the box above. Do not type it again. Scene 1 starts after it.</em></span>)
             : <span><em>Your hook goes first. Type it in the box above, not here. Scene 1 starts after it.</em></span>}
         </p>
       )}
@@ -113,7 +120,7 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
             <div className="tc-table" role="table">
               <div className="tc-head" role="row" aria-hidden="true"><span /><span>🗣 What&apos;s said</span><span>👁 What&apos;s seen</span><span /></div>
               {shown.map(({ l, k }) => (
-                <div key={k} className={"tc-row" + (l.done ? " is-done" : "")} role="row">
+                <div key={k} data-line={`${i}:${k}`} className={"tc-row" + (l.done ? " is-done" : "")} role="row">
                   <label className="tc-done" title="Filmed"><input type="checkbox" checked={Boolean(l.done)} onChange={(e) => setLine(i, k, { done: e.target.checked })} /><span>{k + 1}</span></label>
                   <Grow className="tc-say" value={l.say} onChange={(v) => setLine(i, k, { say: v })} rows={2} placeholder={i === 0 && k === 0 ? "What's said right after the hook — or (no talking)" : "The exact words — or (no talking)"} ariaLabel={`Line ${k + 1}: what's said`} />
                   <div className="tc-see">
@@ -123,7 +130,7 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
                       </select>
                       <label className="tc-secs">secs<input type="number" min={0} max={3600} value={l.secs || ""} onChange={(e) => setLine(i, k, { secs: Number(e.target.value) })} aria-label={`Line ${k + 1}: seconds`} /></label>
                     </span>
-                    <Grow value={l.see} onChange={(v) => setLine(i, k, { see: v })} rows={2} placeholder={l.tag === "talent" ? "Who, doing what, framed how (wide / medium / close)" : l.tag === "place" ? "The spot, the angle, the light" : l.tag === "text" ? "The words on screen" : "The product / prop, how close — amounts for a recipe"} ariaLabel={`Line ${k + 1}: what's seen`} />
+                    <Grow value={l.see} onChange={(v) => setLine(i, k, { see: v })} rows={2} placeholder={l.tag === "talent" ? "Who, doing what, framed how (wide / medium / close)" : l.tag === "place" ? "The spot, the angle, the light" : l.tag === "text" ? "The words on screen" : l.tag === "broll" ? "The extra shot: hands, textures, the sign, the street" : "The product / prop, how close — amounts for a recipe"} ariaLabel={`Line ${k + 1}: what's seen`} />
                   </div>
                   <span className="tc-rowactions">
                     <button type="button" className="achip" onClick={() => moveLine(i, k, -1)} disabled={k === 0} aria-label="Move line up">↑</button>
@@ -143,6 +150,7 @@ export function TChartEditor({ body, setBody, onPrompt, extra = null }) {
 
       <div className="scr-grid tc-close">
         <PlanField label="Call to action: the closing line" value={body.cta} onChange={(v) => set("cta", v)} placeholder="One ask: stop in, order, book, follow" wide />
+        {ctaTwice && <p className="gcard-meta tc-oncenote">Your last scene line already says this. That is okay: it is only read once.</p>}
       </div>
 
       <details className="tc-fold tc-rest" open={restOpen}>

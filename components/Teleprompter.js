@@ -14,7 +14,7 @@
 // + − size · ←→ line back/forward · M mirror · Esc close.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SEE_LABEL } from "../lib/scripts";
+import { SEE_LABEL, saysSame } from "../lib/scripts";
 
 const KEY = "rm-prompter";
 const DEFAULTS = { size: 48, speed: 6, width: 90, mirror: false, cues: true, countdown: true };
@@ -34,10 +34,15 @@ export function promptItems(kind, b) {
       if (!lines.length) return [];
       return [...(many || sc.label ? [{ scene: sc.label || `Scene ${si + 1}` }] : []), ...lines];
     });
-    // The hook and the close, unless the lines already say them word for word.
-    const said = new Set(body.map((x) => (x.say || "").trim().toLowerCase()));
-    const hook = b.hook && !said.has(b.hook.trim().toLowerCase()) && !/^\[/.test(b.hook.trim()) ? [{ say: b.hook, cue: "Hook" }] : [];
-    const cta = b.cta && !said.has(b.cta.trim().toLowerCase()) ? [{ say: b.cta, cue: "Close" }] : [];
+    // The hook and the close, unless the lines already say them. A match is
+    // word for word, or the opening (closing) line's words sitting inside the
+    // hook (close) — Claude's hooks carry stage notes around the spoken words,
+    // so an exact match missed them and the opener was read twice (2026-11-18).
+    const spoken = body.filter((x) => x.say).map((x) => x.say);
+    const hookSaid = b.hook && spoken.length > 0 && (saysSame(b.hook, spoken[0]) || spoken.some((t) => t.trim().toLowerCase() === b.hook.trim().toLowerCase()));
+    const ctaSaid = b.cta && spoken.length > 0 && (saysSame(b.cta, spoken[spoken.length - 1]) || spoken.some((t) => t.trim().toLowerCase() === b.cta.trim().toLowerCase()));
+    const hook = b.hook && !hookSaid && !/^\[/.test(b.hook.trim()) ? [{ say: b.hook, cue: "Hook" }] : [];
+    const cta = b.cta && !ctaSaid ? [{ say: b.cta, cue: "Close" }] : [];
     const qs = b.questions.filter((q) => q.q.trim());
     return [...hook, ...body, ...(qs.length ? [{ scene: "Questions" }, ...qs.map((q) => ({ say: q.q, cue: q.a }))] : []), ...cta];
   }

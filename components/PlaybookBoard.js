@@ -15,7 +15,7 @@ const KIND_LABEL = Object.fromEntries(KINDS);
 const BLURB = {
   camera: "The on-camera nags: white balance, slo-mo, hold still, check the tripod angle. Shows on every shoot so you tick them while you're there, not after.",
   gear: "What goes in the bag. The “every shoot” kit plus extras per type.",
-  shots: "The frames you don't leave without.",
+  shots: "Your master shot lists. Mark each shot A-roll (the main footage, usually someone talking) or B-roll (everything you cut to). On a shoot day, “Use a shot list” drops one in so you can tick shots off.",
   flow: "The order of the day. Put times on it once it's on a shoot.",
   poses: "Poses and things to say that get real reactions.",
 };
@@ -157,13 +157,17 @@ function ListCard({ l, readOnly, photos, onPatch, onDuplicate, onRemove, onFail 
   const pickFor = useRef(-1);
   const items = l.items || [];
   const isFlow = l.section === "flow";
+  const isShots = l.section === "shots";
+  const [roll, setRoll] = useState("a");
+  const rollOf = (it) => (it.roll === "b" ? "b" : "a");
+  const nA = items.filter((it) => rollOf(it) === "a").length;
   const saveItems = (next, msg) => onPatch(l.id, { items: next }, msg);
 
   function add(e) {
     e.preventDefault();
     const t = text.trim();
     if (!t) return;
-    saveItems([...items, { text: t, ...(time ? { time } : {}) }], "Added");
+    saveItems([...items, { text: t, ...(time ? { time } : {}), ...(isShots ? { roll } : {}) }], "Added");
     setText(""); setTime("");
   }
   function move(i, by) {
@@ -196,7 +200,7 @@ function ListCard({ l, readOnly, photos, onPatch, onDuplicate, onRemove, onFail 
         <div className="pbook-meta">
           <select className="achip" value={l.kind} disabled={readOnly} aria-label="Shoot type" onChange={(e) => onPatch(l.id, { kind: e.target.value })}>{KINDS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}</select>
           <label className={"achip pbook-autochip" + (l.auto ? " is-done" : "")} title="Copied onto new shoots of this type"><input type="checkbox" checked={Boolean(l.auto)} disabled={readOnly} onChange={(e) => onPatch(l.id, { auto: e.target.checked }, e.target.checked ? "Auto on" : "Auto off")} /> auto</label>
-          <span className="gcard-meta">{items.length} {items.length === 1 ? "item" : "items"} · {KIND_LABEL[l.kind]}</span>
+          <span className="gcard-meta">{isShots ? `${nA} A-roll · ${items.length - nA} B-roll` : `${items.length} ${items.length === 1 ? "item" : "items"}`} · {KIND_LABEL[l.kind]}</span>
         </div>
       </header>
 
@@ -204,6 +208,7 @@ function ListCard({ l, readOnly, photos, onPatch, onDuplicate, onRemove, onFail 
         {items.map((it, i) => (
           <li key={`${i}-${it.text}-${it.time || ""}`} className={it.img_url ? "has-img" : ""}>
             {isFlow ? <input type="time" className="pbook-time" defaultValue={it.time || ""} disabled={readOnly} aria-label="Time" onBlur={(e) => e.target.value !== (it.time || "") && edit(i, { time: e.target.value })} /> : <span className="pbook-n">{i + 1}</span>}
+            {isShots && <button type="button" className={"pbook-roll is-" + rollOf(it)} disabled={readOnly} title="Tap to switch between A-roll and B-roll" aria-label={`${rollOf(it) === "a" ? "A-roll" : "B-roll"}. Tap to switch.`} onClick={() => edit(i, { roll: rollOf(it) === "a" ? "b" : "a" })}>{rollOf(it) === "a" ? "A-roll" : "B-roll"}</button>}
             <GrowText value={it.text} readOnly={readOnly} label={`Item ${i + 1}`} onSave={(v) => edit(i, { text: v })} />
             {it.img_url && (
               <a className="pbook-thumb" href={it.img_url} target="_blank" rel="noreferrer" title="Open reference photo"><img src={it.img_url} alt="" loading="lazy" /></a>
@@ -226,6 +231,7 @@ function ListCard({ l, readOnly, photos, onPatch, onDuplicate, onRemove, onFail 
       {!readOnly && (
         <form className="prep-add" onSubmit={add}>
           {isFlow && <input type="time" className="pbook-time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Time (optional)" />}
+          {isShots && <select className="achip" value={roll} onChange={(e) => setRoll(e.target.value)} aria-label="A-roll or B-roll"><option value="a">A-roll</option><option value="b">B-roll</option></select>}
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder={ADD_HINT[l.section]} aria-label={ADD_HINT[l.section]} />
           <button type="submit" className="achip" disabled={!text.trim()}>+ Add</button>
         </form>

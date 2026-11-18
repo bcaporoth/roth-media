@@ -725,3 +725,8 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 
 /* Shoot rows: the day it was made, on its own quiet line (2026-11-17). */
 .shoot-main .shoot-made { display: block; font-style: normal; font-size: 0.8rem; opacity: 0.75; margin-top: 0.15rem; }
+
+/* Playbook shot lists: A-roll / B-roll chip on each shot (2026-11-18). */
+.pbook-roll { flex: none; align-self: flex-start; margin-top: 0.3rem; min-width: 3.6rem; padding: 0.15rem 0.45rem; border-radius: 999px; border: 1px solid transparent; font: inherit; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; cursor: pointer; }
+.pbook-roll.is-a { background: rgba(79, 176, 108, 0.18); color: #4fb06c; border-color: rgba(79, 176, 108, 0.45); }
+.pbook-roll.is-b { background: rgba(43, 179, 177, 0.18); color: #2bb3b1; border-color: rgba(43, 179, 177, 0.45); }

@@ -18,6 +18,8 @@ import dynamic from "next/dynamic";
 import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
+import ShotList from "./ShotList";
+import ShotTemplatePicker from "./ShotTemplatePicker";
 import AddressInput from "./AddressInput";
 // Brandon's prep lists for the day (Studio only) — loaded when he opens that tab,
 // so the client's copy of this page never downloads it.
@@ -92,6 +94,17 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
       setOpen(r.script.id);
       say(`${KIND_LABEL[kind]} added`);
     } catch (e) { setAddError(e.message || String(e)); }
+  }
+  // Drop a Playbook shot list onto the day as its own card.
+  async function addTemplate(list) {
+    setBusy(true);
+    try {
+      const r = await api({ action: "template-add", dayId: day.id, listId: list.id });
+      setScripts((s) => [...s, r.script]);
+      setTool("");
+      say(`${list.title} added. Its shots are in the Shot list below.`);
+      setTimeout(() => document.querySelector(".shotlist")?.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+    } catch (e) { fail(e); } finally { setBusy(false); }
   }
   async function move(id, dir) {
     const ids = scripts.map((s) => s.id);
@@ -199,6 +212,35 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   };
 
   const order = runningOrder(day, scripts);
+  // Shot list ticks: show it at once, then save one at a time (two saves on
+  // the same card at the same moment would each overwrite the other's tick).
+  // Tap a shot's card name: open that card and land on the exact line, lit up
+  // for a moment. A B-roll shot lands on the top of its card.
+  const jumpToShot = (x) => {
+    setOpen(x.scriptId);
+    setTimeout(() => {
+      const card = document.getElementById("scr-" + x.scriptId);
+      const row = x.at.scene !== undefined ? card?.querySelector(`[data-line="${x.at.scene}:${x.at.line}"]`) : null;
+      const el = row || card;
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: row ? "center" : "start" });
+      if (row) { row.classList.add("is-landed"); setTimeout(() => row.classList.remove("is-landed"), 2600); }
+    }, 250);
+  };
+  const tickQueue = useRef(Promise.resolve());
+  const tickShot = (x, done) => {
+    setScripts((all) => all.map((s) => {
+      if (s.id !== x.scriptId) return s;
+      const b = cleanBody(s.body);
+      if (x.at.broll !== undefined) { const got = new Set(b.broll_done); if (done) got.add(b.broll[x.at.broll]); else got.delete(b.broll[x.at.broll]); b.broll_done = [...got]; }
+      else if (b.scenes[x.at.scene]?.lines[x.at.line]) b.scenes[x.at.scene].lines[x.at.line] = { ...b.scenes[x.at.scene].lines[x.at.line], done };
+      return { ...s, body: b };
+    }));
+    tickQueue.current = tickQueue.current.then(async () => {
+      try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: x.scriptId, ...x.at, done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); }
+      catch (e) { fail(e); reload(); }
+    });
+  };
   const total = totalMinutes(scripts);
   const ready = scripts.filter((s) => s.status !== "draft").length;
   // A wedding or portrait client with no scripts sees the day itself (when,
@@ -333,8 +375,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         {/* Only T-charts from here on (2026-11-08); the style is picked inside it. */}
         <div className="sday-add">
           <button type="button" className="abtn" onClick={() => addScript("tchart")}>+ Add a T-chart</button>
+          {me === "brandon" && <button type="button" className={"abtn" + (tool === "template" ? " is-on" : "")} aria-expanded={tool === "template"} onClick={() => setTool(tool === "template" ? "" : "template")}>+ Use a shot list</button>}
           {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
         </div>
+        {tool === "template" && <ShotTemplatePicker busy={busy} onPick={addTemplate} onCancel={() => setTool("")} />}
+
+        {/* The whole day as one tickable list, grouped by what the camera is on. */}
+        <ShotList scripts={order} onTick={tickShot} onOpenCard={jumpToShot} />
       </section>
       </div>
     </div>

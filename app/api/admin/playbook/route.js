@@ -25,7 +25,8 @@ function clean(body) {
     out.items = (Array.isArray(body.items) ? body.items : []).slice(0, 150).map((it) => {
       const time = /^\d{2}:\d{2}$/.test(String(it?.time || "")) ? it.time : "";
       const img = PLAYBOOK_IMG_RE.test(String(it?.img || "")) ? it.img : "";
-      return { text: clip(it?.text, 600), ...(time ? { time } : {}), ...(img ? { img } : {}) };
+      const roll = it?.roll === "a" || it?.roll === "b" ? it.roll : ""; // shot lists: A-roll or B-roll
+      return { text: clip(it?.text, 600), ...(time ? { time } : {}), ...(img ? { img } : {}), ...(roll ? { roll } : {}) };
     }).filter((it) => it.text);
   return out;
 }
