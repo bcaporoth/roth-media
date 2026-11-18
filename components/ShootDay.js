@@ -137,25 +137,29 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   // Write N scripts: the outline lands first (titles, goals, minutes), then
   // each script is written in its own request so a long day never times out.
   const [writing, setWriting] = useState(""); // "Writing 3 of 8 — Title…"
+  // The progress bar under the buttons while Claude writes: `at` steps done out
+  // of `of` (planning the day is step one, then one step per card).
+  const [prog, setProg] = useState(null);
   async function planDay(theme, counts) {
     setBusy(true);
     let r;
     try {
-      setWriting("Planning the day…");
+      const want = Object.values(counts || {}).reduce((n, v) => n + (Number(v) || 0), 0);
+      setWriting("Planning the day…"); setProg({ at: 0, of: want + 1 });
       r = await api({ action: "day-draft", dayId: day.id, theme, counts });
       setDay(r.day); setScripts(r.day.scripts); setTool("");
-    } catch (e) { fail(e); setBusy(false); setWriting(""); return; }
+    } catch (e) { fail(e); setBusy(false); setWriting(""); setProg(null); return; }
     const ids = r.newIds || [];
     let done = 0, failed = 0;
     for (let i = 0; i < ids.length; i++) {
       const sc = r.day.scripts.find((x) => x.id === ids[i]);
-      setWriting(`Writing ${i + 1} of ${ids.length} — ${sc?.title || KIND_LABEL[sc?.kind] || "script"}…`);
+      setWriting(`Writing ${i + 1} of ${ids.length} — ${sc?.title || KIND_LABEL[sc?.kind] || "script"}…`); setProg({ at: i + 1, of: ids.length + 1 });
       try {
         const rr = await api({ action: "script-draft", dayId: day.id, scriptId: ids[i], title: sc?.title, idea: sc?.body?.goal || theme });
         replace(rr.script, true); done++;
       } catch { failed++; }
     }
-    setWriting(""); setBusy(false);
+    setWriting(""); setProg(null); setBusy(false);
     say(failed ? `${done} of ${ids.length} written — ${failed} didn't finish; open each one and tap "Ask Claude"` : `${done} script${done === 1 ? "" : "s"} written — read them through`);
   }
   // ✦ The Pinned Three: the three pinned-post T-charts, written by Claude from
@@ -164,17 +168,17 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
     setBusy(true);
     let r;
     try {
-      setWriting("Setting up the Pinned Three…");
+      setWriting("Setting up the Pinned Three…"); setProg({ at: 0, of: 4 });
       r = await api({ action: "pinned-start", dayId: day.id });
       setDay(r.day); setScripts(r.day.scripts);
-    } catch (e) { fail(e); setBusy(false); setWriting(""); return; }
+    } catch (e) { fail(e); setBusy(false); setWriting(""); setProg(null); return; }
     let done = 0, failed = 0;
     for (let i = 0; i < r.pins.length; i++) {
       const p = r.pins[i];
-      setWriting(`Writing ${i + 1} of 3 — ${p.title}…`);
+      setWriting(`Writing ${i + 1} of 3 — ${p.title}…`); setProg({ at: i + 1, of: r.pins.length + 1 });
       try { const rr = await api({ action: "script-draft", dayId: day.id, scriptId: p.id, title: p.title, idea: p.idea }); replace(rr.script, true); done++; } catch { failed++; }
     }
-    setWriting(""); setBusy(false);
+    setWriting(""); setProg(null); setBusy(false);
     const empty = r.pins.filter((p) => !p.answered).length;
     say(failed ? `${done} of 3 written — open the others and tap "Ask Claude"` : `The Pinned Three are written — read them through${empty ? ` (${empty} had no answer on their brand page yet, so look for [brackets])` : ""}`);
   }
@@ -251,6 +255,13 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           {dayArmed && <p className="sday-delete-warn" role="alert">This deletes the day{scripts.length ? `, its ${scripts.length} script${scripts.length === 1 ? "" : "s"}` : ""}{day.shoot_id ? " and its spot on your Shoots calendar" : ""}. It can’t be undone.</p>}
         </div>
       )}
+      {prog && (
+        <div className="sday-progress" role="status" aria-live="polite">
+          <p className="sday-progress-msg"><strong>{writing || "Working…"}</strong><span>Step {Math.min(prog.at + 1, prog.of)} of {prog.of}</span></p>
+          <div className="sday-progress-bar" role="progressbar" aria-valuemin={0} aria-valuemax={prog.of} aria-valuenow={prog.at}><span style={{ width: `${Math.max(6, Math.round((prog.at / prog.of) * 100))}%` }} /></div>
+          <p className="gcard-meta">Claude is writing. Each card takes about half a minute. Keep this page open.</p>
+        </div>
+      )}
       {tool === "plan" && <PlanDayBox aiReady={aiReady} busy={busy} onGo={planDay} onCancel={() => setTool("")} existing={scripts.length} />}
       {tool === "import" && <ImportBox dayId={day.id} busy={busy} onGo={importPlan} onCancel={() => setTool("")} onError={fail} />}
       {tool === "send" && <SendBox day={day} emailReady={emailReady} busy={busy} onGo={sendDay} onCancel={() => setTool("")} />}
@@ -302,7 +313,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                 <span className="sday-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span>
                 <span className="sday-main">
                   <strong>{s.title || <em>Untitled {KIND_LABEL[s.kind]}</em>}</strong>
-                  <em>{KIND_LABEL[s.kind]}{s.body?.style ? ` · ${STYLE_LABEL[s.body.style]}` : ""} · {fmtMins(s.minutes || 0)} to film{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()}{s.body?.length ? ` · ${s.body.length} finished` : ""}</em>
+                  <em>{KIND_LABEL[s.kind]}{s.body?.style ? ` · ${STYLE_LABEL[s.body.style]}` : ""}{s.body?.length ? ` · plays ${s.body.length}` : ""}{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()} · about {fmtMins(s.minutes || 0)} on set</em>
                   <SyncLine s={s} me={me} who={who} last={lastNote(s)} notes={threadOf(s).length} />
                 </span>
                 <span className={`itag sday-status is-${s.status}`}>{STATUS_LABEL[s.status]}</span>
@@ -419,14 +430,13 @@ function DayHeader({ day, role, onSaved, onError, total, ready, count, lite = fa
             </div>
             {role === "brandon" && <button type="button" className="achip" onClick={() => setEdit(true)}>Edit day</button>}
           </div>
-          {role === "brandon" && (day.location || day.client?.phone || (day.reminders || []).length > 0) && (
+          {role === "brandon" && (day.location || day.client?.phone) && (
             <div className="sday-basics">
               <div className="gcard-actions">
                 {day.location && <a className="abtn" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(day.location)}`} target="_blank" rel="noreferrer">Directions ↗</a>}
                 {day.client?.phone && <a className="abtn" href={`sms:${day.client.phone.replace(/[^\d+]/g, "")}`}>Text {day.client?.name?.split(" ")[0] || "them"}</a>}
                 {day.client?.phone && <a className="abtn" href={`tel:${day.client.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
               </div>
-              {(day.reminders || []).length > 0 && <details className="sday-remind"><summary>📷 My camera reminders ({day.reminders.length})</summary><ul>{day.reminders.map((r, i) => <li key={i}>{r}</li>)}</ul></details>}
             </div>
           )}
           {!lite && <dl className="sday-stats">
@@ -530,7 +540,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
             ? null
             : <button type="button" className="achip scr-convert" onClick={() => { setBody((b) => toTchart(kind, b)); setKind("tchart"); }}>Turn this {KIND_LABEL[kind].toLowerCase()} into a T-chart</button>}
           <label>Status<select value={status} onChange={(e) => setStatus(e.target.value)}>{/* No "Delivered" to pick (2026-11-17, Brandon: not needed right now); one already set to it still shows. */}{STATUSES.filter((s) => s.id !== "delivered" || status === "delivered").map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
-          {kind !== "tchart" && <label>Minutes to film<input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>}
+          {kind !== "tchart" && <label>Minutes on set (setup and takes)<input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>}
           <span className={`scr-state is-${state}`}>{state === "saved" ? `Saved ✓ · last by ${who(script.updated_by)} ${when(script.updated_at)}` : state === "saving" ? "Saving…" : state === "stale" ? "Not saved" : "Unsaved…"}</span>
         </div>
       </div>
@@ -552,7 +562,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
         </div>
       )}
 
-      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} onPrompt={() => setPrompting(true)} extra={<label className="scr-field scr-mins"><span>Minutes to film</span><input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>} />}
+      {kind === "tchart" && <TChartEditor body={body} setBody={setBody} onPrompt={() => setPrompting(true)} extra={<label className="scr-field scr-mins"><span>Minutes on set (setup and takes)</span><input type="number" min={0} max={720} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>} />}
       {prompting && <Teleprompter title={title || "T-chart"} items={promptItems(kind, cleanBody(body))} onClose={() => setPrompting(false)} />}
       {kind === "questions" && <QuestionsEditor body={body} setBody={setBody} />}
       {kind === "questions" && <div className="scr-grid"><Field label="Notes for the day" v={body.notes} on={(v) => set("notes", v)} rows={2} ph="Where this happens, who answers, anything to set up first" wide /></div>}

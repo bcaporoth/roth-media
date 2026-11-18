@@ -48,6 +48,8 @@ async function api(payload, { keepalive = false } = {}) {
 import { SHOOT_KIND_LABEL as KIND_LABEL, SHOOT_STATUS_LABEL as STATUS_LABEL } from "../lib/studio-labels";
 import { confirmTap } from "../lib/confirm-tap";
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "No date yet");
+// "Made Nov 10, 2026": when the shoot (or its day) was first created, in New York time.
+const fmtMade = (ts) => (ts ? `Made ${new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" })}` : "");
 const daysOut = (d) => (d ? Math.round((new Date(`${d}T12:00:00`) - new Date()) / 86400000) : null);
 
 const SQL_HINT = "Run supabase/studio-2.sql once (Supabase → SQL editor) to tick deliveries off.";
@@ -431,7 +433,7 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
 
   return (
     <section className="cprof-card cprof-shoots">
-      <div className="cprof-cardhead"><h2>Shoots{mine.length + loose.length > 0 && <em className="cprof-count">{mine.length + loose.length}</em>}</h2>
+      <div className="cprof-cardhead"><h2>Projects{mine.length + loose.length > 0 && <em className="cprof-count">{mine.length + loose.length}</em>}</h2>
         <span className="gcard-actions">
           <button type="button" className={"achip" + (newProj ? " is-on" : "")} onClick={() => setNewProj((v) => !v)} disabled={!data}>{newProj ? "Close" : "+ New project"}</button>
           <button type="button" className="abtn" onClick={toggleNew} disabled={!data}>{anyOpen ? "Close" : `+ ${PLAN_LABEL[type] || "Plan a shoot"}`}</button>
@@ -481,7 +483,7 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
               <li key={dd.id} className="shoot shoot-dayonly">
                 <a className="shoot-row shoot-row-link" href={dayHref(dd)}>
                   <span className="shoot-when"><strong>{dd.date ? fmtDate(dd.date) : "No date"}</strong><em>{dd.date ? (dd.start_time ? fmt12(dd.start_time) : "") : "set one on the day page"}</em></span>
-                  <span className="shoot-main"><strong>{dd.title}</strong><em>{dd.scripts} script{dd.scripts === 1 ? "" : "s"}{dd.scripts ? ` · ${dd.ready} ready` : ""} · {dd.status}</em></span>
+                  <span className="shoot-main"><strong>{dd.title}</strong><em>{dd.scripts} script{dd.scripts === 1 ? "" : "s"}{dd.scripts ? ` · ${dd.ready} ready` : ""} · {dd.status}</em>{dd.created_at && <em className="shoot-made">{fmtMade(dd.created_at)}</em>}</span>
                   <span className="abtn shoot-daybtn">Open scripts →</span>
                 </a>
               </li>
@@ -792,14 +794,14 @@ export function ShootRow({ s, day = null, clientId = null, open, onToggle, onUpd
       {embedded ? null : day ? (
         <a className="shoot-row shoot-row-go" href={day.href}>
           <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
-          <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""} · {day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready` : ""}{!s.address ? " · no address yet" : ""}</em></span>
+          <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""} · {day.scripts} script{day.scripts === 1 ? "" : "s"}{day.scripts ? ` · ${day.ready} ready` : ""}{!s.address ? " · no address yet" : ""}</em>{s.created_at && <em className="shoot-made">{fmtMade(s.created_at)}</em>}</span>
           <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
           <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
         </a>
       ) : (
       <button type="button" className={"shoot-row" + (open ? "" : " shoot-row-go")} onClick={openDay} disabled={going} aria-expanded={open}>
         <span className="shoot-when"><strong>{fmtDate(s.date)}</strong><em>{t.start ? fmt12(t.start) : s.time_note || "time TBD"}{n !== null && n >= 0 ? ` · ${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`}` : ""}</em></span>
-        <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.project_id ? " · part of a project" : ""}{!s.address ? " · no address yet" : ""}</em></span>
+        <span className="shoot-main"><strong>{s.title}</strong><em>{KIND_LABEL[s.kind]}{s.client_name ? ` · ${s.client_name}` : ""}{s.project_id ? " · part of a project" : ""}{!s.address ? " · no address yet" : ""}</em>{s.created_at && <em className="shoot-made">{fmtMade(s.created_at)}</em>}</span>
         <span className="shoot-far">{s.miles != null ? <><strong>{s.miles} mi</strong><em>~{s.drive_min} min drive</em></> : <em>—</em>}</span>
         <span className={`itag itag-${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </button>

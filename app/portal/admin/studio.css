@@ -718,3 +718,10 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
   .cprof-prog-now { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { .cprof-prog-steps::before { transition: none; } }
+
+/* Client profile: Quotes lives on the Money tab only (2026-11-17, Brandon:
+   "quotes is in two places, here and on the money page as well"). */
+.cprof-cols.is-paper #quotes { display: none; }
+
+/* Shoot rows: the day it was made, on its own quiet line (2026-11-17). */
+.shoot-main .shoot-made { display: block; font-style: normal; font-size: 0.8rem; opacity: 0.75; margin-top: 0.15rem; }

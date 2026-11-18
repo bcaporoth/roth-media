@@ -192,7 +192,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           the calendar (passed in by the page), then the planned days, then
           their addresses. */}
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
-        {[["days", "Calendar", null], ["shoots", "Shoots", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
+        {[["days", "Calendar", null], ["shoots", "Projects", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
