@@ -1,0 +1,15 @@
+/* "Save Brandon's card to your Photos" box (components/SaveCardButton.js).
+   Shows on dark and light pages, so it carries its own dark surface. */
+.cardsave { margin: 1.4rem 0 0; padding: 1rem; border-radius: 18px; background: linear-gradient(180deg, #232326, #18181a); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 1px 0 rgba(255,255,255,0.07) inset, 0 10px 24px rgba(0,0,0,0.28); color: #f4f4f2; text-align: left; }
+.cardsave-lead { margin: 0 0 0.7rem; font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: #a9a9ad; }
+.cardsave-row { display: flex; gap: 0.9rem; align-items: flex-start; }
+.cardsave-thumb { flex: none; width: 84px; height: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 4px 10px rgba(0,0,0,0.4); display: block; }
+.cardsave-acts { flex: 1; min-width: 0; display: grid; gap: 0.5rem; }
+.cardsave-btn { appearance: none; cursor: pointer; width: 100%; min-height: 52px; padding: 0.7rem 1rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.5); background: linear-gradient(180deg, #ffffff, #dcdcd8); color: #141416; font: inherit; font-size: 1rem; font-weight: 700; line-height: 1.25; box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 0 #8f8f8b, 0 8px 16px rgba(0,0,0,0.35); transition: transform 0.08s, box-shadow 0.08s; }
+.cardsave-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 1px 0 #8f8f8b, 0 3px 8px rgba(0,0,0,0.35); }
+.cardsave-btn:disabled { opacity: 0.7; cursor: default; }
+.cardsave-btn:focus-visible { outline: 2px solid #4fb06c; outline-offset: 3px; }
+.cardsave-help { margin: 0; font-size: 0.84rem; line-height: 1.4; color: #a9a9ad; }
+.cardsave-link { font-size: 0.88rem; color: #f4f4f2; text-decoration: underline; text-underline-offset: 3px; min-height: 32px; display: inline-flex; align-items: center; }
+@media (max-width: 360px) { .cardsave-thumb { width: 64px; } }
+.cardsave.cardsave--card { margin: 0 0 1.4rem; }

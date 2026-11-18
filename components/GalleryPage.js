@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import GalleryManage from "./GalleryManage";
+import GuestReelSwitch from "./GuestReelSwitch";
 import { isNoEmail } from "../lib/no-email";
 
 function fmtDate(iso) {
@@ -104,6 +105,8 @@ export default function GalleryPage({ gallery, tab = "photos" }) {  // old tab k
           {msg && <p className="cform-error" role="status">{msg}</p>}
         </div>
       </header>
+
+      <GuestReelSwitch galleryId={g.id} />
 
       <section className="gpage-manage">
         <GalleryManage gallery={g} open defaultTab={tab} onChanged={() => router.refresh()} />

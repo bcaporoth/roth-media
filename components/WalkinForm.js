@@ -4,6 +4,7 @@
 // into the portal; an email we already know gets the usual sign-in code.
 
 import { useState } from "react";
+import SaveCardButton from "./SaveCardButton";
 
 export default function WalkinForm({ k = "", gift = 100, giftCode = "", from = "" }) {
   const [status, setStatus] = useState("idle"); // idle | going | sent | signin | error
@@ -31,6 +32,7 @@ export default function WalkinForm({ k = "", gift = 100, giftCode = "", from = "
           ? <p>You already have an account with {email}, so a sign-in code is on its way there. Type the code on the sign-in page and you&apos;re in.</p>
           : <p>Sign in with {email} to see your gallery and your gift cards.</p>}
         <div className="mx-done-acts"><a className="cx-btn cx-btn--light cx-btn--lg" href={`/portal?email=${encodeURIComponent(email)}`}>Open the sign-in page</a></div>
+        <SaveCardButton where="walkin" />
       </div>
     );
   }

@@ -94,6 +94,65 @@ export async function POST(request) {
     });
   }
 
+  // ── One gallery's own Guest Reel (the switch on the gallery page and in
+  // "+ New gallery"). On = an event attached to that gallery with uploads
+  // open; Off = uploads closed, nothing guests sent is removed.
+  if (body.action === "for-gallery" || body.action === "enable" || body.action === "disable") {
+    const galleryId = /^[0-9a-f-]{36}$/.test(String(body.galleryId || "")) ? body.galleryId : null;
+    if (!galleryId) return bad("Bad request");
+    const cols = "id, slug, title, event_date, upload_open_until, view_token, created_at, gallery_id";
+    const find = async () => {
+      const { data } = await db.from("guest_events").select(cols).eq("gallery_id", galleryId).order("created_at", { ascending: false }).limit(1);
+      return data?.[0] || null;
+    };
+    let ev = await find();
+
+    if (body.action === "enable") {
+      const in30 = () => new Date(Date.now() + 30 * 86400000).toISOString();
+      if (ev) {
+        if (new Date(ev.upload_open_until).getTime() <= Date.now()) {
+          // Back to 30 days after the event if that is still ahead, else 30 days from now.
+          const after = ev.event_date ? new Date(ev.event_date + "T23:59:59Z").getTime() + 30 * 86400000 : 0;
+          const { error } = await db.from("guest_events").update({ upload_open_until: after > Date.now() + 86400000 ? new Date(after).toISOString() : in30() }).eq("id", ev.id);
+          if (error) return bad(error.message, 500);
+        }
+      } else {
+        const { data: g } = await db.from("galleries").select("id, title, event_date").eq("id", galleryId).maybeSingle();
+        if (!g) return bad("Gallery not found", 404);
+        // "Matt & April's gallery" reads better on the QR sign as "Matt & April".
+        const title = (String(g.title || "").replace(/[’']s gallery$/i, "").trim() || "Guest photos").slice(0, 80);
+        const eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(g.event_date || "")) ? g.event_date : null;
+        // 30 days after the event, or 30 days from now if that has already passed.
+        const afterEvent = eventDate ? new Date(eventDate + "T23:59:59Z").getTime() + 30 * 86400000 : 0;
+        const until = afterEvent > Date.now() + 86400000 ? new Date(afterEvent).toISOString() : in30();
+        const base = slugify(title).slice(0, 34).replace(/-+$/, "") || "guests";
+        let made = null, lastErr = null;
+        for (let n = 1; n <= 12 && !made; n++) {
+          const slug = n === 1 ? base : `${base}-${n}`;
+          if (!SLUG_RE.test(slug)) { lastErr = { message: "That gallery's name can't be turned into a link. Rename it first." }; break; }
+          const { data, error } = await db.from("guest_events").insert({ slug, title, event_date: eventDate, upload_open_until: until, gallery_id: galleryId }).select("id").single();
+          if (!error) made = data;
+          else if (/duplicate|unique/i.test(error.message)) lastErr = error;
+          else { lastErr = error; break; }
+        }
+        if (!made) return bad(lastErr?.message || "Couldn't turn it on", 500);
+      }
+      ev = await find();
+    }
+
+    if (body.action === "disable" && ev && new Date(ev.upload_open_until).getTime() > Date.now()) {
+      const { error } = await db.from("guest_events").update({ upload_open_until: new Date().toISOString() }).eq("id", ev.id);
+      if (error) return bad(error.message, 500);
+      ev = await find();
+    }
+
+    if (!ev) return NextResponse.json({ event: null });
+    const { data: rows } = await db.from("guest_uploads").select("kind").eq("event_id", ev.id);
+    const stats = { photos: 0, videos: 0, messages: 0 };
+    for (const r of rows || []) stats[r.kind === "photo" ? "photos" : r.kind === "video" ? "videos" : "messages"] += 1;
+    return NextResponse.json({ event: { ...ev, stats } });
+  }
+
   if (body.action === "set-gallery") {
     const { eventId, galleryId } = body;
     if (!eventId) return bad("Bad request");

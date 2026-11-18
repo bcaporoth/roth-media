@@ -19,13 +19,14 @@ export default async function CardAdminPage() {
   const user = await requireAdminPage();
   const db = supabaseAdmin();
   const monthAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-  const [newCount, scans30, scansAll, cardLeads] = await Promise.all([
+  const [newCount, scans30, scansAll, cardLeads, photoSaves] = await Promise.all([
     newLeadCount(),
     db.from("site_events").select("id", { count: "exact", head: true })
       .eq("type", "pageview").eq("utm_source", "qr").eq("path", "/card").gte("created_at", monthAgo),
     db.from("site_events").select("id", { count: "exact", head: true })
       .eq("type", "pageview").eq("utm_source", "qr").eq("path", "/card"),
     db.from("submissions").select("id", { count: "exact", head: true }).eq("kind", "card"),
+    db.from("site_events").select("id", { count: "exact", head: true }).eq("type", "event").eq("name", "card_save_photo"),
   ]);
   const svg = await QRCode.toString(CARD_QR_URL, {
     type: "svg",
@@ -50,6 +51,10 @@ export default async function CardAdminPage() {
           <div className="astat">
             <strong>{cardLeads.count ?? 0}</strong>
             <span>Leads from the card</span>
+          </div>
+          <div className="astat">
+            <strong>{photoSaves.count ?? 0}</strong>
+            <span>Card saved to Photos</span>
           </div>
         </div>
         <CardQrTools url={CARD_QR_URL} svg={svg} />

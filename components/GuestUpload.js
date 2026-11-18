@@ -6,6 +6,7 @@
 
 import "../app/theme/share.css";
 import { useEffect, useRef, useState } from "react";
+import SaveCardButton from "./SaveCardButton";
 
 const BATCH = 12;
 const CONCURRENCY = 2;
@@ -305,6 +306,7 @@ export default function GuestUpload({ slug, title, open, closesAt }) {
           {!busy && doneCount === total && (
             <p className="cx-success sh-thanks" role="status">All {sent} sent. Thank you, {name.trim().split(/\s+/)[0]}! Add more anytime{closesAt ? ` until ${closesAt}` : ""}.</p>
           )}
+          {!busy && doneCount === total && <SaveCardButton where="guest" lead="Photo and video by Brandon Roth" />}
           {!busy && failed > 0 && <p className="cx-error" role="alert">{failed} didn&apos;t make it — tap Send again to retry.</p>}
         </div>
       )}

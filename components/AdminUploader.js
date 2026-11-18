@@ -422,6 +422,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
   const [clientPick, setClientPick] = useState("new");
   const [clientEmail, setClientEmail] = useState("");
   const [clientName, setClientName] = useState("");
+  const [guestReel, setGuestReel] = useState(false); // new gallery only: also turn on Guest Reel
 
   const filesId = append ? `au-files-${gallery.id}` : "au-files";
   const cancelRef = useRef(false);
@@ -815,6 +816,16 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           : null;
       const fin = await apiWithRetry({ action: "finalize", galleryId, media, coverFilename });
 
+      // Guest Reel switch: make this gallery's guest link now, so the QR sign
+      // is ready on the gallery's page. A failure here never fails the upload.
+      let guestReelNote = "";
+      if (!append && guestReel) {
+        try {
+          const gr = await fetch("/api/admin/guest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "enable", galleryId }) });
+          guestReelNote = gr.ok ? "on" : "failed";
+        } catch { guestReelNote = "failed"; }
+      }
+
       clearResume();
       setDone({
         galleryId,
@@ -824,12 +835,14 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
         noPoster,
         zipStale: Boolean(fin.zipStale),
         elapsed: Date.now() - startedAt,
+        guestReel: guestReelNote,
       });
       form.reset();
       if (!append) {
         setClientPick("new");
         setClientEmail("");
         setClientName("");
+        setGuestReel(false);
         // The client just used may be new — refresh the roster.
         api({ action: "clients" })
           .then((r) => setClients(r.clients || []))
@@ -891,6 +904,14 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
               <input id="au-date" name="eventDate" type="date" />
             </div>
           </div>
+          <label className="grswitch au-guestreel">
+            <input type="checkbox" role="switch" checked={guestReel} onChange={(e) => setGuestReel(e.target.checked)} />
+            <span className="grswitch-track" aria-hidden="true" />
+            <span className="grswitch-text">
+              <strong>Guest Reel {guestReel ? "on" : "off"}</strong>
+              <span>Guests scan a QR code and add their own photos and videos to this gallery. You can turn it on or off later on the gallery's page.</span>
+            </span>
+          </label>
           <div>
             <label htmlFor="au-client">Client *</label>
             <select
@@ -1121,6 +1142,16 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
           <p className="qmatch-includes">
             <a href={done.shareUrl}>{done.shareUrl}</a>
           </p>
+          {done.guestReel === "on" && (
+            <p className="qmatch-fineprint">
+              Guest Reel is on. <a href={`/portal/admin/gallery/${done.galleryId}`}>Open the gallery&apos;s page</a> for the guest link and the QR sign.
+            </p>
+          )}
+          {done.guestReel === "failed" && (
+            <p className="qmatch-fineprint">
+              Guest Reel did not turn on. <a href={`/portal/admin/gallery/${done.galleryId}`}>Open the gallery&apos;s page</a> and flip the switch there.
+            </p>
+          )}
           {done.noPoster > 0 && (
             <p className="qmatch-fineprint">
               {done.noPoster} video{done.noPoster === 1 ? "" : "s"} went up without a preview

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import GuestEventsPanel from "./GuestEventsPanel";
 import Link from "next/link";
 import AdminUploader from "./AdminUploader";
 import { isNoEmail } from "../lib/no-email";
@@ -31,7 +30,6 @@ function initials(title) {
 
 export default function AdminDashboard({ galleries }) {
   const [uploaderOpen, setUploaderOpen] = useState(false);
-  const [guestOpen, setGuestOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
   const [copiedId, setCopiedId] = useState(null);
@@ -109,21 +107,12 @@ export default function AdminDashboard({ galleries }) {
           </select>
           <button
             type="button"
-            className="abtn abtn-ghost"
-            onClick={() => setGuestOpen(!guestOpen)}
-          >
-            {guestOpen ? "Close guest reel" : "◎ Guest Reel"}
-          </button>
-          <button
-            type="button"
             className="abtn"
             onClick={() => setUploaderOpen(!uploaderOpen)}
           >
             {uploaderOpen ? "Close" : "+ New gallery"}
           </button>
         </div>
-
-        {guestOpen && <GuestEventsPanel galleries={galleries} />}
 
         {uploaderOpen && (
           <section className="anew">
