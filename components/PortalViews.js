@@ -343,7 +343,7 @@ export function PortalBusinessHome({
     { label: "Account", done: true, href: "/portal/account" },
     { label: "Your brand", done: essentialsDone, next: `Fill in your brand: ${brand.done} of ${brand.of} essentials are done.`, href: "/portal/brand", go: "Open my brand" },
     { label: "Shoot brief", done: Boolean(brief), next: "Fill in your shoot brief. It takes about five minutes.", href: "/portal/brief", go: "Fill in my brief" },
-    { label: "Shoot day", done: days.length > 0 || filmed || delivered, next: "Brandon puts your shoot day on the calendar. You can also pick a day yourself.", href: "/portal?tab=calendar", go: "Open my calendar" },
+    { label: "Shoot day", done: days.length > 0 || filmed || delivered, next: "Brandon puts your shoot day on the calendar. You can suggest a day you are free.", href: "/portal?tab=calendar", go: "Open my calendar" },
     { label: "Filmed", done: filmed || delivered, next: upcoming ? `Read your scripts before ${new Date(upcoming.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}.` : "Your shoot day is being planned.", href: upcoming ? `/portal/days/${upcoming.id}` : "/portal?tab=shoots", go: upcoming ? "Open my shoot day" : "See my shoot days" },
     { label: "Your content", done: delivered, next: "Brandon is editing. Your photos and videos show up in your gallery.", href: "/portal?tab=gallery", go: "Open my gallery" },
   ];
@@ -687,7 +687,7 @@ function CalendarSection({ clientId, clientName, days, place = "" }) {
     <section id="calendar" className="cx-wrap pt-cal" aria-labelledby="pt-cal-h">
       <div className="pt-biz-sechead">
         <h2 id="pt-cal-h" className="cx-kick">Your calendar</h2>
-        <p className="pt-note">Tap a day to add what&apos;s happening, open a shoot day&apos;s scripts 🎬, or start a new shoot day.</p>
+        <p className="pt-note">Tap a day you can film and suggest it to Brandon. Shoot days he has set show with 🎬.</p>
       </div>
       <ClientCalendar mode="client" clientId={clientId} clientName={clientName} days={days ?? []} defaultLocation={place} />
     </section>

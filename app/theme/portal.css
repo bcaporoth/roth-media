@@ -854,3 +854,7 @@ body:has(.pt-gal .lightbox) .pnav-bottom, body:has(.pt-gal .lightbox) .studio-re
 .pt-agree-title { font-size: 1.1rem; font-weight: 600; color: var(--fg, #f4f4f2); }
 .pt-agree-detail { font-size: 0.9rem; color: rgba(244,244,242,0.72); }
 .pt-agree-go { min-height: 44px; }
+
+/* Client calendar: "Suggest this day for a shoot" (2026-11-18). */
+.ccal-suggest label.wide { grid-column: 1 / -1; }
+.ccal-sent { grid-column: 1 / -1; margin: 0; color: #8fd6a4; font-weight: 600; }

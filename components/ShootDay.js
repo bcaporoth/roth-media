@@ -2,8 +2,9 @@
 
 // One shoot day, shared. Brandon opens it from Studio (role="brandon"), the
 // business owner opens the same day from their portal (role="client"). Both
-// see the same running order and edit the same scripts; every script
-// autosaves and says who touched it last. Two people editing the same
+// see the same running order. Since 2026-11-18 only Brandon edits the cards
+// (the client reads them and leaves notes on what to change; see ScriptClient).
+// Every script autosaves and says who touched it last. Two people editing the same
 // script at once: the second save is refused, the newer copy loads, and a
 // line says so — nothing is silently lost (it stays in the notes thread).
 //
@@ -15,7 +16,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf } from "../lib/scripts";
+import { KINDS, KIND_LABEL, STYLE_LABEL, toTchart, STATUSES, STATUS_LABEL, DAY_STATUSES, DAY_STATUS_LABEL, NEEDS_LABEL, SEE_LABEL, isCard, cleanBody, blankStep, runningOrder, totalMinutes, dayWindow, fmt12, fmtMins, stepSecs, progressOf, versionOf, vLabel, historyOf } from "../lib/scripts";
 import { TChartEditor, QuestionsEditor } from "./ScriptCards";
 import Teleprompter, { promptItems } from "./Teleprompter";
 import ShotList from "./ShotList";
@@ -250,7 +251,8 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
   // hasn't been answered, and scripts still in draft.
   const threadOf = (s) => (Array.isArray(s.thread) ? s.thread : []);
   const lastNote = (s) => threadOf(s)[threadOf(s).length - 1];
-  const waiting = order.filter((s) => { const l = lastNote(s); return l && l.who !== me; });
+  // For Brandon a client's note stops waiting once he has said OK to it.
+  const waiting = order.filter((s) => { const l = lastNote(s); return l && l.who !== me && !(me === "brandon" && l.ok); });
   const drafts = order.filter((s) => s.status === "draft");
   const openScript = (id, toNotes = false) => { setOpen(id); setTimeout(() => (toNotes && document.getElementById("notes-" + id) || document.getElementById("scr-" + id))?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
@@ -283,7 +285,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
 
       <div className={"sday-scripts" + ((pane === "prep" && me === "brandon" && day.shoot_id) || lite ? " is-hidden" : "")}>
       <div className="sday-tools">
-        {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>▶ Film mode</button>}
+        {scripts.length > 0 && <button type="button" className="abtn" onClick={() => setFilming(0)}>{me === "brandon" ? "▶ Film mode" : "▶ Read them one by one"}</button>}
         {me === "brandon" && <button type="button" className={"achip" + (tool === "send" ? " is-on" : "")} onClick={() => setTool(tool === "send" ? "" : "send")} disabled={!scripts.length}>✉ Send to {day.client?.name?.split(" ")[0] || "client"}</button>}
         {me === "brandon" && <button type="button" className={"achip sday-tellbtn" + (tool === "plan" ? " is-on" : "")} aria-expanded={tool === "plan"} onClick={() => setTool(tool === "plan" ? "" : "plan")}>✦ Tell Claude what to film</button>}
         {printHref && <a className="achip" href={printHref} target="_blank" rel="noreferrer">🖨 Print</a>}
@@ -316,6 +318,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
           onClose={() => setFilming(null)}
           reminders={me === "brandon" ? day.reminders || [] : []}
           tips={me === "client" ? { scripts, client: day.client } : null}
+          readOnly={me !== "brandon"}
           onTick={async (s, i, done) => { try { const r = await api({ action: "script-tick", dayId: day.id, scriptId: s.id, ...(typeof i === "object" ? i : { step: i }), done }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
           onStatus={async (s, status) => { try { const r = await api({ action: "script-status", dayId: day.id, scriptId: s.id, status }); replace({ ...r.script, body: cleanBody(r.script.body) }, true); } catch (e) { fail(e); } }}
         />
@@ -323,13 +326,14 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
 
       {scripts.length > 0 && (
         <div className={"sday-todo" + (waiting.length || drafts.length ? "" : " is-clear")} role="status">
-          {waiting.length === 0 && drafts.length === 0 && <p>✓ All caught up: no notes waiting on you, nothing still in draft.</p>}
+          {me !== "brandon" && waiting.length === 0 && <p>Read each card. If you would change something, open the card and tell Brandon. He makes the change.</p>}
+          {me === "brandon" && waiting.length === 0 && drafts.length === 0 && <p>✓ All caught up: no notes waiting on you, nothing still in draft.</p>}
           {waiting.length > 0 && (
             <p><strong>💬 Waiting on you:</strong>{" "}
               {waiting.map((s, i) => <span key={s.id}>{i > 0 && " · "}<button type="button" className="rm-linkbtn" onClick={() => openScript(s.id, true)}>{who(lastNote(s).who)} on “{s.title || `Untitled ${KIND_LABEL[s.kind]}`}”</button></span>)}
             </p>
           )}
-          {drafts.length > 0 && (
+          {me === "brandon" && drafts.length > 0 && (
             <p><strong>Still draft:</strong>{" "}
               {drafts.map((s, i) => <span key={s.id}>{i > 0 && " · "}<button type="button" className="rm-linkbtn" onClick={() => openScript(s.id)}>{s.title || `Untitled ${KIND_LABEL[s.kind]}`}</button></span>)}
               <em> (set it to Ready to film once you both agree)</em>
@@ -345,7 +349,7 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         </div>
         {scripts.length === 0 && (
           <p className="sday-empty">
-            {me === "brandon" ? "Nothing here yet. Tell Claude what to film (above) and it makes one card for each reel. Or add a T-chart yourself below." : "Nothing on the board yet. Add an idea below — even a one-line title — and Brandon picks it up from there."}
+            {me === "brandon" ? "Nothing here yet. Tell Claude what to film (above) and it makes one card for each reel. Or add a T-chart yourself below." : "Nothing here yet. Brandon adds the cards, and you will see them here."}
           </p>
         )}
         <ol className="sday-list">
@@ -355,17 +359,20 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
                 <span className="sday-at">{s.at ? fmt12(s.at) : `#${i + 1}`}</span>
                 <span className="sday-main">
                   <strong>{s.title || <em>Untitled {KIND_LABEL[s.kind]}</em>}</strong>
-                  <em>{KIND_LABEL[s.kind]}{s.body?.style ? ` · ${STYLE_LABEL[s.body.style]}` : ""}{s.body?.length ? ` · plays ${s.body.length}` : ""}{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()} · about {fmtMins(s.minutes || 0)} on set</em>
+                  <em>{KIND_LABEL[s.kind]}{s.body?.style ? ` · ${STYLE_LABEL[s.body.style]}` : ""}{s.body?.length ? ` · plays ${s.body.length}` : ""}{(() => { const p = progressOf(s.kind, s.body); return p.total ? ` · ${p.done ? `${p.done}/` : ""}${p.total} ${p.noun}${p.total === 1 ? "" : "s"}${p.done ? " done" : ""}` : ""; })()} · about {fmtMins(s.minutes || 0)} on set · {vLabel(versionOf(s.body))}</em>
                   <SyncLine s={s} me={me} who={who} last={lastNote(s)} notes={threadOf(s).length} />
                 </span>
                 <span className={`itag sday-status is-${s.status}`}>{STATUS_LABEL[s.status]}</span>
               </button>
-              <span className="sday-rowactions">
+              {me === "brandon" && <span className="sday-rowactions">
                 <button type="button" className="achip" onClick={() => move(s.id, -1)} disabled={i === 0} aria-label="Move earlier">↑</button>
                 <button type="button" className="achip" onClick={() => move(s.id, 1)} disabled={i === order.length - 1} aria-label="Move later">↓</button>
                 {(me === "brandon" || s.created_by === "client") && <button type="button" className={"achip achip-danger sday-rowx" + (armed === s.id ? " is-armed" : "")} onClick={() => remove(s)} aria-label={`Remove ${s.title || KIND_LABEL[s.kind]}`} title="Remove from this day">{armed === s.id ? "Sure?" : "×"}</button>}
-              </span>
-              {open === s.id && (
+              </span>}
+              {open === s.id && me !== "brandon" && (
+                <ScriptClient key={s.id} script={s} day={day} who={who} onChange={replace} onClose={() => setOpen(null)} onError={fail} onSay={say} />
+              )}
+              {open === s.id && me === "brandon" && (
                 <ScriptEditor key={s.id + ":" + (bump[s.id] || 0)} script={s} day={day} role={me} who={who} aiReady={aiReady} onChange={replace} onRemove={() => remove(s)} removeArmed={armed === s.id} onDuplicate={() => duplicate(s)} onClose={() => { setOpen(null); setTimeout(() => document.getElementById("scr-" + s.id)?.scrollIntoView({ behavior: "smooth", block: "center" }), 30); }} onError={fail} onSay={say} />
               )}
             </li>
@@ -373,15 +380,15 @@ export default function ShootDay({ initial, role, aiReady = false, emailReady = 
         </ol>
 
         {/* Only T-charts from here on (2026-11-08); the style is picked inside it. */}
-        <div className="sday-add">
+        {me === "brandon" && <div className="sday-add">
           <button type="button" className="abtn" onClick={() => addScript("tchart")}>+ Add a T-chart</button>
-          {me === "brandon" && <button type="button" className={"abtn" + (tool === "template" ? " is-on" : "")} aria-expanded={tool === "template"} onClick={() => setTool(tool === "template" ? "" : "template")}>+ Use a shot list</button>}
+          {<button type="button" className={"abtn" + (tool === "template" ? " is-on" : "")} aria-expanded={tool === "template"} onClick={() => setTool(tool === "template" ? "" : "template")}>+ Use a shot list</button>}
           {addError && <p className="cform-error" role="alert" style={{ width: "100%", margin: 0 }}>{addError}</p>}
-        </div>
+        </div>}
         {tool === "template" && <ShotTemplatePicker busy={busy} onPick={addTemplate} onCancel={() => setTool("")} />}
 
         {/* The whole day as one tickable list, grouped by what the camera is on. */}
-        <ShotList scripts={order} onTick={tickShot} onOpenCard={jumpToShot} />
+        {me === "brandon" && <ShotList scripts={order} onTick={tickShot} onOpenCard={jumpToShot} />}
       </section>
       </div>
     </div>
@@ -519,6 +526,7 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [prompting, setPrompting] = useState(false);
+  const [peek, setPeek] = useState(null); // an older version being looked at
   const rev = useRef(script.rev);
   const timer = useRef(null);
   const first = useRef(true);
@@ -556,6 +564,19 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
     setBusy(true);
     try { const r = await api({ action: "script-note", dayId: day.id, scriptId: script.id, text: note }); onChange({ ...script, thread: r.thread }); setNote(""); } catch (err) { onError(err); } finally { setBusy(false); }
   }
+  // Versions: every one of these keeps the card as it is first, so nothing is
+  // lost. They wait for the autosave ("Saved ✓") so the kept copy is complete.
+  const cur = versionOf(script.body);
+  const hist = historyOf(script.body);
+  async function versionOp(payload, msg) {
+    setBusy(true);
+    try {
+      const r = await api({ dayId: day.id, scriptId: script.id, rev: rev.current, ...payload });
+      onChange({ ...r.script, body: cleanBody(r.script.body) }, true);
+      onSay(msg(r));
+    } catch (err) { onError(err.status === 409 ? new Error("This card changed a moment ago. Close it, open it again, and try once more.") : err); } finally { setBusy(false); }
+  }
+  const keptMsg = (r) => (r.kept ? `${vLabel(r.kept)} is kept. You are now on ${vLabel(r.now)}.` : "Marked OK.");
   async function askClaude() {
     if ((body.steps.length || body.scenes.some((sc) => sc.lines.some((l) => l.say || l.see))) && !confirmTap("Rewrite this script with Claude? It keeps what's good and fills in what's thin. The notes thread is read too.")) return;
     setBusy(true);
@@ -591,6 +612,25 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
           <span className={`scr-state is-${state}`}>{state === "saved" ? `Saved ✓ · last by ${who(script.updated_by)} ${when(script.updated_at)}` : state === "saving" ? "Saving…" : state === "stale" ? "Not saved" : "Unsaved…"}</span>
         </div>
       </div>
+
+      <div className="scr-vers" aria-label="Versions of this card">
+        <span className="scr-vers-now"><strong>{vLabel(cur)}</strong> is the one you are editing.</span>
+        {hist.length > 0 && <span className="scr-vers-old">Older:{" "}
+          {hist.map((h) => <button key={h.v} type="button" className={"achip" + (peek === h.v ? " is-on" : "")} aria-expanded={peek === h.v} onClick={() => setPeek(peek === h.v ? null : h.v)}>{vLabel(h.v)}</button>)}
+        </span>}
+        <button type="button" className="achip" disabled={busy || state !== "saved"} onClick={() => versionOp({ action: "version-new" }, keptMsg)}>Keep {vLabel(cur)}, start {vLabel(cur + 1)}</button>
+      </div>
+      {peek !== null && (() => { const h = hist.find((x) => x.v === peek); if (!h) return null; return (
+        <div className="scr-peek">
+          <p className="scr-peek-h"><strong>{vLabel(h.v)}</strong> · kept {when(h.at)}{h.title ? ` · ${h.title}` : ""}</p>
+          <ScriptBody body={h.body} />
+          <div className="gcard-actions">
+            <button type="button" className="abtn" disabled={busy || state !== "saved"} onClick={() => { setPeek(null); versionOp({ action: "version-restore", v: h.v }, (r) => `Back to ${vLabel(h.v)}. It is now ${vLabel(r.now)}, and ${vLabel(r.kept)} is kept.`); }}>Go back to {vLabel(h.v)}</button>
+            <button type="button" className="achip" onClick={() => setPeek(null)}>Close {vLabel(h.v)}</button>
+          </div>
+          <p className="gcard-meta">Going back does not delete anything. {vLabel(cur)} is kept, and {vLabel(h.v)} comes back as {vLabel(cur + 1)}.</p>
+        </div>
+      ); })()}
 
       {role === "brandon" && (kind === "tchart" || !isCard(kind)) && (
         <div className="scr-ai">
@@ -680,7 +720,11 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
         {thread.length === 0 && <p className="gcard-meta">Questions, changes, “can we do this instead” — it all goes here so the script stays the script.</p>}
         <ul>
           {thread.map((t, i) => (
-            <li key={i} className={"scr-msg is-" + t.who}><strong>{who(t.who)}</strong> <em>{when(t.at)}</em><p>{t.text}</p></li>
+            <li key={i} className={"scr-msg is-" + t.who}><strong>{who(t.who)}</strong> <em>{when(t.at)}{t.v ? ` · about ${vLabel(t.v)}` : ""}</em><p>{t.text}</p>
+              {t.who === "client" && (t.ok
+                ? <small className="scr-ok">✓ You said OK{t.ok_v ? ` · the change goes in ${vLabel(t.ok_v)}` : ""}</small>
+                : <button type="button" className="achip scr-okbtn" disabled={busy || state !== "saved"} onClick={() => versionOp({ action: "note-ok", index: i }, keptMsg)}>OK, I&rsquo;ll change this</button>)}
+            </li>
           ))}
         </ul>
         <form onSubmit={addNote} className="scr-msgform">
@@ -694,6 +738,87 @@ function ScriptEditor({ script, day, role, who, aiReady, onChange, onRemove, rem
         {(role === "brandon" || script.created_by === "client") && <button type="button" className={"achip achip-danger" + (removeArmed ? " is-armed" : "")} onClick={onRemove}>{removeArmed ? "Tap again to remove" : "Remove from this day"}</button>}
         {onClose && <button type="button" className="abtn scr-close" onClick={onClose}>Close ▲</button>}
       </div>
+    </div>
+  );
+}
+
+// A card, read only: the hook, every scene (said / seen), B-roll, closing
+// line. Used for the client's view and for looking at an older version.
+function ScriptBody({ body }) {
+  const b = cleanBody(body);
+  const meta = [b.on_camera && `On camera: ${b.on_camera}`, b.where && `Where: ${b.where}`, b.length && `Plays ${b.length}`].filter(Boolean);
+  const empty = !b.hook && !b.scenes.length && !b.steps.length && !b.questions.length && !b.broll.length && !b.cta;
+  return (
+    <div className="scrv">
+      {empty && <p className="gcard-meta">Nothing is written on this card yet.</p>}
+      {meta.length > 0 && <p className="scrv-meta">{meta.join(" · ")}</p>}
+      {b.goal && <div className="scrv-block"><span>What it is for</span><p>{b.goal}</p></div>}
+      {b.hook && <div className="scrv-block"><span>Hook · goes first</span><p>{b.hook}</p></div>}
+      {b.scenes.map((sc, si) => (
+        <div key={si} className="scrv-scene">
+          <h4>{sc.label || `Scene ${si + 1}`}</h4>
+          <ol>{sc.lines.filter((l) => l.say || l.see).map((l, li) => (
+            <li key={li}>{l.say && <p className="scrv-say">{l.say}</p>}{l.see && <p className="scrv-see"><span>{SEE_LABEL[l.tag] || "Seen"}</span> {l.see}</p>}</li>
+          ))}</ol>
+        </div>
+      ))}
+      {b.steps.length > 0 && (
+        <div className="scrv-scene">
+          <h4>Scenes</h4>
+          <ol>{b.steps.map((st, i) => (
+            <li key={i}>{st.say && <p className="scrv-say">{st.say}</p>}{st.do && <p className="scrv-see"><span>Do</span> {st.do}</p>}{st.shot && <p className="scrv-see"><span>Camera</span> {st.shot}</p>}</li>
+          ))}</ol>
+        </div>
+      )}
+      {b.questions.length > 0 && (
+        <div className="scrv-scene">
+          <h4>Questions</h4>
+          <ol>{b.questions.map((q, i) => <li key={i}><p className="scrv-say">{q.q}</p>{q.a && <p className="scrv-see"><span>After</span> {q.a}</p>}</li>)}</ol>
+        </div>
+      )}
+      {b.cta && <div className="scrv-block"><span>Closing line</span><p>{b.cta}</p></div>}
+      {b.broll.length > 0 && <div className="scrv-block"><span>B-roll</span><ul>{b.broll.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+      {b.needs.length > 0 && <div className="scrv-block"><span>What to have ready</span><ul>{b.needs.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+      {b.notes && <div className="scrv-block"><span>Notes for the day</span><p>{b.notes}</p></div>}
+    </div>
+  );
+}
+
+// The client's card (2026-11-18, Brandon: "allow them to see the cards made
+// and only input their two cents on revisions. Then I okay them and make the
+// revisions"). They read the card and say what they would change. Each of
+// their notes shows where it stands: waiting, or Brandon said OK.
+function ScriptClient({ script, day, who, onChange, onClose, onError, onSay }) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const thread = Array.isArray(script.thread) ? script.thread : [];
+  const cur = versionOf(script.body);
+  async function send(e) {
+    e.preventDefault();
+    if (!note.trim()) return;
+    setBusy(true);
+    try { const r = await api({ action: "script-note", dayId: day.id, scriptId: script.id, text: note }); onChange({ ...script, thread: r.thread }); setNote(""); onSay("Sent to Brandon"); } catch (err) { onError(err); } finally { setBusy(false); }
+  }
+  return (
+    <div className="scr scr-readonly">
+      <p className="scrv-top"><strong className="scrv-v">{vLabel(cur)}</strong> {STATUS_LABEL[script.status]} · Only Brandon changes the card. Tell him below what you would change.</p>
+      <ScriptBody body={script.body} />
+      <section className="scr-thread scr-revise" id={"notes-" + script.id}>
+        <h3>What would you change?</h3>
+        {thread.length === 0 && <p className="gcard-meta">Nothing yet. If the card is right, you do not need to write anything.</p>}
+        <ul>
+          {thread.map((t, i) => (
+            <li key={i} className={"scr-msg is-" + t.who}><strong>{who(t.who)}</strong> <em>{when(t.at)}{t.v ? ` · about ${vLabel(t.v)}` : ""}</em><p>{t.text}</p>
+              {t.who === "client" && <small className={"scr-ok" + (t.ok ? "" : " is-waiting")}>{t.ok ? `✓ Brandon said OK${t.ok_v ? `. The change goes in ${vLabel(t.ok_v)}` : ""}` : "Waiting for Brandon"}</small>}
+            </li>
+          ))}
+        </ul>
+        <form onSubmit={send} className="scr-msgform">
+          <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Say what you would change on this card. A line, a word, the order, anything." maxLength={2000} />
+          <button type="submit" className="abtn" disabled={busy || !note.trim()}>{busy ? "Sending…" : "Send to Brandon"}</button>
+        </form>
+      </section>
+      <div className="gcard-actions scr-foot"><button type="button" className="abtn scr-close" onClick={onClose}>Close ▲</button></div>
     </div>
   );
 }
@@ -783,7 +908,7 @@ function SendBox({ day, emailReady, busy, onGo, onCancel }) {
 // ▶ Film mode: one script at a time, phone-sized. The hook and the Say lines
 // big enough to read from across a counter; tick each step as it's in the
 // can; "Filmed → next" moves on. Ticks save, so the other person sees them.
-function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, reminders = [], tips = null }) {
+function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, reminders = [], tips = null, readOnly = false }) {
   const s = order[index];
   const b = cleanBody(s.body);
   const prog = progressOf(s.kind, b);
@@ -824,7 +949,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
             <ol className="film-steps">
               {sc.lines.map((l, li) => (
                 <li key={li} className={"film-step" + (l.done ? " is-done" : "")}>
-                  <button type="button" className="film-tick" aria-pressed={Boolean(l.done)} onClick={() => onTick(s, { scene: si, line: li }, !l.done)}>{l.done ? "✓" : li + 1}</button>
+                  <button type="button" className="film-tick" aria-pressed={Boolean(l.done)} disabled={readOnly} onClick={() => onTick(s, { scene: si, line: li }, !l.done)}>{l.done ? "✓" : li + 1}</button>
                   <div className="film-stepbody">
                     {l.say && <p className="film-say">{l.say}</p>}
                     {l.see && <p className="film-shot"><span>{SEE_LABEL[l.tag] || "Seen"}</span>{l.see}{l.secs ? ` · ${l.secs}s` : ""}</p>}
@@ -839,7 +964,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
           <ol className="film-steps">
             {b.questions.map((q, qi) => (
               <li key={qi} className={"film-step" + (q.done ? " is-done" : "")}>
-                <button type="button" className="film-tick" aria-pressed={Boolean(q.done)} onClick={() => onTick(s, { question: qi }, !q.done)}>{q.done ? "✓" : qi + 1}</button>
+                <button type="button" className="film-tick" aria-pressed={Boolean(q.done)} disabled={readOnly} onClick={() => onTick(s, { question: qi }, !q.done)}>{q.done ? "✓" : qi + 1}</button>
                 <div className="film-stepbody">
                   <p className="film-say">{q.q}</p>
                   {q.a && <p className="film-do"><span>After</span>{q.a}</p>}
@@ -852,7 +977,7 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
         {!isCard(s.kind) && <ol className="film-steps">
           {b.steps.map((st, i) => (
             <li key={i} className={"film-step" + (st.done ? " is-done" : "")}>
-              <button type="button" className="film-tick" aria-pressed={Boolean(st.done)} onClick={() => onTick(s, i, !st.done)}>{st.done ? "✓" : i + 1}</button>
+              <button type="button" className="film-tick" aria-pressed={Boolean(st.done)} disabled={readOnly} onClick={() => onTick(s, i, !st.done)}>{st.done ? "✓" : i + 1}</button>
               <div className="film-stepbody">
                 {st.say && <p className="film-say">{st.say}</p>}
                 {st.do && <p className="film-do"><span>Do</span>{st.do}</p>}
@@ -867,7 +992,8 @@ function FilmMode({ order, index, who, onJump, onClose, onTick, onStatus, remind
         {b.notes && <p className="film-notes">{b.notes}</p>}
       </div>
       <div className="film-foot">
-        {s.status === "filmed" || s.status === "delivered" ? (
+        {readOnly ? (next !== null ? <button type="button" className="abtn" onClick={() => onJump(next)}>Next →</button> : <button type="button" className="abtn" onClick={onClose}>Done</button>)
+        : s.status === "filmed" || s.status === "delivered" ? (
           <button type="button" className="achip" onClick={() => onStatus(s, "ready")}>Un-mark filmed</button>
         ) : (
           <button type="button" className="abtn" onClick={async () => { await onStatus(s, "filmed"); if (next !== null) onJump(next); }}>{next !== null ? "Filmed → next" : "Filmed ✓"}</button>

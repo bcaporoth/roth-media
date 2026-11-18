@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabase-admin";
 import { whoAmI, canOpen, loadDay, draftScript, outlineDay, draftDay, planItemsFor, sendDayEmail, aiConfigured } from "../../../lib/scripts-server";
-import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart, scriptFromTemplate } from "../../../lib/scripts";
+import { cleanScriptPatch, cleanDayPatch, cleanBody, cleanStep, cleanLine, isUuid, KIND_LABEL, STATUS_LABEL, STYLE_LABEL, toTchart, scriptFromTemplate, versionOp, versionOf, historyOf, withoutHistory } from "../../../lib/scripts";
 import { seedChecklist, checklistFromPlaybook } from "../../../lib/shoot-guides";
 import { standInEmail } from "../../../lib/no-email";
 import { loadPlaybook } from "../../../lib/playbook";
@@ -233,6 +233,14 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, ...r });
     }
 
+    // 2026-11-18, Brandon: "too much freedom for the clients for now. Allow
+    // them to see the cards and only input their two cents on revisions."
+    // A client may load the day, edit the talking points and post a note on a
+    // card. Everything that changes a card is Brandon's.
+    if (me.role !== "brandon" && ["script-add", "script-save", "script-delete", "script-order", "script-duplicate", "script-status", "script-tick"].includes(body.action)) {
+      return bad("Only Brandon changes the cards. Leave him a note on the card and he makes the change.", 403);
+    }
+
     if (body.action === "script-add") {
       const kind = KIND_LABEL[body.kind] ? body.kind : "tchart";
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
@@ -299,7 +307,7 @@ export async function POST(request) {
     if (body.action === "script-duplicate") {
       if (!script) return bad("Script not found", 404);
       const position = day.scripts.reduce((n, s) => Math.max(n, s.position + 1), 0);
-      const b = cleanBody(script.body); b.steps = b.steps.map((st) => ({ ...st, done: false }));
+      const b = withoutHistory(script.body); b.steps = b.steps.map((st) => ({ ...st, done: false }));
       b.scenes = b.scenes.map((sc) => ({ ...sc, lines: sc.lines.map((l) => cleanLine({ ...l, done: false })) }));
       b.questions = b.questions.map((q) => ({ ...q, done: false }));
       const { data, error } = await db.from("scripts").insert({ day_id: day.id, client_id: day.client_id, position, kind: script.kind, title: `${script.title || KIND_LABEL[script.kind]} (copy)`.slice(0, 140), status: "draft", minutes: script.minutes, body: b, created_by: me.role, updated_by: me.role }).select("*").single();
@@ -313,6 +321,8 @@ export async function POST(request) {
       if (Number(body.rev) !== script.rev) return NextResponse.json({ error: "stale", script }, { status: 409 });
       const patch = cleanScriptPatch(body.patch || {});
       if (!Object.keys(patch).length) return bad("Nothing to save");
+      // The editor never changes the saved versions: keep what the server has.
+      if (patch.body) patch.body = { ...withoutHistory(patch.body), ...(historyOf(script.body).length ? { history: cleanBody(script.body).history } : {}) };
       const { data, error } = await db.from("scripts").update({ ...patch, rev: script.rev + 1, updated_by: me.role, updated_at: now() }).eq("id", script.id).eq("rev", script.rev).select("*").maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) { const fresh = (await loadDay(db, day.id)).scripts.find((s) => s.id === script.id); return NextResponse.json({ error: "stale", script: fresh }, { status: 409 }); }
@@ -341,10 +351,33 @@ export async function POST(request) {
     if (body.action === "script-note") {
       const text = clip(body.text, 2000).trim();
       if (!text) return bad("Write something first");
-      const thread = [...(Array.isArray(script.thread) ? script.thread : []), { who: me.role, text, at: now() }].slice(-200);
+      // Each note remembers which version it was written about.
+      const thread = [...(Array.isArray(script.thread) ? script.thread : []), { who: me.role, text, at: now(), v: versionOf(script.body) }].slice(-200);
       const { error } = await db.from("scripts").update({ thread, updated_at: now() }).eq("id", script.id);
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, thread });
+    }
+
+    // Versions. All three are Brandon's.
+    //   note-ok          he okays a client's note. If no new version was started
+    //                    since that note, the card as it is gets kept (say v01)
+    //                    and he is now working on the next one (v02).
+    //   version-new      keep the card as it is and start the next version.
+    //   version-restore  keep the card as it is, then bring an older version
+    //                    back as the newest. Nothing is ever thrown away.
+    if (["note-ok", "version-new", "version-restore"].includes(body.action)) {
+      if (me.role !== "brandon") return bad("Not authorized", 403);
+      if (!script) return bad("Script not found", 404);
+      if (body.rev !== undefined && Number(body.rev) !== script.rev) return NextResponse.json({ error: "stale", script }, { status: 409 });
+      const at = now();
+      const op = versionOp(script, body.action, { index: body.index, v: body.v }, at);
+      if (op.error) return bad(op.error, op.code || 400);
+      if (op.same) return NextResponse.json({ ok: true, script });
+      const { up, thread, kept, cur } = op;
+      const { data, error } = await db.from("scripts").update({ ...up, thread: thread.slice(-200) }).eq("id", script.id).eq("rev", script.rev).select("*").maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) return NextResponse.json({ error: "stale", script }, { status: 409 });
+      return NextResponse.json({ ok: true, script: data, kept, now: kept ? kept + 1 : cur });
     }
 
     if (body.action === "script-draft") {
@@ -358,7 +391,8 @@ export async function POST(request) {
       });
       // T-chart: Claude writes it as steps, laid out here as said | seen lines;
       // the style and any interview questions they already had are kept.
-      const next = isT ? { ...toTchart(style, drafted), style: cur.style || style, questions: cur.questions } : cleanBody(drafted);
+      const drafted2 = isT ? { ...toTchart(style, drafted), style: cur.style || style, questions: cur.questions } : cleanBody(drafted);
+      const next = { ...withoutHistory(drafted2), ...(cur.history ? { history: cur.history } : {}) }; // Claude's rewrite keeps the saved versions
       const { data, error } = await db.from("scripts").update({ title: title || script.title, body: next, rev: script.rev + 1, updated_by: "brandon", updated_at: now() }).eq("id", script.id).select("*").single();
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true, script: data });

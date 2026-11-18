@@ -35,7 +35,7 @@ export default async function CalendarPage() {
   const nav = <PortalNav email={user.email} isAdmin={email === ADMIN_EMAIL} active="calendar" brand={hasBrand} />;
   return (
     <PortalFrame nav={nav} className="pt-brief pt-calendar mx-page">
-      <PortalTop who={who} page="Your calendar" lede={<>Drop in anything happening at the business — a sale, a launch, an event, a busy week, a slow one. I plan the content around it and reach out ahead of the dates that matter. Tap a day, add a line. That&apos;s it.</>} />
+      <PortalTop who={who} page="Your calendar" lede={<>Tap a day you can film. Tell Brandon what time you are free and what you would like to film. He sees it right away.</>} />
       <section className="cx-section cx-section--tight">
         <div className="cx-wrap pt-ccal-wrap">
           {!client ? <p className="inbox-hint">Your account isn&apos;t linked to a client profile yet — text Brandon at 845-549-4425 and he&apos;ll switch it on.</p> : <ClientCalendar mode="client" clientId={client.id} clientName={client.name || ""} days={days} />}

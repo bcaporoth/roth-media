@@ -102,6 +102,7 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
   const [day, setDay] = useState(() => ymd(new Date()));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [sent, setSent] = useState(""); // the day a client just suggested
   const today = ymd(new Date());
 
   useEffect(() => {
@@ -147,9 +148,18 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
     const d = Object.fromEntries(new FormData(e.currentTarget).entries());
     setBusy(true); setErr("");
     try {
-      const j = await api({ op: "add", client_id: clientId, date: day, title: d.title, time: d.time, note: d.note, repeat: d.repeat || "", wants: Boolean(d.wants) });
+      // 2026-11-18, Brandon: "the client should only be able to suggest a day
+      // they can shoot. I can see when they're free and when they'd like to
+      // film and what." So a client's entry is always a shoot suggestion: the
+      // hours they are free go in front of the note, and it emails Brandon.
+      const hours = d.from && d.to ? `Free ${fmt12(d.from)} to ${fmt12(d.to)}` : d.from ? `Free from ${fmt12(d.from)}` : d.to ? `Free until ${fmt12(d.to)}` : "";
+      const payload = studio
+        ? { title: d.title, time: d.time, note: d.note, repeat: d.repeat || "", wants: false }
+        : { title: d.title, time: d.from || "", note: [hours, d.note].filter(Boolean).join(". "), repeat: "", wants: true };
+      const j = await api({ op: "add", client_id: clientId, date: day, ...payload });
       setEvents((xs) => [...xs, ...expandEvents([j.event])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
       e.target.reset();
+      if (!studio) setSent(day);
     } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
   // Reschedule (2026-11-08): pick a new date (and time). A repeating event asks
@@ -220,26 +230,25 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         ) : <div key={`b${i}`} className="scal-cell is-blank" />)}
       </div>
 
-      {free.length > 0 && <p className="inbox-hint ccal-freekey"><span className="scal-free">✓ Free</span> {studio ? "Days you marked free. They see these and can ask for one." : "Green days are the days Brandon is free to shoot. Tap one to ask for it."}</p>}
+      {free.length > 0 && <p className="inbox-hint ccal-freekey"><span className="scal-free">✓ Free</span> {studio ? "Days you marked free. They see these and can ask for one." : "Green days are the days Brandon is free to shoot. Tap one to suggest it."}</p>}
 
       <div className="ccal-day">
         <h4>{longDay(day)}</h4>
         {free.includes(day) && <p className="ccal-freenote">{studio ? `You marked this day free${freeHours(day) ? `, ${freeHours(day)}` : ""}. They can ask for it.` : `Brandon is free this day${freeHours(day) ? `, ${freeHours(day)}` : ""}.`}{busyText(day) ? ` Not free: ${busyText(day)}.` : ""}</p>}
-        {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing here yet — add what's happening below."}</p> : (
+        {dayEvents.length === 0 ? <p className="inbox-hint">{studio ? "Nothing on their calendar this day." : "Nothing on this day yet."}</p> : (
           <ul className="ccal-list">
             {dayEvents.map((e) => (
               <li key={e.id}>
                 <div>
                   <strong>{e.wants_shoot ? "🔥 " : ""}{e.title}</strong>{e.time ? <span className="ccal-time"> · {fmt12(e.time)}</span> : null}{e.repeat ? <span className="ccal-time"> · every {e.repeat === "weekly" ? "week" : "month"}</span> : null}
                   {e.note ? <em>{e.note}</em> : null}
-                  <small>{e.source === "intake" ? "From their intake" : e.created_by === "studio" ? (studio ? "You added this" : "Added by Brandon") : (studio ? `${clientName.split(" ")[0] || "They"} added this` : "You added this")}{e.followup_at ? ` · follow-up on ${studio ? "your" : "Brandon's"} calendar ✓` : ""}</small>
+                  <small>{e.source === "intake" ? "From their intake" : e.created_by === "studio" ? (studio ? "You added this" : "Added by Brandon") : (studio ? `${clientName.split(" ")[0] || "They"} ${e.wants_shoot ? "suggested this day for a shoot" : "added this"}` : e.wants_shoot ? "You suggested this day for a shoot" : "You added this")}{e.followup_at ? ` · follow-up on ${studio ? "your" : "Brandon's"} calendar ✓` : ""}</small>
                   {studio && <IdeaBox ev={e} clientId={clientId} onSaved={(ev) => setEvents((xs) => xs.map((x) => ((x.base_id || x.id) === (ev.base_id || ev.id) ? { ...x, idea: ev.idea } : x)))} />}
                   {!studio && e.idea && <p className="ccal-idea-view"><strong>Brandon&rsquo;s idea:</strong> {e.idea}</p>}
                 </div>
                 <span className="ccal-acts">
-                  {!studio && <button type="button" className={"achip" + (e.wants_shoot ? " is-on" : "")} onClick={() => wants(e, !e.wants_shoot)}>{e.wants_shoot ? "Asked Brandon to film this ✓" : "Ask Brandon to film this"}</button>}
                   {studio && e.wants_shoot && <span className="achip is-on">🔥 They want content for this</span>}
-                  {days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
+                  {studio && days !== null && <button type="button" className="achip" disabled={starting} onClick={() => startDay(e.title)}>🎬 Make this a shoot day</button>}
                   {studio && <button type="button" className="abtn" onClick={() => followup(e)}>{e.followup_at ? "Follow up again →" : "Follow up on this →"}</button>}
                   {(studio || e.created_by === "client") && <button type="button" className={"achip" + (moving?.key === e.id ? " is-on" : "")} onClick={() => (moving?.key === e.id ? setMoving(null) : startMove(e))}>Move</button>}
                   {(studio || e.created_by === "client") && <button type="button" className={"achip achip-danger" + (armed === (e.base_id || e.id) ? " is-armed" : "")} onClick={() => remove(e)}>{armed === (e.base_id || e.id) ? (e.repeat ? `Tap again: removes every ${e.repeat === "monthly" ? "month" : "week"}` : "Tap again to remove") : "Remove"}</button>}
@@ -251,10 +260,9 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
         )}
         {studio && dayEvents.length === 0 && <p><button type="button" className="abtn abtn-ghost" onClick={() => followup(null)}>Follow up with {clientName.split(" ")[0] || "them"} this day →</button></p>}
 
-        <p className="ccal-opt"><span className="ccal-optn">1</span> <strong>{studio ? "Put something on their calendar" : "Put something on your calendar"}</strong></p>
-        <p className="inbox-hint ccal-opt-hint">{studio
-          ? "Something happening at their business, or a reminder for you. It doesn't book a shoot."
-          : "Something happening at your business: a sale, a launch, an event, a busy week. Brandon sees it and plans content around it. It doesn't book a shoot."}</p>
+        {studio ? (<>
+        <p className="ccal-opt"><span className="ccal-optn">1</span> <strong>Put something on their calendar</strong></p>
+        <p className="inbox-hint ccal-opt-hint">Something happening at their business, or a reminder for you. It doesn&apos;t book a shoot.</p>
         <form className="ccal-add" onSubmit={add}>
           <label className="grow"><span>What&rsquo;s happening?</span><input name="title" required placeholder={studio ? "Content Day · Shoot the new menu" : "Spring sale starts · New class launches · Anniversary week"} /></label>
           <label><span>Time <small>optional</small></span><input name="time" type="time" /></label>
@@ -264,9 +272,22 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
           <button type="submit" className="abtn" disabled={busy}>{busy ? "Adding…" : `Put it on ${longDay(day).split(",")[0]}`}</button>
           {err && <p className="cform-error">{err}</p>}
         </form>
+        </>) : day < today ? <p className="inbox-hint">This day has passed. Pick today or a later day to suggest it.</p> : (<>
+        <p className="ccal-opt"><strong>Suggest this day for a shoot</strong></p>
+        <p className="inbox-hint ccal-opt-hint">Tell Brandon what time you are free and what you would like to film. He sees it right away. The day is not booked until Brandon says yes.</p>
+        <form className="ccal-add ccal-suggest" onSubmit={add}>
+          <label><span>Free from <small>optional</small></span><input name="from" type="time" /></label>
+          <label><span>Free until <small>optional</small></span><input name="to" type="time" /></label>
+          <label className="wide"><span>What would you like to film?</span><input name="title" required maxLength={120} placeholder="The new menu · A class in action · A tour of the shop" /></label>
+          <label className="wide"><span>Anything else Brandon should know? <small>optional</small></span><input name="note" placeholder="Who will be there, what matters most" /></label>
+          <button type="submit" className="abtn" disabled={busy}>{busy ? "Sending…" : `Suggest ${longDay(day).split(",").slice(0, 2).join(",")}`}</button>
+          {sent === day && !busy && <p className="ccal-sent" role="status">Sent. Brandon can see it now.</p>}
+          {err && <p className="cform-error">{err}</p>}
+        </form>
+        </>)}
         {days !== null && (
           <div className="ccal-shoot">
-            <p className="ccal-opt"><span className="ccal-optn">2</span> <strong>A shoot day, with scripts</strong></p>
+            {(studio || (shootByDay[day] || []).length > 0) && <p className="ccal-opt">{studio && <span className="ccal-optn">2</span>} <strong>{studio ? "A shoot day, with scripts" : "Your shoot day"}</strong></p>}
             {(shootByDay[day] || []).map((d) => (
               <div key={d.id} className="ccal-shoot-wrap">
                 <a className="ccal-shoot-row" href={dayHref(d.id)}>
@@ -278,10 +299,10 @@ export default function ClientCalendar({ mode = "client", clientId = "", clientN
                   : <button type="button" className="achip ccal-daymove" onClick={() => startDayMove(d)}>Move this shoot day</button>)}
               </div>
             ))}
-            <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
-              {starting ? "Starting…" : !studio && free.includes(day) ? `🎬 Ask for ${longDay(day).split(",").slice(0, 2).join(",")}` : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
-            </button>
-            {!(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">{studio ? "Opens the scripts page for that day. You and they write it together." : free.includes(day) ? "Brandon is free this day. Asking starts the day and its scripts page, and he gets a heads-up to confirm the time." : "Opens the scripts page for that day. You and Brandon write it together, and he gets a heads-up."}</p>}
+            {studio && <button type="button" className={(shootByDay[day] || []).length ? "achip" : "abtn ccal-start"} onClick={() => startDay()} disabled={starting}>
+              {starting ? "Starting…" : `🎬 Start a shoot day on ${longDay(day).split(",").slice(0, 2).join(",")}`}
+            </button>}
+            {studio && !(shootByDay[day] || []).length && <p className="inbox-hint ccal-start-hint">Opens the scripts page for that day. You and they write it together.</p>}
             {studio && day >= today && (marked.includes(day)
               ? <button type="button" className="achip is-on ccal-freetoggle" disabled={freeBusy} onClick={() => toggleFree(false)}>✓ You&rsquo;re marked free this day · take it off</button>
               : <button type="button" className="achip ccal-freetoggle" disabled={freeBusy} onClick={() => toggleFree(true)}>Mark me free this day (all clients see it)</button>)}
