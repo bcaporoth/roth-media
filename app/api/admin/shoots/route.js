@@ -6,6 +6,7 @@ import { GUIDES, GEAR_BASE, seedChecklist, GROUPS, checklistFromPlaybook } from 
 import { loadPlaybook } from "../../../../lib/playbook";
 import { computeDues, dueFromDate } from "../../../../lib/delivery";
 import { PLAYBOOK_IMG_RE, signItemPhotos } from "../../../../lib/r2";
+import { loadProjectColors, saveProjectColor } from "../../../../lib/project-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -118,8 +119,9 @@ export async function GET() {
   // Projects (the job above the dates), so a shoot can be filed under one from
   // a client's profile. Light list only; the project page loads the rest.
   const { data: projects } = await db.from("projects").select("id, title, status, client_id, client_email").order("created_at", { ascending: true }).then((r) => r, () => ({ data: [] }));
+  const { colors: pcolors } = await loadProjectColors(db).catch(() => ({ colors: {} }));
   return NextResponse.json({
-    projects: projects || [],
+    projects: (projects || []).map((p) => ({ ...p, color: pcolors[p.id] || "" })),
     shoots: await withPhotos(shoots, "checklist"),
     delivery: { ready: deliveryReady },
     days,
@@ -139,6 +141,12 @@ export async function POST(request) {
   const db = supabaseAdmin();
 
   try {
+    // A project's calendar color (lib/project-colors.js). "" takes it off.
+    if (body.action === "project-color") {
+      if (!body.id) return bad("Bad request");
+      const colors = await saveProjectColor(db, String(body.id), String(body.color || ""));
+      return NextResponse.json({ ok: true, colors });
+    }
     if (body.action === "create") {
       const row = clean(body);
       if (!row.title) return bad("Give the shoot a title");
@@ -212,6 +220,10 @@ export async function POST(request) {
       // client's calendar and the day page show the new date too.
       if (row.date !== undefined && cur && cur.date !== data.date) {
         try { await db.from("shoot_days").update({ date: data.date || null, updated_at: new Date().toISOString() }).eq("shoot_id", id); } catch {}
+      }
+      // Same for a new start time (dragged on the Week / Day calendar).
+      if (row.start_time !== undefined && cur && (cur.start_time || "") !== (data.start_time || "")) {
+        try { await db.from("shoot_days").update({ start_time: data.start_time || "", updated_at: new Date().toISOString() }).eq("shoot_id", id); } catch {}
       }
       return NextResponse.json({ shoot: { ...data, checklist: await signItemPhotos(data.checklist) } });
     }

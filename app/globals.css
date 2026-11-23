@@ -7367,7 +7367,9 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 .scal-busylabel input { flex: 1; min-width: 0; font: inherit; font-size: 0.95rem; color: inherit; min-height: 40px; padding: 0.3rem 0.7rem; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 10px; background: rgba(0, 0, 0, 0.3); }
 .admin-shell:not(.is-dark) .scal-busylabel input { border-color: var(--field-line); background: transparent; }
 .scal-busy { display: inline-block; justify-self: start; max-width: 100%; font-size: 0.64rem; line-height: 1.25; padding: 0.1rem 0.35rem; border-radius: 999px; border: 1px solid rgba(240, 138, 126, 0.6); color: #f0a79e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scal-busywhat { font-style: normal; opacity: 0.75; }
 @media (max-width: 640px) { .scal-busybtn { margin-left: 0; } .scal-busy { font-size: 0.5rem; padding: 0.05rem 0.2rem; } }
+@media (max-width: 900px) { .scal-busywhat { display: none; } }
 .scal-freehint { margin: 0 0 0.6rem; }
 .scal-freebox { margin: 0 0 0.9rem; padding: 0.8rem 0.9rem 0.3rem; border: 1px solid #4a7c59; border-radius: 14px; background: rgba(74, 124, 89, 0.1); }
 .scal-hours { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; margin: 0 0 0.6rem; }
@@ -7549,3 +7551,53 @@ a.terms-how:hover { color: var(--fg, #f4f4f2); }
 @media (prefers-reduced-motion: reduce) {
   :is(.pt-root, .admin-shell) :is(.achip, .abtn), .pt-root .cx-btn { transition: none; transform: none !important; }
 }
+
+/* Studio calendar: Week and Day views, an hour grid (components/StudioCalendar.js, 2026-11-17). */
+.scal-views { display: inline-flex; gap: 0.3rem; margin-left: 0.4rem; }
+.scal-numbtn { appearance: none; background: none; border: 0; padding: 0; margin: 0; font: inherit; font-size: 0.78rem; text-align: left; justify-self: start; cursor: pointer; border-radius: 6px; }
+.scal-numbtn:hover, .scal-numbtn:focus-visible { color: #fff; text-decoration: underline; }
+.scal-tg-hint { margin: 0 0 0.6rem; }
+.scal-tg-wrap { overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
+.scal-tg { display: grid; min-width: 100%; }
+.scal-tg-corner { position: sticky; left: 0; z-index: 3; background: #1f1f21; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.scal-tg-alllabel { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8f8b; padding: 0.4rem 0.3rem; text-align: right; }
+.scal-tg-day { appearance: none; font: inherit; color: #c9c9c5; background: none; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 0.55rem 0.4rem; cursor: pointer; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.scal-tg-day strong { font-size: 1rem; letter-spacing: 0; color: #f4f4f2; margin-left: 0.2rem; }
+.scal-tg-day:hover { background: rgba(255, 255, 255, 0.05); }
+.scal-tg-day.is-today strong { color: var(--clay); }
+.scal-tg-all { min-height: 2rem; display: grid; align-content: start; gap: 0.2rem; padding: 0.3rem; border-left: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.1); min-width: 0; }
+.scal-tg-all.is-drop { box-shadow: inset 0 0 0 2px var(--clay); background: rgba(196, 120, 74, 0.14); }
+.scal-tg-gutter { position: sticky; left: 0; z-index: 3; background: #1f1f21; }
+.scal-tg-gutter span { position: absolute; right: 0.35rem; transform: translateY(-50%); font-size: 0.62rem; color: #8f8f8b; white-space: nowrap; }
+.scal-tg-gutter span:first-child { transform: none; }
+.scal-tg-col { position: relative; min-width: 0; border-left: 1px solid rgba(255, 255, 255, 0.08); background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px); }
+.scal-tg-col.is-today { background-color: rgba(196, 120, 74, 0.06); }
+.scal-tg-free { position: absolute; left: 0; right: 0; background: rgba(74, 124, 89, 0.18); border-left: 3px solid #4a7c59; pointer-events: none; }
+.scal-tg-busy { position: absolute; left: 0; right: 0; overflow: hidden; background: repeating-linear-gradient(135deg, rgba(240, 138, 126, 0.2) 0 6px, rgba(240, 138, 126, 0.08) 6px 12px); border-left: 3px solid rgba(240, 138, 126, 0.8); pointer-events: none; }
+.scal-tg-busy span { display: block; padding: 0.1rem 0.3rem; font-size: 0.62rem; color: #f0a79e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scal-ev.scal-tg-ev { position: absolute; z-index: 2; white-space: normal; padding: 0.25rem 0.4rem; cursor: grab; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 6px rgba(0, 0, 0, 0.35); }
+.scal-tg-ev em { font-style: normal; opacity: 0.8; }
+.scal-tg-all .scal-ev { cursor: grab; }
+.scal-tg-drop { position: absolute; left: 0; right: 0; z-index: 4; border-top: 2px solid var(--clay); pointer-events: none; }
+.scal-tg-drop span { position: absolute; top: -0.6rem; left: 0.3rem; font-size: 0.62rem; line-height: 1; padding: 0.15rem 0.35rem; border-radius: 999px; background: var(--clay); color: #fff; white-space: nowrap; }
+@media (max-width: 640px) {
+  .scal-views { margin-left: 0; }
+  .scal-tg.is-week { min-width: 44rem; }
+}
+
+/* Project colors + the calendar key (lib/project-colors.js, 2026-11-17). */
+.pcolor { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.pcolor-dot { appearance: none; width: 1.35rem; height: 1.35rem; padding: 0; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 5px rgba(0, 0, 0, 0.4); }
+.pcolor-dot:hover { transform: translateY(-1px); }
+.pcolor-dot.is-on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 2px 5px rgba(0, 0, 0, 0.4); }
+.shoot-projtools { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.scal-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem 1rem; margin: -0.6rem 0 1.5rem; padding: 0.7rem 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; font-size: 0.78rem; color: #c9c9c5; background-image: linear-gradient(rgba(255, 255, 255, 0.05), transparent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.3); }
+.scal-legend > strong { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8f8f8b; }
+.scal-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.scal-key > i { display: inline-block; width: 0.85rem; height: 0.85rem; padding: 0; border-radius: 4px; flex: none; }
+.scal-keyfree { background: rgba(74, 124, 89, 0.45); border: 1px solid #4a7c59; }
+.scal-keybusy { background: repeating-linear-gradient(135deg, rgba(240, 138, 126, 0.55) 0 3px, rgba(240, 138, 126, 0.15) 3px 6px); border: 1px solid rgba(240, 138, 126, 0.8); }
+.scal-keysep { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8f8f8b; padding-left: 0.6rem; border-left: 1px solid rgba(255, 255, 255, 0.14); }
+.scal-keyproj .achip { display: inline-flex; align-items: center; gap: 0.4rem; }
+.scal-keydot { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 999px; border: 1px dashed rgba(255, 255, 255, 0.45); }
+.scal-keydot[style] { border: 0; }

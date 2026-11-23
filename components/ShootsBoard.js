@@ -47,6 +47,7 @@ async function api(payload, { keepalive = false } = {}) {
 
 import { SHOOT_KIND_LABEL as KIND_LABEL, SHOOT_STATUS_LABEL as STATUS_LABEL } from "../lib/studio-labels";
 import { confirmTap } from "../lib/confirm-tap";
+import ProjectColorDots from "./ProjectColorDots";
 const fmtDate = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "No date yet");
 // "Made Nov 10, 2026": when the shoot (or its day) was first created, in New York time.
 const fmtMade = (ts) => (ts ? `Made ${new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" })}` : "");
@@ -282,7 +283,7 @@ export default function ShootsBoard() {
 
       {showNew && <NewShoot prefill={prefill} leads={data.leads} clients={data.clients || []} guides={data.guides} busy={busy} onCreate={create} />}
 
-      {view === "month" && <StudioCalendar shoots={shoots} onOpen={reveal} onMoved={sh.patch} />}
+      {view === "month" && <StudioCalendar shoots={shoots} projects={data.projects} onOpen={reveal} onMoved={sh.patch} />}
 
       {view === "owed" && <OwedPanel shoots={shoots} clock={clock} onOpen={reveal} onBulk={deliverBulk} full />}
 
@@ -463,7 +464,16 @@ export function ClientShoots({ client, type = "wedding", brief = null, days = []
           <div key={p.id} className="shoot-proj">
             <div className="shoot-projhead">
               <span className="shoot-projname"><strong>📁 {p.title}</strong><em>{list.length} shoot{list.length === 1 ? "" : "s"} · {span(list)}</em></span>
-              <a className="achip" href={`/portal/admin/projects/${p.id}`}>Open project ↗</a>
+              <span className="shoot-projtools">
+                <ProjectColorDots value={p.color || ""} name={p.title} onPick={async (color) => {
+                  try {
+                    const res = await fetch("/api/admin/shoots", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "project-color", id: p.id, color }) });
+                    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't save the color");
+                    await refresh(); sh.say(color ? "Color saved. This project's shoots wear it on your calendar." : "Color taken off.");
+                  } catch (e) { sh.say(e.message); }
+                }} />
+                <a className="achip" href={`/portal/admin/projects/${p.id}`}>Open project ↗</a>
+              </span>
             </div>
             {list.length ? <ul className="shoot-list">{list.map(row)}</ul> : <p className="gcard-meta shoot-projempty">Nothing filed here yet. Pick “{p.title}” in the Project box on a shoot below.</p>}
           </div>
