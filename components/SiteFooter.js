@@ -35,7 +35,7 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
           <p className="cx-credits-big">{headline}</p>
           {BIZ_REVIEW && <p className="cx-credits-say">“{BIZ_REVIEW.quote}” — {BIZ_REVIEW.name}, Google review</p>}
           <ul className="cx-enddoors">
-            <li><Link href="/quote?for=business"><span>Your business <small>custom quote</small></span><b>Get my quote <Arrow /></b></Link></li>
+            <li><Link href="/#plans"><span>Monthly plans <small>from $300/mo</small></span><b>See the plans <Arrow /></b></Link></li>
             <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Not sure yet? <small>15 minutes</small></span><b>Book a call <Arrow /></b></a></li>
             <li><Link href="/personal"><span>Personal <small>weddings &amp; portraits</small></span><b>See personal <Arrow /></b></Link></li>
           </ul>

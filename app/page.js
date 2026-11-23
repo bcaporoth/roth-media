@@ -1,6 +1,7 @@
 // The homepage — "Cinema". A film-first, dark page: letterboxed opening shot,
 // chapters you scrub through. Business-only since 2026-11-23 (Brandon):
-// content that converts, ads run for the owner, events. Weddings and
+// monthly social media management in three tiers (lib/plans.js), ads run
+// for the owner, single projects and events by custom quote. Weddings and
 // portraits live under /personal. The previous homepage lives at /classic.
 import Link from "next/link";
 import "./home.css";
@@ -13,6 +14,7 @@ import { REVIEWS, GOOGLE_RATING } from "../lib/reviews";
 import { videoUrl } from "../lib/media";
 import { businessLd } from "../lib/schema";
 import { CITIES } from "../lib/cities";
+import { PLANS, PLAN_RULES } from "../lib/plans";
 
 export const metadata = {
   alternates: { canonical: "/" },
@@ -21,7 +23,7 @@ export const metadata = {
 const JSON_LD = businessLd({
   url: "https://rothmediaco.com",
   description:
-    "Video, photos and ads for local businesses, based in Waverly, NY. Content shot at your place and made to sell, plus Facebook and Instagram ads run for you, and event coverage, across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Every job is a custom quote with three options.",
+    "Social media management for local businesses, based in Waverly, NY: monthly plans from $300 a month. Videos and photos shot at your place and made to sell, posted for you, plus Facebook and Instagram ads run for you, and event coverage, across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Single projects are a custom quote with three options.",
 });
 
 export const revalidate = 3600;
@@ -38,10 +40,13 @@ const QUOTE_STEPS = [
   { n: "03", title: "Pick one, sign, pay", say: "All on one page. Paid in full, delivered within two weeks." },
 ];
 
+const PLAN_FROM = Math.min(...PLANS.map((p) => p.price));
+const planHref = (id) => `${BIZ_QUOTE}&plan=${id}`;
+
 const DOORS = [
-  { n: "01", id: "business", name: "Content", sub: "Videos & photos made to sell, shot at your place", label: "Custom quote", cta: "Get my quote", href: BIZ_QUOTE, primary: true, jump: "See the work" },
-  { n: "02", id: "ads", name: "Ads", sub: "Facebook & Instagram, run for you, aimed at people nearby", label: "Add to any quote", cta: "Ask about ads", href: BIZ_QUOTE, jump: "How ads work" },
-  { n: "03", id: "events", name: "Events", sub: "Openings, fundraisers, company events", label: "Custom quote", cta: "Quote my event", href: BIZ_QUOTE, jump: "Event coverage" },
+  { n: "01", id: "plans", name: "Monthly plans", sub: "I film, edit and post for you, every month", label: `from $${PLAN_FROM}/mo`, cta: "See the plans", href: "#plans", primary: true, jump: "What's in each" },
+  { n: "02", id: "ads", name: "Ads", sub: "Facebook & Instagram, run for you, aimed at people nearby", label: "Tier 2 and 3", cta: "See the plans", href: "#plans", jump: "How ads work" },
+  { n: "03", id: "events", name: "Projects", sub: "Events and one-off videos, quoted to fit", label: "Custom quote", cta: "Get a quote", href: BIZ_QUOTE, jump: "Events & projects" },
 ];
 
 // One review where it sells, not a chapter of them.
@@ -49,10 +54,11 @@ const BIZ_REVIEW = REVIEWS.find((r) => /business|promo|content/i.test(r.who)) ||
 
 const CHAPTERS = [
   { id: "top", label: "Opening" },
+  { id: "plans", label: "Plans" },
   { id: "business", label: "Content" },
   { id: "ads", label: "Ads" },
-  { id: "events", label: "Events" },
-  { id: "quote", label: "Your quote" },
+  { id: "events", label: "Projects" },
+  { id: "quote", label: "One project" },
   { id: "about", label: "Brandon" },
 ];
 
@@ -148,14 +154,14 @@ export default function CinemaHome() {
           <a href={PHONE_HREF} className="cin-nav-phone">{PHONE}</a>
           <Link href="/portal" className="cin-nav-login">Client login</Link>
         </nav>
-        <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-nav-quote">Get a quote</Link>
+        <a href="#plans" className="cin-btn cin-btn--light cin-nav-quote">See plans</a>
         <details className="cin-menu">
           <summary aria-label="Menu"><span aria-hidden="true" /><span aria-hidden="true" /></summary>
           <nav className="cin-menu-panel" aria-label="Menu">
-            <Link href="/business">Business <em>custom quote</em></Link>
-            <Link href={BIZ_QUOTE}>Get a quote <em>4 quick questions</em></Link>
+            <a href="#plans">Monthly plans <em>from ${PLAN_FROM}/mo</em></a>
+            <Link href="/business">Business <em>more about the work</em></Link>
+            <Link href={BIZ_QUOTE}>One project <em>custom quote</em></Link>
             <a href="#ads">Ads <em>run for you</em></a>
-            <a href="#events">Events <em>custom quote</em></a>
             <Link href="/personal">Personal <em>weddings &amp; portraits</em></Link>
             <a href={SMS_HREF}>Text Brandon <em>{PHONE}</em></a>
             <a href={PHONE_HREF}>Call <em>{PHONE}</em></a>
@@ -185,19 +191,19 @@ export default function CinemaHome() {
 
           <div className="cin-hero-grid">
           <div className="cin-hero-title">
-            <p className="cin-kick">Content + ads for local businesses · Twin Tiers</p>
+            <p className="cin-kick">Social media management for local businesses · Twin Tiers</p>
             <h1>
               <span className="cin-mask"><span>Content that converts.</span></span>
               <span className="cin-mask"><span>Not just views.</span></span>
             </h1>
             <p className="cin-hero-pitch">
               <strong>More reach, more engagement, and most of all, more sales.</strong>{" "}
-              I come to your place and film you doing what you already do. I make
-              the videos and photos, and I run your ads so people nearby actually
-              see them. You never touch a camera.
+              Every month I come to your place and film you doing what you already
+              do. I make the videos and photos, post them for you, and run your ads
+              so people nearby actually see them. You never touch a camera.
             </p>
             <div className="cin-hero-cta">
-              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Get my quote <Arrow /></Link>
+              <a href="#plans" className="cin-btn cin-btn--light cin-btn--lg">See the plans <Arrow /></a>
               <a href={CALENDLY} target="_blank" rel="noopener noreferrer" className="cin-btn cin-btn--ghost cin-btn--lg">Book a 15-min call</a>
             </div>
             <p className="cin-hero-where">
@@ -205,28 +211,28 @@ export default function CinemaHome() {
               <strong>Twin Tiers &amp; Finger Lakes</strong>.
             </p>
           </div>
-          {/* How a quote works, right in the opening — each step opens the business quote form */}
+          {/* The three monthly plans, right in the opening — each one opens the form with that plan picked */}
           <div className="cin-hero-offer">
             {/* The ad — the same 30 seconds people see on Facebook, so the page picks up where the ad left off. */}
             <div className="cin-hero-ad cin-rise">
               <video src="/reels/roth-ad.mp4" poster="/reels/roth-ad-poster.jpg" autoPlay muted loop playsInline controls preload="metadata" aria-label="Brandon, 30 seconds: one shoot, a month of posts" />
               <span className="cin-hero-ad-tag">30 sec · tap for sound</span>
             </div>
-            <p className="cin-lead-kick">How a quote works</p>
+            <p className="cin-lead-kick">Monthly plans · intro prices</p>
             <ul className="cin-hero-planlist">
-              {QUOTE_STEPS.map((st) => (
-                <li key={st.n}>
-                  <Link href={BIZ_QUOTE} className={st.n === "01" ? "cin-plan is-popular" : "cin-plan"}>
+              {PLANS.map((p) => (
+                <li key={p.id}>
+                  <Link href={planHref(p.id)} className={p.popular ? "cin-plan is-popular" : "cin-plan"}>
                     <span className="cin-plan-what">
-                      <strong>{st.title}</strong>
-                      <span>{st.say}</span>
+                      <strong>{p.name}</strong>
+                      <span>{p.short}</span>
                     </span>
-                    <span className="cin-plan-price">{st.n}</span>
+                    <span className="cin-plan-price">${p.price}<small>/mo</small></span>
                   </Link>
                 </li>
               ))}
             </ul>
-            <a href="#business" className="cin-link cin-hero-seework">See the work first <ArrowDown /></a>
+            <a href="#plans" className="cin-link cin-hero-seework">See what&apos;s in each <ArrowDown /></a>
           </div>
           </div>
 
@@ -242,10 +248,52 @@ export default function CinemaHome() {
                   <span className="cin-door-price"><small>{d.label}</small></span>
                   <span className="cin-door-jump">{d.jump} <ArrowDown /></span>
                 </a>
-                <Link href={d.href} className="cin-door-cta">{d.cta} <Arrow /></Link>
+                {d.href.startsWith("#") ? <a href={d.href} className="cin-door-cta">{d.cta} <Arrow /></a> : <Link href={d.href} className="cin-door-cta">{d.cta} <Arrow /></Link>}
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* ── Plans · monthly social media management ── */}
+        <section className="cin-chapter cin-prices" id="plans" data-ch="Plans">
+          <div className="cin-prices-head">
+            <p className="cin-kick cin-rise">Social media management · monthly</p>
+            <h2 className="cin-h2 cin-card-title">
+              <span className="cin-mask"><span>Three plans.</span></span>
+              <span className="cin-mask"><span>Each one does more.</span></span>
+            </h2>
+            <p className="cin-say cin-rise">Every plan: I come to your place each month, film, edit, and post for you.</p>
+          </div>
+          <div className="cin-tickets cin-tickets--3">
+            {PLANS.map((p) => (
+              <article key={p.id} className={`cin-ticket cin-rise${p.popular ? " is-popular" : ""}`}>
+                <header>
+                  <div>
+                    {p.popular && <span className="cin-flag">Recommended</span>}
+                    <h3>{p.name}</h3>
+                    <p>{p.shoot}</p>
+                  </div>
+                  <p className="cin-price">${p.price}<small>/mo</small></p>
+                </header>
+                <ul>{p.get.map((g) => <li key={g} className={g.endsWith("plus:") ? "cin-plus" : undefined}>{g}</li>)}</ul>
+                <Link href={planHref(p.id)} className="cin-btn cin-btn--light cin-plan-start">Start {p.name} <Arrow /></Link>
+              </article>
+            ))}
+          </div>
+          <div className="cin-extras cin-rise">
+            <div>
+              <h3>Good to know</h3>
+              <ul className="cin-ideas cin-rules">
+                {PLAN_RULES.map((r) => <li key={r}><span>{r}</span></li>)}
+              </ul>
+            </div>
+            <div className="cin-extras-side">
+              <h3>Just need one project?</h3>
+              <p className="cin-fine">An event, a launch, or a single promo video: those get a custom quote with three options to pick from.</p>
+              <Link href={BIZ_QUOTE} className="cin-link">Get a quote for one project <Arrow /></Link>
+            </div>
+          </div>
+          <Skip label="Those are the plans." links={[{ href: "#business", text: "See the work" }, { href: "#ads", text: "How ads work" }]} />
         </section>
 
         {/* ── Chapter 01 · Content ── */}
@@ -272,8 +320,8 @@ export default function CinemaHome() {
               </div>
               <div className="cin-card-act">
                 {BIZ_REVIEW && <blockquote className="cin-quote-inline cin-rise">“{BIZ_REVIEW.quote}”<cite>{BIZ_REVIEW.name} · {BIZ_REVIEW.who} · {GOOGLE_RATING} on Google</cite></blockquote>}
-                <p className="cin-fromline"><span>Every quote is <b>built around you</b></span></p>
-                <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Get my quote <Arrow /></Link>
+                <p className="cin-fromline"><span>Plans from <b>${PLAN_FROM} a month</b></span></p>
+                <a href="#plans" className="cin-btn cin-btn--light cin-btn--lg">See the plans <Arrow /></a>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
               </div>
             </div>
@@ -315,7 +363,7 @@ export default function CinemaHome() {
 
           <div className="cin-bizgrid">
             <div className="cin-rise">
-              <h3 className="cin-h3">How pricing works</h3>
+              <h3 className="cin-h3">Just one project? How a quote works</h3>
               <ul className="cin-list">
                 {QUOTE_STEPS.map((st) => (
                   <li key={st.n}>
@@ -331,7 +379,7 @@ export default function CinemaHome() {
                 Videos, photos, interviews, team headshots, extra lighting and mics, rush delivery, ads, even a website:
                 anything can go into a quote. The price is in writing before we shoot.
               </p>
-              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg cin-bizquote">Get my quote <Arrow /></Link>
+              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--ghost cin-btn--lg cin-bizquote">Get a quote <Arrow /></Link>
             </div>
             <div className="cin-rise">
               <h3 className="cin-h3">What would you promote?</h3>
@@ -340,7 +388,7 @@ export default function CinemaHome() {
               </ul>
             </div>
           </div>
-          <Skip label="That’s the content chapter." links={[{ href: "#ads", text: "Next: ads" }, { href: "#quote", text: "Skip to your quote" }]} />
+          <Skip label="That’s the content chapter." links={[{ href: "#ads", text: "Next: ads" }, { href: "#plans", text: "Back to the plans" }]} />
         </section>
 
         {/* ── Chapter 02 · Ads ── */}
@@ -365,20 +413,20 @@ export default function CinemaHome() {
                 </ol>
               </div>
               <div className="cin-card-act">
-                <p className="cin-fromline"><span>Ads can go in <b>any quote</b></span></p>
+                <p className="cin-fromline"><span>Ads come with <b>Tier 2 and 3</b></span></p>
                 <p className="cin-fine">You pay Facebook for the ad budget directly, on your own card. My fee covers making and running the ads.</p>
-                <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Ask about ads <Arrow /></Link>
+                <a href="#plans" className="cin-btn cin-btn--light cin-btn--lg">See the plans <Arrow /></a>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
               </div>
             </div>
           </div>
-          <Skip label="That’s the ads chapter." links={[{ href: "#events", text: "Next: events" }, { href: "#quote", text: "Skip to your quote" }]} />
+          <Skip label="That’s the ads chapter." links={[{ href: "#plans", text: "See the plans" }, { href: "#events", text: "Next: events" }]} />
         </section>
 
         {/* ── Chapter 03 · Events ── */}
-        <section className="cin-chapter cin-biz cin-events" id="events" data-ch="Events">
+        <section className="cin-chapter cin-biz cin-events" id="events" data-ch="Projects">
           <div className="cin-card">
-            <Slate n="03" name="Events" note="Openings · Fundraisers · Company events" />
+            <Slate n="03" name="Events & projects" note="Custom quote" />
             <h2 className="cin-card-title">
               <span className="cin-mask"><span>Small event or big one,</span></span>
               <span className="cin-mask"><span>it’s quoted to fit.</span></span>
@@ -410,17 +458,17 @@ export default function CinemaHome() {
               </ul>
             </div>
           </div>
-          <Skip label="That’s the events chapter." links={[{ href: "#quote", text: "Next: your quote" }, { href: "#about", text: "Meet Brandon" }]} />
+          <Skip label="That’s the events chapter." links={[{ href: "#quote", text: "Quote one project" }, { href: "#plans", text: "Back to the plans" }]} />
         </section>
 
         {/* ── Chapter 04 · Your quote ── (legacy /#pricing and /#quote both land here) */}
-        <section className="cin-chapter cin-quote" id="quote" data-ch="Your quote">
+        <section className="cin-chapter cin-quote" id="quote" data-ch="One project">
           <span id="pricing" className="cin-anchor" aria-hidden="true" />
           <div className="cin-quote-inner">
-            <Slate n="04" name="Your quote" note="Four questions · no obligation" />
+            <Slate n="04" name="One project" note="Four questions · no obligation" />
             <h2 className="cin-card-title">
-              <span className="cin-mask"><span>Three options.</span></span>
-              <span className="cin-mask"><span>You pick one.</span></span>
+              <span className="cin-mask"><span>Just one project?</span></span>
+              <span className="cin-mask"><span>Get three options.</span></span>
             </h2>
             <ol className="cin-steps">
               {QUOTE_STEPS.map((st, i) => (
@@ -428,7 +476,7 @@ export default function CinemaHome() {
               ))}
             </ol>
             <div className="cin-cta-row cin-rise">
-              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--xl">Get my quote <Arrow /></Link>
+              <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--xl">Get a quote <Arrow /></Link>
               <a href={SMS_HREF} className="cin-btn cin-btn--ghost cin-btn--xl">Text {PHONE}</a>
             </div>
             <div className="cin-quote-lead">
@@ -472,7 +520,7 @@ export default function CinemaHome() {
           <p className="cin-credits-big">Let’s tell yours.</p>
           {BIZ_REVIEW && <p className="cin-credits-say">“{BIZ_REVIEW.quote}” — {BIZ_REVIEW.name}, Google review</p>}
           <ul className="cin-enddoors">
-            <li><Link href={BIZ_QUOTE}><span>Your business <small>custom quote</small></span><b>Get my quote <Arrow /></b></Link></li>
+            <li><a href="#plans"><span>Monthly plans <small>from ${PLAN_FROM}/mo</small></span><b>See the plans <Arrow /></b></a></li>
             <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Not sure yet? <small>15 minutes</small></span><b>Book a call <Arrow /></b></a></li>
             <li><Link href="/personal"><span>Personal <small>weddings &amp; portraits</small></span><b>See personal <Arrow /></b></Link></li>
           </ul>
@@ -498,10 +546,10 @@ export default function CinemaHome() {
 
       {/* Phone dock: business quote / text / call, always reachable, sits below the content */}
       <div className="cin-dock">
-        <Link href={BIZ_QUOTE} className="cin-dock-main">
+        <a href="#plans" className="cin-dock-main">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v11H3zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
-          Get a quote
-        </Link>
+          See plans
+        </a>
         <a href={SMS_HREF} aria-label="Text Brandon">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
           Text

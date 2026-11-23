@@ -11,6 +11,12 @@ import { WORK_TITLE, WORK_STEPS } from "../lib/call";
 import { track } from "../lib/track";
 import { ASK } from "../lib/quotes";
 import { isReferralCode, REFERRAL_AMOUNT } from "../lib/referral-rules";
+import { PLANS, planById } from "../lib/plans";
+
+// `plan` (t1|t2|t3) comes from /quote?for=business&plan=… when they tapped a
+// monthly plan on the homepage; they can still switch, or pick one project.
+const ONE_OFF = "One project, not monthly";
+const planLabel = (p) => `${p.name}, $${p.price} a month`;
 
 function Pills({ label, options, value, onChange, many = false }) {
   const on = (o) => (many ? value.includes(o) : value === o);
@@ -27,7 +33,10 @@ function Pills({ label, options, value, onChange, many = false }) {
   );
 }
 
-export default function BusinessAsk() {
+export default function BusinessAsk({ plan = "" }) {
+  const picked0 = planById(plan);
+  const [planPick, setPlanPick] = useState(picked0 ? planLabel(picked0) : "");
+  const isPlan = !!planPick && planPick !== ONE_OFF;
   const topRef = useRef(null);
   const [goals, setGoals] = useState([]);
   const [where, setWhere] = useState([]);
@@ -61,6 +70,7 @@ export default function BusinessAsk() {
     const business = String(data.business || "").trim();
     const fields = [
       ["what it's for", "My business or an event"],
+      ["monthly plan", planPick],
       ["business", business],
       ["trying to do", goals.join(", ")],
       ["where it'll show up", where.join(", ")],
@@ -79,8 +89,8 @@ export default function BusinessAsk() {
         name,
         email: data.email,
         phone: data.phone,
-        subject: `Quote request — ${name}${business ? ` · ${business}` : ""}`,
-        summary: `Wants a quote · ${goals.join(", ")}${budget ? ` · ${budget}` : ""}`,
+        subject: `${isPlan ? `Plan request (${planPick.split(",")[0]})` : "Quote request"} — ${name}${business ? ` · ${business}` : ""}`,
+        summary: `${isPlan ? `Wants ${planPick}` : "Wants a quote"} · ${goals.join(", ")}${budget ? ` · ${budget}` : ""}`,
         fields,
       });
       track("quote_sent", { category: "business" });
@@ -116,6 +126,15 @@ export default function BusinessAsk() {
           <strong>{friendName} sent you ${REFERRAL_AMOUNT} off.</strong>
           <span>It&apos;s already on your quote. Nothing to type.</span>
         </div>
+      )}
+
+      {picked0 && (
+        <section className="ba-step">
+          <p className="ba-num">Your plan</p>
+          <h2 className="cx-h2 qt-q">Monthly social media management</h2>
+          <p className="cx-fine ba-hint">Intro prices, 3-month minimum. Switch here if you change your mind.</p>
+          <Pills label="Your plan" options={[...PLANS.map(planLabel), ONE_OFF]} value={planPick} onChange={(v) => { touch(); setPlanPick(v); }} />
+        </section>
       )}
 
       <section className="ba-step">

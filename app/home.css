@@ -778,3 +778,13 @@
 .rm-cinema .cin-hero-ad video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rm-cinema .cin-hero-ad-tag { position: absolute; left: 0.6rem; top: 0.6rem; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #fff; background: rgba(0,0,0,0.55); padding: 0.25rem 0.5rem; border-radius: 3px; pointer-events: none; }
 @media (min-width: 900px) { .rm-cinema .cin-hero-ad { margin: 0 0 1rem; } }
+
+/* Monthly plans (2026-11-23): three tickets. One column until there is room for three. */
+.rm-cinema .cin-tickets.cin-tickets--3 { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .rm-cinema .cin-tickets.cin-tickets--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rm-cinema .cin-tickets--3 .cin-ticket { padding: 1.8rem 1.6rem 1.5rem; } .rm-cinema .cin-tickets--3 .cin-ticket .cin-price { font-size: 2.6rem; } }
+.rm-cinema .cin-ticket .cin-price small, .rm-cinema .cin-plan-price small { font-size: 0.42em; font-weight: 500; color: var(--dim); margin-left: 0.15em; letter-spacing: 0; }
+.rm-cinema .cin-ticket .cin-plan-start { margin-top: auto; align-self: flex-start; }
+.rm-cinema .cin-ticket li:first-child:last-child, .rm-cinema .cin-ticket li { list-style: none; }
+.rm-cinema .cin-rules li { padding-left: 0.9rem; }
+.rm-cinema .cin-ticket li.cin-plus { padding-left: 0; color: var(--fg); font-weight: 600; }
+.rm-cinema .cin-ticket li.cin-plus::before { display: none; }

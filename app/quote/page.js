@@ -5,6 +5,7 @@ import SiteFooter from "../../components/SiteFooter";
 import { stripeConfigured } from "../../lib/stripe";
 import QuoteFlow from "../../components/QuoteFlow";
 import BusinessAsk from "../../components/BusinessAsk";
+import { planById } from "../../lib/plans";
 
 export const metadata = {
   title: "Get an Instant Quote",
@@ -30,6 +31,7 @@ export default async function QuotePage({ searchParams }) {
   const date = String(params?.date || "").replace(/[^\w ,.\/-]/g, "").trim().slice(0, 40);
   const hero = HERO[category];
   const biz = category === "business";
+  const plan = biz ? planById(String(params?.plan || "")) : null; // a monthly plan tapped on the homepage
 
   return (
     <>
@@ -42,10 +44,12 @@ export default async function QuotePage({ searchParams }) {
           </div>
           <div className="cx-hero-shade" />
           <div className="cx-wrap cx-hero-body">
-            <p className="cx-kick">{biz ? "Your quote" : "Instant quote"}</p>
-            <h1 className="cx-h1 cx-h1--long">{biz ? "Tell me what you need." : "Build your quote in two minutes."}</h1>
+            <p className="cx-kick">{plan ? `${plan.name} · $${plan.price} a month` : biz ? "Your quote" : "Instant quote"}</p>
+            <h1 className="cx-h1 cx-h1--long">{plan ? "Let's start your plan." : biz ? "Tell me what you need." : "Build your quote in two minutes."}</h1>
             <p className="cx-lede">
-              {biz
+              {plan
+                ? "Four quick questions so I can plan your first month. No obligation until you sign."
+                : biz
                 ? "Four quick questions. I'll build a quote around them, with three options to pick from. No obligation."
                 : <>Pick what you need and I&apos;ll walk you to a tailored starting price, step by step. Real prices, no obligation.</>}
             </p>
@@ -55,7 +59,7 @@ export default async function QuotePage({ searchParams }) {
 
         <section className="qt-stage">
           <div className="cx-wrap">
-            {biz ? <BusinessAsk /> : <QuoteFlow cinema initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />}
+            {biz ? <BusinessAsk plan={plan?.id || ""} /> : <QuoteFlow cinema initialCategory={category} checkout={stripeConfigured} code={code} initialPkg={pkg} initialDate={date} />}
           </div>
         </section>
       </main>
