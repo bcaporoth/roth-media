@@ -366,6 +366,7 @@ export default function CinemaHome() {
               </div>
               <div className="cin-card-act">
                 <p className="cin-fromline"><span>Ads can go in <b>any quote</b></span></p>
+                <p className="cin-fine">You pay Facebook for the ad budget directly, on your own card. My fee covers making and running the ads.</p>
                 <Link href={BIZ_QUOTE} className="cin-btn cin-btn--light cin-btn--lg">Ask about ads <Arrow /></Link>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
               </div>
