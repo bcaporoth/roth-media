@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import { PHONE } from "../lib/site";
-import { PACKAGES, money } from "../lib/packages";
 
 // The Cinema site header — the same plate the homepage wears, for every other page.
 //
@@ -14,17 +13,16 @@ import { PACKAGES, money } from "../lib/packages";
 //   <SiteNav cta={{ href: "/quote?for=wedding", label: "Build my quote" }} />
 //   <SiteNav cta={null} />                        no button (e.g. on the quote page itself)
 //
-// active: "weddings" | "business" | "portraits" | "quote" | "portal" | ""
+// active: "business" | "personal" | "weddings" | "portraits" | "quote" | "portal" | ""
+// Business-first since 2026-11-23: weddings and portraits sit under "Personal".
 // It is position: fixed and var(--nav-h) tall: wrap the page in .cx-page (adds the top padding),
 // or .cx-page.cx-page--hero when a .cx-hero runs underneath it.
 // Works with no JS: the plate is solid, the phone menu is a <details>.
 
 const PHONE_HREF = "tel:+18455494425";
 const SMS_HREF = "sms:+18455494425";
-const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
-const portraitFrom = PACKAGES.family[0].price;
 
-export default function SiteNav({ active = "", overHero = false, cta = { href: "/quote", label: "Get a quote" } }) {
+export default function SiteNav({ active = "", overHero = false, cta = { href: "/quote?for=business", label: "Get a quote" } }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -51,6 +49,7 @@ export default function SiteNav({ active = "", overHero = false, cta = { href: "
   }, []);
 
   const cur = (key) => (active === key ? "page" : undefined);
+  const personal = ["personal", "weddings", "portraits"].includes(active) ? "page" : undefined;
 
   return (
     <header ref={ref} className={"cx-nav" + (overHero ? " cx-nav--over" : "")}>
@@ -59,9 +58,8 @@ export default function SiteNav({ active = "", overHero = false, cta = { href: "
         <span>Roth Media</span>
       </Link>
       <nav className="cx-nav-links" aria-label="Main navigation">
-        <Link href="/weddings" aria-current={cur("weddings")}>Weddings</Link>
         <Link href="/business" aria-current={cur("business")}>Business</Link>
-        <Link href="/#families" aria-current={cur("portraits")}>Portraits</Link>
+        <Link href="/personal" aria-current={personal}>Personal</Link>
         <a href={PHONE_HREF} className="cx-nav-phone">{PHONE}</a>
         <Link href="/portal" className="cx-nav-login" aria-current={cur("portal")}>Client login</Link>
       </nav>
@@ -69,11 +67,9 @@ export default function SiteNav({ active = "", overHero = false, cta = { href: "
       <details className="cx-menu">
         <summary aria-label="Menu"><span aria-hidden="true" /><span aria-hidden="true" /></summary>
         <nav className="cx-menu-panel" aria-label="Menu">
-          <Link href="/weddings" aria-current={cur("weddings")}>Weddings <em>from {money(wedFrom)}</em></Link>
           <Link href="/business" aria-current={cur("business")}>Business <em>custom quote</em></Link>
-          <Link href="/#families" aria-current={cur("portraits")}>Family &amp; portraits <em>from {money(portraitFrom)}</em></Link>
-          <Link href="/#date">Check a wedding date <em>open Saturdays</em></Link>
-          <Link href="/quote" aria-current={cur("quote")}>Get a quote <em>2 minutes</em></Link>
+          <Link href="/quote?for=business" aria-current={cur("quote")}>Get a quote <em>4 quick questions</em></Link>
+          <Link href="/personal" aria-current={personal}>Personal <em>weddings &amp; portraits</em></Link>
           <a href={SMS_HREF}>Text Brandon <em>{PHONE}</em></a>
           <a href={PHONE_HREF}>Call <em>{PHONE}</em></a>
           <Link href="/portal" className="cx-menu-login" aria-current={cur("portal")}>Client login</Link>

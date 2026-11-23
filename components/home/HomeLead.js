@@ -5,7 +5,8 @@ import { submitLead } from "../../lib/submit-lead";
 import { track } from "../../lib/track";
 import { CALENDLY } from "../../lib/site";
 
-const FOR = [["business", "My business"], ["wedding", "A wedding"], ["family", "Family photos"], ["", "Not sure yet"]];
+// Business-first since 2026-11-23; "Something personal" still lands as a portrait lead.
+const FOR = [["business", "My business"], ["business", "An event"], ["family", "Something personal"], ["", "Not sure yet"]];
 const CONTACT = [["text", "Text"], ["call", "Call"], ["email", "Email"]];
 
 // The homepage lead form: what they're struggling with, what they want,
@@ -75,11 +76,11 @@ export default function HomeLead() {
 
       <label className="cin-lead-field">
         <span>What are you struggling with?</span>
-        <textarea name="struggle" rows={2} placeholder="e.g. Nobody knows we exist · our wedding is in 5 months and we have no video · the website looks ten years old" />
+        <textarea name="struggle" rows={2} placeholder="e.g. Nobody knows we exist · we post but nobody buys · we have an event coming up and no video" />
       </label>
       <label className="cin-lead-field">
         <span>What would a win look like?</span>
-        <textarea name="goal" rows={2} placeholder="e.g. 10 more bookings a month · a film we'll watch for 50 years · a site that actually gets calls" />
+        <textarea name="goal" rows={2} placeholder="e.g. 10 more bookings a month · more people in the door on weekdays · a site that actually gets calls" />
       </label>
 
       <div className="cin-lead-grid">

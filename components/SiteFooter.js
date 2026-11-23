@@ -1,7 +1,7 @@
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import { EMAIL, SOCIAL, CALENDLY, PHONE, OWNER_NAME, REVIEW_URL } from "../lib/site";
-import { PACKAGES, money } from "../lib/packages";
+import { REVIEWS } from "../lib/reviews";
 import { CITIES } from "../lib/cities";
 
 // The Cinema site footer — the homepage's end credits, for every other page.
@@ -14,8 +14,9 @@ import { CITIES } from "../lib/cities";
 
 const PHONE_HREF = "tel:+18455494425";
 const SMS_HREF = "sms:+18455494425";
-const wedFrom = Math.min(...PACKAGES.wedding.map((p) => p.price));
-const portraitFrom = PACKAGES.family[0].price;
+// Business-first since 2026-11-23: the business review leads; weddings and
+// portraits sit under "Personal".
+const BIZ_REVIEW = REVIEWS.find((r) => /business|promo|content/i.test(r.who)) || REVIEWS[0];
 
 function Arrow() {
   return (
@@ -32,11 +33,11 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
         <div className="cx-credits">
           <p className="cx-kick">{kicker}</p>
           <p className="cx-credits-big">{headline}</p>
-          <p className="cx-credits-say">“He made us so comfortable.” — Kaitlyn, Google review</p>
+          {BIZ_REVIEW && <p className="cx-credits-say">“{BIZ_REVIEW.quote}” — {BIZ_REVIEW.name}, Google review</p>}
           <ul className="cx-enddoors">
-            <li><Link href="/#date"><span>Weddings <small>from {money(wedFrom)}</small></span><b>Check my date <Arrow /></b></Link></li>
-            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Business <small>custom quote</small></span><b>Book a 15-min call <Arrow /></b></a></li>
-            <li><a href={SMS_HREF}><span>Family &amp; portraits <small>from {money(portraitFrom)}</small></span><b>Text Brandon <Arrow /></b></a></li>
+            <li><Link href="/quote?for=business"><span>Your business <small>custom quote</small></span><b>Get my quote <Arrow /></b></Link></li>
+            <li><a href={CALENDLY} target="_blank" rel="noopener noreferrer"><span>Not sure yet? <small>15 minutes</small></span><b>Book a call <Arrow /></b></a></li>
+            <li><Link href="/personal"><span>Personal <small>weddings &amp; portraits</small></span><b>See personal <Arrow /></b></Link></li>
           </ul>
           <dl className="cx-roll">
             <div><dt>Filmed &amp; photographed by</dt><dd>{OWNER_NAME}</dd></div>
@@ -48,9 +49,9 @@ export default function SiteFooter({ slim = false, kicker = "Next: yours", headl
       )}
       <div className="cx-footer-row">
         <Link href="/" className="cx-brand"><BrandMark /><span>Roth Media</span></Link>
-        <Link href="/weddings">Weddings</Link>
         <Link href="/business">Business</Link>
-        <Link href="/quote">Get a quote</Link>
+        <Link href="/personal">Personal</Link>
+        <Link href="/quote?for=business">Get a quote</Link>
         {slim && <a href={PHONE_HREF}>{PHONE}</a>}
         {slim && <a href={`mailto:${EMAIL}`}>{EMAIL}</a>}
         {SOCIAL.map((s) => <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>)}
