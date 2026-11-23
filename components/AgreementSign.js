@@ -31,7 +31,7 @@ export default function AgreementSign({ token, row, checkout, children }) {
     <form className="mx-pa" onSubmit={onSubmit}>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="cform-honey" aria-hidden="true" />
       <section className="mx-pa-total" aria-live="polite">
-        <div className="mx-pa-due"><span>{row.kind === "invoice" ? "Amount" : `This month${row.period ? ` · ${row.period}` : ""}`}</span><strong>{amt}</strong></div>
+        <div className="mx-pa-due"><span>{row.kind === "invoice" ? "Amount" : row.kind === "plan" ? "Each month" : `This month${row.period ? ` · ${row.period}` : ""}`}</span><strong>{amt}{row.kind === "plan" ? <small>/mo</small> : null}</strong></div>
         {row.note ? <p className="cx-help">{row.note}</p> : null}
       </section>
 
@@ -56,13 +56,13 @@ export default function AgreementSign({ token, row, checkout, children }) {
       <div className="mx-pa-pay">
         {status === "error" && <p className="cx-error" role="alert">{err}</p>}
         {checkout ? (
-          <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>{status === "going" ? "Opening secure checkout…" : needSign ? `Sign and pay ${amt}` : `Pay ${amt}`}</button>
+          <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>{status === "going" ? "Opening secure checkout…" : row.kind === "plan" ? `Sign and pay the first month (${amt})` : needSign ? `Sign and pay ${amt}` : `Pay ${amt}`}</button>
         ) : needSign ? (
           <button type="submit" className="cx-btn cx-btn--light cx-btn--xl cx-btn--block" disabled={status === "going"}>Sign</button>
         ) : (
           <p className="cx-error">Online payment isn&apos;t switched on yet. Text Brandon at 845-549-4425.</p>
         )}
-        <p className="cx-help">Secure checkout by Stripe — card, Apple Pay or Google Pay. Receipt by email.</p>
+        <p className="cx-help">{row.kind === "plan" ? `Secure checkout by Stripe — card, Apple Pay or Google Pay. After today, ${amt} is charged to the same card automatically each month. 3-month minimum. Receipt by email every time.` : "Secure checkout by Stripe — card, Apple Pay or Google Pay. Receipt by email."}</p>
       </div>
     </form>
   );

@@ -485,7 +485,9 @@ export default function InboxBoard({ initial, did = {}, migrated = true }) {
                       {busyProfile ? "Opening…" : "Open profile"}
                     </button>
                   )}
-                  {open.intel.lead && open.kind !== "booking" && <a className="abtn abtn-ghost" href={`/portal/admin/quotes?from=${open.id}`}>Build a quote</a>}
+                  {open.intel.lead && open.kind !== "booking" && (open.fields || []).some(([k, v]) => k === "monthly plan" && /^Tier/.test(String(v || "")))
+                    ? <a className="abtn" href={`/portal/admin/pay?plan_from=${open.id}#agreement`}>Send plan agreement</a>
+                    : open.intel.lead && open.kind !== "booking" && <a className="abtn abtn-ghost" href={`/portal/admin/quotes?from=${open.id}`}>Build a quote</a>}
                   <a className="abtn abtn-ghost" href={planHref}>Plan shoot</a>
                   {/* A paid quote lands here as a "booking" row: the same one tap makes the shoot and the day. */}
                   {open.kind === "booking" && !booked && (

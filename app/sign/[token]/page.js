@@ -40,8 +40,8 @@ export default async function SignPage({ params, searchParams }) {
     return (
       <LegalPage kick={k.title} title={`${first}, you're all set.`} updated="" plain>
         <div className="mx-done" role="status">
-          <p className="mx-done-title">{money(row.paid_cents || row.amount_cents)} paid{row.period ? ` for ${row.period}` : ""}. Thank you!</p>
-          <p>A receipt is on its way to {row.client_email}. {row.kind === "shoot" ? "Your date is locked. I'll text before the shoot to confirm the plan — have the people and the space ready at the start time and we're golden." : row.kind === "invoice" ? "" : "Send your changes any time — text or email, one batch at a time, with the final words and files."}</p>
+          <p className="mx-done-title">{money(row.paid_cents || row.amount_cents)} paid{row.kind === "plan" ? " for your first month" : row.period ? ` for ${row.period}` : ""}. Thank you!</p>
+          <p>A receipt is on its way to {row.client_email}. {row.kind === "plan" ? `Your plan is on. ${money(row.amount_cents)} is charged to the same card automatically each month, and you get a receipt every time. Update your card at rothmediaco.com/billing. Next, we set your first shoot date.` : row.kind === "shoot" ? "Your date is locked. I'll text before the shoot to confirm the plan — have the people and the space ready at the start time and we're golden." : row.kind === "invoice" ? "" : "Send your changes any time — text or email, one batch at a time, with the final words and files."}</p>
         </div>
       </LegalPage>
     );
@@ -52,17 +52,17 @@ export default async function SignPage({ params, searchParams }) {
       <LegalPage kick={k.title} title={`${first}, this proposal has expired.`} updated="" plain>
         <div className="mx-done" role="status">
           <p className="mx-done-title">It was good for {OFFER_DAYS} days — through {offerDate(offerExpiry(row))}.</p>
-          <p>The price and {row.kind === "shoot" ? "the date" : "the terms"} came off the table after that. Still want to work together? Text Brandon at 845-549-4425 or reply to the email and he&apos;ll send a fresh one.</p>
+          <p>The price and {row.kind === "shoot" ? "the date" : row.kind === "plan" ? "the plan" : "the terms"} came off the table after that. Still want to work together? Text Brandon at 845-549-4425 or reply to the email and he&apos;ll send a fresh one.</p>
         </div>
       </LegalPage>
     );
   }
 
-  const title = row.kind === "shoot" ? `${first}, here's your Content Day agreement.` : row.kind === "invoice" ? `${first}, here's your invoice.` : `${first}, here's your website upkeep agreement.`;
+  const title = row.kind === "plan" ? `${first}, here's your monthly plan agreement.` : row.kind === "shoot" ? `${first}, here's your Content Day agreement.` : row.kind === "invoice" ? `${first}, here's your invoice.` : `${first}, here's your website upkeep agreement.`;
   const intro = row.kind === "invoice"
     ? `One amount, one button. Pay by card, Apple Pay or Google Pay.`
     : row.sign_required && row.status !== "signed"
-    ? row.kind === "shoot" ? `Take your time looking it over (about three minutes). When you're ready, type your name to sign and pay the package. That locks in your date.` : `Take your time looking it over (about two minutes). When you're ready, type your name to sign and pay this month's amount, all on this page.`
+    ? row.kind === "plan" ? `Take your time looking it over (about three minutes). When you're ready, type your name to sign and pay the first month. After that, your card is charged automatically each month.` : row.kind === "shoot" ? `Take your time looking it over (about three minutes). When you're ready, type your name to sign and pay the package. That locks in your date.` : `Take your time looking it over (about two minutes). When you're ready, type your name to sign and pay this month's amount, all on this page.`
     : `You've already signed — this is this month's payment.`;
 
   return (

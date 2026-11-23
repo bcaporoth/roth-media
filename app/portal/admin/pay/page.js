@@ -12,6 +12,8 @@ import { supabaseAdmin } from "../../../../lib/supabase-admin";
 import { BOOKING_COLS, splitBookings, usd } from "../../../../lib/money-view";
 import { listReferrals } from "../../../../lib/referrals";
 import AgreementSender from "../../../../components/AgreementSender";
+import { stripe, stripeConfigured } from "../../../../lib/stripe";
+import { PLANS } from "../../../../lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +22,23 @@ export const metadata = {
   robots: { index: false },
 };
 
-export default async function PayAdminPage() {
+// A started monthly plan's live state, straight from Stripe.
+const shortDate = (sec) => new Date(sec * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+async function planLive(subId) {
+  try {
+    const sub = await stripe("GET", `/subscriptions/${subId}`);
+    const end = sub.current_period_end || sub.items?.data?.[0]?.current_period_end;
+    if (sub.status === "canceled") return "Stopped";
+    if (sub.status === "past_due" || sub.status === "unpaid") return "Card failed — payment overdue";
+    if (sub.cancel_at_period_end && end) return `Active — stopping ${shortDate(end)}`;
+    if (sub.status === "active" && end) return `Active — next charge ${shortDate(end)}`;
+    return sub.status ? `Stripe says: ${sub.status}` : "";
+  } catch { return ""; }
+}
+
+export default async function PayAdminPage({ searchParams }) {
   const user = await requireAdminPage();
+  const sp = await searchParams;
   const newCount = await newLeadCount();
   const pkgs = payablePackages();
   const live = pkgs.filter((p) => p.link).length + (OPEN_AMOUNT_LINK ? 1 : 0);
@@ -41,9 +58,28 @@ export default async function PayAdminPage() {
   // Agreements + custom invoices sent one client at a time (lib/agreements.js).
   let agreements = []; let agreementsOk = true;
   try {
-    const { data, error } = await db.from("agreements").select("id, created_at, token, kind, client_name, client_email, business, amount_cents, period, status").order("created_at", { ascending: false }).limit(50);
-    if (error) agreementsOk = false; else agreements = (data || []).map((r) => ({ ...r, url: `https://rothmediaco.com/sign/${r.token}` }));
+    const { data, error } = await db.from("agreements").select("id, created_at, token, kind, client_name, client_email, business, amount_cents, period, status, payment_intent").order("created_at", { ascending: false }).limit(50);
+    if (error) agreementsOk = false;
+    else agreements = await Promise.all((data || []).map(async ({ payment_intent, ...r }) => {
+      // A started plan keeps its Stripe subscription id in payment_intent (lib/booking.js).
+      const sub = r.kind === "plan" && /^sub_/.test(payment_intent || "") ? payment_intent : "";
+      return { ...r, url: `https://rothmediaco.com/sign/${r.token}`, ...(sub ? { sub, live: stripeConfigured ? await planLive(sub) : "" } : {}) };
+    }));
   } catch { agreementsOk = false; }
+  // ?plan_from=<inbox row>: a plan request from the homepage, ready to send.
+  let planPrefill = null;
+  const from = String(sp?.plan_from || "");
+  if (/^[0-9a-f-]{36}$/.test(from)) {
+    try {
+      const { data: lead } = await db.from("submissions").select("name, email, phone, fields").eq("id", from).maybeSingle();
+      if (lead) {
+        const f = Array.isArray(lead.fields) ? lead.fields : [];
+        const get = (k) => String((f.find(([x]) => x === k) || [])[1] || "");
+        const tier = PLANS.find((p) => get("monthly plan").startsWith(p.name + ","));
+        planPrefill = { name: lead.name || "", email: lead.email || "", phone: lead.phone || "", business: get("business"), plan: tier?.id || "", adsOn: /^yes/i.test(get("ads add-on")) };
+      }
+    } catch {}
+  }
   const shortDay = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   // Link each one to its client profile when they're on the roster.
   const profiles = {};
@@ -97,13 +133,13 @@ export default async function PayAdminPage() {
           )}
         </section>
 
-        <section className="psection">
+        <section className="psection" id="agreement">
           <h2>Send an agreement</h2>
-          <p className="inbox-hint">Website upkeep or a one-off invoice, for one client, with your amount. You get a private link — she reads, types her name to sign, and pays on the same page. Next month: tick &ldquo;already signed&rdquo; and send a fresh link with that month&apos;s amount.</p>
+          <p className="inbox-hint"><b>Monthly plan:</b> pick the tier, send the link. They read it, type their name, and pay the first month. After that Stripe charges their card every month by itself, and the row below shows the next charge. <b>Website upkeep or an invoice:</b> your amount, one link, paid once.</p>
           {!agreementsOk ? (
             <p className="sm-sqlhint">Run <code>supabase/agreements.sql</code> once in the Supabase SQL editor and this switches on.</p>
           ) : (
-            <AgreementSender recent={agreements} />
+            <AgreementSender recent={agreements} prefill={planPrefill} key={from || "new"} />
           )}
         </section>
 

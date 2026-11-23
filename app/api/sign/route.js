@@ -42,6 +42,27 @@ export async function POST(request) {
   const name = row.kind === "shoot" ? `Content Day — ${row.business || row.client_name}${row.period ? ` · ${row.period}` : ""}` : row.kind === "invoice" ? `Invoice${row.period ? ` — ${row.period}` : ""}` : `Website upkeep${row.period ? ` — ${row.period}` : ""}`;
   const description = clip(row.note || (row.kind === "invoice" ? "" : row.kind === "shoot" ? `One Content Day shoot at ${row.business || "your business"} — licensed for your business, forever.` : `Two update sessions this month for ${row.business || row.client_name}.`), 300) || undefined;
   const metadata = { kind: "agreement", agreement: String(row.id), token, agreement_kind: row.kind, name: row.client_name, business: row.business, phone: row.client_phone };
+  // A monthly plan: a Stripe subscription. The first month is charged now,
+  // then the same card every month on the same date, with no link from
+  // Brandon. lib/booking.js marks it paid and saves the subscription id.
+  if (row.kind === "plan") {
+    const amt = money(row.amount_cents);
+    try {
+      const session = await stripe("POST", "/checkout/sessions", {
+        mode: "subscription",
+        line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: row.amount_cents, recurring: { interval: "month" }, product_data: { name: `Monthly plan — ${row.business || row.client_name}`, ...(row.note ? { description: clip(row.note, 300) } : {}) } } }],
+        customer_email: row.client_email,
+        metadata,
+        subscription_data: { description: `${k.title} — ${row.business || row.client_name}`, metadata },
+        success_url: `${site}/sign/${token}?s={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${site}/sign/${token}`,
+        custom_text: { submit: { message: `That's ${amt} today for your first month. After that, ${amt} is charged to this card automatically each month. 3-month minimum. Update your card at rothmediaco.com/billing.` } },
+      });
+      return NextResponse.json({ signed: true, url: session.url });
+    } catch (err) {
+      return bad(err.message, 502);
+    }
+  }
   try {
     const session = await stripe("POST", "/checkout/sessions", {
       mode: "payment",
