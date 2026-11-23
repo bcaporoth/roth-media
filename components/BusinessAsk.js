@@ -11,7 +11,7 @@ import { WORK_TITLE, WORK_STEPS } from "../lib/call";
 import { track } from "../lib/track";
 import { ASK } from "../lib/quotes";
 import { isReferralCode, REFERRAL_AMOUNT } from "../lib/referral-rules";
-import { PLANS, planById } from "../lib/plans";
+import { PLANS, PLAN_ADS, planById } from "../lib/plans";
 
 // `plan` (t1|t2|t3) comes from /quote?for=business&plan=… when they tapped a
 // monthly plan on the homepage; they can still switch, or pick one project.
@@ -37,6 +37,7 @@ export default function BusinessAsk({ plan = "" }) {
   const picked0 = planById(plan);
   const [planPick, setPlanPick] = useState(picked0 ? planLabel(picked0) : "");
   const isPlan = !!planPick && planPick !== ONE_OFF;
+  const [adsPick, setAdsPick] = useState("");
   const topRef = useRef(null);
   const [goals, setGoals] = useState([]);
   const [where, setWhere] = useState([]);
@@ -71,6 +72,7 @@ export default function BusinessAsk({ plan = "" }) {
     const fields = [
       ["what it's for", "My business or an event"],
       ["monthly plan", planPick],
+      ["ads add-on", isPlan ? adsPick : ""],
       ["business", business],
       ["trying to do", goals.join(", ")],
       ["where it'll show up", where.join(", ")],
@@ -134,6 +136,13 @@ export default function BusinessAsk({ plan = "" }) {
           <h2 className="cx-h2 qt-q">Monthly social media management</h2>
           <p className="cx-fine ba-hint">Intro prices, 3-month minimum. Switch here if you change your mind.</p>
           <Pills label="Your plan" options={[...PLANS.map(planLabel), ONE_OFF]} value={planPick} onChange={(v) => { touch(); setPlanPick(v); }} />
+          {isPlan && (
+            <>
+              <h2 className="cx-h2 qt-q">Add ads?</h2>
+              <p className="cx-fine ba-hint">{PLAN_ADS.say}</p>
+              <Pills label="Add ads" options={["Yes, add ads", "No ads for now", "Not sure yet"]} value={adsPick} onChange={(v) => { touch(); setAdsPick(v); }} />
+            </>
+          )}
         </section>
       )}
 

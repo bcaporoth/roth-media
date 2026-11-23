@@ -14,7 +14,7 @@ import { REVIEWS, GOOGLE_RATING } from "../lib/reviews";
 import { videoUrl } from "../lib/media";
 import { businessLd } from "../lib/schema";
 import { CITIES } from "../lib/cities";
-import { PLANS, PLAN_RULES } from "../lib/plans";
+import { PLANS, PLAN_RULES, PLAN_ADS } from "../lib/plans";
 
 export const metadata = {
   alternates: { canonical: "/" },
@@ -23,7 +23,7 @@ export const metadata = {
 const JSON_LD = businessLd({
   url: "https://rothmediaco.com",
   description:
-    "Social media management for local businesses, based in Waverly, NY: monthly plans from $300 a month. Videos and photos shot at your place and made to sell, posted for you, plus Facebook and Instagram ads run for you, and event coverage, across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Single projects are a custom quote with three options.",
+    "Social media management for local businesses, based in Waverly, NY: monthly plans from $300 a month. Videos and photos shot at your place and made to sell, posted for you, with Facebook and Instagram ads as an optional add-on, and event coverage, across the Twin Tiers and Finger Lakes: Waverly, Sayre, Athens, Elmira, Corning, Ithaca, Owego, Towanda, and Binghamton. Single projects are a custom quote with three options.",
 });
 
 export const revalidate = 3600;
@@ -45,7 +45,7 @@ const planHref = (id) => `${BIZ_QUOTE}&plan=${id}`;
 
 const DOORS = [
   { n: "01", id: "plans", name: "Monthly plans", sub: "I film, edit and post for you, every month", label: `from $${PLAN_FROM}/mo`, cta: "See the plans", href: "#plans", primary: true, jump: "What's in each" },
-  { n: "02", id: "ads", name: "Ads", sub: "Facebook & Instagram, run for you, aimed at people nearby", label: "Tier 2 and 3", cta: "See the plans", href: "#plans", jump: "How ads work" },
+  { n: "02", id: "ads", name: "Ads", sub: "Facebook & Instagram, run for you, aimed at people nearby", label: "Add-on · any tier", cta: "See the plans", href: "#plans", jump: "How ads work" },
   { n: "03", id: "events", name: "Projects", sub: "Events and one-off videos, quoted to fit", label: "Custom quote", cta: "Get a quote", href: BIZ_QUOTE, jump: "Events & projects" },
 ];
 
@@ -199,8 +199,8 @@ export default function CinemaHome() {
             <p className="cin-hero-pitch">
               <strong>More reach, more engagement, and most of all, more sales.</strong>{" "}
               Every month I come to your place and film you doing what you already
-              do. I make the videos and photos, post them for you, and run your ads
-              so people nearby actually see them. You never touch a camera.
+              do. I make the videos and photos and post them for you. Want more
+              people nearby to see them? Add ads to any plan. You never touch a camera.
             </p>
             <div className="cin-hero-cta">
               <a href="#plans" className="cin-btn cin-btn--light cin-btn--lg">See the plans <Arrow /></a>
@@ -288,6 +288,8 @@ export default function CinemaHome() {
               </ul>
             </div>
             <div className="cin-extras-side">
+              <h3>Want ads too?</h3>
+              <p className="cin-fine">{PLAN_ADS.say} <a href="#ads">How ads work</a></p>
               <h3>Just need one project?</h3>
               <p className="cin-fine">An event, a launch, or a single promo video: those get a custom quote with three options to pick from.</p>
               <Link href={BIZ_QUOTE} className="cin-link">Get a quote for one project <Arrow /></Link>
@@ -413,8 +415,8 @@ export default function CinemaHome() {
                 </ol>
               </div>
               <div className="cin-card-act">
-                <p className="cin-fromline"><span>Ads come with <b>Tier 2 and 3</b></span></p>
-                <p className="cin-fine">You pay Facebook for the ad budget directly, on your own card. My fee covers making and running the ads.</p>
+                <p className="cin-fromline"><span>Ads are an add-on to <b>any tier</b></span></p>
+                <p className="cin-fine">{PLAN_ADS.say} You pay Facebook for the ad budget directly, on your own card. My fee covers making and running the ads.</p>
                 <a href="#plans" className="cin-btn cin-btn--light cin-btn--lg">See the plans <Arrow /></a>
                 <a href={SMS_HREF} className="cin-link">or text {PHONE} <Arrow /></a>
               </div>
