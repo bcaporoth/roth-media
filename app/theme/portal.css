@@ -858,3 +858,8 @@ body:has(.pt-gal .lightbox) .pnav-bottom, body:has(.pt-gal .lightbox) .studio-re
 /* Client calendar: "Suggest this day for a shoot" (2026-11-18). */
 .ccal-suggest label.wide { grid-column: 1 / -1; }
 .ccal-sent { grid-column: 1 / -1; margin: 0; color: #8fd6a4; font-weight: 600; }
+
+/* Simpler business home (2026-11-24): name, one or two to-dos, content. */
+.pt-biz--simple .pt-head { padding-bottom: 1.2rem; }
+.pt-biz--simple .pt-biz-foot { display: grid; gap: 1.2rem; margin-top: 2.5rem; padding-top: 2rem; padding-bottom: 4rem; border-top: 1px solid var(--line, rgba(255,255,255,0.12)); }
+.pt-biz--simple .pt-biz-foot .pt-biz-help { margin: 0; padding: 0; }

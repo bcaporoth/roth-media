@@ -37,7 +37,8 @@ export default function PortalNav({ email, isAdmin = false, isStaff = false, act
     isStaff
       ? { key: "crew", href: "/portal/crew", full: "My projects", short: "Projects", icon: "crew" }
       : { key: "galleries", href: isAdmin ? "/portal?galleries=1" : "/portal", full: biz ? "Home" : "Galleries", short: biz ? "Home" : "Galleries", icon: biz ? "home" : "photos" },
-    biz && { key: "brand", href: "/portal/brand", full: "Your brand", short: "Brand", icon: "brand", title: "Your logo, colors, customers and goals" },
+    // "Your brand" left the client menu 2026-11-24 (Brandon: the brand palette
+    // isn't needed right now). /portal/brand still works by link.
     biz && { key: "days", href: "/portal?tab=shoots", full: "Shoot days", short: "Shoots", icon: "days", title: "The scripts we film from" },
     !isAdmin && !isStaff && !biz && { key: "brief", href: "/portal/brief", full: "Your brief", short: "Brief", icon: "brief", title: "Your shoot brief — the questions I plan the day from" },
     !isAdmin && !isStaff && { key: "shop", href: "/portal/shop", full: "Shop", short: "Shop", icon: "shop", title: "Packages and extras you can book — your cart, pay, or ask" },

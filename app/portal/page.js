@@ -247,13 +247,16 @@ export default async function PortalPage({ searchParams }) {
   let brief = null;
   let welcome = null; // step 1 of the brief (the welcome form), or null
   let missing = []; // services they picked that still have no details
+  let known = false; // Brandon did the intake with them in person (discovery row)
   let place = ""; // their newest address (brief answers) → new shoot days start there
   if (adminConfigured && !isAdmin) {
     try {
-      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome", "addresses"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
+      const { data } = await supabaseAdmin().from("submissions").select("id, created_at, updated_at, kind, fields, utm").in("kind", ["intake", "welcome", "addresses", "discovery"]).eq("email", user.email.toLowerCase()).order("created_at", { ascending: false }).limit(20);
       const b = latestBrief(data || []);
       brief = b ? { id: b.id, when: new Date(b.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric" }) } : false;
       welcome = welcomeOf(data || []);
+      // Brandon filled in "Get to know them" with them in person → don't ask again.
+      known = (data || []).some((r) => r.kind === "discovery");
       const have = briefsByType(data || []);
       missing = (welcome?.services || []).filter((t) => !have[t] && !(t === "business" && palette));
       place = clientAddresses({ subs: data || [] })[0]?.address || "";
@@ -265,7 +268,7 @@ export default async function PortalPage({ searchParams }) {
   if (adminConfigured && !isAdmin) {
     const unread = await unreadFor(supabaseAdmin(), client.id, "client").catch(() => 0);
     if (unread) todo.push({ who: "brandon", text: `${unread} new message${unread === 1 ? "" : "s"} from Brandon`, href: "/portal/chat" });
-    if (!welcome && brief === false) todo.push({ who: "you", text: "Start here: tell me about you and what you're after (about 3 minutes)", href: "/portal/brief" });
+    if (!welcome && brief === false && !known) todo.push({ who: "you", text: "Start here: tell me about you and what you're after (about 3 minutes)", href: "/portal/brief" });
     else if (missing.length) todo.push({ who: "you", text: `Fill in your ${TYPE_LABEL[missing[0]].toLowerCase()} details${missing.length > 1 ? ` (${missing.length} left)` : ""}`, href: `/portal/brief?type=${missing[0]}` });
   }
 
@@ -298,8 +301,7 @@ export default async function PortalPage({ searchParams }) {
     const agreements = adminConfigured && !isAdmin ? await loadPortalAgreements(supabaseAdmin(), user.email).catch(() => []) : [];
     const toSign = agreements.filter((x) => x.state === "todo").length;
     if (toSign) todo.unshift({ who: "you", text: toSign === 1 ? `1 thing to sign: ${agreements.find((x) => x.state === "todo").title}` : `${toSign} things waiting for you to sign or pay`, href: "/portal?tab=agreements" });
-    const b = brandSummary(palette);
-    if (b.done < b.of) todo.push({ who: "you", text: `Your brand: ${b.done} of ${b.of} essentials filled in`, href: "/portal/brand" });
+    // The brand page is in the menu; the home no longer nags about it (2026-11-24).
     const todayStr = new Date().toISOString().slice(0, 10);
     const upcoming = (days || []).filter((d) => d.date && d.date >= todayStr).sort((a, c) => a.date.localeCompare(c.date))[0];
     if (upcoming) todo.push({ who: "soon", text: `${upcoming.title} — ${new Date(upcoming.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}${upcoming.scripts ? ` · ${upcoming.scripts} script${upcoming.scripts === 1 ? "" : "s"} to read` : ""}`, href: `/portal/days/${upcoming.id}` });
@@ -320,7 +322,7 @@ export default async function PortalPage({ searchParams }) {
         months={months}
         gifts={gifts}
         agreements={agreements}
-        tab={typeof sp?.tab === "string" ? sp.tab : "calendar"}
+        tab={typeof sp?.tab === "string" ? sp.tab : "gallery"}
         next={todo}
         clientName={client.name || ""}
         clientId={client.id}

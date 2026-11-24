@@ -329,111 +329,42 @@ export function PortalBusinessHome({
   const hasLinks = galleries.length > 0;
   const albums = hostedGalleries.length + galleries.length;
   const items = hostedGalleries.reduce((n, g) => n + (g.media_count || 0), 0);
-  const essentialsDone = brand.done >= brand.of;
-  const todo = !essentialsDone || !brief;
+  const toSign = agreements.filter((x) => x.state === "todo").length;
+  const hasMoney = Boolean(gifts) || payments.length > 0;
 
-  // Where they are, in the client's own words (their version of the progress
-  // bar on the Command Center client page). Each step is a plain fact the
-  // portal already knows; the first one not done is "now".
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const upcoming = days.filter((d) => d.date && d.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date))[0];
-  const filmed = days.some((d) => d.status === "filmed" || d.status === "delivered" || (d.date && d.date < todayStr));
-  const delivered = hostedGalleries.some((g) => (g.media_count || 0) > 0) || hasLinks;
-  const steps = [
-    { label: "Account", done: true, href: "/portal/account" },
-    { label: "Your brand", done: essentialsDone, next: `Fill in your brand: ${brand.done} of ${brand.of} essentials are done.`, href: "/portal/brand", go: "Open my brand" },
-    { label: "Shoot brief", done: Boolean(brief), next: "Fill in your shoot brief. It takes about five minutes.", href: "/portal/brief", go: "Fill in my brief" },
-    { label: "Shoot day", done: days.length > 0 || filmed || delivered, next: "Brandon puts your shoot day on the calendar. You can suggest a day you are free.", href: "/portal?tab=calendar", go: "Open my calendar" },
-    { label: "Filmed", done: filmed || delivered, next: upcoming ? `Read your scripts before ${new Date(upcoming.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}.` : "Your shoot day is being planned.", href: upcoming ? `/portal/days/${upcoming.id}` : "/portal?tab=shoots", go: upcoming ? "Open my shoot day" : "See my shoot days" },
-    { label: "Your content", done: delivered, next: "Brandon is editing. Your photos and videos show up in your gallery.", href: "/portal?tab=gallery", go: "Open my gallery" },
-  ];
-  const at = ["calendar", "shoots", "gallery", "agreements", "gifts"].includes(tab) ? tab : "calendar";
+  // Simpler home (2026-11-24, Brandon: "a very, very busy front page for both
+  // the clients and myself"). The menu already has Brand, Shoots, Shop,
+  // Calendar and Chat, so the home no longer repeats them: just their name,
+  // the one or two things to do now, and their content. The progress bar,
+  // brand/brief cards and chat card are gone. Tabs only show when there is
+  // something in them. ?tab=calendar still works for old links.
   const TABS = [
-    ["calendar", "Calendar", null],
-    ["shoots", "Shoots", days.length || null],
-    ["gallery", "Gallery", albums || null],
-    ["agreements", "Agreements", agreements.filter((x) => x.state === "todo").length || null],
-    ["gifts", "Gift cards & cart", gifts && !gifts.used ? 1 : null],
-  ];
-
-  const cards = (
-    <section className={"cx-wrap pt-biz-cards" + (todo ? " is-todo" : "")} aria-labelledby="pt-biz-cards-h">
-      <div className="pt-biz-sechead">
-        <h2 id="pt-biz-cards-h" className="cx-kick">{todo ? "Start here" : "Your brand and brief"}</h2>
-        {todo && <p className="pt-note">Two short forms I plan your shoots from. Both save as you go, and you can skip anything.</p>}
-      </div>
-      <div className="pt-biz-grid">
-        <article className="pt-biz-card">
-          <h3 className="pt-biz-title">Your brand</h3>
-          <p className="pt-biz-what">Your logo, colors, customers and goals. I plan every shoot, edit and caption from it.</p>
-          {(brand.logo || brand.colors.length > 0) && (
-            <div className="pt-biz-look">
-              {brand.logo && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={brand.logo} alt="Your logo" className="pt-biz-logo" />
-              )}
-              {brand.colors.map((c, i) => (
-                <span key={i} className="pt-biz-swatch" style={{ background: c.hex }} title={`${c.name || c.role} ${c.hex}`} aria-hidden="true" />
-              ))}
-            </div>
-          )}
-          {brand.words.length > 0 && <p className="pt-biz-words">{brand.words.join(" · ")}</p>}
-          <div className="pt-biz-meter">
-            <span>Essentials: <strong>{brand.done} of {brand.of}</strong> filled in</span>
-            <span className="pt-biz-bar" role="progressbar" aria-label="Essentials filled in" aria-valuemin={0} aria-valuemax={brand.of} aria-valuenow={brand.done}>
-              <span style={{ width: `${brand.of ? Math.round((brand.done / brand.of) * 100) : 0}%` }} />
-            </span>
-          </div>
-          <p className="pt-biz-stat">
-            {essentialsDone
-              ? "The essentials are done. Add more or change anything, any time."
-              : <>{brand.of - brand.done} left. Next up: &ldquo;{brand.next[0]}&rdquo;</>}
-          </p>
-          <Link href="/portal/brand" className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn">
-            {brand.done === 0 ? "Start my brand" : essentialsDone ? "Open my brand" : "Finish my brand"} <Arrow />
-          </Link>
-        </article>
-
-        <article className="pt-biz-card">
-          <h3 className="pt-biz-title">Your shoot brief</h3>
-          <p className="pt-biz-what">What the next shoot is for, where we&apos;re filming, who&apos;s on camera, and the shots you can&apos;t miss.</p>
-          <p className="pt-biz-stat">
-            {brief ? `Last saved ${brief.when}. Change it any time before the shoot.` : "Not filled in yet. It takes about five minutes."}
-          </p>
-          <Link href="/portal/brief" className={"cx-btn cx-btn--lg pt-biz-btn " + (brief ? "cx-btn--ghost" : "cx-btn--light")}>
-            {brief ? "Update my brief" : "Fill in my brief"} <Arrow />
-          </Link>
-        </article>
-      </div>
-    </section>
-  );
+    ["gallery", "Your content", albums || null, true],
+    ["shoots", "Shoot days", days.length || null, days.length > 0 || Boolean(plan)],
+    ["agreements", "Agreements", toSign || null, agreements.length > 0],
+    ["gifts", gifts ? "Gift cards" : "Payments", gifts && !gifts.used ? 1 : null, hasMoney],
+  ].filter((t) => t[3]);
+  const at = ["calendar", "shoots", "gallery", "agreements", "gifts"].includes(tab) ? tab : "gallery";
 
   return (
-    <PortalFrame nav={nav} className="pt-home pt-biz">
+    <PortalFrame nav={nav} className="pt-home pt-biz pt-biz--simple">
       <Reveal />
       <header className="cx-wrap pt-head">
         <p className="cx-kick">Your business portal</p>
         <h1 className="cx-h1 cx-h1--long">{name}</h1>
-        <p className="cx-lede">
-          Your photos and videos, your brand, and your next shoot, in one
-          place.
-        </p>
       </header>
 
-      <ClientProgress steps={steps} />
-      <NextStrip items={next} />
+      <NextStrip items={next.slice(0, 2)} />
 
-      {/* Tabs, like the client page in the Command Center (2026-11-18,
-          Brandon: "a calendar tab, a shoot tab, their gallery tab, their gift
-          cards and cart tab"). Plain links (?tab=), so each tab can be linked
-          to from an email or the menu. */}
-      <nav className="cx-wrap pt-tabs" aria-label="Your portal">
-        {TABS.map(([k, label, n]) => (
-          <Link key={k} href={`/portal?tab=${k}`} scroll={false} className={"pt-tab" + (at === k ? " is-on" : "")} aria-current={at === k ? "page" : undefined}>
-            {label}{n ? <em> {n}</em> : null}
-          </Link>
-        ))}
-      </nav>
+      {TABS.length > 1 && (
+        <nav className="cx-wrap pt-tabs" aria-label="Your portal">
+          {TABS.map(([k, label, n]) => (
+            <Link key={k} href={`/portal?tab=${k}`} scroll={false} className={"pt-tab" + (at === k ? " is-on" : "")} aria-current={at === k ? "page" : undefined}>
+              {label}{n ? <em> {n}</em> : null}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {at === "calendar" && clientId && <CalendarSection clientId={clientId} clientName={clientName} days={days} place={place} />}
 
@@ -443,33 +374,29 @@ export function PortalBusinessHome({
             ? <DaysSection days={days} />
             : <section id="days" className="cx-wrap"><p className="pt-empty">No shoot day is planned yet. When one is, it shows up here with its scripts.</p></section>}
           {plan && <PlanSection plan={plan} />}
-          {cards}
         </>
       )}
 
       {at === "gallery" && (
         <>
-      <section id="content" className="pt-biz-content" aria-labelledby="pt-biz-content-h">
-        <div className="cx-wrap pt-biz-sechead">
-          <h2 id="pt-biz-content-h" className="cx-kick">Your content</h2>
-          <p className="pt-note">
-            {albums
-              ? `${plural(albums, "gallery", "galleries")}${items ? ` · ${plural(items, "photo or video", "photos and videos")}` : ""}. Newest first. Open one to watch it, save to your phone, or download the full files.`
-              : "Photos and videos from your shoots land here."}
-          </p>
-        </div>
-        {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} label="Your content" />}
-        {!hasHosted && !hasLinks && (
-          <div className="cx-wrap">
-            <p className="pt-empty">
-              Your first gallery is on its way — it&apos;ll appear right here the
-              moment it&apos;s ready.
-            </p>
-          </div>
-        )}
-      </section>
-
+          <section id="content" className="pt-biz-content" aria-labelledby="pt-biz-content-h">
+            <div className="cx-wrap pt-biz-sechead">
+              <h2 id="pt-biz-content-h" className="cx-kick">Your content</h2>
+              {albums > 0 && (
+                <p className="pt-note">
+                  {plural(albums, "gallery", "galleries")}{items ? ` · ${plural(items, "photo or video", "photos and videos")}` : ""}. Newest first.
+                </p>
+              )}
+            </div>
+            {hasHosted && <GalleryShelf hostedGalleries={hostedGalleries} label="Your content" />}
+            {!hasHosted && !hasLinks && (
+              <div className="cx-wrap">
+                <p className="pt-empty">Your photos and videos show up here the moment they&apos;re ready.</p>
+              </div>
+            )}
+          </section>
           {months.length > 0 && <MonthsSection months={months} />}
+          {hasLinks && <Ledger galleries={galleries} payments={[]} total={0} money={money} dateFmt={dateFmt} hasHosted={hasHosted} />}
         </>
       )}
 
@@ -477,27 +404,18 @@ export function PortalBusinessHome({
 
       {at === "gifts" && (
         <>
-          {gifts
-            ? <GiftCards gifts={gifts} name={name} />
-            : <section id="gifts" className="cx-wrap"><p className="pt-empty">You have no gift cards right now.</p></section>}
-          <section className="cx-wrap pt-cartrow" aria-labelledby="pt-cart-h">
-            <div className="pt-biz-sechead">
-              <h2 id="pt-cart-h" className="cx-kick">Your cart</h2>
-              <p className="pt-note">Packages and extras you can book. Your cart saves as you go.</p>
-            </div>
-            <Link className="cx-btn cx-btn--light cx-btn--lg pt-biz-btn" href="/portal/shop">Open the shop and my cart <Arrow /></Link>
-          </section>
-          <Ledger galleries={galleries} payments={payments} total={total} money={money} dateFmt={dateFmt} hasHosted={hasHosted} />
+          {gifts && <GiftCards gifts={gifts} name={name} />}
+          <Ledger galleries={[]} payments={payments} total={total} money={money} dateFmt={dateFmt} hasHosted={hasHosted} />
         </>
       )}
 
-      <NotesCard />
-      <section className="cx-wrap"><SaveCardButton where="portal" lead="Save my contact" /></section>
-
-      <p className="cx-wrap pt-biz-help">
-        Need something changed, or can&apos;t find a file? Text me at{" "}
-        <a href="tel:+18455494425">845-549-4425</a>.
-      </p>
+      <footer className="cx-wrap pt-biz-foot">
+        <p className="pt-biz-help">
+          Need something? <Link href="/portal/chat">Chat with me</Link> or text{" "}
+          <a href="tel:+18455494425">845-549-4425</a>.
+        </p>
+        <SaveCardButton where="portal" lead="Save my contact" />
+      </footer>
     </PortalFrame>
   );
 }
@@ -579,35 +497,6 @@ function AgreementsSection({ items }) {
 
 // The client's progress bar: same idea as the one on their Command Center
 // page, with their steps and one line saying what comes next.
-function ClientProgress({ steps }) {
-  const firstOpen = steps.findIndex((x) => !x.done);
-  const allDone = firstOpen === -1;
-  const now = allDone ? steps.length - 1 : firstOpen;
-  const doneCount = steps.filter((x) => x.done).length;
-  const cur = steps[now];
-  return (
-    <section className="cx-wrap pt-prog" aria-label={`Your progress: ${doneCount} of ${steps.length} steps done`}>
-      <ol className="pt-prog-steps" style={{ "--prog": `${((allDone ? steps.length : now) / steps.length) * 100}%` }}>
-        {steps.map((x, i) => (
-          <li key={x.label} className={x.done ? "is-done" : i === now ? "is-now" : ""} aria-current={!allDone && i === now ? "step" : undefined}>
-            {/* Every step is a link to the place where that step is done. */}
-            <Link href={x.href || "/portal"} title={`Go to: ${x.label}`}><span>{x.done ? "✓ " : ""}{x.label}</span></Link>
-          </li>
-        ))}
-      </ol>
-      <div className="pt-prog-now">
-        <p>
-          <strong>{allDone ? "All six steps are done." : `Step ${now + 1} of ${steps.length}: ${cur.label}.`}</strong>{" "}
-          {allDone ? "Your content is in your gallery." : cur.next}
-        </p>
-        {allDone
-          ? <Link className="cx-btn cx-btn--light pt-prog-go" href="/portal?tab=gallery">Open my gallery <Arrow /></Link>
-          : cur.href && <Link className="cx-btn cx-btn--light pt-prog-go" href={cur.href}>{cur.go} <Arrow /></Link>}
-      </div>
-    </section>
-  );
-}
-
 function NextStrip({ items }) {
   if (!items || !items.length) return null;
   return (
@@ -625,8 +514,8 @@ function NextStrip({ items }) {
 }
 
 // Chat with Brandon lives on its own page now (/portal/chat, 2026-11-18).
-// The home keeps one short row that opens it. id="notes" stays so links in
-// older emails (/portal#notes) still land somewhere useful.
+// The wedding home keeps one short row that opens it. id="notes" stays so
+// links in older emails (/portal#notes) still land somewhere useful.
 function NotesCard() {
   return (
     <section id="notes" className="cx-wrap pt-notes pt-chatrow" aria-labelledby="pt-notes-h">
