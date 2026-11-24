@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Quotes — Command Center", robots: { index: false } };
 
 // Labels on an Inbox row that are contact details, not what they asked for.
-const SKIP = /^(first name|last name|email|phone|name|what it's for|pay link|best way to reach)/i;
+const SKIP = /^(first name|last name|email|phone|name|what it's for|pay link|best way to reach|for$)/i;
 
 // Studio → Money → Quotes (2026-11-15). ?from=<inbox row id> starts a new
 // quote with that person's details and answers filled in.
@@ -35,7 +35,7 @@ export default async function QuotesAdmin({ searchParams }) {
       if (row) {
         const fields = Array.isArray(row.fields) ? row.fields : [];
         const get = (re) => (fields.find(([k]) => re.test(String(k))) || [])[1] || "";
-        prefill = { from: row.id, name: row.name || "", email: row.email || "", phone: row.phone || "", business: get(/^business( name)?$/i) || get(/business name and location/i), when: get(/^when$/i) || get(/when would you like/i) };
+        prefill = { from: row.id, name: row.name || "", email: row.email || "", phone: row.phone || "", business: get(/^business( name)?$/i) || get(/business name and location/i) || get(/^business name and what you do/i), when: get(/^when$/i) || get(/when would you like/i) || get(/^dates and times that work/i) };
         asked = fields.filter(([k, v]) => !SKIP.test(String(k)) && String(v || "").trim()).slice(0, 14).map(([k, v]) => [String(k), String(v)]);
       }
     }

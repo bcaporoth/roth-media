@@ -4,7 +4,7 @@ import { supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
 import { addMember } from "../../../../lib/album-access";
-import { CALL, TYPE_LABEL, typeOf } from "../../../../lib/intake";
+import { CALL, INTAKE, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 import { findAuthUser, accountView } from "../../../../lib/auth-users";
 import { sendSetupCode } from "../../../../lib/setup-code";
@@ -354,6 +354,34 @@ export async function POST(request) {
     }).select("id").single();
     if (error) return bad(error.message, 500);
     return NextResponse.json({ ok: true, id: data.id });
+  }
+
+  // Brandon fills in the intake WITH the client (2026-11-24): one brief per
+  // service, same row the client edits from their portal. An edit updates it,
+  // the first save makes it. No emails go anywhere.
+  if (body.action === "intake-save") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("This client needs an email first (Settings tab)");
+    const type = typeOf(body.type);
+    const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
+    const fields = [["for", type], ...INTAKE[type].map((it) => [it.q, String(answers[it.q] || "").slice(0, 4000).trim()]).filter(([, v]) => v)];
+    const name = String(body.name || "").trim().slice(0, 120);
+    const phone = String(body.phone || "").trim().slice(0, 40);
+    const now = new Date().toISOString();
+    const { data: cur } = await db.from("submissions").select("id").eq("kind", "intake").eq("email", email).eq("utm->>type", type).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const row = {
+      kind: "intake", email, fields, utm: { type, by: "brandon" }, updated_at: now,
+      ...(name ? { name } : {}), ...(phone ? { phone } : {}),
+      subject: `Intake — ${name || email}`,
+      summary: `${TYPE_LABEL[type]} intake · ${fields.length - 1} answers · filled in together`,
+    };
+    const q = cur
+      ? db.from("submissions").update(row).eq("id", cur.id)
+      : db.from("submissions").insert({ ...row, status: "contacted", read_at: now, source_path: "/portal/admin/clients" });
+    const { data, error } = await q.select("id, updated_at").single();
+    if (error) return bad(error.message, 500);
+    if (!cur) await db.from("submissions").delete().eq("kind", "intake_sent").eq("email", email);
+    return NextResponse.json({ ok: true, id: data.id, updated_at: data.updated_at });
   }
 
   // Orientation-call sheet: create on first tap, then every change saves the whole sheet.

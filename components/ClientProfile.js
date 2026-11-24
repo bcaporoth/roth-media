@@ -147,6 +147,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
+          {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.intakes.length ? "Intake" : "Fill in intake"}</a>}
           <a className="achip" href={quoteHref}>Build a quote</a>
           <button type="button" className="achip" onClick={() => { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
@@ -232,6 +233,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Their brief{d.intakes.length > 0 && <em className="cprof-count">{d.intakes.length}</em>}</h2>
               <div className="gcard-actions">
+                {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.intakes.length ? "Edit with them" : "Fill in with them"}</a>}
                 <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
                 {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
                 <button type="button" className="achip" onClick={() => intakeSent("mail")}>Email it</button>
@@ -240,7 +242,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
             {d.intakes.length === 0 && (
               <p className="gcard-meta">{d.intakeSent ? `Link sent ${fmt(d.intakeSent.created_at)} — nothing back yet.` : "Nothing yet — send them the link. Their answers feed the call sheet and the day plan."}</p>
             )}
-            {brief && <p className="gcard-meta">Updated {fmt(brief.updated_at)} · they can edit it from their portal.</p>}
+            {brief && <p className="gcard-meta">Updated {fmt(brief.updated_at)} · {d.intakes[0]?.utm?.by === "brandon" ? "you filled it in together" : "they can edit it from their portal"}.</p>}
             {d.intakes.map((it, i) => <Answers key={it.id} item={it} title={`${TYPE_LABEL[typeOf(it.utm?.type)]} brief · ${fmt(it.updated_at || it.created_at)}${i > 0 ? " (older)" : ""}`} closed={i > 0} />)}
           </section>
 

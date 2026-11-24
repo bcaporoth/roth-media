@@ -7,8 +7,11 @@
 // Portal step 2 (2026-11-08): `types` = the services they picked in the
 // welcome form (pills limited to those), `initialByType` = each service's
 // saved answers, `skipWelcomeAsked` hides questions the welcome form already asked.
+// mode="admin" (2026-11-24, Command Center → client → Fill in intake): Brandon
+// fills it in WITH the client. Nothing required, saves by itself as he types
+// (same row the client edits from their portal), no emails, no call picker.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AutoText from "./AutoText";
 import AddressInput from "./AddressInput";
 import AddonPicker from "./AddonPicker";
@@ -17,22 +20,57 @@ import { track } from "../lib/track";
 import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME, SHOT_GROUP, shotPart } from "../lib/intake";
 import BookCall from "./BookCall";
 
-export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public", types = null, initialByType = null, skipWelcomeAsked = false }) {
+export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public", types = null, initialByType = null, skipWelcomeAsked = false, backHref = "", quoteBase = "", savedTypes = null }) {
   const portal = mode === "portal";
+  const admin = mode === "admin";
   const [type, setType] = useState(type0 ? typeOf(type0) : "");
   const [name, setName] = useState(name0);
   const [email, setEmail] = useState(email0);
   const [phone, setPhone] = useState(phone0);
   // Answers per service, so switching pills never loses what they typed.
   const [byType, setByType] = useState(() => initialByType || (type0 ? { [typeOf(type0)]: initial } : {}));
-  const [saved, setSaved] = useState(() => Object.keys(initialByType || {}).filter((t) => Object.keys(initialByType[t] || {}).length));
+  const [saved, setSaved] = useState(() => savedTypes || Object.keys(initialByType || {}).filter((t) => Object.keys(initialByType[t] || {}).length));
   const answers = (type && byType[type]) || {};
-  const setAnswers = (a) => setByType((b) => ({ ...b, [type]: a }));
+  const setAnswers = (a) => { touched.current = true; setByType((b) => ({ ...b, [type]: a })); };
   const pills = types?.length ? TYPES.filter((t) => types.includes(t.id)) : TYPES;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [sid, setSid] = useState(""); // this intake's id, so a booked call shows in Studio
+  // Admin: autosave state. "saved" | "dirty" | "saving" | "error"
+  const [saveState, setSaveState] = useState("saved");
+  const [savedAt, setSavedAt] = useState("");
+  const touched = useRef(false);
+  const timer = useRef(null);
+  async function adminSave(t = type) {
+    if (!t) return null;
+    setSaveState("saving");
+    try {
+      const res = await fetch("/api/admin/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "intake-save", email, name, phone, type: t, answers: byType[t] || {} }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Save failed (${res.status})`);
+      setSid(json.id || "");
+      setSaved((s) => (s.includes(t) ? s : [...s, t]));
+      setSaveState("saved"); setError("");
+      setSavedAt(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }));
+      return json;
+    } catch (err) { setSaveState("error"); setError(`Not saved yet: ${err.message}. It will try again when you type, or tap Save.`); return null; }
+  }
+  useEffect(() => {
+    if (!admin || !touched.current || !type) return;
+    setSaveState("dirty");
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => adminSave(type), 1200);
+    return () => clearTimeout(timer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byType, name, phone]);
+  // Admin: leaving with unsaved typing asks first.
+  useEffect(() => {
+    if (!admin) return;
+    const warn = (e) => { if (saveState === "dirty" || saveState === "saving" || saveState === "error") { e.preventDefault(); e.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [admin, saveState]);
 
   const questions = type ? INTAKE[type].filter((it) => !(skipWelcomeAsked && ASKED_IN_WELCOME.test(it.q))) : [];
   // The three shot questions render as one block where the first of them sits.
@@ -48,16 +86,23 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
     it.addons
       ? <AddonPicker category={it.addons} id={`in-q${i}`} value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
       : it.address
-      ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
+      ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt && !admin} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
       : it.long
-      ? <AutoText className="cx-textarea" id={`in-q${i}`} rows={it.opt || shotPart(it.q) >= 0 ? 2 : 3} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
-      : <AutoText className="cx-input" id={`in-q${i}`} required={!it.opt} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />;
+      ? <AutoText className="cx-textarea" id={`in-q${i}`} rows={it.opt || shotPart(it.q) >= 0 ? 2 : 3} required={!it.opt && !admin} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
+      : <AutoText className="cx-input" id={`in-q${i}`} required={!it.opt && !admin} value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />;
 
   async function submit(e) {
     e.preventDefault();
     if (!type) { setError("Pick what this is for first."); return; }
     setBusy(true); setError("");
     const fields = questions.map((it) => [it.q, (answers[it.q] || "").trim()]).filter(([, v]) => v);
+    if (admin) {
+      clearTimeout(timer.current);
+      const r = await adminSave(type);
+      setBusy(false);
+      if (r) { setDone(true); window.scrollTo({ top: 0, behavior: "smooth" }); }
+      return;
+    }
     if (portal) {
       try {
         const res = await fetch("/api/portal/brief", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, name, phone, answers }) });
@@ -88,6 +133,22 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
     } finally { setBusy(false); }
   }
 
+  if (done && admin) {
+    const first = (name || "").split(" ")[0] || "them";
+    return (
+      <div className="mx-intake-done">
+        <div className="mx-done" role="status">
+          <p className="mx-done-title">{TYPE_LABEL[type]} intake saved.</p>
+          <p>It&apos;s on {first}&apos;s profile under Paperwork. You can come back and change anything.</p>
+        </div>
+        <div className="mx-done-acts">
+          {quoteBase && sid && <a className="cx-btn cx-btn--light" href={`${quoteBase}${sid}`}>Build their quote</a>}
+          {backHref && <a className="cx-btn" href={backHref}>Back to {first}&apos;s profile</a>}
+          <button type="button" className="cx-btn" onClick={() => setDone(false)}>Keep editing</button>
+        </div>
+      </div>
+    );
+  }
   if (done && portal) {
     const next = pills.find((t) => !saved.includes(t.id));
     return (
@@ -126,17 +187,18 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
         <p className="cx-label" id="in-type">{types?.length > 1 ? "Details for" : "This is for"}</p>
         <div className="cx-pills" role="group" aria-labelledby="in-type">
           {pills.map((t) => (
-            <button key={t.id} type="button" className={"cx-pill" + (type === t.id ? " is-on" : "")} aria-pressed={type === t.id} onClick={() => setType(t.id)}>{saved.includes(t.id) ? "✓ " : ""}{t.label}</button>
+            <button key={t.id} type="button" className={"cx-pill" + (type === t.id ? " is-on" : "")} aria-pressed={type === t.id} onClick={() => { if (admin && type && type !== t.id && saveState !== "saved") { clearTimeout(timer.current); adminSave(type); } setType(t.id); }}>{saved.includes(t.id) ? "✓ " : ""}{t.label}</button>
           ))}
         </div>
         {!type && <p className="cx-help">Pick one and the questions for it appear below.</p>}
         {types?.length > 1 && <p className="cx-help">One set of questions for each thing you picked. A ✓ means it's saved.</p>}
       </div>
       <div className="cx-form-row">
-        <div className="mx-field"><label className="cx-label" htmlFor="in-name">Full name</label><input className="cx-input" id="in-name" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" /></div>
-        <div className="mx-field"><label className="cx-label" htmlFor="in-phone">Best phone</label><input className="cx-input" id="in-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" /></div>
+        <div className="mx-field"><label className="cx-label" htmlFor="in-name">Full name</label><input className="cx-input" id="in-name" required={!admin} value={name} onChange={(e) => { touched.current = true; setName(e.target.value); }} autoComplete="name" /></div>
+        <div className="mx-field"><label className="cx-label" htmlFor="in-phone">Best phone</label><input className="cx-input" id="in-phone" type="tel" value={phone} onChange={(e) => { touched.current = true; setPhone(e.target.value); }} autoComplete="tel" inputMode="tel" /></div>
       </div>
-      {!portal && <div className="mx-field"><label className="cx-label" htmlFor="in-email">Email</label><input className="cx-input" id="in-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoCapitalize="none" /></div>}
+      {admin && <p className="cx-help">Email: {email}. Change it in their Settings tab.</p>}
+      {!portal && !admin && <div className="mx-field"><label className="cx-label" htmlFor="in-email">Email</label><input className="cx-input" id="in-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoCapitalize="none" /></div>}
 
       {blocks.map((b, n) => {
         const num = <span className="mx-q-n" aria-hidden="true">{String(n + 1).padStart(2, "0")}</span>;
@@ -169,7 +231,8 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
         );
       })}
       <input type="text" name="website" className="cform-honey" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-      {type && <button type="submit" className="cx-btn cx-btn--light cx-btn--lg" disabled={busy}>{busy ? (portal ? "Saving…" : "Sending…") : portal ? `Save my ${TYPE_LABEL[type].toLowerCase()} details` : "Send it to Brandon"}</button>}
+      {type && <button type="submit" className="cx-btn cx-btn--light cx-btn--lg" disabled={busy}>{busy ? (portal || admin ? "Saving…" : "Sending…") : admin ? "Save and finish" : portal ? `Save my ${TYPE_LABEL[type].toLowerCase()} details` : "Send it to Brandon"}</button>}
+      {admin && type && <p className="mx-autosave" role="status" aria-live="polite">{saveState === "saving" ? "Saving…" : saveState === "dirty" ? "Typing… saves in a second" : saveState === "error" ? "Not saved yet" : savedAt ? `Saved ${savedAt}` : saved.includes(type) ? "Saved earlier. Changes save by themselves." : "Changes save by themselves as you type."}</p>}
       {error && <p className="cx-error" role="alert">{error}</p>}
     </form>
   );
