@@ -4,7 +4,7 @@ import { supabaseAdmin, ADMIN_EMAIL } from "../../../../lib/supabase-admin";
 import { resendConfigured, sendEmail, sendBatch } from "../../../../lib/resend";
 import { wrapHtml, merge, firstName, unsubscribeUrl } from "../../../../lib/client-email";
 import { addMember } from "../../../../lib/album-access";
-import { CALL, INTAKE, TYPE_LABEL, typeOf } from "../../../../lib/intake";
+import { CALL, DISCOVERY, INTAKE, TYPE_LABEL, typeOf } from "../../../../lib/intake";
 import { isNoEmail, standInEmail } from "../../../../lib/no-email";
 import { findAuthUser, accountView } from "../../../../lib/auth-users";
 import { sendSetupCode } from "../../../../lib/setup-code";
@@ -374,6 +374,32 @@ export async function POST(request) {
       ...(name ? { name } : {}), ...(phone ? { phone } : {}),
       subject: `Intake — ${name || email}`,
       summary: `${TYPE_LABEL[type]} intake · ${fields.length - 1} answers · filled in together`,
+    };
+    const q = cur
+      ? db.from("submissions").update(row).eq("id", cur.id)
+      : db.from("submissions").insert({ ...row, status: "contacted", read_at: now, source_path: "/portal/admin/clients" });
+    const { data, error } = await q.select("id, updated_at").single();
+    if (error) return bad(error.message, 500);
+    if (!cur) await db.from("submissions").delete().eq("kind", "intake_sent").eq("email", email);
+    return NextResponse.json({ ok: true, id: data.id, updated_at: data.updated_at });
+  }
+
+  // Step 1 for a business (lib/intake.js DISCOVERY): one "discovery" row per
+  // client, saved over as Brandon types with them. Never a lead, no emails.
+  if (body.action === "discovery-save") {
+    const email = cleanEmail(body.email);
+    if (!EMAIL_RE.test(email)) return bad("This client needs an email first (Settings tab)");
+    const answers = body.answers && typeof body.answers === "object" ? body.answers : {};
+    const fields = DISCOVERY.map((it) => [it.q, String(answers[it.q] || "").slice(0, 4000).trim()]).filter(([, v]) => v);
+    const name = String(body.name || "").trim().slice(0, 120);
+    const phone = String(body.phone || "").trim().slice(0, 40);
+    const now = new Date().toISOString();
+    const { data: cur } = await db.from("submissions").select("id").eq("kind", "discovery").eq("email", email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const row = {
+      kind: "discovery", email, fields, utm: { type: "business", by: "brandon" }, updated_at: now,
+      ...(name ? { name } : {}), ...(phone ? { phone } : {}),
+      subject: `Getting to know them — ${name || email}`,
+      summary: `Getting to know them · ${fields.length} answers`,
     };
     const q = cur
       ? db.from("submissions").update(row).eq("id", cur.id)

@@ -71,7 +71,7 @@ export default async function StatsPage({ searchParams }) {
   const db = supabaseAdmin();
 
   const prevSince = new Date(since.getTime() - range * 24 * 3600 * 1000);
-  const NOT_MINE = "(partner,partner_lead,partner_month,call,intake_sent,coupon,quote_offer,quote_settings)"; // partner work + Brandon's own call sheets
+  const NOT_MINE = "(partner,partner_lead,partner_month,call,discovery,intake_sent,coupon,quote_offer,quote_settings)"; // partner work + Brandon's own call sheets
   const SUB_COLS = "id, created_at, updated_at, kind, status, name, email, phone, summary, source_path, utm, visitor";
   const loadSubs = (cols) => db.from("submissions").select(cols).not("kind", "in", NOT_MINE).gte("created_at", since.toISOString());
   const [{ rows, error }, subsFirst, actRes, newCount, bookRes, guestRes, prevLeadsRes, prevViewsRes, payRes] = await Promise.all([

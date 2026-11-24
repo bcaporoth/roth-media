@@ -115,7 +115,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   // Quotes: build one from their inquiry (same pre-fill the Inbox uses), and
   // once one is paid with no shoot on the books, one tap plans the day.
   const quotes = d.quotes || [];
-  const quoteHref = inquiry && inquiry.kind !== "walkin" ? "/portal/admin/quotes?from=" + inquiry.id : "/portal/admin/quotes?client=" + c.id;
+  // Step 1 (getting to know them) is the richest source once it exists.
+  const quoteHref = d.discovery ? "/portal/admin/quotes?from=" + d.discovery.id : inquiry && inquiry.kind !== "walkin" ? "/portal/admin/quotes?from=" + inquiry.id : "/portal/admin/quotes?client=" + c.id;
   const paidQuote = quotes.find((q) => q.status === "paid") || null;
   const needsDay = paidQuote && !(d.shoots || []).length && !(d.days || []).length;
   const planFrom = inquiry || d.messages.find((m) => m.kind === "booking") || null;
@@ -147,7 +148,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           {c.phone && <a className="achip" href={`sms:${c.phone.replace(/[^\d+]/g, "")}`}>Text</a>}
           {c.phone && <a className="achip" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>Call</a>}
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
-          {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.intakes.length ? "Intake" : "Fill in intake"}</a>}
+          {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.discovery || d.intakes.length ? "Intake" : "Fill in intake"}</a>}
           <a className="achip" href={quoteHref}>Build a quote</a>
           <button type="button" className="achip" onClick={() => { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
@@ -193,7 +194,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           the calendar (passed in by the page), then the planned days, then
           their addresses. */}
       <div className="pbook-kinds cprof-tabs" role="tablist" aria-label="This client">
-        {[["days", "Calendar", null], ["shoots", "Projects", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
+        {[["days", "Calendar", null], ["shoots", "Projects", (d.days || []).length || null], ["paper", "Paperwork", d.messages.length + d.intakes.length + d.calls.length + (d.discovery ? 1 : 0) || null], ["notes", "Notes", null], ["gals", "Galleries", d.galleries.length || null], ["money", "Money", bookings.length + d.payments.length || null], ["settings", "Settings", null]].map(([k, label, n]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={"ifilter" + (tab === k ? " is-on" : "")} onClick={() => setTab(k)}>{label}{n ? <em className="ifilter-n"> {n}</em> : null}</button>
         ))}
       </div>
@@ -231,9 +232,18 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           </section>
 
           <section className="cprof-card">
+            <div className="cprof-cardhead"><h2>Getting to know them</h2>
+              {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake?step=know`}>{d.discovery ? "Edit with them" : "Fill in with them"}</a>}
+            </div>
+            {d.discovery
+              ? <><p className="gcard-meta">Step 1 · updated {fmt(d.discovery.updated_at || d.discovery.created_at)} · step 2 is their <a href={`/portal/admin/clients/${c.id}/brand`}>Brand Palette</a>.</p><Answers item={d.discovery} title="Goals, struggles, interests" /></>
+              : <p className="gcard-meta">Their goals, what&apos;s been hard, and what they want. Fill it in together, then Continue into their Brand Palette.</p>}
+          </section>
+
+          <section className="cprof-card">
             <div className="cprof-cardhead"><h2>Their brief{d.intakes.length > 0 && <em className="cprof-count">{d.intakes.length}</em>}</h2>
               <div className="gcard-actions">
-                {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.intakes.length ? "Edit with them" : "Fill in with them"}</a>}
+                {!isNoEmail(c.email) && <a className="achip" href={`/portal/admin/clients/${c.id}/intake?step=shoot`}>{d.intakes.length ? "Edit with them" : "Fill in with them"}</a>}
                 <button type="button" className="achip" onClick={() => intakeSent("copy")}>Copy intake link</button>
                 {c.phone && <button type="button" className="achip" onClick={() => intakeSent("sms")}>Text it</button>}
                 <button type="button" className="achip" onClick={() => intakeSent("mail")}>Email it</button>

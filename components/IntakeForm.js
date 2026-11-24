@@ -32,6 +32,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   const [saved, setSaved] = useState(() => savedTypes || Object.keys(initialByType || {}).filter((t) => Object.keys(initialByType[t] || {}).length));
   const answers = (type && byType[type]) || {};
   const setAnswers = (a) => { touched.current = true; setByType((b) => ({ ...b, [type]: a })); };
+  const setOne = (q, fn) => { touched.current = true; setByType((b) => ({ ...b, [type]: { ...(b[type] || {}), [q]: fn((b[type] || {})[q] || "") } })); };
   const pills = types?.length ? TYPES.filter((t) => types.includes(t.id)) : TYPES;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -85,8 +86,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   // Pick several: each tap adds or removes its words ("Instagram, Facebook").
   const split = (v) => String(v || "").split(/,\s*/).map((x) => x.trim()).filter(Boolean);
   const togglePick = (it, p) => {
-    const cur = split(answers[it.q]);
-    setAnswers({ ...answers, [it.q]: (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]).join(", ") });
+    setOne(it.q, (v) => { const cur = split(v); return (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]).join(", "); });
   };
   const pickRow = (it, i) => (
     <div className="cx-pills mx-picks" role="group" aria-label={`${it.q}: tap any`}>
@@ -98,7 +98,7 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
       ? (
         <>
           <div className="cx-pills mx-picks" role="radiogroup" aria-label={it.q} id={`in-q${i}`}>
-            {it.choices.map((c) => <button key={c} type="button" role="radio" aria-checked={answers[it.q] === c} className={"cx-pill" + (answers[it.q] === c ? " is-on" : "")} onClick={() => setAnswers({ ...answers, [it.q]: answers[it.q] === c ? "" : c })}>{c}</button>)}
+            {it.choices.map((c) => <button key={c} type="button" role="radio" aria-checked={answers[it.q] === c} className={"cx-pill" + (answers[it.q] === c ? " is-on" : "")} onClick={() => setOne(it.q, (v) => (v === c ? "" : c))}>{c}</button>)}
           </div>
           {answers[it.q] && !it.choices.includes(answers[it.q]) && <p className="cx-help">Earlier answer: {answers[it.q]}</p>}
         </>

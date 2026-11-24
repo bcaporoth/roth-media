@@ -33,13 +33,13 @@ export async function GET(request) {
   const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
   const SUB_COLS = "id, created_at, updated_at, kind, status, name, email, phone, summary, visitor, next_follow_up, first_contacted_at";
   const [subsRes, evRes, fuRes] = await Promise.all([
-    db.from("submissions").select(SUB_COLS).not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent,coupon,quote_offer,quote_settings)").gte("created_at", since),
+    db.from("submissions").select(SUB_COLS).not("kind", "in", "(partner,partner_lead,partner_month,call,discovery,intake_sent,coupon,quote_offer,quote_settings)").gte("created_at", since),
     db.from("site_events").select("created_at, type, name, path, utm_source, visitor").eq("type", "event").gte("created_at", since).limit(5000),
     db.from("submissions").select(SUB_COLS).in("status", ["new", "contacted"]).lte("next_follow_up", todayKey).lt("created_at", since).then((r) => r, () => ({ data: [] })),
   ]);
   if (subsRes.error && /next_follow_up|first_contacted_at/.test(subsRes.error.message)) {
     // studio-2.sql not run yet: fall back to the columns that exist.
-    const again = await db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").not("kind", "in", "(partner,partner_lead,partner_month,call,intake_sent,coupon,quote_offer,quote_settings)").gte("created_at", since);
+    const again = await db.from("submissions").select("id, created_at, updated_at, kind, status, name, email, phone, summary, visitor").not("kind", "in", "(partner,partner_lead,partner_month,call,discovery,intake_sent,coupon,quote_offer,quote_settings)").gte("created_at", since);
     subsRes.data = again.data; subsRes.error = again.error;
   }
   if (!subsRes.error && fuRes?.data?.length) subsRes.data = [...(subsRes.data || []), ...fuRes.data];
