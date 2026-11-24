@@ -82,8 +82,35 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
     else blocks.push({ group: [{ it, i }] });
   });
   for (const b of blocks) if (b.group) b.group.sort((x, y) => shotPart(x.it.q) - shotPart(y.it.q));
+  // Pick several: each tap adds or removes its words ("Instagram, Facebook").
+  const split = (v) => String(v || "").split(/,\s*/).map((x) => x.trim()).filter(Boolean);
+  const togglePick = (it, p) => {
+    const cur = split(answers[it.q]);
+    setAnswers({ ...answers, [it.q]: (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]).join(", ") });
+  };
+  const pickRow = (it, i) => (
+    <div className="cx-pills mx-picks" role="group" aria-label={`${it.q}: tap any`}>
+      {it.picks.map((p) => { const on = split(answers[it.q]).includes(p); return <button key={p} type="button" aria-pressed={on} className={"cx-pill" + (on ? " is-on" : "")} onClick={() => togglePick(it, p)}>{p}</button>; })}
+    </div>
+  );
   const box = (it, i) =>
-    it.addons
+    it.choices
+      ? (
+        <>
+          <div className="cx-pills mx-picks" role="radiogroup" aria-label={it.q} id={`in-q${i}`}>
+            {it.choices.map((c) => <button key={c} type="button" role="radio" aria-checked={answers[it.q] === c} className={"cx-pill" + (answers[it.q] === c ? " is-on" : "")} onClick={() => setAnswers({ ...answers, [it.q]: answers[it.q] === c ? "" : c })}>{c}</button>)}
+          </div>
+          {answers[it.q] && !it.choices.includes(answers[it.q]) && <p className="cx-help">Earlier answer: {answers[it.q]}</p>}
+        </>
+      )
+      : it.picks
+      ? (
+        <>
+          {pickRow(it, i)}
+          <AutoText className="cx-input" id={`in-q${i}`} placeholder="Or type it here" value={answers[it.q] || ""} onChange={(e) => setAnswers({ ...answers, [it.q]: e.target.value })} />
+        </>
+      )
+      : it.addons
       ? <AddonPicker category={it.addons} id={`in-q${i}`} value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
       : it.address
       ? <AddressInput endpoint={portal ? "/api/portal/geo" : "/api/admin/geo"} className="mx-addr" inputClassName="cx-input" id={`in-q${i}`} name={`q${i}`} required={!it.opt && !admin} placeholder="Start typing the place or address…" value={answers[it.q] || ""} onChange={(v) => setAnswers({ ...answers, [it.q]: v })} />
