@@ -51,6 +51,10 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   // Which album/folder has its extra tools open ("⋯": link, rename, move up/down).
   // Only Select and + Add photos show by default (2026-11-24, simpler page).
   const [tools, setTools] = useState("");
+  // Empty folders made with "+ New folder" (saved in galleries.design.folders).
+  const [savedFolders, setSavedFolders] = useState({});
+  const [addingFolder, setAddingFolder] = useState(null); // album name whose "+ New folder" box is open
+  const [folderName, setFolderName] = useState("");
   const toolsBtn = (k, what) => (
     <button type="button" className={"achip gph-more" + (tools === k ? " is-on" : "")} aria-expanded={tools === k} aria-label={`More for ${what}`} title="Copy link, rename, move up or down" onClick={() => setTools((t) => (t === k ? "" : k))}>
       {tools === k ? "Done" : "⋯"}
@@ -77,6 +81,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
       const j = await api({ action: "list-media", galleryId: gallery.id });
       setItems(j.items || []);
       setDayCovers(j.dayCovers || {});
+      setSavedFolders(j.folders || {});
     } catch (e) {
       setMsg(e.message);
       setItems([]);
@@ -125,6 +130,14 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     if (!F) D.folders.push((F = { folder: f, files: [] }));
     F.files.push(it);
     D.count += 1;
+  }
+  // Folders made with "+ New folder" that have no photos yet: shown (empty)
+  // after the album's other folders, so they can be filled.
+  for (const D of days) {
+    if (D.day === TOP) continue;
+    for (const f of savedFolders[D.day] || []) {
+      if (!D.folders.some((F) => F.folder === f)) D.folders.push({ folder: f, files: [], empty: true });
+    }
   }
   const namedDays = days.filter((d) => d.day !== TOP);
   const folderCount = namedDays.reduce((n, d) => n + d.folders.filter((f) => f.folder !== TOP).length, 0);
@@ -219,7 +232,11 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     } else if (r.folder === TOP) {
       run({ action: "album-rename", from: r.day, to: joinAlbum(r.day, to) }, (j) => `${plural(j.renamed, "photo")} now in “${to}” ✓`);
     } else {
-      run({ action: "album-rename", from: keyOf(r.day, r.folder), to: joinAlbum(r.day, to) }, () => `Folder renamed to “${to}” ✓`);
+      const saved = (savedFolders[r.day] || []).includes(r.folder);
+      const hasFiles = items.some((it) => it.album === keyOf(r.day, r.folder));
+      if (saved) api({ action: "folder-rename-saved", galleryId: gallery.id, day: r.day, folder: r.folder, to }).then((j) => setSavedFolders(j.folders || {})).catch((e) => setMsg(e.message));
+      if (hasFiles) run({ action: "album-rename", from: keyOf(r.day, r.folder), to: joinAlbum(r.day, to) }, () => `Folder renamed to “${to}” ✓`);
+      else setMsg(`Folder renamed to “${to}” ✓`);
     }
   }
   const isRenaming = (r) =>
@@ -237,6 +254,27 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     const files = [...picked];
     clear();
     run({ action: "album-assign", filenames: files, album: target || null }, (j) => (label ? `${plural(j.moved, "photo")} put in “${label}” ✓` : `${plural(j.moved, "photo")} taken out of the album ✓`));
+  }
+  async function makeFolder(day) {
+    const name = cleanPart(folderName);
+    if (!name || busy) return;
+    setBusy(true); setMsg("");
+    try {
+      const j = await api({ action: "folder-add", galleryId: gallery.id, day, folder: name });
+      setSavedFolders(j.folders || {});
+      setAddingFolder(null);
+      setFolderName("");
+      setMsg(`Folder “${name}” is ready. Tap + Add photos on it, or tap photos and tap 🗂 ${name}.`);
+    } catch (e) { setMsg(e.message); } finally { setBusy(false); }
+  }
+  async function dropFolder(day, folder) {
+    setBusy(true); setMsg("");
+    try {
+      const j = await api({ action: "folder-remove", galleryId: gallery.id, day, folder });
+      setSavedFolders(j.folders || {});
+      setTools("");
+      setMsg(`Empty folder “${folder}” deleted.`);
+    } catch (e) { setMsg(e.message); } finally { setBusy(false); }
   }
   function saveName() {
     const name = cleanPart(newName);
@@ -388,6 +426,11 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                       <button type="button" className="achip" disabled={busy} onClick={() => onAddTo?.(isTop ? TOP : D.day)}>
                         + Add photos
                       </button>
+                      {!isTop && (
+                        <button type="button" className={"achip" + (addingFolder === D.day ? " is-on" : "")} disabled={busy} onClick={() => { setAddingFolder((a) => (a === D.day ? null : D.day)); setFolderName(""); }}>
+                          + New folder
+                        </button>
+                      )}
                       {tools === `d:${D.day}` && (<>
                       {!isTop && gallery.share_token && (
                         <button type="button" className={"achip" + (copied === `d:${D.day}` ? " is-on" : "")} onClick={() => copyLink(`d:${D.day}`, D.day, null)} title="Copies a link that opens right on this album">
@@ -410,6 +453,23 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                 )}
               </header>
 
+              {addingFolder === D.day && (
+                <form className="gph-newfolder" onSubmit={(e) => { e.preventDefault(); makeFolder(D.day); }}>
+                  <input
+                    autoFocus
+                    value={folderName}
+                    maxLength={60}
+                    placeholder="Folder name, e.g. Reels"
+                    onChange={(e) => setFolderName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") setAddingFolder(null); }}
+                    aria-label={`New folder in ${D.day}`}
+                    disabled={busy}
+                  />
+                  <button type="submit" className="achip gph-choice is-go" disabled={busy || !cleanPart(folderName)}>Make folder</button>
+                  <button type="button" className="achip" onClick={() => setAddingFolder(null)}>Cancel</button>
+                </form>
+              )}
+
               {D.folders.map((F, fi) => {
                 const loose = F.folder === TOP;
                 const showHead = !isTop && (!loose || D.folders.length > 1);
@@ -430,12 +490,19 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                               <em>{plural(F.files.length, "file")}</em>
                             </h5>
                             <span className="gph-actions gph-factions">
-                              <button type="button" className="achip" disabled={busy} onClick={() => selectFiles(F.files)}>
-                                {fAllOn ? "Unselect" : "Select"}
-                              </button>
+                              {n > 0 && !loose && !pickedFiles.every((f) => f.album === keyOf(D.day, F.folder)) && (
+                                <button type="button" className="achip gph-here" disabled={busy} onClick={() => moveTo(D.day, F.folder)}>
+                                  Move {n} here
+                                </button>
+                              )}
+                              {F.files.length > 0 && (
+                                <button type="button" className="achip" disabled={busy} onClick={() => selectFiles(F.files)}>
+                                  {fAllOn ? "Unselect" : "Select"}
+                                </button>
+                              )}
                               {!loose && (
                                 <button type="button" className="achip" disabled={busy} onClick={() => onAddTo?.(keyOf(D.day, F.folder))}>
-                                  + Add
+                                  + Add photos
                                 </button>
                               )}
                               {tools === `f:${D.day}›${F.folder}` && (<>
@@ -447,7 +514,10 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                               <button type="button" className="achip" disabled={busy} onClick={() => startRename(fR, loose ? "" : F.folder)}>
                                 {loose ? "Make a folder…" : "Rename"}
                               </button>
-                              {D.folders.length > 1 && (
+                              {F.empty && (
+                                <button type="button" className="achip achip-danger" disabled={busy} onClick={() => dropFolder(D.day, F.folder)}>Delete empty folder</button>
+                              )}
+                              {D.folders.length > 1 && !F.empty && (
                                 <>
                                   <button type="button" className="achip" disabled={busy || fi === 0} onClick={() => moveFolder(di, fi, -1)} aria-label="Move folder up">↑</button>
                                   <button type="button" className="achip" disabled={busy || fi === D.folders.length - 1} onClick={() => moveFolder(di, fi, 1)} aria-label="Move folder down">↓</button>
@@ -460,7 +530,11 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                         )}
                       </header>
                     )}
-                    {grid(F.files)}
+                    {F.files.length > 0 ? grid(F.files) : (
+                      <p className="cover-picker-hint gph-emptyhint">
+                        Empty. Tap <strong>+ Add photos</strong> to upload into it, or tap photos above and tap <strong>🗂 {F.folder}</strong>.
+                      </p>
+                    )}
                   </div>
                 );
               })}

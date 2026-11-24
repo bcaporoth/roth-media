@@ -514,10 +514,36 @@ export async function POST(request) {
         thumbUrl: await signedUrl(photoKey(galleryId, "thumb", jpgName(m.filename))).catch(() => null),
       }))
     );
-    return NextResponse.json({ cover: gallery.cover_filename, dayCovers: resolveDesign(gallery.design).covers, items });
+    return NextResponse.json({ cover: gallery.cover_filename, dayCovers: resolveDesign(gallery.design).covers, folders: resolveDesign(gallery.design).folders, items });
   }
 
   // Pick one day album's cover photo (or null to go back to its first photo).
+  // Empty folders inside an album (2026-11-24): make one, or take one away.
+  // Folders that hold photos come from media.section; these are the ones
+  // waiting for their first photo. Renaming a folder keeps this list in step.
+  if (body.action === "folder-add" || body.action === "folder-remove" || body.action === "folder-rename-saved") {
+    const { galleryId } = body;
+    const day = cleanPart(body.day);
+    const folder = cleanPart(body.folder);
+    if (!isUuid(galleryId) || !day || !folder) return NextResponse.json({ error: "Bad request" }, { status: 422 });
+    const { data: g } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
+    if (!g) return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    const design = resolveDesign(g.design);
+    const folders = { ...design.folders };
+    const list = (folders[day] || []).filter((f) => f !== folder);
+    if (body.action === "folder-add") list.push(folder);
+    if (body.action === "folder-rename-saved") {
+      const to = cleanPart(body.to);
+      if (to && (design.folders[day] || []).includes(folder)) list.push(to);
+    }
+    if (list.length) folders[day] = list;
+    else delete folders[day];
+    const clean = resolveDesign({ ...design, folders });
+    const { error } = await db.from("galleries").update({ design: clean }).eq("id", galleryId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, folders: clean.folders });
+  }
+
   if (body.action === "set-day-cover") {
     const { galleryId } = body;
     const day = cleanPart(body.day);
@@ -630,10 +656,12 @@ export async function POST(request) {
     // The day's chosen cover follows the new name.
     const { data: g } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
     const design = resolveDesign(g?.design);
-    if (design.covers[from]) {
-      const covers = { ...design.covers, [to]: design.covers[from] };
-      delete covers[from];
-      await db.from("galleries").update({ design: resolveDesign({ ...design, covers }) }).eq("id", galleryId);
+    if (design.covers[from] || design.folders[from]) {
+      const covers = { ...design.covers };
+      if (covers[from]) { covers[to] = covers[from]; delete covers[from]; }
+      const folders = { ...design.folders };
+      if (folders[from]) { folders[to] = [...(folders[to] || []), ...folders[from]]; delete folders[from]; }
+      await db.from("galleries").update({ design: resolveDesign({ ...design, covers, folders }) }).eq("id", galleryId);
     }
     return NextResponse.json({ ok: true, day: to, renamed });
   }
@@ -672,7 +700,7 @@ export async function POST(request) {
     if (!galleryId) return NextResponse.json({ error: "Bad request" }, { status: 422 });
     // whitelists font/mode/accent; the day-album covers are kept as they are
     const { data: cur } = await db.from("galleries").select("design").eq("id", galleryId).maybeSingle();
-    const clean = resolveDesign({ ...(design || {}), covers: resolveDesign(cur?.design).covers });
+    const clean = resolveDesign({ ...(design || {}), covers: resolveDesign(cur?.design).covers, folders: resolveDesign(cur?.design).folders });
     const { error } = await db
       .from("galleries")
       .update({ design: clean })

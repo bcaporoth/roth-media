@@ -1038,6 +1038,10 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
                 {albums.map((a) => (
                   <option key={a} value={a}>Album: {a}</option>
                 ))}
+                {/* A new, still-empty folder picked with its "+ Add photos" button (2026-11-24). */}
+                {albumPick !== NO_ALBUM && albumPick !== NEW_ALBUM && !albums.includes(albumPick) && (
+                  <option value={albumPick}>Album: {albumPick}</option>
+                )}
                 <option value={NEW_ALBUM}>+ New album…</option>
               </select>
               {albumPick === NEW_ALBUM && (
