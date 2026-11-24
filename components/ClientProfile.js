@@ -236,8 +236,8 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
               {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake?step=know`}>{d.discovery ? "Edit with them" : "Fill in with them"}</a>}
             </div>
             {d.discovery
-              ? <><p className="gcard-meta">Step 1 · updated {fmt(d.discovery.updated_at || d.discovery.created_at)} · step 2 is their <a href={`/portal/admin/clients/${c.id}/brand`}>Brand Palette</a>.</p><Answers item={d.discovery} title="Goals, struggles, interests" /></>
-              : <p className="gcard-meta">Their goals, what&apos;s been hard, and what they want. Fill it in together, then Continue into their Brand Palette.</p>}
+              ? <><p className="gcard-meta">Updated {fmt(d.discovery.updated_at || d.discovery.created_at)}{(d.discovery.fields || []).find(([k]) => k === "What's next?") ? ` · next: ${(d.discovery.fields || []).find(([k]) => k === "What's next?")[1]}` : ""}{(d.discovery.fields || []).find(([k]) => k === "When do we meet?") ? ` · meeting ${fmt((d.discovery.fields || []).find(([k]) => k === "When do we meet?")[1])}` : ""}</p><Answers item={d.discovery} title="Goals, struggles, interests" /></>
+              : <p className="gcard-meta">Their goals, what&apos;s been hard, and what they want. Fill it in together. It ends with your next meeting, which goes on their calendar.</p>}
           </section>
 
           <section className="cprof-card">

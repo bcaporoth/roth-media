@@ -52,16 +52,16 @@ export default async function ClientIntakePage({ params, searchParams }) {
     return (
       <PortalFrame nav={nav} className="pt-brief mx-page">
         <PortalTop
-          who={{ kick: "Command Center · Intake · Step 1 of 2", title: client.name || client.email }}
+          who={{ kick: "Command Center · Intake", title: client.name || client.email }}
           page={`Get to know ${first}`}
-          lede={<>Their goals, what&apos;s been hard, and what they want. Tap what fits, type the rest. Nothing is required. <strong>It saves by itself</strong> and no emails go out. <a href={back}>Back to {first}&apos;s profile</a></>}
+          lede={<>Everything you need to quote them: their goals, what&apos;s been hard, what they want, budget, and the next meeting. Tap what fits, type the rest. Nothing is required. <strong>It saves by itself</strong> and no emails go out. <a href={back}>Back to {first}&apos;s profile</a></>}
         />
         <section className="cx-section cx-section--tight">
           <div className="cx-wrap cx-wrap--narrow">
             {isNoEmail(email) ? (
               <p className="cx-lede">{first} needs an email on file first. Add it in their Settings tab, then come back. <a href={`${back}#settings`}>Open Settings</a></p>
             ) : (
-              <DiscoveryForm email={email} name={client.name || ""} phone={client.phone || ""} initial={initial} savedId={disc?.id || ""} backHref={back} deepHref={`${back}/brand`} quoteBase="/portal/admin/quotes?from=" shootHref={`${here}?step=shoot&type=business`} />
+              <DiscoveryForm email={email} name={client.name || ""} phone={client.phone || ""} initial={initial} savedId={disc?.id || ""} backHref={back} quoteBase="/portal/admin/quotes?from=" shootHref={`${here}?step=shoot&type=business`} />
             )}
           </div>
         </section>

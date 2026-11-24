@@ -1,10 +1,10 @@
 "use client";
 
-// Command Center → client → Intake, step 1 (2026-11-24): getting to know a
-// business — goals, struggles, interests — filled in WITH them. Questions in
-// lib/intake.js DISCOVERY. Saves by itself as Brandon types (one "discovery"
-// row per client), no emails. Then: Continue into the Brand Palette (the deep
-// one), build a quote, or back to the profile.
+// Command Center → client → Intake (2026-11-24): getting to know a business —
+// goals, struggles, interests, budget, what a customer is worth — filled in
+// WITH them. Questions in lib/intake.js DISCOVERY. Saves by itself as Brandon
+// types (one "discovery" row per client), no emails. Ends with the next step:
+// a meeting date (lands on their calendar), then build the quote.
 
 import { useEffect, useRef, useState } from "react";
 import AutoText from "./AutoText";
@@ -20,7 +20,7 @@ const togglePickText = (v, p) => {
   return `, ${cur}, `.replace(`, ${p}, `, ", ").replace(/^, |, $/g, "").replace(/^,\s*|,\s*$/g, "").trim();
 };
 
-export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 = "", initial = {}, savedId = "", backHref = "", deepHref = "", quoteBase = "", shootHref = "" }) {
+export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 = "", initial = {}, savedId = "", backHref = "", quoteBase = "", shootHref = "" }) {
   const [name, setName] = useState(name0);
   const [phone, setPhone] = useState(phone0);
   const [answers, setAnswersRaw] = useState(initial);
@@ -67,6 +67,8 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
 
   const box = (it, i) => {
     const v = answers[it.q] || "";
+    if (it.date) return <input className="cx-input" type="date" id={`dq${i}`} value={v} onChange={(e) => set(it.q, e.target.value)} />;
+    if (it.time) return <input className="cx-input" type="time" step="900" id={`dq${i}`} value={v} onChange={(e) => set(it.q, e.target.value)} />;
     if (it.addons) return <AddonPicker category={it.addons} id={`dq${i}`} value={v} onChange={(x) => set(it.q, x)} />;
     if (it.choices) return (
       <>
@@ -89,7 +91,7 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
   };
 
   return (
-    <form className="mx-form" onSubmit={(e) => { e.preventDefault(); go(deepHref); }}>
+    <form className="mx-form" onSubmit={(e) => { e.preventDefault(); go(backHref); }}>
       <div className="cx-form-row">
         <div className="mx-field"><label className="cx-label" htmlFor="dq-name">Full name</label><input className="cx-input" id="dq-name" value={name} onChange={(e) => { touched.current = true; setName(e.target.value); }} autoComplete="off" /></div>
         <div className="mx-field"><label className="cx-label" htmlFor="dq-phone">Best phone</label><input className="cx-input" id="dq-phone" type="tel" value={phone} onChange={(e) => { touched.current = true; setPhone(e.target.value); }} autoComplete="off" inputMode="tel" /></div>
@@ -106,13 +108,13 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
         </div>
       ))}
       <div className="mx-done">
-        <p className="mx-done-title">Next</p>
-        <p><strong>Continue</strong> opens the Brand Palette: who they serve, what makes them different, their look and their voice. That&apos;s where you find their niche. Or stop here and build the quote.</p>
+        <p className="mx-done-title">That&apos;s everything</p>
+        <p>{answers["When do we meet?"] ? <>The meeting is on their calendar for <strong>{new Date(`${answers["When do we meet?"]}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}{answers["What time?"] ? ` at ${new Date(`2000-01-01T${answers["What time?"]}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}</strong>. </> : "Pick a meeting day above and it goes on their calendar. "}Build the quote now, or come back to it.</p>
       </div>
       <div className="mx-done-acts">
-        {deepHref && <button type="submit" className="cx-btn cx-btn--light">Continue: go deeper →</button>}
-        {quoteBase && <button type="button" className="cx-btn" onClick={() => go((sid) => (sid ? `${quoteBase}${sid}` : backHref))}>Build their quote</button>}
-        {backHref && <button type="button" className="cx-btn" onClick={() => go(backHref)}>Back to their profile</button>}
+        {quoteBase && <button type="button" className="cx-btn cx-btn--light" onClick={() => go((sid) => (sid ? `${quoteBase}${sid}` : backHref))}>Build their quote</button>}
+        {backHref && <button type="submit" className="cx-btn">Done: back to their profile</button>}
+        {backHref && <button type="button" className="cx-btn" onClick={() => go(`${backHref}#calendar`)}>Open their calendar</button>}
       </div>
       {shootHref && <p className="cx-help">Planning one specific shoot? <a href={shootHref}>Use the shoot questions</a> (shots, location, brand files).</p>}
       {error && <p className="cx-error" role="alert">{error}</p>}
