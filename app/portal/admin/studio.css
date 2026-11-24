@@ -775,3 +775,12 @@ body:has(.admin-shell.is-dark) footer.rm-footer { background: #0c0c0d; border-to
 .gph-emptyhint { margin: 0.2rem 0.4rem 0.6rem; padding: 0.9rem 1rem; border: 1px dashed var(--line); border-radius: 12px; }
 .gph-here { background: #f4f4f2 !important; border-color: #f4f4f2 !important; color: #141414 !important; font-weight: 600; }
 .gph-actions .achip.gph-more { flex: 0 0 auto; min-width: 48px; justify-content: center; }
+
+/* The filing system, said once at the top: Gallery › 📁 Album › 🗂 Folder (2026-11-24). */
+.gph-filing { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.6rem; margin: 0 0 0.4rem; padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: 14px; font-size: 0.88rem; color: var(--ink-soft); }
+.gph-filing strong { color: var(--ink, inherit); font-weight: 600; margin-right: 0.25rem; }
+.gph-filing > span[aria-hidden] { opacity: 0.5; }
+@media (max-width: 560px) { .gph-filing { display: grid; gap: 0.25rem; } .gph-filing > span[aria-hidden] { display: none; } }
+/* Name ideas: tap one to fill the name box. */
+.gph-ideas { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.gph-ideas .gph-idea { min-height: 36px !important; padding: 0 0.8rem; font-size: 0.85rem; border-style: dashed; }

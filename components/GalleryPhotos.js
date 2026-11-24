@@ -15,7 +15,19 @@
 
 import { useEffect, useState } from "react";
 import TypedConfirm from "./TypedConfirm";
-import { splitAlbum, joinAlbum, cleanPart, albumLink } from "../lib/albums";
+import { splitAlbum, joinAlbum, cleanPart, albumLink, albumNameIdeas, folderNameIdeas, ALBUM_ICON, FOLDER_ICON } from "../lib/albums";
+
+// Tap a name idea to fill the box (the box can still be edited).
+function NameIdeas({ ideas, onPick, disabled }) {
+  if (!ideas.length) return null;
+  return (
+    <div className="gph-ideas" aria-label="Name ideas">
+      {ideas.map((x) => (
+        <button key={x} type="button" className="achip gph-idea" disabled={disabled} onClick={() => onPick(x)}>{x}</button>
+      ))}
+    </div>
+  );
+}
 
 async function api(payload) {
   const res = await fetch("/api/admin/gallery", {
@@ -394,6 +406,13 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
 
   return (
     <div className="gph">
+      <p className="gph-filing" aria-label="How this gallery is filed">
+        <span><strong>Gallery</strong> everything for {gallery.clientName || gallery.title}</span>
+        <span aria-hidden="true">›</span>
+        <span><strong>{ALBUM_ICON} Album</strong> one shoot or event</span>
+        <span aria-hidden="true">›</span>
+        <span><strong>{FOLDER_ICON} Folder</strong> one kind of thing: Reels, Photos…</span>
+      </p>
       <p className="cover-picker-hint gph-hint">
         <strong>Tap photos, then tap where they go.</strong> To change the cover, tap one, then <strong>★ Make it the cover</strong>.
       </p>
@@ -412,7 +431,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                 ) : (
                   <>
                     <h4 className="gph-title">
-                      {!isTop && <span className="gph-kind">Album</span>}
+                      {!isTop && <span className="gph-kind">{ALBUM_ICON} Album</span>}
                       <button type="button" className="gph-title-btn" title={isTop ? "Put these in an album" : "Click to rename this album"} disabled={busy} onClick={() => startRename(dayR, isTop ? "" : D.day)}>
                         {isTop ? "Not in an album" : D.day}
                       </button>{" "}
@@ -465,6 +484,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                     aria-label={`New folder in ${D.day}`}
                     disabled={busy}
                   />
+                  <NameIdeas ideas={folderNameIdeas(D.folders.map((F) => F.folder).filter(Boolean))} onPick={setFolderName} disabled={busy} />
                   <button type="submit" className="achip gph-choice is-go" disabled={busy || !cleanPart(folderName)}>Make folder</button>
                   <button type="button" className="achip" onClick={() => setAddingFolder(null)}>Cancel</button>
                 </form>
@@ -485,7 +505,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                           <>
                             <h5 className="gph-ftitle">
                               <button type="button" className="gph-title-btn" disabled={busy} title={loose ? "Put these in a folder" : "Click to rename this folder"} onClick={() => startRename(fR, loose ? "" : F.folder)}>
-                                {loose ? "Not in a folder" : F.folder}
+                                {loose ? "Not in a folder" : `${FOLDER_ICON} ${F.folder}`}
                               </button>{" "}
                               <em>{plural(F.files.length, "file")}</em>
                             </h5>
@@ -568,7 +588,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
               <div className="gph-where">
                 {naming ? (
                   <form className="gph-name" onSubmit={(e) => { e.preventDefault(); saveName(); }}>
-                    <p className="gph-q">{naming === "album" ? "Name the new album" : `Name the new folder in “${whereDay}”`}</p>
+                    <p className="gph-q">{naming === "album" ? `Name the new ${ALBUM_ICON} album` : `Name the new ${FOLDER_ICON} folder in “${whereDay}”`}</p>
                     <input
                       autoFocus
                       value={newName}
@@ -577,6 +597,13 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                       onChange={(e) => setNewName(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Escape") { setNaming(""); setNewName(""); } }}
                       aria-label={naming === "album" ? "New album name" : "New folder name"}
+                      disabled={busy}
+                    />
+                    <NameIdeas
+                      ideas={naming === "album"
+                        ? albumNameIdeas(gallery.event_date, namedDays.map((D) => D.day))
+                        : folderNameIdeas(whereFolders.map((F) => F.folder))}
+                      onPick={setNewName}
                       disabled={busy}
                     />
                     <button type="submit" className="achip gph-choice is-go" disabled={busy || !cleanPart(newName)}>Put them in</button>

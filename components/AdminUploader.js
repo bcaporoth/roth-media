@@ -519,7 +519,7 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
       return;
     }
     if (!folderMode && albumPick === NEW_ALBUM && !chosenAlbum()) {
-      setError("Give the new album a name, or pick “Top of gallery”.");
+      setError("Give the new album a name, or pick “No album”.");
       return;
     }
     // Folder mode: sorting by relative path keeps each subfolder's photos
@@ -1034,13 +1034,13 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
                 onChange={(e) => setAlbumPick(e.target.value)}
                 disabled={busy}
               >
-                <option value={NO_ALBUM}>Top of gallery (no album)</option>
+                <option value={NO_ALBUM}>No album</option>
                 {albums.map((a) => (
-                  <option key={a} value={a}>Album: {a}</option>
+                  <option key={a} value={a}>{a.includes(" › ") ? `📁 ${a.split(" › ")[0]} › 🗂 ${a.split(" › ").slice(1).join(" › ")}` : `📁 ${a}`}</option>
                 ))}
                 {/* A new, still-empty folder picked with its "+ Add photos" button (2026-11-24). */}
                 {albumPick !== NO_ALBUM && albumPick !== NEW_ALBUM && !albums.includes(albumPick) && (
-                  <option value={albumPick}>Album: {albumPick}</option>
+                  <option value={albumPick}>{albumPick.includes(" › ") ? `📁 ${albumPick.split(" › ")[0]} › 🗂 ${albumPick.split(" › ").slice(1).join(" › ")}` : `📁 ${albumPick}`}</option>
                 )}
                 <option value={NEW_ALBUM}>+ New album…</option>
               </select>
@@ -1057,10 +1057,10 @@ export default function AdminUploader({ gallery = null, onDone = null, album = n
             </div>
             <p className="au-client-hint">
               {albumPick === NO_ALBUM
-                ? "They'll show at the top of the gallery with no heading. You can move them into an album any time under Photos & albums."
+                ? "They go in the gallery without an album. You can tap them later and put them in one."
                 : albumPick === NEW_ALBUM
-                  ? "A new heading in the gallery, with these files under it."
-                  : `They'll land under the “${albumPick}” heading, after what's already there.`}
+                  ? "A new album in this gallery, with these files in it."
+                  : `They go in “${albumPick}”, after what's already there.`}
             </p>
           </>
         )}
