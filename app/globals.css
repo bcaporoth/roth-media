@@ -5605,6 +5605,7 @@ select.achip { appearance: auto; }
 .cbook { flex-basis: 100%; width: 100%; margin-top: 0.6rem; }
 .cbook-head { margin: 0; font-size: 0.92rem; line-height: 1.5; opacity: 0.9; }
 .cbook-frame { height: 700px; }
+.cbook-kinds { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; }
 .bookcall.is-dark .bookcall-frame { border-color: rgba(241, 235, 223, 0.2); }
 .cform-success:has(.bookcall) { max-width: 720px; }
 

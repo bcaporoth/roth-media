@@ -116,7 +116,7 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
         {quoteBase && <button type="button" className="cx-btn cx-btn--light" onClick={() => go((sid) => (sid ? `${quoteBase}${sid}` : backHref))}>Build their quote</button>}
         {backHref && <button type="submit" className="cx-btn">Done: back to their profile</button>}
         {backHref && <button type="button" className="cx-btn" onClick={() => go(`${backHref}#calendar`)}>Open their calendar</button>}
-        <CalendlyBook name={name} email={email} phone={phone} sid={id} label="Book a meeting in Calendly" className="cx-btn" />
+        <CalendlyBook name={name} email={email} phone={phone} address={answers["Where are you?"] || ""} sid={id} label="Book a meeting in Calendly" className="cx-btn" />
       </div>
       {shootHref && <p className="cx-help">Planning one specific shoot? <a href={shootHref}>Use the shoot questions</a> (shots, location, brand files).</p>}
       {error && <p className="cx-error" role="alert">{error}</p>}

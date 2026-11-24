@@ -9,10 +9,18 @@
 // (api/call-booked, `sid` = the client's intake or inquiry row).
 
 import { useEffect, useState } from "react";
-import { CALENDLY } from "../lib/site";
+import { CALENDLY, CALENDLY_PLANNING } from "../lib/site";
 
-export default function CalendlyBook({ name = "", email = "", phone = "", sid = "", label = "Book a meeting", className = "achip achip-primary", onBooked }) {
+// Two kinds: a sit-down at their business (default) or the 15-minute phone call.
+const KINDS = [
+  { id: "plan", label: "Planning meeting · in person, 30 min", url: CALENDLY_PLANNING },
+  { id: "call", label: "Phone call · 15 min", url: CALENDLY },
+];
+
+export default function CalendlyBook({ name = "", email = "", phone = "", address = "", sid = "", label = "Book a meeting", className = "achip achip-primary", onBooked }) {
   const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState("plan");
+  const pick = KINDS.find((k) => k.id === kind) || KINDS[0];
   const [booked, setBooked] = useState(false);
   const [host, setHost] = useState("");
   useEffect(() => { setHost(window.location.hostname); }, []);
@@ -43,8 +51,13 @@ export default function CalendlyBook({ name = "", email = "", phone = "", sid = 
         <div className="cbook" role="region" aria-label={`Book a meeting with ${first}`}>
           <p className="cbook-head">{booked
             ? <><strong>Booked.</strong> It&apos;s on your calendar, and Calendly emailed {first} the invite for theirs.</>
-            : <>Pick the day and time with {first}. Their name and email are already in.{phone ? <> Calendly asks for the number you&apos;ll call: <strong>{phone}</strong>.</> : null} When you book, it goes on <strong>both calendars</strong>.</>}</p>
-          {host && <iframe className="bookcall-frame cbook-frame" src={`${CALENDLY}?${q.toString()}`} title={`Book a meeting with ${first}`} loading="lazy" />}
+            : <>Pick the day and time with {first}. Their name and email are already in.{kind === "plan" ? (address ? <> Calendly asks where: <strong>{address}</strong>.</> : <> Calendly asks where: type their business address.</>) : phone ? <> Calendly asks for the number you&apos;ll call: <strong>{phone}</strong>.</> : null} When you book, it goes on <strong>both calendars</strong>.</>}</p>
+          {!booked && (
+            <div className="cx-pills cbook-kinds" role="radiogroup" aria-label="What kind of meeting">
+              {KINDS.map((k) => <button key={k.id} type="button" role="radio" aria-checked={kind === k.id} className={"ifilter" + (kind === k.id ? " is-on" : "")} onClick={() => setKind(k.id)}>{k.label}</button>)}
+            </div>
+          )}
+          {host && <iframe key={pick.id} className="bookcall-frame cbook-frame" src={`${pick.url}?${q.toString()}`} title={`Book a meeting with ${first}`} loading="lazy" />}
         </div>
       )}
     </>
