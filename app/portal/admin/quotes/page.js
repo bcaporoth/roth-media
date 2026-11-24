@@ -36,7 +36,7 @@ export default async function QuotesAdmin({ searchParams }) {
         const fields = Array.isArray(row.fields) ? row.fields : [];
         const get = (re) => (fields.find(([k]) => re.test(String(k))) || [])[1] || "";
         prefill = { from: row.id, name: row.name || "", email: row.email || "", phone: row.phone || "", business: get(/^business( name)?$/i) || get(/business name and location/i) || get(/^business name and what you do/i), when: get(/^when$/i) || get(/when would you like/i) || get(/^dates and times that work/i) };
-        asked = fields.filter(([k, v]) => !SKIP.test(String(k)) && String(v || "").trim()).slice(0, 14).map(([k, v]) => [String(k), String(v)]);
+        asked = fields.filter(([k, v]) => !SKIP.test(String(k)) && String(v || "").trim()).slice(0, 30).map(([k, v]) => [String(k), String(v)]);
       }
     }
     // From a client profile with no inquiry on file: just who they are.

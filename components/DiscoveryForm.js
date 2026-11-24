@@ -11,7 +11,14 @@ import AutoText from "./AutoText";
 import AddonPicker from "./AddonPicker";
 import { DISCOVERY } from "../lib/intake";
 
-const split = (v) => String(v || "").split(/,\s*/).map((x) => x.trim()).filter(Boolean);
+// Is pick p in the answer? Match whole phrases, so a pick with a comma in it
+// ("Nobody, just the place and the work") still lights up after a reload.
+const hasPick = (v, p) => `, ${String(v || "").trim()}, `.includes(`, ${p}, `);
+const togglePickText = (v, p) => {
+  const cur = String(v || "").trim();
+  if (!hasPick(cur, p)) return cur ? `${cur}, ${p}` : p;
+  return `, ${cur}, `.replace(`, ${p}, `, ", ").replace(/^, |, $/g, "").replace(/^,\s*|,\s*$/g, "").trim();
+};
 
 export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 = "", initial = {}, savedId = "", backHref = "", deepHref = "", quoteBase = "", shootHref = "" }) {
   const [name, setName] = useState(name0);
@@ -71,11 +78,10 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
     );
     const text = <AutoText className="cx-input" id={`dq${i}`} rows={it.long ? 2 : 1} placeholder={it.picks ? "Or type it here" : undefined} value={v} onChange={(e) => set(it.q, e.target.value)} />;
     if (!it.picks) return text;
-    const on = split(v);
     return (
       <>
         <div className="cx-pills mx-picks" role="group" aria-label={`${it.q}: tap any`}>
-          {it.picks.map((p) => <button key={p} type="button" aria-pressed={on.includes(p)} className={"cx-pill" + (on.includes(p) ? " is-on" : "")} onClick={() => set(it.q, (cur) => { const now = split(cur); return (now.includes(p) ? now.filter((x) => x !== p) : [...now, p]).join(", "); })}>{p}</button>)}
+          {it.picks.map((p) => <button key={p} type="button" aria-pressed={hasPick(v, p)} className={"cx-pill" + (hasPick(v, p) ? " is-on" : "")} onClick={() => set(it.q, (cur) => togglePickText(cur, p))}>{p}</button>)}
         </div>
         {text}
       </>

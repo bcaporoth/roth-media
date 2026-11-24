@@ -20,6 +20,15 @@ import { track } from "../lib/track";
 import { INTAKE, TYPES, TYPE_LABEL, typeOf, ASKED_IN_WELCOME, SHOT_GROUP, shotPart } from "../lib/intake";
 import BookCall from "./BookCall";
 
+// Is pick p in the answer? Match whole phrases, so a pick with a comma in it
+// ("Nobody, just the place and the work") still lights up after a reload.
+const hasPick = (v, p) => `, ${String(v || "").trim()}, `.includes(`, ${p}, `);
+const togglePickText = (v, p) => {
+  const cur = String(v || "").trim();
+  if (!hasPick(cur, p)) return cur ? `${cur}, ${p}` : p;
+  return `, ${cur}, `.replace(`, ${p}, `, ", ").replace(/^, |, $/g, "").replace(/^,\s*|,\s*$/g, "").trim();
+};
+
 export default function IntakeForm({ email: email0 = "", name: name0 = "", phone: phone0 = "", type: type0 = "", initial = {}, mode = "public", types = null, initialByType = null, skipWelcomeAsked = false, backHref = "", quoteBase = "", savedTypes = null }) {
   const portal = mode === "portal";
   const admin = mode === "admin";
@@ -84,13 +93,12 @@ export default function IntakeForm({ email: email0 = "", name: name0 = "", phone
   });
   for (const b of blocks) if (b.group) b.group.sort((x, y) => shotPart(x.it.q) - shotPart(y.it.q));
   // Pick several: each tap adds or removes its words ("Instagram, Facebook").
-  const split = (v) => String(v || "").split(/,\s*/).map((x) => x.trim()).filter(Boolean);
   const togglePick = (it, p) => {
-    setOne(it.q, (v) => { const cur = split(v); return (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]).join(", "); });
+    setOne(it.q, (v) => togglePickText(v, p));
   };
   const pickRow = (it, i) => (
     <div className="cx-pills mx-picks" role="group" aria-label={`${it.q}: tap any`}>
-      {it.picks.map((p) => { const on = split(answers[it.q]).includes(p); return <button key={p} type="button" aria-pressed={on} className={"cx-pill" + (on ? " is-on" : "")} onClick={() => togglePick(it, p)}>{p}</button>; })}
+      {it.picks.map((p) => { const on = hasPick(answers[it.q], p); return <button key={p} type="button" aria-pressed={on} className={"cx-pill" + (on ? " is-on" : "")} onClick={() => togglePick(it, p)}>{p}</button>; })}
     </div>
   );
   const box = (it, i) =>
