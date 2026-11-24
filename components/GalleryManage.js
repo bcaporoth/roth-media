@@ -12,6 +12,7 @@ import AdminUploader from "./AdminUploader";
 import CoverPicker from "./CoverPicker";
 import GalleryEditPanel from "./GalleryEditPanel";
 import GalleryPhotos from "./GalleryPhotos";
+import GuestReelSwitch from "./GuestReelSwitch";
 import DesignPanel from "./DesignPanel";
 import PremierePanel from "./PremierePanel";
 import ReviewButton from "./ReviewButton";
@@ -397,9 +398,13 @@ export default function GalleryManage({ gallery, open, onChanged, askDelete, def
               }}
             />
             <section className="gmanage-sec" id={`gadd-${g.id}`}>
-              <button type="button" className="achip" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}>
-                {addOpen ? "Hide uploader" : "+ Add photos"}
-              </button>
+              {/* Each day has its own "+ Add photos"; this one only shows for an
+                  empty gallery, or as "Hide uploader" while it's open. */}
+              {(addOpen || !(g.media_count > 0)) && (
+                <button type="button" className="achip" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}>
+                  {addOpen ? "Hide uploader" : "+ Add photos"}
+                </button>
+              )}
               {addOpen && (
                 <div className="gmanage-add">
                   <p className="cover-picker-hint">
@@ -437,6 +442,7 @@ export default function GalleryManage({ gallery, open, onChanged, askDelete, def
         {pane(
           "details",
           <>
+            <section className="gmanage-sec"><GuestReelSwitch galleryId={g.id} /></section>
             <section className="gmanage-sec"><GalleryEditPanel galleryId={g.id} embedded onSaved={() => window.location.reload()} /></section>
             <section className="gmanage-sec gmanage-danger"><h3>Delete</h3><GalleryDelete gallery={g} onDeleted={onChanged} /></section>
           </>

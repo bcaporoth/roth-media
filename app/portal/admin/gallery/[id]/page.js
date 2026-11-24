@@ -61,7 +61,8 @@ export default async function AdminGalleryPage({ params, searchParams }) {
   return (
     <>
       <PortalNav email={user.email} isAdmin active="admin" />
-      <StudioShell active="galleries" newCount={newCount} kick="Command Center · Galleries" title={gallery.title}>
+      {/* No kick or big title: the gallery card below already shows the name (2026-11-24, simpler page). */}
+      <StudioShell active="galleries" newCount={newCount}>
         <GalleryPage gallery={gallery} tab={typeof sp.tab === "string" ? sp.tab : "photos"} />
       </StudioShell>
       <StudioFooter />

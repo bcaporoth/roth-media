@@ -1,14 +1,14 @@
 "use client";
 
 // Studio → /portal/admin/gallery/[id]: the gallery's own page. Header = cover,
-// click-to-rename title, date, who it belongs to, View / Copy link / Open.
+// click-to-rename title, date, who it belongs to, See it as the client / Copy link.
+// Guest Reel lives in the Details tab (2026-11-24, simpler page).
 // Below it the full manage toolset, opened on Photos & albums by default.
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import GalleryManage from "./GalleryManage";
-import GuestReelSwitch from "./GuestReelSwitch";
 import { isNoEmail } from "../lib/no-email";
 
 function fmtDate(iso) {
@@ -98,15 +98,12 @@ export default function GalleryPage({ gallery, tab = "photos" }) {  // old tab k
             {g.activity ? ` · opened ${g.activity.views}× · ${g.activity.saves} saved` : " · not opened yet"}
           </p>
           <div className="gcard-actions">
-            <Link className="achip" href={`/portal/gallery/${g.id}`}>View</Link>
+            <Link className="achip" href={`/portal/gallery/${g.id}`}>See it as the client</Link>
             <button type="button" className={"achip" + (copied ? " is-done" : "")} onClick={copyLink}>{copied ? "Copied ✓" : "Copy link"}</button>
-            <a className="achip" href={`/g/${g.share_token}`} target="_blank" rel="noreferrer">Open ↗</a>
           </div>
           {msg && <p className="cform-error" role="status">{msg}</p>}
         </div>
       </header>
-
-      <GuestReelSwitch galleryId={g.id} />
 
       <section className="gpage-manage">
         <GalleryManage gallery={g} open defaultTab={tab} onChanged={() => router.refresh()} />

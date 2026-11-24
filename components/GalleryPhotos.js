@@ -345,9 +345,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   return (
     <div className="gph">
       <p className="cover-picker-hint gph-hint">
-        This is how the client sees “{gallery.title}”: {plural(items.length, "file")} in{" "}
-        {namedDays.length === 0 ? "no day albums yet" : plural(namedDays.length, "day")}
-        {folderCount ? `, ${plural(folderCount, "folder")}` : ""}. <strong>Tap photos to select them</strong>, then move them to a day and folder, or remove them. To change an album&apos;s cover, tap one photo, then <strong>★ Make it the cover</strong>.
+        <strong>Tap photos to select them.</strong> To change the cover, tap one, then <strong>★ Make it the cover</strong>.
       </p>
 
       <div className="gph-scroll">
@@ -452,10 +450,9 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
           );
         })}
 
-        <div className={"gph-bar" + (n > 0 ? " is-on" : "")} role="region" aria-label="Selected photos">
-          {n === 0 ? (
-            <span className="cover-picker-hint">Nothing selected — tap photos above.</span>
-          ) : removing ? (
+        {/* The bar only shows once something is picked (2026-11-24, simpler page). */}
+        {n > 0 && <div className="gph-bar is-on" role="region" aria-label="Selected photos">
+          {removing ? (
             <TypedConfirm
               phrase="remove"
               prompt={`Type “remove” to delete ${plural(n, "file")} from “${gallery.title}” for good — clients lose them too.`}
@@ -515,7 +512,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
               </span>
             </>
           )}
-        </div>
+        </div>}
       </div>
       {msg && <p className="cover-picker-hint gfiles-msg" role="status">{msg}</p>}
     </div>
