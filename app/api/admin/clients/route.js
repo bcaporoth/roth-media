@@ -407,24 +407,7 @@ export async function POST(request) {
     const { data, error } = await q.select("id, updated_at").single();
     if (error) return bad(error.message, 500);
     if (!cur) await db.from("submissions").delete().eq("kind", "intake_sent").eq("email", email);
-    // "When do we meet?" → one Meeting on their calendar (source intake-meeting),
-    // replaced whenever the date, time or next step changes; cleared with the date.
-    let meeting = "";
-    try {
-      const { data: c } = await db.from("clients").select("id").eq("email", email).maybeSingle();
-      if (c) {
-        const day = String(answers["When do we meet?"] || "");
-        const time = String(answers["What time?"] || "").slice(0, 5);
-        const next = String(answers["What's next?"] || "");
-        const title = /day project/i.test(next) ? "Meeting: plan your day project" : /monthly/i.test(next) ? "Meeting: plan your monthly content" : "Meeting with Brandon";
-        await db.from("client_events").delete().eq("client_id", c.id).eq("source", "intake-meeting");
-        if (/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-          await db.from("client_events").insert({ client_id: c.id, date: day, time: /^\d{2}:\d{2}$/.test(time) ? time : "", title, note: "Set at your intake", created_by: "studio", source: "intake-meeting" });
-          meeting = day;
-        }
-      }
-    } catch {}
-    return NextResponse.json({ ok: true, id: data.id, updated_at: data.updated_at, meeting });
+    return NextResponse.json({ ok: true, id: data.id, updated_at: data.updated_at });
   }
 
   // Orientation-call sheet: create on first tap, then every change saves the whole sheet.
