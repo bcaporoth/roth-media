@@ -133,7 +133,7 @@ export default function GalleryDays({ items, title, videoPoster = null, dayCover
       <>
         <header className="pgal-dayhead">
           <button type="button" className="pgal-back" onClick={allDays}>
-            <span aria-hidden="true">←</span> All days
+            <span aria-hidden="true">←</span> All albums
           </button>
           <h2 className="pgal-day-title">{day.title || "More"}</h2>
           <p className="pgal-day-meta">
@@ -147,9 +147,9 @@ export default function GalleryDays({ items, title, videoPoster = null, dayCover
 
   return (
     <div className="pt-gal pgal-daypick">
-      <nav className="pgal-albums pgal-days" aria-label="Shoot days in this gallery">
+      <nav className="pgal-albums pgal-days" aria-label="Albums in this gallery">
         <p className="pgal-albums-kick">
-          <span>{plural(days.length, "day")}</span>
+          <span>{plural(days.length, "album")}</span>
           <em>Tap one to open it</em>
         </p>
         <div className="pgal-albums-row">

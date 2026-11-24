@@ -29,7 +29,6 @@ async function api(payload) {
 }
 
 const TOP = ""; // no day — shows at the top of the gallery, no heading
-const NEW = "__new";
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const keyOf = (day, folder) => joinAlbum(day, folder) || TOP;
 
@@ -39,15 +38,24 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const [picked, setPicked] = useState(() => new Set());
   const [renaming, setRenaming] = useState(null); // { kind: "day"|"folder"|"top", day, folder }
   const [renameTo, setRenameTo] = useState("");
-  const [destDay, setDestDay] = useState(TOP); // move bar: day <select> value
-  const [destFolder, setDestFolder] = useState(TOP); // move bar: folder <select> value
-  const [newDay, setNewDay] = useState("");
-  const [newFolder, setNewFolder] = useState("");
+  // "Where do they go?" (2026-11-24, Brandon: "so simple a caveman could do it"):
+  // big buttons, no dropdowns. Tap an album → tap a folder (or "Straight in").
+  const [whereDay, setWhereDay] = useState(null); // album picked in step 1, or null
+  const [naming, setNaming] = useState(""); // "" | "album" | "folder": the name box is open
+  const [newName, setNewName] = useState("");
   const [removing, setRemoving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [broken, setBroken] = useState(() => new Set());
   const [quick, setQuick] = useState(null); // filename awaiting its one-tap Delete / Keep answer
+  // Which album/folder has its extra tools open ("⋯": link, rename, move up/down).
+  // Only Select and + Add photos show by default (2026-11-24, simpler page).
+  const [tools, setTools] = useState("");
+  const toolsBtn = (k, what) => (
+    <button type="button" className={"achip gph-more" + (tools === k ? " is-on" : "")} aria-expanded={tools === k} aria-label={`More for ${what}`} title="Copy link, rename, move up or down" onClick={() => setTools((t) => (t === k ? "" : k))}>
+      {tools === k ? "Done" : "⋯"}
+    </button>
+  );
 
   // "Copy link": the share link that opens straight on this day or folder.
   const [copied, setCopied] = useState(""); // which album's link was just copied
@@ -167,10 +175,9 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   }
   function clear() {
     setPicked(new Set());
-    setDestDay(TOP);
-    setDestFolder(TOP);
-    setNewDay("");
-    setNewFolder("");
+    setWhereDay(null);
+    setNaming("");
+    setNewName("");
     setRemoving(false);
   }
 
@@ -183,7 +190,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     if (j < 0 || j >= days.length) return;
     const list = [...days];
     [list[i], list[j]] = [list[j], list[i]];
-    run({ action: "album-order", order: flatOrder(list) }, () => "Days reordered ✓");
+    run({ action: "album-order", order: flatOrder(list) }, () => "Albums reordered ✓");
   }
   function moveFolder(di, fi, dir) {
     const fj = fi + dir;
@@ -206,9 +213,9 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
     if (!to || !r) return;
     setRenaming(null);
     if (r.kind === "top") {
-      run({ action: "album-rename", from: TOP, to }, (j) => `${plural(j.renamed, "photo")} now in the day “${to}” ✓`);
+      run({ action: "album-rename", from: TOP, to }, (j) => `${plural(j.renamed, "photo")} now in the album “${to}” ✓`);
     } else if (r.kind === "day") {
-      run({ action: "day-rename", from: r.day, to }, () => `Day renamed to “${to}” ✓`);
+      run({ action: "day-rename", from: r.day, to }, () => `Album renamed to “${to}” ✓`);
     } else if (r.folder === TOP) {
       run({ action: "album-rename", from: r.day, to: joinAlbum(r.day, to) }, (j) => `${plural(j.renamed, "photo")} now in “${to}” ✓`);
     } else {
@@ -218,19 +225,24 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   const isRenaming = (r) =>
     renaming && renaming.kind === r.kind && renaming.day === r.day && renaming.folder === r.folder;
 
-  // ── move ──
-  const chosenDay = destDay === NEW ? cleanPart(newDay) : destDay;
-  const dayFolders = days.find((d) => d.day === chosenDay)?.folders.filter((f) => f.folder !== TOP) || [];
-  const chosenFolder = destFolder === NEW ? cleanPart(newFolder) : destFolder;
-  const target = chosenDay ? keyOf(chosenDay, chosenFolder) : TOP;
-  const targetLabel = chosenDay ? (chosenFolder ? `${chosenDay} › ${chosenFolder}` : chosenDay) : "the top of the gallery";
-  const canMove = n > 0 && !busy && (destDay !== NEW || chosenDay) && (destFolder !== NEW || chosenFolder) && target !== onlyIn;
-  function move() {
-    if (!canMove) return;
+  // ── move: tap where they go ──
+  const whereFolders = whereDay ? days.find((d) => d.day === whereDay)?.folders.filter((f) => f.folder !== TOP) || [] : [];
+  function moveTo(day, folder) {
+    const d = cleanPart(day);
+    const f = cleanPart(folder);
+    const target = d ? keyOf(d, f) : TOP;
+    if (n === 0 || busy) return;
+    if (target === onlyIn) { setMsg("They're already there."); return; }
+    const label = d ? (f ? `${d} › ${f}` : d) : "";
     const files = [...picked];
-    const label = targetLabel;
     clear();
-    run({ action: "album-assign", filenames: files, album: target || null }, (j) => `${plural(j.moved, "photo")} moved to ${label === "the top of the gallery" ? label : `“${label}”`} ✓`);
+    run({ action: "album-assign", filenames: files, album: target || null }, (j) => (label ? `${plural(j.moved, "photo")} put in “${label}” ✓` : `${plural(j.moved, "photo")} taken out of the album ✓`));
+  }
+  function saveName() {
+    const name = cleanPart(newName);
+    if (!name) return;
+    if (naming === "album") moveTo(name, TOP);
+    else moveTo(whereDay, name);
   }
 
   // Removes the given files (a tile's 🗑), or the selected ones (the bar's typed confirm).
@@ -345,7 +357,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
   return (
     <div className="gph">
       <p className="cover-picker-hint gph-hint">
-        <strong>Tap photos to select them.</strong> To change the cover, tap one, then <strong>★ Make it the cover</strong>.
+        <strong>Tap photos, then tap where they go.</strong> To change the cover, tap one, then <strong>★ Make it the cover</strong>.
       </p>
 
       <div className="gph-scroll">
@@ -358,16 +370,16 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
             <section key={D.day || "·"} className={"gph-album gph-day" + (isTop ? " is-top" : "")}>
               <header className="gph-head gph-dayhead">
                 {isRenaming(dayR) ? (
-                  renameForm(isTop ? "Day name, e.g. Oct 22 · Pop-up" : "New day name")
+                  renameForm(isTop ? "Album name, e.g. Ribbon Cutting" : "New album name")
                 ) : (
                   <>
                     <h4 className="gph-title">
-                      {!isTop && <span className="gph-kind">Day</span>}
-                      <button type="button" className="gph-title-btn" title={isTop ? "Turn these into a day album" : "Click to rename this day"} disabled={busy} onClick={() => startRename(dayR, isTop ? "" : D.day)}>
-                        {isTop ? "Top of gallery" : D.day}
+                      {!isTop && <span className="gph-kind">Album</span>}
+                      <button type="button" className="gph-title-btn" title={isTop ? "Put these in an album" : "Click to rename this album"} disabled={busy} onClick={() => startRename(dayR, isTop ? "" : D.day)}>
+                        {isTop ? "Not in an album" : D.day}
                       </button>{" "}
                       <em>{plural(D.count, "file")}</em>
-                      {isTop && <small>no day — shows first</small>}
+                      {isTop && <small>clients see these as “More”</small>}
                     </h4>
                     <span className="gph-actions">
                       <button type="button" className="achip" disabled={busy} onClick={() => selectFiles(dayFiles)}>
@@ -376,20 +388,23 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                       <button type="button" className="achip" disabled={busy} onClick={() => onAddTo?.(isTop ? TOP : D.day)}>
                         + Add photos
                       </button>
+                      {tools === `d:${D.day}` && (<>
                       {!isTop && gallery.share_token && (
-                        <button type="button" className={"achip" + (copied === `d:${D.day}` ? " is-on" : "")} onClick={() => copyLink(`d:${D.day}`, D.day, null)} title="Copies a link that opens right on this day">
+                        <button type="button" className={"achip" + (copied === `d:${D.day}` ? " is-on" : "")} onClick={() => copyLink(`d:${D.day}`, D.day, null)} title="Copies a link that opens right on this album">
                           {copied === `d:${D.day}` ? "Copied ✓" : "🔗 Copy link"}
                         </button>
                       )}
                       <button type="button" className="achip" disabled={busy} onClick={() => startRename(dayR, isTop ? "" : D.day)}>
-                        {isTop ? "Make this a day…" : "Rename"}
+                        {isTop ? "Put in an album…" : "Rename"}
                       </button>
                       {days.length > 1 && (
                         <>
-                          <button type="button" className="achip" disabled={busy || di === 0} onClick={() => moveDay(di, -1)} aria-label="Move day up">↑</button>
-                          <button type="button" className="achip" disabled={busy || di === days.length - 1} onClick={() => moveDay(di, 1)} aria-label="Move day down">↓</button>
+                          <button type="button" className="achip" disabled={busy || di === 0} onClick={() => moveDay(di, -1)} aria-label="Move album up">↑</button>
+                          <button type="button" className="achip" disabled={busy || di === days.length - 1} onClick={() => moveDay(di, 1)} aria-label="Move album down">↓</button>
                         </>
                       )}
+                      </>)}
+                      {toolsBtn(`d:${D.day}`, isTop ? "photos not in an album" : D.day)}
                     </span>
                   </>
                 )}
@@ -423,6 +438,7 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                                   + Add
                                 </button>
                               )}
+                              {tools === `f:${D.day}›${F.folder}` && (<>
                               {!loose && !isTop && gallery.share_token && (
                                 <button type="button" className={"achip" + (copied === `f:${D.day}›${F.folder}` ? " is-on" : "")} onClick={() => copyLink(`f:${D.day}›${F.folder}`, D.day, F.folder)} title="Copies a link that opens right on this folder">
                                   {copied === `f:${D.day}›${F.folder}` ? "Copied ✓" : "🔗 Link"}
@@ -437,6 +453,8 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                                   <button type="button" className="achip" disabled={busy || fi === D.folders.length - 1} onClick={() => moveFolder(di, fi, 1)} aria-label="Move folder down">↓</button>
                                 </>
                               )}
+                              </>)}
+                              {toolsBtn(`f:${D.day}›${F.folder}`, loose ? "photos not in a folder" : F.folder)}
                             </span>
                           </>
                         )}
@@ -473,35 +491,50 @@ export default function GalleryPhotos({ gallery, onChanged, onAddTo }) {
                   <button type="button" className="abtn gph-coverbtn" disabled={busy} onClick={() => setCover(oneDay, one.filename)}>★ Make it the cover of “{oneDay}”</button>
                 )
               )}
-              <form className="gph-moveto gph-moveform" onSubmit={(e) => { e.preventDefault(); move(); }}>
-                <span className="gph-label">Move to</span>
-                <select
-                  aria-label="Day"
-                  value={destDay}
-                  disabled={busy}
-                  onChange={(e) => { setDestDay(e.target.value); setDestFolder(TOP); setNewFolder(""); }}
-                >
-                  <option value={TOP}>Top of gallery (no day)</option>
-                  {namedDays.map((D) => <option key={D.day} value={D.day}>{D.day}</option>)}
-                  <option value={NEW}>+ New day…</option>
-                </select>
-                {destDay === NEW && (
-                  <input value={newDay} maxLength={60} placeholder="Day name, e.g. Oct 22 · Pop-up" onChange={(e) => setNewDay(e.target.value)} aria-label="New day name" disabled={busy} />
+              <div className="gph-where">
+                {naming ? (
+                  <form className="gph-name" onSubmit={(e) => { e.preventDefault(); saveName(); }}>
+                    <p className="gph-q">{naming === "album" ? "Name the new album" : `Name the new folder in “${whereDay}”`}</p>
+                    <input
+                      autoFocus
+                      value={newName}
+                      maxLength={60}
+                      placeholder={naming === "album" ? "e.g. Ribbon Cutting" : "e.g. Reels"}
+                      onChange={(e) => setNewName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Escape") { setNaming(""); setNewName(""); } }}
+                      aria-label={naming === "album" ? "New album name" : "New folder name"}
+                      disabled={busy}
+                    />
+                    <button type="submit" className="achip gph-choice is-go" disabled={busy || !cleanPart(newName)}>Put them in</button>
+                    <button type="button" className="achip" onClick={() => { setNaming(""); setNewName(""); }}>Back</button>
+                  </form>
+                ) : whereDay ? (
+                  <>
+                    <p className="gph-q">Which folder in “{whereDay}”?</p>
+                    <div className="gph-choices">
+                      <button type="button" className="achip gph-choice is-go" disabled={busy} onClick={() => moveTo(whereDay, TOP)}>Straight into “{whereDay}”</button>
+                      {whereFolders.map((F) => (
+                        <button key={F.folder} type="button" className="achip gph-choice" disabled={busy} onClick={() => moveTo(whereDay, F.folder)}>🗂 {F.folder}</button>
+                      ))}
+                      <button type="button" className="achip gph-choice is-new" disabled={busy} onClick={() => { setNaming("folder"); setNewName(""); }}>+ New folder</button>
+                      <button type="button" className="achip" onClick={() => setWhereDay(null)}>← Back</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="gph-q">Where do they go?</p>
+                    <div className="gph-choices">
+                      {namedDays.map((D) => (
+                        <button key={D.day} type="button" className="achip gph-choice" disabled={busy} onClick={() => setWhereDay(D.day)}>📁 {D.day}</button>
+                      ))}
+                      <button type="button" className="achip gph-choice is-new" disabled={busy} onClick={() => { setNaming("album"); setNewName(""); }}>+ New album</button>
+                      {onlyIn !== TOP && (
+                        <button type="button" className="achip" disabled={busy} onClick={() => moveTo(TOP, TOP)}>Take out of the album</button>
+                      )}
+                    </div>
+                  </>
                 )}
-                {(destDay !== TOP) && (
-                  <select aria-label="Folder" value={destFolder} disabled={busy} onChange={(e) => setDestFolder(e.target.value)}>
-                    <option value={TOP}>No folder</option>
-                    {dayFolders.map((F) => <option key={F.folder} value={F.folder}>{F.folder}</option>)}
-                    <option value={NEW}>+ New folder…</option>
-                  </select>
-                )}
-                {destDay !== TOP && destFolder === NEW && (
-                  <input value={newFolder} maxLength={60} placeholder="Folder name, e.g. Funny reels" onChange={(e) => setNewFolder(e.target.value)} aria-label="New folder name" disabled={busy} />
-                )}
-                <button type="submit" className="achip gph-dest gph-go" disabled={!canMove} title={target === onlyIn ? "They're already there" : `Move to ${targetLabel}`}>
-                  Move
-                </button>
-              </form>
+              </div>
               <span className="gph-else">
                 <button type="button" className="achip achip-danger" disabled={busy} onClick={() => setRemoving(true)}>
                   Remove…

@@ -574,7 +574,7 @@ export default function PortalGallery({ items, title, videoPoster = null, groupW
   return (
     <div className={"pt-gal" + (selectMode ? " is-selecting" : "")}>
       {showTabs && (
-        <nav className="pgal-tabs" aria-label={`${groupWord === "folder" ? "Folders" : "Albums"} in this ${groupWord === "folder" ? "day" : "gallery"}`}>
+        <nav className="pgal-tabs" aria-label={`${groupWord === "folder" ? "Folders" : "Albums"} in this ${groupWord === "folder" ? "album" : "gallery"}`}>
           <button type="button" className={"pgal-tab" + (tab === null ? " is-on" : "")} aria-pressed={tab === null} onClick={() => pickTab(null)}>
             All <em>{items.length}</em>
           </button>
