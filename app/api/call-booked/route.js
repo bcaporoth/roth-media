@@ -5,7 +5,7 @@ import { clip } from "../../../lib/visitor";
 export const dynamic = "force-dynamic";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const KINDS = new Set(["quote", "home", "card", "contact", "intake", "promo", "walkin"]);
+const KINDS = new Set(["quote", "home", "card", "contact", "intake", "promo", "walkin", "discovery"]);
 const CALENDLY_API = "https://api.calendly.com/scheduled_events/";
 
 // components/BookCall.js posts here when Calendly says a call was booked.

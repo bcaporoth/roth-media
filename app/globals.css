@@ -5601,6 +5601,10 @@ select.achip { appearance: auto; }
 .bookcall-frame { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: 14px; margin-top: 0.9rem; background: #fff; }
 .bookcall.is-dark .bookcall-title { color: #f1ebdf; }
 .bookcall.is-dark .bookcall-sub { color: #b4a894; }
+/* Command Center → Book a meeting (components/CalendlyBook.js): opens under the buttons, full row. */
+.cbook { flex-basis: 100%; width: 100%; margin-top: 0.6rem; }
+.cbook-head { margin: 0; font-size: 0.92rem; line-height: 1.5; opacity: 0.9; }
+.cbook-frame { height: 700px; }
 .bookcall.is-dark .bookcall-frame { border-color: rgba(241, 235, 223, 0.2); }
 .cform-success:has(.bookcall) { max-width: 720px; }
 

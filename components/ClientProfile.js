@@ -21,6 +21,7 @@ import { confirmTap } from "../lib/confirm-tap";
 import { callOf, callLabel, callLink } from "../lib/call";
 import CopyButton from "./CopyButton";
 import AddressInput from "./AddressInput";
+import CalendlyBook from "./CalendlyBook";
 
 async function api(path, payload) {
   const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -109,7 +110,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
   }
 
   // Their newest inquiry or brief, and the call they booked from it (if any).
-  const forms = [...d.messages, ...d.intakes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const forms = [...d.messages, ...d.intakes, ...(d.discovery ? [d.discovery] : [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const bookedCall = forms.map(callOf).find(Boolean) || null;
   const inquiry = forms.find((s) => ["quote", "home", "card", "contact", "intake", "walkin"].includes(s.kind)) || null;
   // Quotes: build one from their inquiry (same pre-fill the Inbox uses), and
@@ -150,6 +151,7 @@ export default function ClientProfile({ initial, emailReady, children = null }) 
           {!isNoEmail(c.email) && <a className="achip" href={`mailto:${c.email}`}>Email</a>}
           {!isNoEmail(c.email) && <a className="achip achip-primary" href={`/portal/admin/clients/${c.id}/intake`}>{d.discovery || d.intakes.length ? "Intake" : "Fill in intake"}</a>}
           <a className="achip" href={quoteHref}>Build a quote</a>
+          {!isNoEmail(c.email) && <CalendlyBook name={c.name} email={c.email} phone={c.phone} sid={(d.discovery || inquiry || {}).id || ""} className="achip" onBooked={() => setTimeout(() => window.location.reload(), 2500)} />}
           <button type="button" className="achip" onClick={() => { setTab("settings"); setTimeout(() => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}>Edit</button>
           <Link className="achip" href="/portal/admin/clients">← All clients</Link>
         </div>

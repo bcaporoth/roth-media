@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import AutoText from "./AutoText";
 import AddonPicker from "./AddonPicker";
 import { DISCOVERY } from "../lib/intake";
+import CalendlyBook from "./CalendlyBook";
 
 // Is pick p in the answer? Match whole phrases, so a pick with a comma in it
 // ("Nobody, just the place and the work") still lights up after a reload.
@@ -115,6 +116,7 @@ export default function DiscoveryForm({ email, name: name0 = "", phone: phone0 =
         {quoteBase && <button type="button" className="cx-btn cx-btn--light" onClick={() => go((sid) => (sid ? `${quoteBase}${sid}` : backHref))}>Build their quote</button>}
         {backHref && <button type="submit" className="cx-btn">Done: back to their profile</button>}
         {backHref && <button type="button" className="cx-btn" onClick={() => go(`${backHref}#calendar`)}>Open their calendar</button>}
+        <CalendlyBook name={name} email={email} phone={phone} sid={id} label="Book a meeting in Calendly" className="cx-btn" />
       </div>
       {shootHref && <p className="cx-help">Planning one specific shoot? <a href={shootHref}>Use the shoot questions</a> (shots, location, brand files).</p>}
       {error && <p className="cx-error" role="alert">{error}</p>}
